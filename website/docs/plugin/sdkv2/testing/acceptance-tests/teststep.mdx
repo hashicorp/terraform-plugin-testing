@@ -171,7 +171,7 @@ would be:
 resource.TestCheckResourceAttr("example_widget.foo", "active", "true"),
 ```
 
-The full list of functions can be seen in the [`helper/resource` package](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource). Names for these begin with `TestCheck...` and `TestMatch...`. The most common checks for non-`TypeSet` attributes are below.
+The full list of functions can be seen in the [`helper/resource` package](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/helper/resource). Names for these begin with `TestCheck...` and `TestMatch...`. The most common checks for non-`TypeSet` attributes are below.
 
 | Function                                                                                                                                                                                                      | Purpose                                                               |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
@@ -186,9 +186,9 @@ For `TypeSet` attributes, there are some additional functions that accept a `*` 
 
 | Function                                                                                                                                                                                                               | Purpose                                                                             |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| [`TestCheckTypeSetElemAttr(name string, key string, value string)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource#TestCheckTypeSetElemAttr)                                          | Value is contained in set                                                           |
-| [`TestCheckTypeSetElemAttrPair(nameFirst string, keyFirst string, nameSecond string, keySecond string)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource#TestCheckTypeSetElemAttrPair) | Value is contained in set from another attribute (usually in different resources)   |
-| [`TestCheckTypeSetElemNestedAttrs(name string, key string, values map[string]string)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource#TestCheckTypeSetElemNestedAttrs)                | Map of values is contained in set (usually checking multiple attributes of a block) |
+| [`TestCheckTypeSetElemAttr(name string, key string, value string)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/helper/resource#TestCheckTypeSetElemAttr)                                          | Value is contained in set                                                           |
+| [`TestCheckTypeSetElemAttrPair(nameFirst string, keyFirst string, nameSecond string, keySecond string)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/helper/resource#TestCheckTypeSetElemAttrPair) | Value is contained in set from another attribute (usually in different resources)   |
+| [`TestCheckTypeSetElemNestedAttrs(name string, key string, values map[string]string)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/helper/resource#TestCheckTypeSetElemNestedAttrs)                | Map of values is contained in set (usually checking multiple attributes of a block) |
 
 All of these functions also accept the below syntax in attribute keys to enable additional behaviors.
 
