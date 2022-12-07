@@ -7,7 +7,7 @@ description: >-
 
 # Sweepers
 
-Acceptance tests in Terraform provision and verify real infrastructure using [Terraform's testing framework](/plugin/sdkv2/testing/acceptance-tests). Ideally all infrastructure created is then destroyed within the lifecycle of a test, however the reality is that there are several situations that can arise where resources created during a test are “leaked”. Leaked test resources are resources created by Terraform during a test, but Terraform either failed to destroy them as part of the test, or the test falsely reported all resources were destroyed after completing the test. Common causes are intermittent errors or failures in vendor APIs, or developer error in the resource code or test.
+Acceptance tests in Terraform provision and verify real infrastructure using [Terraform's testing framework](/plugin/testing/acceptance-tests). Ideally all infrastructure created is then destroyed within the lifecycle of a test, however the reality is that there are several situations that can arise where resources created during a test are “leaked”. Leaked test resources are resources created by Terraform during a test, but Terraform either failed to destroy them as part of the test, or the test falsely reported all resources were destroyed after completing the test. Common causes are intermittent errors or failures in vendor APIs, or developer error in the resource code or test.
 
 To address the possibility of leaked resources, Terraform provides a mechanism called sweepers to cleanup leftover infrastructure. We will add a file to our folder structure that will invoke the sweeper helper.
 
@@ -29,7 +29,7 @@ package example
 import (
   "testing"
 
-  "github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+  "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestMain(m *testing.M) {
@@ -55,7 +55,7 @@ import (
   "strings"
   "testing"
 
-  "github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+  "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func init() {
@@ -99,7 +99,7 @@ package example
 import (
   "testing"
 
-  "github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+  "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func init() {

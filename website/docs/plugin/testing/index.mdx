@@ -48,7 +48,7 @@ using a common make task:
 $ make testacc
 ```
 
-See [Acceptance Testing](/plugin/sdkv2/testing/acceptance-tests) to learn more.
+See [Acceptance Testing](/plugin/testing/acceptance-tests) to learn more.
 
 ## Unit Tests
 
@@ -65,4 +65,13 @@ a common make task:
 $ make test
 ```
 
-See [Unit Testing](/plugin/sdkv2/testing/unit-testing) to learn more.
+See [Unit Testing](/plugin/testing/unit-testing) to learn more.
+
+## Testing Patterns
+
+Terraform developers are encouraged to write acceptance tests that create real
+resource to verify the behavior of plugins, ensuring a reliable and safe
+way to manage infrastructure. In [Testing Patterns](/plugin/testing/testing-patterns) we cover
+some basic acceptance tests that almost all resources should have to validate
+not only the functionality of the resource, but that the resource behaves as
+Terraform would expect.
