@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/logging"
+	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 )
 
 // hasProviders returns true if the TestCase has set any of the

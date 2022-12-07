@@ -11,7 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/plugintest"
+
+	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
 func TestProtoV5ProviderFactoriesMerge(t *testing.T) {

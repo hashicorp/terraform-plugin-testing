@@ -6,11 +6,12 @@ import (
 	"fmt"
 
 	tfjson "github.com/hashicorp/terraform-json"
-	testing "github.com/mitchellh/go-testing-interface"
+	"github.com/mitchellh/go-testing-interface"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/logging"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+
+	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
+	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
 func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/logging"
+	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 )
 
 // testStepValidateRequest contains data for the (TestStep).validate() method.

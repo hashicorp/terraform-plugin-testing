@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/go-cty/cty"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/configs/configschema"
+	"github.com/hashicorp/terraform-plugin-testing/internal/configs/configschema"
 )
 
 func TestConfigValueFromHCL2Block(t *testing.T) {

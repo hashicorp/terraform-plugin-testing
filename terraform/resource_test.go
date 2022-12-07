@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/mitchellh/reflectwalk"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/configs/configschema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/configs/hcl2shim"
+	"github.com/hashicorp/terraform-plugin-testing/internal/configs/configschema"
+	"github.com/hashicorp/terraform-plugin-testing/internal/configs/hcl2shim"
 )
 
 func TestResourceConfigGet(t *testing.T) {

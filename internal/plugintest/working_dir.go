@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/logging"
+	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 )
 
 const (

@@ -7,7 +7,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-log/tfsdklogtest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/logging"
+
+	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 )
 
 func TestHelperSchemaDebug(t *testing.T) {

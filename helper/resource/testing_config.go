@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/logging"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
+
+	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
 func testStepTaint(ctx context.Context, step TestStep, wd *plugintest.WorkingDir) error {

@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/addrs"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/configs/hcl2shim"
+
+	"github.com/hashicorp/terraform-plugin-testing/internal/addrs"
+	"github.com/hashicorp/terraform-plugin-testing/internal/configs/hcl2shim"
 )
 
 func TestStateValidate(t *testing.T) {

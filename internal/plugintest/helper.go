@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/internal/logging"
+
+	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 )
 
 // AutoInitProviderHelper is the main entrypoint for testing provider plugins
