@@ -1,0 +1,23 @@
+# Continuous integration handling for GoReleaser
+name: ci-goreleaser
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/ci-goreleaser.yml
+      - .goreleaser.yml
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+      - uses: goreleaser/goreleaser-action@v4
+        with:
+          args: check
