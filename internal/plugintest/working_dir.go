@@ -47,6 +47,25 @@ type WorkingDir struct {
 	reattachInfo tfexec.ReattachInfo
 }
 
+func (wd *WorkingDir) SetTFStdout() error {
+	dst, err := os.Create(filepath.Join(wd.baseDir, "stdout.txt"))
+	if err != nil {
+		return fmt.Errorf("unable to create file for writing stdout: %w", err)
+	}
+
+	wd.tf.SetStdout(dst)
+
+	return nil
+}
+
+func (wd *WorkingDir) UnsetTFStdout() {
+	wd.tf.SetStdout(nil)
+}
+
+func (wd *WorkingDir) GetBaseDir() string {
+	return wd.baseDir
+}
+
 // Close deletes the directories and files created to represent the receiving
 // working directory. After this method is called, the working directory object
 // is invalid and may no longer be used.
@@ -241,7 +260,14 @@ func (wd *WorkingDir) Apply(ctx context.Context) error {
 
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI apply command")
 
-	err := wd.tf.Apply(context.Background(), args...)
+	err := wd.SetTFStdout()
+	if err != nil {
+		return err
+	}
+
+	err = wd.tf.Apply(context.Background(), args...)
+
+	wd.UnsetTFStdout()
 
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI apply command")
 
