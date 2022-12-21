@@ -1,8 +1,13 @@
 package resource
 
 import (
+	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -313,6 +318,46 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						map[string]interface{}{logging.KeyError: err},
 					)
 					t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), err)
+				}
+			}
+
+			if step.ExpectWarning != nil {
+				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectWarning")
+
+				// TODO: Move file open and defer close outside of for ... {} loop.
+				file, err := os.Open(filepath.Join(wd.GetBaseDir(), "stdout.txt"))
+				if err != nil {
+					log.Fatal(err)
+				}
+				defer file.Close()
+
+				warningFound := false
+
+				// TODO: Use MultiLineJSONDecode providing entire contents of stdout.txt is valid JSON.
+				scanner := bufio.NewScanner(file)
+				// optionally, resize scanner's capacity for lines over 64K, see next example
+				for scanner.Scan() {
+					var outer struct {
+						Diagnostic tfjson.Diagnostic
+					}
+
+					if json.Unmarshal([]byte(scanner.Text()), &outer) == nil {
+						if step.ExpectWarning.MatchString(outer.Diagnostic.Summary) && outer.Diagnostic.Severity == tfjson.DiagnosticSeverityWarning {
+							warningFound = true
+						}
+					}
+				}
+
+				if err := scanner.Err(); err != nil {
+					log.Fatal(err)
+				}
+
+				if !warningFound {
+					//logging.HelperResourceError(ctx,
+					//	fmt.Sprintf("Expected a warning with pattern (%s)", step.ExpectWarning.String()),
+					//	map[string]interface{}{logging.KeyError: err},
+					//)
+					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), step.ExpectWarning.String())
 				}
 			}
 
