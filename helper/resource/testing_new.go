@@ -125,15 +125,21 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	// acts as default for import tests
 	var appliedCfg string
 
-	var file *os.File
-	defer func() error {
-		if file != nil {
-			err := file.Close()
+	// stdoutFile is used as the handle to the file that contains
+	// json output from running Terraform commands.
+	var stdoutFile *os.File
+	defer func() {
+		if stdoutFile != nil {
+			err := stdoutFile.Close()
 			if err != nil {
-				return err
+				logging.HelperResourceError(ctx,
+					"Error closing file containing json output from Terraform commands",
+					map[string]interface{}{logging.KeyError: err},
+				)
+				t.Fatalf("Error closing file containing json from Terraform commands: %s", err.Error())
+				return
 			}
 		}
-		return nil
 	}()
 
 	for stepIndex, step := range c.Steps {
@@ -338,7 +344,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if step.ExpectWarning != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectWarning")
 
-				file, err = os.Open(filepath.Join(wd.GetBaseDir(), "stdout.txt"))
+				stdoutFile, err = os.Open(filepath.Join(wd.GetBaseDir(), "stdout.txt"))
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -346,7 +352,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				warningFound := false
 
 				// TODO: Use MultiLineJSONDecode providing entire contents of stdout.txt is valid JSON.
-				scanner := bufio.NewScanner(file)
+				scanner := bufio.NewScanner(stdoutFile)
 				// optionally, resize scanner's capacity for lines over 64K, see next example
 				for scanner.Scan() {
 					var outer struct {
@@ -356,6 +362,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					if json.Unmarshal([]byte(scanner.Text()), &outer) == nil {
 						if step.ExpectWarning.MatchString(outer.Diagnostic.Summary) && outer.Diagnostic.Severity == tfjson.DiagnosticSeverityWarning {
 							warningFound = true
+							break
 						}
 					}
 				}
