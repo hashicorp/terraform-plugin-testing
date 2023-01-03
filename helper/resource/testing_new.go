@@ -125,6 +125,17 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	// acts as default for import tests
 	var appliedCfg string
 
+	var file *os.File
+	defer func() error {
+		if file != nil {
+			err := file.Close()
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}()
+
 	for stepIndex, step := range c.Steps {
 		stepNumber := stepIndex + 1 // 1-based indexing for humans
 		ctx = logging.TestStepNumberContext(ctx, stepNumber)
@@ -327,12 +338,10 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if step.ExpectWarning != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectWarning")
 
-				// TODO: Move file open and defer close outside of for ... {} loop.
-				file, err := os.Open(filepath.Join(wd.GetBaseDir(), "stdout.txt"))
+				file, err = os.Open(filepath.Join(wd.GetBaseDir(), "stdout.txt"))
 				if err != nil {
 					log.Fatal(err)
 				}
-				defer file.Close()
 
 				warningFound := false
 
