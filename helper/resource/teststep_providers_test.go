@@ -6,6 +6,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -2127,6 +2128,48 @@ func TestTest_TestStep_ProviderFactories_Import_External_With_Data_Source(t *tes
 					testCheckResourceAttrInstanceState(&id, "length", "12"),
 				),
 				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestTest_TestStep_ProviderFactories_ExpectWarning(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"random": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return &schema.Provider{
+					ResourcesMap: map[string]*schema.Resource{
+						"random_password": {
+							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) (diags diag.Diagnostics) {
+								d.SetId("id")
+								return append(diags, diag.Diagnostic{
+									Severity: diag.Warning,
+									Summary:  "warning diagnostic - summary",
+								})
+							},
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							Schema: map[string]*schema.Schema{
+								"id": {
+									Computed: true,
+									Type:     schema.TypeString,
+								},
+							},
+						},
+					},
+				}, nil
+			},
+		},
+		Steps: []TestStep{
+			{
+				Config:        `resource "random_password" "test" { }`,
+				ExpectWarning: regexp.MustCompile(`.*warning diagnostic - summary`),
 			},
 		},
 	})
