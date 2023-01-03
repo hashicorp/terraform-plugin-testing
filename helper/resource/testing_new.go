@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 
@@ -82,6 +83,11 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				)
 				t.Fatalf("Error running post-test destroy, there may be dangling resources: %s", err.Error())
 			}
+		}
+
+		if v := os.Getenv(plugintest.EnvTfAccPersistWorkingDir); v != "" {
+			t.Log(fmt.Sprintf("Working directory and files have been persisted in: %s", wd.GetHelper().WorkingDirectory()))
+			return
 		}
 
 		wd.Close()
