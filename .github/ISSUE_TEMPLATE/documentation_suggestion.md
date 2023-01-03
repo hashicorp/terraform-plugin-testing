@@ -4,7 +4,7 @@ about: Suggest new documentation or an enhancement to existing documentation.
 labels: documentation
 ---
 
-### Does this documenation exist?
+### Does this documentation exist?
 
 * [ ] This is new documentation
 * [ ] This is an enhancement to existing documentation
