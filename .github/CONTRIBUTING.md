@@ -81,7 +81,7 @@ type.
    It's very helpful when writing documentation to have specific questions like
    "how do I default a subsystem logger to off?" in mind. This helps us ensure
    the documentation is targeted, specific, and framed in a useful way.
- - [ ] **Contribute**: This repository contains the markdown files that generate versioned documentation for [terraform.io/plugin/log](https://www.terraform.io/plugin/log). Please open a pull request with documentation changes. Refer to the [website README](../website/README.md) for more information.
+ - [ ] **Contribute**: This repository contains the markdown files that generate versioned documentation for [developer.hashicorp.com/terraform/plugin/testing/](https://developer.hashicorp.com/terraform/plugin/testing/). Please open a pull request with documentation changes. Refer to the [website README](../website/README.md) for more information.
 
 ## New Pull Request
 
