@@ -70,25 +70,8 @@ jobs:
           git pull
           git tag "${{ inputs.versionNumber }}"
           git push origin "${{ inputs.versionNumber }}"
-  release-notes:
-    needs: [ changelog-version, changelog, release-tag ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ inputs.versionNumber }}
-          fetch-depth: 0
-      - name: Generate Release Notes
-        run: |
-          cd .changes
-          sed -e "1{/# /d;}" -e "2{/^$/d;}" ${{ needs.changelog-version.outputs.version }}.md > release-notes.txt
-      - uses: actions/upload-artifact@v3
-        with:
-          name: release-notes
-          path: ./.changes/release-notes.txt
-          retention-days: 1
   goreleaser:
-    needs: release-notes
+    needs: [ changelog-version, changelog, release-tag ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -98,8 +81,12 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version-file: 'go.mod'
+      - name: Generate Release Notes
+        run: |
+          cd .changes
+          sed -e "1{/# /d;}" -e "2{/^$/d;}" ${{ needs.changelog-version.outputs.version }}.md > /tmp/release-notes.txt
       - uses: goreleaser/goreleaser-action@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: release --release-notes ${{ steps.release-notes-download.outputs.download-path }}/release-notes.txt --rm-dist
+          args: release --release-notes /tmp/release-notes.txt --rm-dist
