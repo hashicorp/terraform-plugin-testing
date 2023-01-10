@@ -8,9 +8,9 @@ labels: enhancement
 <!--
 Inspect your go.mod as below to find the version, and paste the result between the ``` marks below.
 
-go list -m github.com/hashicorp/terraform-plugin-log/...
+go list -m github.com/hashicorp/terraform-plugin-testing/...
 
-If you are not running the latest version of terraform-plugin-log, please try
+If you are not running the latest version of terraform-plugin-testing, please try
 upgrading because your feature may have already been implemented.
 -->
 ```
@@ -28,7 +28,7 @@ a moment, below!
 
 ### Attempted solutions
 <!---
-If you've already tried to solve the problem within terraform-plugin-log's
+If you've already tried to solve the problem within terraform-plugin-testing's
 existing features and found a limitation that prevented you from succeeding,
 please describe it below in as much detail as possible.
 
@@ -43,7 +43,7 @@ configuration snippets and commands.
 ### Proposal
 <!---
 If you have an idea for a way to address the problem via a change to
-terraform-plugin-log, please describe it below.
+terraform-plugin-testing, please describe it below.
 
 In this section, it's helpful to include specific examples of how what you are
 suggesting might look like in configuration files, on the command line, or in

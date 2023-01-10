@@ -108,6 +108,16 @@ attaching use cases to an issue first before raising a pull request.
   commands). Where possible it is better to raise a separate pull request with
   just dependency changes as it's easier to review such PR(s).
 
+- [ ] **Changelog**: We use the [Changie](https://changie.dev/) automation tool 
+  for changelog automation. To add a new entry to the `CHANGELOG` install Changie 
+  using the following [instructions](https://changie.dev/guide/installation/)
+  and run `changie new` then choose a `kind` of change corresponding to the Terraform 
+  Plugin [changelog categories](https://developer.hashicorp.com/terraform/plugin/sdkv2/best-practices/versioning#categorization) 
+  and then fill out the body following the entry format. Changie will then prompt for 
+  a Github issue or pull request number. Repeat this process for any additional changes. 
+  The `.yaml` files created in the `.changes/unreleased` folder should be pushed the repository 
+  along with any code changes.
+
 ### Cosmetic changes, code formatting, and typos
 
 In general we do not accept PRs containing only the following changes:
@@ -221,30 +231,8 @@ This section is dedicated to the maintainers of this project.
 
 ### Releases
 
-Before running a release, the changelog must be constructed from unreleased entries in the `.changelog` directory.
-
-Install the latest version of the [`changelog-build`](https://pkg.go.dev/github.com/hashicorp/go-changelog/cmd/changelog-build) command, if it not already available:
-
-```shell
-go install github.com/hashicorp/go-changelog/cmd/changelog-build
-```
-
-Run the [`changelog-build`](https://pkg.go.dev/github.com/hashicorp/go-changelog/cmd/changelog-build) command from the root directory of the repository:
-
-```shell
-changelog-build -changelog-template .changelog.tmpl -entries-dir .changelog -last-release $(git describe --tags --abbrev=0) -note-template .changelog-note.tmpl -this-release HEAD
-```
-
-This will generate a section of Markdown text for the next release. Open the `CHANGELOG.md` file, add a `# X.Y.Z` header as the first line, then add the output from the `changelog-build` command.
-
-Commit, push, create a release Git tag, and push the tag:
-
-```shell
-git add CHANGELOG.md
-git commit -m "Update CHANGELOG for v1.2.3"
-git push
-git tag v1.2.3
-git push --tags
-```
-
-GitHub Actions will pick up the new release tag and kick off the release workflow.
+To cut a release, go to the repository in Github and click on the `Actions` tab 
+and select the `Release` workflow on the left-hand menu. In the `Release` submenu, 
+click on the Run workflow button, select the branch to cut the release from (default is main)
+and input the `Release version number` which is the Semantic Release number including 
+the `v` prefix (i.e. `v1.4.0`) and click `Run workflow`
