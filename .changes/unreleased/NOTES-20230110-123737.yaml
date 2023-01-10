@@ -3,4 +3,4 @@ body: Same testing functionality as that of terraform-plugin-sdk v2.24.1, repack
   in a standalone repository
 time: 2023-01-10T12:37:37.053752-05:00
 custom:
-  Issue/PR Number: "24"
+  Issue: "24"
