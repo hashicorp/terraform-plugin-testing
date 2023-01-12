@@ -424,11 +424,11 @@ func diagnosticFound(wd *plugintest.WorkingDir, r *regexp.Regexp, severity tfjso
 		txt := scanner.Text()
 
 		if json.Unmarshal([]byte(txt), &outer) == nil {
+			jsonOutput = append(jsonOutput, txt)
+
 			if outer.Diagnostic.Severity == "" {
 				continue
 			}
-
-			jsonOutput = append(jsonOutput, txt)
 
 			if !r.MatchString(outer.Diagnostic.Summary) && !r.MatchString(outer.Diagnostic.Detail) {
 				continue

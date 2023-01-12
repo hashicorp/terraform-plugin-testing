@@ -4,10 +4,16 @@
 package resource
 
 import (
+	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
 
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
@@ -17,6 +23,34 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
+
+func getJSONOutput(wd *plugintest.WorkingDir) []string {
+	stdoutFile, err := os.Open(filepath.Join(wd.GetBaseDir(), "stdout.txt"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	scanner := bufio.NewScanner(stdoutFile)
+	var jsonOutput []string
+
+	for scanner.Scan() {
+		var outer struct {
+			Diagnostic tfjson.Diagnostic
+		}
+
+		txt := scanner.Text()
+
+		if json.Unmarshal([]byte(txt), &outer) == nil {
+			jsonOutput = append(jsonOutput, txt)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return jsonOutput
+}
 
 func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, w io.Writer) error {
 	t.Helper()
@@ -29,7 +63,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	// require a refresh before applying
 	// failing to do this will result in data sources not being updated
 	err = runProviderCommand(ctx, t, func() error {
-		return wd.RefreshJSON(ctx, w)
+		return wd.Refresh(ctx)
 	}, wd, providers)
 	if err != nil {
 		return fmt.Errorf("Error running pre-apply refresh: %w", err)
@@ -68,6 +102,8 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		}
 
 		// Apply the diff, creating real resources
+		// TODO: Update all Errorf outputs that should use contents of streaming json
+		// after calling terraform-exec with `-json`.
 		err = runProviderCommand(ctx, t, func() error {
 			return wd.ApplyJSON(ctx, w)
 		}, wd, providers)
@@ -75,7 +111,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			if step.Destroy {
 				return fmt.Errorf("Error running destroy: %w", err)
 			}
-			return fmt.Errorf("Error running apply: %w", err)
+			return fmt.Errorf("Error running apply: %s", strings.Join(getJSONOutput(wd), "\n"))
 		}
 
 		// Get the new state

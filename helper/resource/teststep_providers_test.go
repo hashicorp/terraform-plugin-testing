@@ -13,13 +13,19 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/go-cty/cty"
+	fwdiag "github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	fwresourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
@@ -2406,6 +2412,58 @@ func TestTest_TestStep_ProviderFactories_ExpectWarningSummaryRefreshOnly(t *test
 			{
 				RefreshState:  true,
 				ExpectWarning: regexp.MustCompile(`.*warning diagnostic - summary`),
+			},
+		},
+	})
+}
+
+func TestTest_TestStep_ProviderFactories_ExpectWarningSummaryPlanOnly(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
+			"random": providerserver.NewProtocol5WithError(&testprovider.Provider{
+				MetadataMethod: func(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+					resp.TypeName = "random"
+				},
+				ResourcesMethod: func(ctx context.Context) []func() resource.Resource {
+					return []func() resource.Resource{
+						func() resource.Resource {
+							return &testprovider.Resource{
+								MetadataMethod: func(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+									resp.TypeName = req.ProviderTypeName + "_password"
+								},
+								SchemaMethod: func(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+									resp.Schema = fwresourceschema.Schema{
+										Attributes: map[string]fwresourceschema.Attribute{
+											"id": fwresourceschema.StringAttribute{
+												Computed: true,
+											},
+										},
+									}
+								},
+								CreateMethod: func(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+									var data struct {
+										Id types.String `tfsdk:"id"`
+									}
+
+									data.Id = types.StringValue("example-id")
+
+									diags := resp.State.Set(ctx, &data)
+									resp.Diagnostics.Append(diags...)
+
+									resp.Diagnostics.Append(fwdiag.NewWarningDiagnostic("warning diagnostic - detail", ""))
+								},
+							}
+						},
+					}
+				},
+			}),
+		},
+		Steps: []TestStep{
+			{
+				Config:        `resource "random_password" "test" { }`,
+				ExpectWarning: regexp.MustCompile(`.*warning diagnostic - detail`),
 			},
 		},
 	})
