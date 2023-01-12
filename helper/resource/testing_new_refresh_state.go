@@ -6,6 +6,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"io"
 
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
@@ -16,7 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {
+func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, w io.Writer) error {
 	t.Helper()
 
 	var err error
@@ -33,7 +34,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 	}
 
 	err = runProviderCommand(ctx, t, func() error {
-		return wd.Refresh(ctx)
+		return wd.RefreshJSON(ctx, w)
 	}, wd, providers)
 	if err != nil {
 		return err

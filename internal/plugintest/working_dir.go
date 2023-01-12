@@ -382,6 +382,17 @@ func (wd *WorkingDir) Refresh(ctx context.Context) error {
 	return err
 }
 
+// RefreshJSON runs terraform refresh
+func (wd *WorkingDir) RefreshJSON(ctx context.Context, w io.Writer) error {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI refresh command")
+
+	err := wd.tf.RefreshJSON(context.Background(), w, tfexec.Reattach(wd.reattachInfo))
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI refresh command")
+
+	return err
+}
+
 // Schemas returns an object describing the provider schemas.
 //
 // If the schemas cannot be read, Schemas returns an error.

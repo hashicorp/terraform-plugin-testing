@@ -29,7 +29,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	// require a refresh before applying
 	// failing to do this will result in data sources not being updated
 	err = runProviderCommand(ctx, t, func() error {
-		return wd.Refresh(ctx)
+		return wd.RefreshJSON(ctx, w)
 	}, wd, providers)
 	if err != nil {
 		return fmt.Errorf("Error running pre-apply refresh: %w", err)

@@ -272,19 +272,31 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.RefreshState {
 			logging.HelperResourceTrace(ctx, "TestStep is RefreshState mode")
 
-			err := testStepNewRefreshState(ctx, t, wd, step, providers)
+			err := testStepNewRefreshState(ctx, t, wd, step, providers, stdoutFile)
+
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
+
 				if err == nil {
 					logging.HelperResourceError(ctx,
 						"Error running refresh: expected an error but got none",
 					)
 					t.Fatalf("Step %d/%d error running refresh: expected an error but got none", stepNumber, len(c.Steps))
 				}
-				if !step.ExpectError.MatchString(err.Error()) {
+
+				errorFound := step.ExpectError.MatchString(err.Error())
+				jsonErrorFound, jsonDiags := diagnosticFound(wd, step.ExpectError, tfjson.DiagnosticSeverityError)
+
+				errorOutput := []string{err.Error()}
+
+				if jsonErrorFound {
+					errorOutput = jsonDiags
+				}
+
+				if !errorFound && !jsonErrorFound {
 					logging.HelperResourceError(ctx,
 						fmt.Sprintf("Error running refresh: expected an error with pattern (%s)", step.ExpectError.String()),
-						map[string]interface{}{logging.KeyError: err},
+						map[string]interface{}{logging.KeyError: strings.Join(errorOutput, "")},
 					)
 					t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
 				}
@@ -300,6 +312,20 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						map[string]interface{}{logging.KeyError: err},
 					)
 					t.Fatalf("Step %d/%d error running refresh: %s", stepNumber, len(c.Steps), err)
+				}
+			}
+
+			if step.ExpectWarning != nil {
+				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectWarning")
+
+				warningFound, jsonDiags := diagnosticFound(wd, step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
+
+				if !warningFound {
+					logging.HelperResourceError(ctx,
+						fmt.Sprintf("Expected a warning with pattern (%s)", step.ExpectWarning.String()),
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), strings.Join(jsonDiags, "\n"))
 				}
 			}
 
@@ -326,10 +352,16 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				errorFound := step.ExpectError.MatchString(err.Error())
 				jsonErrorFound, jsonDiags := diagnosticFound(wd, step.ExpectError, tfjson.DiagnosticSeverityError)
 
+				errorOutput := []string{err.Error()}
+
+				if jsonErrorFound {
+					errorOutput = jsonDiags
+				}
+
 				if !errorFound && !jsonErrorFound {
 					logging.HelperResourceError(ctx,
 						fmt.Sprintf("Expected an error with pattern (%s)", step.ExpectError.String()),
-						map[string]interface{}{logging.KeyError: err},
+						map[string]interface{}{logging.KeyError: strings.Join(errorOutput, "")},
 					)
 					t.Fatalf("Step %d/%d, expected an error matching pattern, no match on: %s", stepNumber, len(c.Steps), jsonDiags)
 				}
@@ -360,7 +392,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						fmt.Sprintf("Expected a warning with pattern (%s)", step.ExpectWarning.String()),
 						map[string]interface{}{logging.KeyError: err},
 					)
-					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), jsonDiags)
+					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), strings.Join(jsonDiags, "\n"))
 				}
 			}
 

@@ -2301,6 +2301,116 @@ func TestTest_TestStep_ProviderFactories_ExpectWarningDetail(t *testing.T) {
 	})
 }
 
+func TestTest_TestStep_ProviderFactories_ExpectErrorSummaryRefreshOnly(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"random": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return &schema.Provider{
+					ResourcesMap: map[string]*schema.Resource{
+						"random_password": {
+							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) diag.Diagnostics {
+								d.SetId("id")
+								return nil
+							},
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) (diags diag.Diagnostics) {
+								// Only generate diag when ReadContext is called for the second
+								// time during terraform refresh.
+								if d.Get("id") == "new_id" {
+									return append(diags, diag.Diagnostic{
+										Severity: diag.Error,
+										Summary:  "error diagnostic - summary",
+									})
+								}
+
+								// Update id when ReadContext is called following resource creation
+								// during terraform apply.
+								d.SetId("new_id")
+
+								return
+							},
+							Schema: map[string]*schema.Schema{
+								"id": {
+									Computed: true,
+									Type:     schema.TypeString,
+								},
+							},
+						},
+					},
+				}, nil
+			},
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "random_password" "test" { }`,
+			},
+			{
+				RefreshState: true,
+				ExpectError:  regexp.MustCompile(`.*error diagnostic - summary`),
+			},
+		},
+	})
+}
+
+func TestTest_TestStep_ProviderFactories_ExpectWarningSummaryRefreshOnly(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"random": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return &schema.Provider{
+					ResourcesMap: map[string]*schema.Resource{
+						"random_password": {
+							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) diag.Diagnostics {
+								d.SetId("id")
+								return nil
+							},
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) (diags diag.Diagnostics) {
+								// Only generate diag when ReadContext is called for the second
+								// time during terraform refresh.
+								if d.Get("id") == "new_id" {
+									return append(diags, diag.Diagnostic{
+										Severity: diag.Warning,
+										Summary:  "warning diagnostic - summary",
+									})
+								}
+
+								// Update id when ReadContext is called following resource creation
+								// during terraform apply.
+								d.SetId("new_id")
+
+								return
+							},
+							Schema: map[string]*schema.Schema{
+								"id": {
+									Computed: true,
+									Type:     schema.TypeString,
+								},
+							},
+						},
+					},
+				}, nil
+			},
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "random_password" "test" { }`,
+			},
+			{
+				RefreshState:  true,
+				ExpectWarning: regexp.MustCompile(`.*warning diagnostic - summary`),
+			},
+		},
+	})
+}
+
 func setTimeForTest(t time.Time) func() {
 	return func() {
 		getTimeForTest = func() time.Time {
