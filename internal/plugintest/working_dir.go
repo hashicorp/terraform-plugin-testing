@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -45,21 +46,6 @@ type WorkingDir struct {
 	// reattachInfo stores the gRPC socket info required for Terraform's
 	// plugin reattach functionality
 	reattachInfo tfexec.ReattachInfo
-}
-
-func (wd *WorkingDir) SetTFStdout() error {
-	dst, err := os.Create(filepath.Join(wd.baseDir, "stdout.txt"))
-	if err != nil {
-		return fmt.Errorf("unable to create file for writing stdout: %w", err)
-	}
-
-	wd.tf.SetStdout(dst)
-
-	return nil
-}
-
-func (wd *WorkingDir) UnsetTFStdout() {
-	wd.tf.SetStdout(nil)
 }
 
 func (wd *WorkingDir) GetBaseDir() string {
@@ -260,14 +246,27 @@ func (wd *WorkingDir) Apply(ctx context.Context) error {
 
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI apply command")
 
-	err := wd.SetTFStdout()
-	if err != nil {
-		return err
+	err := wd.tf.Apply(context.Background(), args...)
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI apply command")
+
+	return err
+}
+
+// ApplyJSON runs "terraform apply" with the `-json` flag. The streaming JSON output
+// generated when `terraform apply` is executed is written to `w`.
+// If CreatePlan has previously completed successfully and the saved plan has not
+// been cleared in the meantime then this will apply the saved plan. Otherwise,
+// it will implicitly create a new plan and apply it.
+func (wd *WorkingDir) ApplyJSON(ctx context.Context, w io.Writer) error {
+	args := []tfexec.ApplyOption{tfexec.Reattach(wd.reattachInfo), tfexec.Refresh(false)}
+	if wd.HasSavedPlan() {
+		args = append(args, tfexec.DirOrPlan(PlanFileName))
 	}
 
-	err = wd.tf.Apply(context.Background(), args...)
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI apply command")
 
-	wd.UnsetTFStdout()
+	err := wd.tf.ApplyJSON(context.Background(), w, args...)
 
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI apply command")
 

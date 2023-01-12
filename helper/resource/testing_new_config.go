@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
@@ -17,7 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {
+func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, w io.Writer) error {
 	t.Helper()
 
 	err := wd.SetConfig(ctx, step.mergedConfig(ctx, c))
@@ -68,7 +69,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 		// Apply the diff, creating real resources
 		err = runProviderCommand(ctx, t, func() error {
-			return wd.Apply(ctx)
+			return wd.ApplyJSON(ctx, w)
 		}, wd, providers)
 		if err != nil {
 			if step.Destroy {

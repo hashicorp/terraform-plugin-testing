@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
@@ -127,7 +128,10 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 	// stdoutFile is used as the handle to the file that contains
 	// json output from running Terraform commands.
-	var stdoutFile *os.File
+	stdoutFile, err := os.Create(filepath.Join(wd.GetBaseDir(), "stdout.txt"))
+	if err != nil {
+		t.Fatalf("unable to create file for writing stdout: %w", err)
+	}
 	defer func() {
 		if stdoutFile != nil {
 			err := stdoutFile.Close()
@@ -307,7 +311,8 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.Config != "" {
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
-			err := testStepNewConfig(ctx, t, c, wd, step, providers)
+			err := testStepNewConfig(ctx, t, c, wd, step, providers, stdoutFile)
+
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 
@@ -317,12 +322,16 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					)
 					t.Fatalf("Step %d/%d, expected an error but got none", stepNumber, len(c.Steps))
 				}
-				if !step.ExpectError.MatchString(err.Error()) {
+
+				errorFound := step.ExpectError.MatchString(err.Error())
+				jsonErrorFound, jsonDiags := diagnosticFound(wd, step.ExpectError, tfjson.DiagnosticSeverityError)
+
+				if !errorFound && !jsonErrorFound {
 					logging.HelperResourceError(ctx,
 						fmt.Sprintf("Expected an error with pattern (%s)", step.ExpectError.String()),
 						map[string]interface{}{logging.KeyError: err},
 					)
-					t.Fatalf("Step %d/%d, expected an error with pattern, no match on: %s", stepNumber, len(c.Steps), err)
+					t.Fatalf("Step %d/%d, expected an error matching pattern, no match on: %s", stepNumber, len(c.Steps), jsonDiags)
 				}
 			} else {
 				if err != nil && c.ErrorCheck != nil {
@@ -344,39 +353,14 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if step.ExpectWarning != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectWarning")
 
-				stdoutFile, err = os.Open(filepath.Join(wd.GetBaseDir(), "stdout.txt"))
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				warningFound := false
-
-				// TODO: Use MultiLineJSONDecode providing entire contents of stdout.txt is valid JSON.
-				scanner := bufio.NewScanner(stdoutFile)
-				// optionally, resize scanner's capacity for lines over 64K, see next example
-				for scanner.Scan() {
-					var outer struct {
-						Diagnostic tfjson.Diagnostic
-					}
-
-					if json.Unmarshal([]byte(scanner.Text()), &outer) == nil {
-						if step.ExpectWarning.MatchString(outer.Diagnostic.Summary) && outer.Diagnostic.Severity == tfjson.DiagnosticSeverityWarning {
-							warningFound = true
-							break
-						}
-					}
-				}
-
-				if err := scanner.Err(); err != nil {
-					log.Fatal(err)
-				}
+				warningFound, jsonDiags := diagnosticFound(wd, step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
 
 				if !warningFound {
-					//logging.HelperResourceError(ctx,
-					//	fmt.Sprintf("Expected a warning with pattern (%s)", step.ExpectWarning.String()),
-					//	map[string]interface{}{logging.KeyError: err},
-					//)
-					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), step.ExpectWarning.String())
+					logging.HelperResourceError(ctx,
+						fmt.Sprintf("Expected a warning with pattern (%s)", step.ExpectWarning.String()),
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), jsonDiags)
 				}
 			}
 
@@ -389,6 +373,48 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 		t.Fatalf("Step %d/%d, unsupported test mode", stepNumber, len(c.Steps))
 	}
+}
+
+func diagnosticFound(wd *plugintest.WorkingDir, r *regexp.Regexp, severity tfjson.DiagnosticSeverity) (bool, []string) {
+	stdoutFile, err := os.Open(filepath.Join(wd.GetBaseDir(), "stdout.txt"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	scanner := bufio.NewScanner(stdoutFile)
+	var jsonOutput []string
+
+	for scanner.Scan() {
+		var outer struct {
+			Diagnostic tfjson.Diagnostic
+		}
+
+		txt := scanner.Text()
+
+		if json.Unmarshal([]byte(txt), &outer) == nil {
+			if outer.Diagnostic.Severity == "" {
+				continue
+			}
+
+			jsonOutput = append(jsonOutput, txt)
+
+			if !r.MatchString(outer.Diagnostic.Summary) && !r.MatchString(outer.Diagnostic.Detail) {
+				continue
+			}
+
+			if outer.Diagnostic.Severity != severity {
+				continue
+			}
+
+			return true, jsonOutput
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return false, jsonOutput
 }
 
 func getState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir) (*terraform.State, error) {

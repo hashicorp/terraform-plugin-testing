@@ -2133,7 +2133,91 @@ func TestTest_TestStep_ProviderFactories_Import_External_With_Data_Source(t *tes
 	})
 }
 
-func TestTest_TestStep_ProviderFactories_ExpectWarning(t *testing.T) {
+func TestTest_TestStep_ProviderFactories_ExpectErrorSummary(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"random": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return &schema.Provider{
+					ResourcesMap: map[string]*schema.Resource{
+						"random_password": {
+							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) (diags diag.Diagnostics) {
+								d.SetId("id")
+								return append(diags, diag.Diagnostic{
+									Severity: diag.Error,
+									Summary:  "error diagnostic - summary",
+								})
+							},
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							Schema: map[string]*schema.Schema{
+								"id": {
+									Computed: true,
+									Type:     schema.TypeString,
+								},
+							},
+						},
+					},
+				}, nil
+			},
+		},
+		Steps: []TestStep{
+			{
+				Config:      `resource "random_password" "test" { }`,
+				ExpectError: regexp.MustCompile(`.*error diagnostic - summary`),
+			},
+		},
+	})
+}
+
+func TestTest_TestStep_ProviderFactories_ExpectErrorDetail(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"random": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return &schema.Provider{
+					ResourcesMap: map[string]*schema.Resource{
+						"random_password": {
+							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) (diags diag.Diagnostics) {
+								d.SetId("id")
+								return append(diags, diag.Diagnostic{
+									Severity: diag.Error,
+									Detail:   "error diagnostic - detail",
+								})
+							},
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							Schema: map[string]*schema.Schema{
+								"id": {
+									Computed: true,
+									Type:     schema.TypeString,
+								},
+							},
+						},
+					},
+				}, nil
+			},
+		},
+		Steps: []TestStep{
+			{
+				Config:      `resource "random_password" "test" { }`,
+				ExpectError: regexp.MustCompile(`.*error diagnostic - detail`),
+			},
+		},
+	})
+}
+
+func TestTest_TestStep_ProviderFactories_ExpectWarningSummary(t *testing.T) {
 	t.Parallel()
 
 	Test(t, TestCase{
@@ -2170,6 +2254,48 @@ func TestTest_TestStep_ProviderFactories_ExpectWarning(t *testing.T) {
 			{
 				Config:        `resource "random_password" "test" { }`,
 				ExpectWarning: regexp.MustCompile(`.*warning diagnostic - summary`),
+			},
+		},
+	})
+}
+
+func TestTest_TestStep_ProviderFactories_ExpectWarningDetail(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"random": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return &schema.Provider{
+					ResourcesMap: map[string]*schema.Resource{
+						"random_password": {
+							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) (diags diag.Diagnostics) {
+								d.SetId("id")
+								return append(diags, diag.Diagnostic{
+									Severity: diag.Warning,
+									Detail:   "warning diagnostic - detail",
+								})
+							},
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							Schema: map[string]*schema.Schema{
+								"id": {
+									Computed: true,
+									Type:     schema.TypeString,
+								},
+							},
+						},
+					},
+				}, nil
+			},
+		},
+		Steps: []TestStep{
+			{
+				Config:        `resource "random_password" "test" { }`,
+				ExpectWarning: regexp.MustCompile(`.*warning diagnostic - detail`),
 			},
 		},
 	})
