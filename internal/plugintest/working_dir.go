@@ -264,6 +264,36 @@ func (wd *WorkingDir) CreateDestroyPlan(ctx context.Context) error {
 	return nil
 }
 
+// CreateDestroyPlanJSON runs "terraform plan -destroy -json" to create a saved plan
+// file, which if successful will then be used for the next call to Apply.
+func (wd *WorkingDir) CreateDestroyPlanJSON(ctx context.Context, w io.Writer) error {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan -destroy command")
+
+	hasChanges, err := wd.tf.PlanJSON(context.Background(), w, tfexec.Reattach(wd.reattachInfo), tfexec.Refresh(false), tfexec.Out(PlanFileName), tfexec.Destroy(true))
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI plan -destroy command")
+
+	if err != nil {
+		return err
+	}
+
+	if !hasChanges {
+		logging.HelperResourceTrace(ctx, "Created destroy plan with no changes")
+
+		return nil
+	}
+
+	stdout, err := wd.SavedPlanRawStdout(ctx)
+
+	if err != nil {
+		return fmt.Errorf("error retrieving formatted plan output: %w", err)
+	}
+
+	logging.HelperResourceTrace(ctx, "Created destroy plan with changes", map[string]any{logging.KeyTestTerraformPlan: stdout})
+
+	return nil
+}
+
 // Apply runs "terraform apply". If CreatePlan has previously completed
 // successfully and the saved plan has not been cleared in the meantime then
 // this will apply the saved plan. Otherwise, it will implicitly create a new

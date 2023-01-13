@@ -4,15 +4,9 @@
 package resource
 
 import (
-	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
 	"reflect"
-	"regexp"
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
@@ -126,15 +120,14 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	// acts as default for import tests
 	var appliedCfg string
 
-	// stdoutFile is used as the handle to the file that contains
-	// json output from running Terraform commands.
-	stdoutFile, err := os.Create(filepath.Join(wd.GetBaseDir(), "stdout.txt"))
+	// w (io.WriteCloser) is supplied to all terraform commands that are using streaming json output.
+	w, err := stdoutWriter(wd)
 	if err != nil {
 		t.Fatalf("unable to create file for writing stdout: %w", err)
 	}
 	defer func() {
-		if stdoutFile != nil {
-			err := stdoutFile.Close()
+		if w != nil {
+			err := w.Close()
 			if err != nil {
 				logging.HelperResourceError(ctx,
 					"Error closing file containing json output from Terraform commands",
@@ -272,7 +265,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.RefreshState {
 			logging.HelperResourceTrace(ctx, "TestStep is RefreshState mode")
 
-			err := testStepNewRefreshState(ctx, t, wd, step, providers, stdoutFile)
+			err := testStepNewRefreshState(ctx, t, wd, step, providers, w)
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -337,7 +330,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.Config != "" {
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
-			err := testStepNewConfig(ctx, t, c, wd, step, providers, stdoutFile)
+			err := testStepNewConfig(ctx, t, c, wd, step, providers, w)
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -405,48 +398,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 		t.Fatalf("Step %d/%d, unsupported test mode", stepNumber, len(c.Steps))
 	}
-}
-
-func diagnosticFound(wd *plugintest.WorkingDir, r *regexp.Regexp, severity tfjson.DiagnosticSeverity) (bool, []string) {
-	stdoutFile, err := os.Open(filepath.Join(wd.GetBaseDir(), "stdout.txt"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	scanner := bufio.NewScanner(stdoutFile)
-	var jsonOutput []string
-
-	for scanner.Scan() {
-		var outer struct {
-			Diagnostic tfjson.Diagnostic
-		}
-
-		txt := scanner.Text()
-
-		if json.Unmarshal([]byte(txt), &outer) == nil {
-			jsonOutput = append(jsonOutput, txt)
-
-			if outer.Diagnostic.Severity == "" {
-				continue
-			}
-
-			if !r.MatchString(outer.Diagnostic.Summary) && !r.MatchString(outer.Diagnostic.Detail) {
-				continue
-			}
-
-			if outer.Diagnostic.Severity != severity {
-				continue
-			}
-
-			return true, jsonOutput
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	return false, jsonOutput
 }
 
 func getState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir) (*terraform.State, error) {

@@ -37,7 +37,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 		return wd.RefreshJSON(ctx, w)
 	}, wd, providers)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s", getJSONOutputStr(wd))
 	}
 
 	var refreshState *terraform.State
@@ -65,10 +65,10 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 
 	// do a plan
 	err = runProviderCommand(ctx, t, func() error {
-		return wd.CreatePlan(ctx)
+		return wd.CreatePlanJSON(ctx, w)
 	}, wd, providers)
 	if err != nil {
-		return fmt.Errorf("Error running post-apply plan: %w", err)
+		return fmt.Errorf("Error running post-apply plan: %s", getJSONOutputStr(wd))
 	}
 
 	var plan *tfjson.Plan
