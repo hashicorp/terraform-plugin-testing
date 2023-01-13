@@ -80,7 +80,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			if step.Destroy {
 				return wd.CreateDestroyPlan(ctx)
 			}
-			return wd.CreatePlan(ctx)
+			return wd.CreatePlanJSON(ctx, w)
 		}, wd, providers)
 		if err != nil {
 			return fmt.Errorf("Error running pre-apply plan: %w", err)
@@ -152,7 +152,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		if step.Destroy {
 			return wd.CreateDestroyPlan(ctx)
 		}
-		return wd.CreatePlan(ctx)
+		return wd.CreatePlanJSON(ctx, w)
 	}, wd, providers)
 	if err != nil {
 		return fmt.Errorf("Error running post-apply plan: %w", err)
@@ -196,7 +196,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		if step.Destroy {
 			return wd.CreateDestroyPlan(ctx)
 		}
-		return wd.CreatePlan(ctx)
+		return wd.CreatePlanJSON(ctx, w)
 	}, wd, providers)
 	if err != nil {
 		return fmt.Errorf("Error running second post-apply plan: %w", err)

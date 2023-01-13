@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	fwresourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -25,6 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testplanmodifier"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -2307,7 +2309,7 @@ func TestTest_TestStep_ProviderFactories_ExpectWarningDetail(t *testing.T) {
 	})
 }
 
-func TestTest_TestStep_ProviderFactories_ExpectErrorSummaryRefreshOnly(t *testing.T) {
+func TestTest_TestStep_ProviderFactories_ExpectErrorRefresh(t *testing.T) {
 	t.Parallel()
 
 	Test(t, TestCase{
@@ -2362,7 +2364,7 @@ func TestTest_TestStep_ProviderFactories_ExpectErrorSummaryRefreshOnly(t *testin
 	})
 }
 
-func TestTest_TestStep_ProviderFactories_ExpectWarningSummaryRefreshOnly(t *testing.T) {
+func TestTest_TestStep_ProviderFactories_ExpectWarningRefresh(t *testing.T) {
 	t.Parallel()
 
 	Test(t, TestCase{
@@ -2417,8 +2419,10 @@ func TestTest_TestStep_ProviderFactories_ExpectWarningSummaryRefreshOnly(t *test
 	})
 }
 
-func TestTest_TestStep_ProviderFactories_ExpectWarningSummaryPlanOnly(t *testing.T) {
+func TestTest_TestStep_ProviderFactories_ExpectErrorPlan(t *testing.T) {
 	t.Parallel()
+
+	readCount := 0
 
 	Test(t, TestCase{
 		ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
@@ -2438,6 +2442,99 @@ func TestTest_TestStep_ProviderFactories_ExpectWarningSummaryPlanOnly(t *testing
 										Attributes: map[string]fwresourceschema.Attribute{
 											"id": fwresourceschema.StringAttribute{
 												Computed: true,
+												PlanModifiers: []planmodifier.String{
+													testplanmodifier.String{
+														PlanModifyStringMethod: func(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+															if req.PlanValue.ValueString() == "new_id" {
+																resp.Diagnostics.Append(fwdiag.NewErrorDiagnostic("error diagnostic - summary", ""))
+															}
+														},
+													},
+												},
+											},
+										},
+									}
+								},
+								CreateMethod: func(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+									var data struct {
+										Id types.String `tfsdk:"id"`
+									}
+
+									data.Id = types.StringValue("id")
+
+									diags := resp.State.Set(ctx, &data)
+									resp.Diagnostics.Append(diags...)
+								},
+								ReadMethod: func(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+									var data struct {
+										Id types.String `tfsdk:"id"`
+									}
+
+									diags := req.State.Get(ctx, &data)
+									resp.Diagnostics.Append(diags...)
+
+									// Update id when Read is called following resource creation
+									// during terraform apply.
+									if readCount == 1 {
+										data.Id = types.StringValue("new_id")
+									}
+
+									readCount++
+
+									diags = resp.State.Set(ctx, &data)
+									resp.Diagnostics.Append(diags...)
+								},
+							}
+						},
+					}
+				},
+			}),
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "random_password" "test" { }`,
+			},
+			{
+				Config:      `resource "random_password" "test" { }`,
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`.*error diagnostic - summary`),
+			},
+		},
+	})
+}
+
+func TestTest_TestStep_ProviderFactories_ExpectWarningPlan(t *testing.T) {
+	t.Parallel()
+
+	readCount := 0
+
+	Test(t, TestCase{
+		ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
+			"random": providerserver.NewProtocol5WithError(&testprovider.Provider{
+				MetadataMethod: func(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+					resp.TypeName = "random"
+				},
+				ResourcesMethod: func(ctx context.Context) []func() resource.Resource {
+					return []func() resource.Resource{
+						func() resource.Resource {
+							return &testprovider.Resource{
+								MetadataMethod: func(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+									resp.TypeName = req.ProviderTypeName + "_password"
+								},
+								SchemaMethod: func(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+									resp.Schema = fwresourceschema.Schema{
+										Attributes: map[string]fwresourceschema.Attribute{
+											"id": fwresourceschema.StringAttribute{
+												Computed: true,
+												PlanModifiers: []planmodifier.String{
+													testplanmodifier.String{
+														PlanModifyStringMethod: func(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+															if req.PlanValue.ValueString() == "new_id" {
+																resp.Diagnostics.Append(fwdiag.NewWarningDiagnostic("warning diagnostic - summary", ""))
+															}
+														},
+													},
+												},
 											},
 										},
 									}
@@ -2451,8 +2548,25 @@ func TestTest_TestStep_ProviderFactories_ExpectWarningSummaryPlanOnly(t *testing
 
 									diags := resp.State.Set(ctx, &data)
 									resp.Diagnostics.Append(diags...)
+								},
+								ReadMethod: func(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+									var data struct {
+										Id types.String `tfsdk:"id"`
+									}
 
-									resp.Diagnostics.Append(fwdiag.NewWarningDiagnostic("warning diagnostic - detail", ""))
+									diags := req.State.Get(ctx, &data)
+									resp.Diagnostics.Append(diags...)
+
+									// Update id when Read is called following resource creation
+									// during terraform apply.
+									if readCount == 1 {
+										data.Id = types.StringValue("new_id")
+									}
+
+									readCount++
+
+									diags = resp.State.Set(ctx, &data)
+									resp.Diagnostics.Append(diags...)
 								},
 							}
 						},
@@ -2462,8 +2576,12 @@ func TestTest_TestStep_ProviderFactories_ExpectWarningSummaryPlanOnly(t *testing
 		},
 		Steps: []TestStep{
 			{
+				Config: `resource "random_password" "test" { }`,
+			},
+			{
 				Config:        `resource "random_password" "test" { }`,
-				ExpectWarning: regexp.MustCompile(`.*warning diagnostic - detail`),
+				PlanOnly:      true,
+				ExpectWarning: regexp.MustCompile(`.*warning diagnostic - summary`),
 			},
 		},
 	})

@@ -204,6 +204,36 @@ func (wd *WorkingDir) CreatePlan(ctx context.Context) error {
 	return nil
 }
 
+// CreatePlanJSON runs "terraform plan" with `-json` to create a saved plan file,
+// which if successful will then be used for the next call to Apply.
+func (wd *WorkingDir) CreatePlanJSON(ctx context.Context, w io.Writer) error {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan command")
+
+	hasChanges, err := wd.tf.PlanJSON(context.Background(), w, tfexec.Reattach(wd.reattachInfo), tfexec.Refresh(false), tfexec.Out(PlanFileName))
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI plan command")
+
+	if err != nil {
+		return err
+	}
+
+	if !hasChanges {
+		logging.HelperResourceTrace(ctx, "Created plan with no changes")
+
+		return nil
+	}
+
+	stdout, err := wd.SavedPlanRawStdout(ctx)
+
+	if err != nil {
+		return fmt.Errorf("error retrieving formatted plan output: %w", err)
+	}
+
+	logging.HelperResourceTrace(ctx, "Created plan with changes", map[string]any{logging.KeyTestTerraformPlan: stdout})
+
+	return nil
+}
+
 // CreateDestroyPlan runs "terraform plan -destroy" to create a saved plan
 // file, which if successful will then be used for the next call to Apply.
 func (wd *WorkingDir) CreateDestroyPlan(ctx context.Context) error {
