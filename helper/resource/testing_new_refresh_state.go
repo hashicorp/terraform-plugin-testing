@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
@@ -19,7 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, w io.Writer) error {
+func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, stdout *Stdout) error {
 	t.Helper()
 
 	var err error
@@ -36,7 +35,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 	}
 
 	err = runProviderCommand(ctx, t, func() error {
-		return wd.RefreshJSON(ctx, w)
+		return wd.RefreshJSON(ctx, stdout)
 	}, wd, providers)
 	if err != nil {
 		target := &tfexec.ErrVersionMismatch{}
@@ -48,7 +47,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 				return fmt.Errorf("Error running refresh: %w", err)
 			}
 		} else {
-			return fmt.Errorf("Error running refresh: %s", getJSONOutputStr(wd))
+			return fmt.Errorf("Error running refresh: %s", stdout.GetJSONOutputStr())
 		}
 	}
 
@@ -77,7 +76,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 
 	// do a plan
 	err = runProviderCommand(ctx, t, func() error {
-		return wd.CreatePlanJSON(ctx, w)
+		return wd.CreatePlanJSON(ctx, stdout)
 	}, wd, providers)
 	if err != nil {
 		target := &tfexec.ErrVersionMismatch{}
@@ -89,7 +88,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 				return fmt.Errorf("Error running post-apply plan: %w", err)
 			}
 		} else {
-			return fmt.Errorf("Error running post-apply plan: %s", getJSONOutputStr(wd))
+			return fmt.Errorf("Error running post-apply plan: %s", stdout.GetJSONOutputStr())
 		}
 	}
 

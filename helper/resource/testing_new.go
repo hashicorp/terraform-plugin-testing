@@ -120,24 +120,8 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	// acts as default for import tests
 	var appliedCfg string
 
-	// w (io.WriteCloser) is supplied to all terraform commands that are using streaming json output.
-	w, err := stdoutWriter(wd)
-	if err != nil {
-		t.Fatalf("unable to create file for writing stdout: %w", err)
-	}
-	defer func() {
-		if w != nil {
-			err := w.Close()
-			if err != nil {
-				logging.HelperResourceError(ctx,
-					"Error closing file containing json output from Terraform commands",
-					map[string]interface{}{logging.KeyError: err},
-				)
-				t.Fatalf("Error closing file containing json from Terraform commands: %s", err.Error())
-				return
-			}
-		}
-	}()
+	// stdout (io.Writer) is supplied to all terraform commands that are using streaming json output.
+	stdout := NewStdout()
 
 	for stepIndex, step := range c.Steps {
 		stepNumber := stepIndex + 1 // 1-based indexing for humans
@@ -265,7 +249,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.RefreshState {
 			logging.HelperResourceTrace(ctx, "TestStep is RefreshState mode")
 
-			err := testStepNewRefreshState(ctx, t, wd, step, providers, w)
+			err := testStepNewRefreshState(ctx, t, wd, step, providers, stdout)
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -278,7 +262,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				}
 
 				errorFound := step.ExpectError.MatchString(err.Error())
-				jsonErrorFound, jsonDiags := diagnosticFound(wd, step.ExpectError, tfjson.DiagnosticSeverityError)
+				jsonErrorFound, jsonDiags := stdout.DiagnosticFound(step.ExpectError, tfjson.DiagnosticSeverityError)
 
 				errorOutput := []string{err.Error()}
 
@@ -311,7 +295,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if step.ExpectWarning != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectWarning")
 
-				warningFound, jsonDiags := diagnosticFound(wd, step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
+				warningFound, jsonDiags := stdout.DiagnosticFound(step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
 
 				if !warningFound {
 					logging.HelperResourceError(ctx,
@@ -330,7 +314,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.Config != "" {
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
-			err := testStepNewConfig(ctx, t, c, wd, step, providers, w)
+			err := testStepNewConfig(ctx, t, c, wd, step, providers, stdout)
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -343,7 +327,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				}
 
 				errorFound := step.ExpectError.MatchString(err.Error())
-				jsonErrorFound, jsonDiags := diagnosticFound(wd, step.ExpectError, tfjson.DiagnosticSeverityError)
+				jsonErrorFound, jsonDiags := stdout.DiagnosticFound(step.ExpectError, tfjson.DiagnosticSeverityError)
 
 				errorOutput := []string{err.Error()}
 
@@ -378,7 +362,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if step.ExpectWarning != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectWarning")
 
-				warningFound, jsonDiags := diagnosticFound(wd, step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
+				warningFound, jsonDiags := stdout.DiagnosticFound(step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
 
 				if !warningFound {
 					logging.HelperResourceError(ctx,
