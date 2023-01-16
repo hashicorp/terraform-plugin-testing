@@ -18,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	fwresourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -26,7 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testplanmodifier"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -2313,50 +2311,66 @@ func TestTest_TestStep_ProviderFactories_ExpectErrorRefresh(t *testing.T) {
 	t.Parallel()
 
 	Test(t, TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"random": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return &schema.Provider{
-					ResourcesMap: map[string]*schema.Resource{
-						"random_password": {
-							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) diag.Diagnostics {
-								d.SetId("id")
-								return nil
-							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
-								return nil
-							},
-							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) (diags diag.Diagnostics) {
-								// Only generate diag when ReadContext is called for the second
-								// time during terraform refresh.
-								if d.Get("id") == "new_id" {
-									return append(diags, diag.Diagnostic{
-										Severity: diag.Error,
-										Summary:  "error diagnostic - summary",
-									})
-								}
-
-								// Update id when ReadContext is called following resource creation
-								// during terraform apply.
-								d.SetId("new_id")
-
-								return
-							},
-							Schema: map[string]*schema.Schema{
-								"id": {
-									Computed: true,
-									Type:     schema.TypeString,
-								},
-							},
-						},
-					},
-				}, nil
-			},
-		},
 		Steps: []TestStep{
 			{
+				ProviderFactories: map[string]func() (*schema.Provider, error){
+					"random": func() (*schema.Provider, error) { //nolint:unparam // required signature
+						return &schema.Provider{
+							ResourcesMap: map[string]*schema.Resource{
+								"random_password": {
+									CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) diag.Diagnostics {
+										d.SetId("id")
+										return nil
+									},
+									DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+										return nil
+									},
+									ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) (diags diag.Diagnostics) {
+										return nil
+									},
+									Schema: map[string]*schema.Schema{
+										"id": {
+											Computed: true,
+											Type:     schema.TypeString,
+										},
+									},
+								},
+							},
+						}, nil
+					},
+				},
 				Config: `resource "random_password" "test" { }`,
 			},
 			{
+				ProviderFactories: map[string]func() (*schema.Provider, error){
+					"random": func() (*schema.Provider, error) { //nolint:unparam // required signature
+						return &schema.Provider{
+							ResourcesMap: map[string]*schema.Resource{
+								"random_password": {
+									CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) diag.Diagnostics {
+										d.SetId("id")
+										return nil
+									},
+									DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+										return nil
+									},
+									ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) (diags diag.Diagnostics) {
+										return append(diags, diag.Diagnostic{
+											Severity: diag.Error,
+											Summary:  "error diagnostic - summary",
+										})
+									},
+									Schema: map[string]*schema.Schema{
+										"id": {
+											Computed: true,
+											Type:     schema.TypeString,
+										},
+									},
+								},
+							},
+						}, nil
+					},
+				},
 				RefreshState: true,
 				ExpectError:  regexp.MustCompile(`.*error diagnostic - summary`),
 			},
@@ -2422,79 +2436,83 @@ func TestTest_TestStep_ProviderFactories_ExpectWarningRefresh(t *testing.T) {
 func TestTest_TestStep_ProviderFactories_ExpectErrorPlan(t *testing.T) {
 	t.Parallel()
 
-	readCount := 0
-
 	Test(t, TestCase{
-		ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
-			"random": providerserver.NewProtocol5WithError(&testprovider.Provider{
-				MetadataMethod: func(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-					resp.TypeName = "random"
-				},
-				ResourcesMethod: func(ctx context.Context) []func() resource.Resource {
-					return []func() resource.Resource{
-						func() resource.Resource {
-							return &testprovider.Resource{
-								MetadataMethod: func(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-									resp.TypeName = req.ProviderTypeName + "_password"
-								},
-								SchemaMethod: func(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-									resp.Schema = fwresourceschema.Schema{
-										Attributes: map[string]fwresourceschema.Attribute{
-											"id": fwresourceschema.StringAttribute{
-												Computed: true,
-												PlanModifiers: []planmodifier.String{
-													testplanmodifier.String{
-														PlanModifyStringMethod: func(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-															if req.PlanValue.ValueString() == "new_id" {
-																resp.Diagnostics.Append(fwdiag.NewErrorDiagnostic("error diagnostic - summary", ""))
-															}
-														},
+		Steps: []TestStep{
+			{
+				ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
+					"random": providerserver.NewProtocol5WithError(&testprovider.Provider{
+						MetadataMethod: func(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+							resp.TypeName = "random"
+						},
+						ResourcesMethod: func(ctx context.Context) []func() resource.Resource {
+							return []func() resource.Resource{
+								func() resource.Resource {
+									return &testprovider.Resource{
+										MetadataMethod: func(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+											resp.TypeName = req.ProviderTypeName + "_password"
+										},
+										SchemaMethod: func(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+											resp.Schema = fwresourceschema.Schema{
+												Attributes: map[string]fwresourceschema.Attribute{
+													"id": fwresourceschema.StringAttribute{
+														Computed: true,
 													},
 												},
-											},
+											}
+										},
+										CreateMethod: func(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+											var data struct {
+												Id types.String `tfsdk:"id"`
+											}
+
+											data.Id = types.StringValue("id")
+
+											diags := resp.State.Set(ctx, &data)
+											resp.Diagnostics.Append(diags...)
 										},
 									}
 								},
-								CreateMethod: func(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-									var data struct {
-										Id types.String `tfsdk:"id"`
-									}
-
-									data.Id = types.StringValue("id")
-
-									diags := resp.State.Set(ctx, &data)
-									resp.Diagnostics.Append(diags...)
-								},
-								ReadMethod: func(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-									var data struct {
-										Id types.String `tfsdk:"id"`
-									}
-
-									diags := req.State.Get(ctx, &data)
-									resp.Diagnostics.Append(diags...)
-
-									// Update id when Read is called following resource creation
-									// during terraform apply.
-									if readCount == 1 {
-										data.Id = types.StringValue("new_id")
-									}
-
-									readCount++
-
-									diags = resp.State.Set(ctx, &data)
-									resp.Diagnostics.Append(diags...)
-								},
 							}
 						},
-					}
+					}),
 				},
-			}),
-		},
-		Steps: []TestStep{
-			{
 				Config: `resource "random_password" "test" { }`,
 			},
 			{
+				ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
+					"random": providerserver.NewProtocol5WithError(&testprovider.Provider{
+						MetadataMethod: func(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+							resp.TypeName = "random"
+						},
+						ResourcesMethod: func(ctx context.Context) []func() resource.Resource {
+							return []func() resource.Resource{
+								func() resource.Resource {
+									return &testprovider.ResourceWithModifyPlan{
+										Resource: &testprovider.Resource{
+											MetadataMethod: func(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+												resp.TypeName = req.ProviderTypeName + "_password"
+											},
+											SchemaMethod: func(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+												resp.Schema = fwresourceschema.Schema{
+													Attributes: map[string]fwresourceschema.Attribute{
+														"id": fwresourceschema.StringAttribute{
+															Computed: true,
+														},
+													},
+												}
+											},
+										},
+										ModifyPlanMethod: func(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+											if !req.Plan.Raw.IsNull() {
+												resp.Diagnostics.Append(fwdiag.NewErrorDiagnostic("error diagnostic - summary", ""))
+											}
+										},
+									}
+								},
+							}
+						},
+					}),
+				},
 				Config:      `resource "random_password" "test" { }`,
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`.*error diagnostic - summary`),
@@ -2506,81 +2524,259 @@ func TestTest_TestStep_ProviderFactories_ExpectErrorPlan(t *testing.T) {
 func TestTest_TestStep_ProviderFactories_ExpectWarningPlan(t *testing.T) {
 	t.Parallel()
 
-	readCount := 0
-
 	Test(t, TestCase{
-		ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
-			"random": providerserver.NewProtocol5WithError(&testprovider.Provider{
-				MetadataMethod: func(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-					resp.TypeName = "random"
-				},
-				ResourcesMethod: func(ctx context.Context) []func() resource.Resource {
-					return []func() resource.Resource{
-						func() resource.Resource {
-							return &testprovider.Resource{
-								MetadataMethod: func(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-									resp.TypeName = req.ProviderTypeName + "_password"
-								},
-								SchemaMethod: func(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-									resp.Schema = fwresourceschema.Schema{
-										Attributes: map[string]fwresourceschema.Attribute{
-											"id": fwresourceschema.StringAttribute{
-												Computed: true,
-												PlanModifiers: []planmodifier.String{
-													testplanmodifier.String{
-														PlanModifyStringMethod: func(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-															if req.PlanValue.ValueString() == "new_id" {
-																resp.Diagnostics.Append(fwdiag.NewWarningDiagnostic("warning diagnostic - summary", ""))
-															}
-														},
+		Steps: []TestStep{
+			{
+				ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
+					"random": providerserver.NewProtocol5WithError(&testprovider.Provider{
+						MetadataMethod: func(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+							resp.TypeName = "random"
+						},
+						ResourcesMethod: func(ctx context.Context) []func() resource.Resource {
+							return []func() resource.Resource{
+								func() resource.Resource {
+									return &testprovider.Resource{
+										MetadataMethod: func(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+											resp.TypeName = req.ProviderTypeName + "_password"
+										},
+										SchemaMethod: func(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+											resp.Schema = fwresourceschema.Schema{
+												Attributes: map[string]fwresourceschema.Attribute{
+													"id": fwresourceschema.StringAttribute{
+														Computed: true,
 													},
 												},
-											},
+											}
+										},
+										CreateMethod: func(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+											var data struct {
+												Id types.String `tfsdk:"id"`
+											}
+
+											data.Id = types.StringValue("example-id")
+
+											diags := resp.State.Set(ctx, &data)
+											resp.Diagnostics.Append(diags...)
 										},
 									}
 								},
-								CreateMethod: func(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-									var data struct {
-										Id types.String `tfsdk:"id"`
-									}
-
-									data.Id = types.StringValue("example-id")
-
-									diags := resp.State.Set(ctx, &data)
-									resp.Diagnostics.Append(diags...)
-								},
-								ReadMethod: func(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-									var data struct {
-										Id types.String `tfsdk:"id"`
-									}
-
-									diags := req.State.Get(ctx, &data)
-									resp.Diagnostics.Append(diags...)
-
-									// Update id when Read is called following resource creation
-									// during terraform apply.
-									if readCount == 1 {
-										data.Id = types.StringValue("new_id")
-									}
-
-									readCount++
-
-									diags = resp.State.Set(ctx, &data)
-									resp.Diagnostics.Append(diags...)
-								},
 							}
 						},
-					}
+					}),
 				},
-			}),
-		},
-		Steps: []TestStep{
-			{
 				Config: `resource "random_password" "test" { }`,
 			},
 			{
+				ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
+					"random": providerserver.NewProtocol5WithError(&testprovider.Provider{
+						MetadataMethod: func(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+							resp.TypeName = "random"
+						},
+						ResourcesMethod: func(ctx context.Context) []func() resource.Resource {
+							return []func() resource.Resource{
+								func() resource.Resource {
+									return &testprovider.ResourceWithModifyPlan{
+										Resource: &testprovider.Resource{
+											MetadataMethod: func(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+												resp.TypeName = req.ProviderTypeName + "_password"
+											},
+											SchemaMethod: func(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+												resp.Schema = fwresourceschema.Schema{
+													Attributes: map[string]fwresourceschema.Attribute{
+														"id": fwresourceschema.StringAttribute{
+															Computed: true,
+														},
+													},
+												}
+											},
+										},
+										ModifyPlanMethod: func(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+											resp.Diagnostics.Append(fwdiag.NewWarningDiagnostic("warning diagnostic - summary", ""))
+										},
+									}
+								},
+							}
+						},
+					}),
+				},
 				Config:        `resource "random_password" "test" { }`,
 				PlanOnly:      true,
+				ExpectWarning: regexp.MustCompile(`.*warning diagnostic - summary`),
+			},
+		},
+	})
+}
+
+func TestTest_TestStep_ProviderFactories_ExpectErrorDestroy(t *testing.T) {
+	t.Parallel()
+
+	deleteCount := 0
+
+	Test(t, TestCase{
+		Steps: []TestStep{
+			{
+				ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
+					"random": providerserver.NewProtocol5WithError(&testprovider.Provider{
+						MetadataMethod: func(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+							resp.TypeName = "random"
+						},
+						ResourcesMethod: func(ctx context.Context) []func() resource.Resource {
+							return []func() resource.Resource{
+								func() resource.Resource {
+									return &testprovider.Resource{
+										MetadataMethod: func(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+											resp.TypeName = req.ProviderTypeName + "_password"
+										},
+										SchemaMethod: func(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+											resp.Schema = fwresourceschema.Schema{
+												Attributes: map[string]fwresourceschema.Attribute{
+													"id": fwresourceschema.StringAttribute{
+														Computed: true,
+													},
+												},
+											}
+										},
+										CreateMethod: func(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+											var data struct {
+												Id types.String `tfsdk:"id"`
+											}
+
+											data.Id = types.StringValue("example-id")
+
+											diags := resp.State.Set(ctx, &data)
+											resp.Diagnostics.Append(diags...)
+										},
+									}
+								},
+							}
+						},
+					}),
+				},
+				Config: `resource "random_password" "test" { }`,
+			},
+			{
+				ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
+					"random": providerserver.NewProtocol5WithError(&testprovider.Provider{
+						MetadataMethod: func(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+							resp.TypeName = "random"
+						},
+						ResourcesMethod: func(ctx context.Context) []func() resource.Resource {
+							return []func() resource.Resource{
+								func() resource.Resource {
+									return &testprovider.Resource{
+										MetadataMethod: func(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+											resp.TypeName = req.ProviderTypeName + "_password"
+										},
+										SchemaMethod: func(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+											resp.Schema = fwresourceschema.Schema{
+												Attributes: map[string]fwresourceschema.Attribute{
+													"id": fwresourceschema.StringAttribute{
+														Computed: true,
+													},
+												},
+											}
+										},
+										DeleteMethod: func(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+											// TODO: deleteCount is used so that when Delete is called during apply, diagnostic is added but
+											// when Delete is called during runPostTestDestroy it does not add diagnostic.
+											if deleteCount < 1 {
+												resp.Diagnostics.Append(fwdiag.NewErrorDiagnostic("error diagnostic - summary", ""))
+											}
+
+											deleteCount++
+										},
+									}
+								},
+							}
+						},
+					}),
+				},
+				Config:      `resource "random_password" "test" { }`,
+				Destroy:     true,
+				ExpectError: regexp.MustCompile(`.*error diagnostic - summary`),
+			},
+		},
+	})
+}
+
+func TestTest_TestStep_ProviderFactories_ExpectWarningDestroy(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		Steps: []TestStep{
+			{
+				ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
+					"random": providerserver.NewProtocol5WithError(&testprovider.Provider{
+						MetadataMethod: func(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+							resp.TypeName = "random"
+						},
+						ResourcesMethod: func(ctx context.Context) []func() resource.Resource {
+							return []func() resource.Resource{
+								func() resource.Resource {
+									return &testprovider.Resource{
+										MetadataMethod: func(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+											resp.TypeName = req.ProviderTypeName + "_password"
+										},
+										SchemaMethod: func(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+											resp.Schema = fwresourceschema.Schema{
+												Attributes: map[string]fwresourceschema.Attribute{
+													"id": fwresourceschema.StringAttribute{
+														Computed: true,
+													},
+												},
+											}
+										},
+										CreateMethod: func(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+											var data struct {
+												Id types.String `tfsdk:"id"`
+											}
+
+											data.Id = types.StringValue("example-id")
+
+											diags := resp.State.Set(ctx, &data)
+											resp.Diagnostics.Append(diags...)
+										},
+									}
+								},
+							}
+						},
+					}),
+				},
+				Config: `resource "random_password" "test" { }`,
+			},
+			{
+				ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
+					"random": providerserver.NewProtocol5WithError(&testprovider.Provider{
+						MetadataMethod: func(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+							resp.TypeName = "random"
+						},
+						ResourcesMethod: func(ctx context.Context) []func() resource.Resource {
+							return []func() resource.Resource{
+								func() resource.Resource {
+									return &testprovider.Resource{
+										MetadataMethod: func(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+											resp.TypeName = req.ProviderTypeName + "_password"
+										},
+										SchemaMethod: func(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+											resp.Schema = fwresourceschema.Schema{
+												Attributes: map[string]fwresourceschema.Attribute{
+													"id": fwresourceschema.StringAttribute{
+														Computed: true,
+													},
+												},
+											}
+										},
+										DeleteMethod: func(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+											resp.Diagnostics.Append(fwdiag.NewWarningDiagnostic("warning diagnostic - summary", ""))
+										},
+									}
+								},
+							}
+						},
+					}),
+				},
+				Config:        `resource "random_password" "test" { }`,
+				Destroy:       true,
 				ExpectWarning: regexp.MustCompile(`.*warning diagnostic - summary`),
 			},
 		},
