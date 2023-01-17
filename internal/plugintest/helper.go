@@ -96,10 +96,6 @@ func (h *Helper) Close() error {
 		}
 	}
 
-	if v := os.Getenv(EnvTfAccPersistWorkingDir); v != "" {
-		return nil
-	}
-
 	return os.RemoveAll(h.baseDir)
 }
 

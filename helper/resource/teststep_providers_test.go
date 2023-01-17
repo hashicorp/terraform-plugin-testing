@@ -3,6 +3,8 @@ package resource
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -16,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
@@ -1866,6 +1869,70 @@ func TestTest_TestStep_ProviderFactories_Refresh_Inline(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestTest_TestStep_ProviderFactories_CopyWorkingDir_EachTestStep(t *testing.T) {
+	t.Parallel()
+
+	err := os.Setenv(plugintest.EnvTfAccPersistWorkingDir, "1")
+	if err != nil {
+		t.Fatalf("cannot set %s env var: %s", plugintest.EnvTfAccPersistWorkingDir, err)
+	}
+
+	testSteps := []TestStep{
+		{
+			Config: `resource "random_password" "test" { }`,
+		},
+		{
+			Config: `resource "random_password" "test" { }`,
+		},
+	}
+
+	Test(t, TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"random": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return &schema.Provider{
+					ResourcesMap: map[string]*schema.Resource{
+						"random_password": {
+							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) diag.Diagnostics {
+								d.SetId("id")
+								return nil
+							},
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							Schema: map[string]*schema.Schema{
+								"id": {
+									Computed: true,
+									Type:     schema.TypeString,
+								},
+							},
+						},
+					},
+				}, nil
+			},
+		},
+		Steps: testSteps,
+	})
+
+	workingDirPath := os.Getenv(plugintest.EnvTfAccPersistWorkingDirPath)
+
+	for k := range testSteps {
+		dir := workingDirPath + "_" + strconv.Itoa(k+1)
+
+		_, err := os.ReadDir(dir)
+		if err != nil {
+			t.Fatalf("cannot read dir: %s", dir)
+		}
+	}
+
+	err = os.Unsetenv(plugintest.EnvTfAccPersistWorkingDir)
+	if err != nil {
+		t.Fatalf("cannot unset %s env var: %s", plugintest.EnvTfAccPersistWorkingDir, err)
+	}
 }
 
 func TestTest_TestStep_ProviderFactories_RefreshWithPlanModifier_Inline(t *testing.T) {

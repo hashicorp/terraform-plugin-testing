@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
 
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
-
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func runPostTestDestroy(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, providers *providerFactories, statePreDestroy *terraform.State) error {
@@ -85,11 +85,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			}
 		}
 
-		if v := os.Getenv(plugintest.EnvTfAccPersistWorkingDir); v != "" {
-			t.Log(fmt.Sprintf("Working directory and files have been persisted in: %s", wd.GetHelper().WorkingDirectory()))
-			return
-		}
-
 		wd.Close()
 	}()
 
@@ -122,9 +117,14 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	// use this to track last step successfully applied
 	// acts as default for import tests
 	var appliedCfg string
+	var stepNumber int
 
 	for stepIndex, step := range c.Steps {
-		stepNumber := stepIndex + 1 // 1-based indexing for humans
+		if stepNumber > 0 {
+			copyWorkingDir(ctx, t, stepNumber, wd)
+		}
+
+		stepNumber = stepIndex + 1 // 1-based indexing for humans
 		ctx = logging.TestStepNumberContext(ctx, stepNumber)
 
 		logging.HelperResourceDebug(ctx, "Starting TestStep")
@@ -331,6 +331,10 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 		t.Fatalf("Step %d/%d, unsupported test mode", stepNumber, len(c.Steps))
 	}
+
+	if stepNumber > 0 {
+		copyWorkingDir(ctx, t, stepNumber, wd)
+	}
 }
 
 func getState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir) (*terraform.State, error) {
@@ -444,4 +448,28 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 	}
 
 	return nil
+}
+
+func copyWorkingDir(ctx context.Context, t testing.T, stepNumber int, wd *plugintest.WorkingDir) {
+	if v := os.Getenv(plugintest.EnvTfAccPersistWorkingDir); v != "" {
+		dest := wd.GetHelper().WorkingDirectory() + "_" + strconv.Itoa(stepNumber)
+
+		err := os.Setenv(plugintest.EnvTfAccPersistWorkingDirPath, wd.GetHelper().WorkingDirectory())
+		if err != nil {
+			t.Log(fmt.Sprintf("could not set %s env var: %s", plugintest.EnvTfAccPersistWorkingDirPath, err))
+		}
+
+		err = CopyDir(wd.GetHelper().WorkingDirectory(), dest)
+		if err != nil {
+			logging.HelperResourceError(ctx,
+				"Unexpected error copying working directory files",
+				map[string]interface{}{logging.KeyError: err},
+			)
+			t.Fatalf("TestStep %d/%d error copying working directory files: %s", stepNumber, err)
+		}
+
+		t.Log(fmt.Sprintf("Working directory and files have been copied to: %s", dest))
+
+		return
+	}
 }
