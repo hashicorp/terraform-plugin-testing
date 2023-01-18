@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package logging
 
 import (
@@ -9,7 +12,7 @@ import (
 	"syscall"
 
 	"github.com/hashicorp/logutils"
-	testing "github.com/mitchellh/go-testing-interface"
+	"github.com/mitchellh/go-testing-interface"
 )
 
 // These are the environmental variables that determine if we log, and if

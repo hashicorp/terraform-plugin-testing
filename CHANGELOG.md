@@ -1,0 +1,6 @@
+## 1.0.0 (January 10, 2023)
+
+NOTES:
+
+* Same testing functionality as that of terraform-plugin-sdk v2.24.1, repacked in a standalone repository ([#24](https://github.com/hashicorp/terraform-plugin-testing/issues/24))
+
