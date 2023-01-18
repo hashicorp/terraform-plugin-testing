@@ -7,7 +7,7 @@ kindFormat: '{{.Kind}}:'
 changeFormat: '* {{.Body}} ([#{{.Custom.Issue}}](https://github.com/hashicorp/terraform-plugin-testing/issues/{{.Custom.Issue}}))'
 custom:
   - key: Issue
-    label: Issue/PR Number
+    label: Issue Number
     type: int
     minInt: 1
 kinds:
