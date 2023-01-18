@@ -16,8 +16,18 @@ This guide provides information and examples for most common use cases, but it d
 Take the following steps when you migrate a provider's acceptance tests from SDKv2 to the testing module:
 
 - Change all instances of the following Go import statements in `*_test.go` files:
-    - github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest to github.com/hashicorp/terraform-plugin-testing/helper/acctest
-    - github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource to github.com/hashicorp/terraform-plugin-testing/helper/resource
-- Run `go get github.com/hashicorp/terraform-plugin-testing@v1.0.0`
-- Run `go mod tidy`
-- Verify everything is working as expected.
+    - `github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest` to `github.com/hashicorp/terraform-plugin-testing/helper/acctest`
+    - `github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource` to `github.com/hashicorp/terraform-plugin-testing/helper/resource`
+- Get and download terraform-plugin-testing `v1.0.0`:
+
+```shell
+$ go get github.com/hashicorp/terraform-plugin-testing@v1.0.0
+```
+
+- Clean up `go.mod`:
+
+```shell
+$ go mod tidy
+```
+
+- Verify that the tests are working as expected.
