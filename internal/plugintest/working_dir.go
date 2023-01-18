@@ -48,10 +48,6 @@ type WorkingDir struct {
 	reattachInfo tfexec.ReattachInfo
 }
 
-func (wd *WorkingDir) GetBaseDir() string {
-	return wd.baseDir
-}
-
 // Close deletes the directories and files created to represent the receiving
 // working directory. After this method is called, the working directory object
 // is invalid and may no longer be used.
