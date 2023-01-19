@@ -19,10 +19,10 @@ Take the following steps when you migrate a provider's acceptance tests from SDK
     - `github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest` to `github.com/hashicorp/terraform-plugin-testing/helper/acctest`
     - `github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource` to `github.com/hashicorp/terraform-plugin-testing/helper/resource`
     - `github.com/hashicorp/terraform-plugin-sdk/v2/terraform` to `github.com/hashicorp/terraform-plugin-testing/terraform`
-- Get and download terraform-plugin-testing `v1.0.0`:
+- Get and download the latest version of terraform-plugin-testing:
 
 ```shell
-$ go get github.com/hashicorp/terraform-plugin-testing@v1.0.0
+$ go get github.com/hashicorp/terraform-plugin-testing@latest
 ```
 
 - Clean up `go.mod`:
