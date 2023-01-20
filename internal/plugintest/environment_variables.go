@@ -116,8 +116,4 @@ const (
 	// test. Can be set to any value to persist the working directory and
 	// its contents, however "1" is conventional.
 	EnvTfAccPersistWorkingDir = "TF_ACC_PERSIST_WORKING_DIR"
-
-	// EnvTfAccPersistWorkingDirPath environment variable is populated
-	// with the working directory path for the current test step.
-	EnvTfAccPersistWorkingDirPath = "TF_ACC_PERSIST_WORKING_DIR_PATH"
 )

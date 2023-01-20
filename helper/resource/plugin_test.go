@@ -261,7 +261,7 @@ func TestRunProviderCommand(t *testing.T) {
 			funcCalled = true
 			return nil
 		},
-		helper.RequireNewWorkingDir(ctx, t),
+		helper.RequireNewWorkingDir(ctx, t, ""),
 		&providerFactories{
 			legacy: map[string]func() (*schema.Provider, error){
 				"examplecloud": func() (*schema.Provider, error) { //nolint:unparam // required signature

@@ -108,8 +108,15 @@ func (h *Helper) Close() error {
 // If the working directory object is not itself closed by the time the test
 // program exits, the Close method on the helper itself will attempt to
 // delete it.
-func (h *Helper) NewWorkingDir(ctx context.Context, t TestControl) (*WorkingDir, error) {
-	dir, err := os.MkdirTemp(h.baseDir, "work")
+func (h *Helper) NewWorkingDir(ctx context.Context, t TestControl, wd string) (*WorkingDir, error) {
+	workingDir := h.baseDir
+
+	if wd != "" {
+		workingDir = wd
+		h.baseDir = wd
+	}
+
+	dir, err := os.MkdirTemp(workingDir, "work")
 	if err != nil {
 		return nil, err
 	}
@@ -268,10 +275,10 @@ func (h *Helper) NewWorkingDir(ctx context.Context, t TestControl) (*WorkingDir,
 // RequireNewWorkingDir is a variant of NewWorkingDir that takes a TestControl
 // object and will immediately fail the running test if the creation of the
 // working directory fails.
-func (h *Helper) RequireNewWorkingDir(ctx context.Context, t TestControl) *WorkingDir {
+func (h *Helper) RequireNewWorkingDir(ctx context.Context, t TestControl, workingDir string) *WorkingDir {
 	t.Helper()
 
-	wd, err := h.NewWorkingDir(ctx, t)
+	wd, err := h.NewWorkingDir(ctx, t, workingDir)
 	if err != nil {
 		t := testingT{t}
 		t.Fatalf("failed to create new working directory: %s", err)

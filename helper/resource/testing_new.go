@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -47,7 +48,7 @@ func runPostTestDestroy(ctx context.Context, t testing.T, c TestCase, wd *plugin
 func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest.Helper) {
 	t.Helper()
 
-	wd := helper.RequireNewWorkingDir(ctx, t)
+	wd := helper.RequireNewWorkingDir(ctx, t, c.WorkingDir)
 
 	ctx = logging.TestTerraformPathContext(ctx, wd.GetHelper().TerraformExecPath())
 	ctx = logging.TestWorkingDirectoryContext(ctx, wd.GetHelper().WorkingDirectory())
@@ -454,25 +455,23 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 }
 
 func copyWorkingDir(ctx context.Context, t testing.T, stepNumber int, wd *plugintest.WorkingDir) {
-	if v := os.Getenv(plugintest.EnvTfAccPersistWorkingDir); v != "" {
-		dest := wd.GetHelper().WorkingDirectory() + "_" + strconv.Itoa(stepNumber)
-
-		err := os.Setenv(plugintest.EnvTfAccPersistWorkingDirPath, wd.GetHelper().WorkingDirectory())
-		if err != nil {
-			t.Log(fmt.Sprintf("could not set %s env var: %s", plugintest.EnvTfAccPersistWorkingDirPath, err))
-		}
-
-		err = CopyDir(wd.GetHelper().WorkingDirectory(), dest)
-		if err != nil {
-			logging.HelperResourceError(ctx,
-				"Unexpected error copying working directory files",
-				map[string]interface{}{logging.KeyError: err},
-			)
-			t.Fatalf("TestStep %d/%d error copying working directory files: %s", stepNumber, err)
-		}
-
-		t.Log(fmt.Sprintf("Working directory and files have been copied to: %s", dest))
-
+	if os.Getenv(plugintest.EnvTfAccPersistWorkingDir) == "" {
 		return
 	}
+
+	workingDir := wd.GetHelper().WorkingDirectory()
+	parentDir := filepath.Dir(workingDir)
+
+	dest := parentDir + "_" + strconv.Itoa(stepNumber)
+
+	err := plugintest.CopyDir(wd.GetHelper().WorkingDirectory(), dest)
+	if err != nil {
+		logging.HelperResourceError(ctx,
+			"Unexpected error copying working directory files",
+			map[string]interface{}{logging.KeyError: err},
+		)
+		t.Fatalf("TestStep %d/%d error copying working directory files: %s", stepNumber, err)
+	}
+
+	t.Log(fmt.Sprintf("Working directory and files have been copied to: %s", dest))
 }

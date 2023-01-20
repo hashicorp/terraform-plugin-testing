@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -1781,6 +1782,54 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithPersistMatch(t *tes
 	})
 }
 
+func TestTest_TestStep_ProviderFactories_Import_External_WithPersistMatch_WithPersistWorkingDir(t *testing.T) {
+	var result1, result2 string
+
+	t.Setenv(plugintest.EnvTfAccPersistWorkingDir, "1")
+	workingDir := t.TempDir()
+
+	testSteps := []TestStep{
+		{
+			Config:             `resource "random_password" "test" { length = 12 }`,
+			ResourceName:       "random_password.test",
+			ImportState:        true,
+			ImportStateId:      "Z=:cbrJE?Ltg",
+			ImportStatePersist: true,
+			ImportStateCheck: composeImportStateCheck(
+				testExtractResourceAttrInstanceState("none", "result", &result1),
+			),
+		},
+		{
+			Config: `resource "random_password" "test" { length = 12 }`,
+			Check: ComposeTestCheckFunc(
+				testExtractResourceAttr("random_password.test", "result", &result2),
+				testCheckAttributeValuesEqual(&result1, &result2),
+			),
+		},
+	}
+
+	Test(t, TestCase{
+		ExternalProviders: map[string]ExternalProvider{
+			"random": {
+				Source: "registry.terraform.io/hashicorp/random",
+			},
+		},
+		WorkingDir: workingDir,
+		Steps:      testSteps,
+	})
+
+	workingDirPath := filepath.Dir(workingDir)
+
+	for k := range testSteps {
+		dir := workingDirPath + "_" + strconv.Itoa(k+1)
+
+		_, err := os.ReadDir(dir)
+		if err != nil {
+			t.Fatalf("cannot read dir: %s", dir)
+		}
+	}
+}
+
 func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch(t *testing.T) {
 	var result1, result2 string
 
@@ -1812,6 +1861,54 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch(
 			},
 		},
 	})
+}
+
+func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch_WithPersistWorkingDir(t *testing.T) {
+	var result1, result2 string
+
+	t.Setenv(plugintest.EnvTfAccPersistWorkingDir, "1")
+	workingDir := t.TempDir()
+
+	testSteps := []TestStep{
+		{
+			Config:             `resource "random_password" "test" { length = 12 }`,
+			ResourceName:       "random_password.test",
+			ImportState:        true,
+			ImportStateId:      "Z=:cbrJE?Ltg",
+			ImportStatePersist: false,
+			ImportStateCheck: composeImportStateCheck(
+				testExtractResourceAttrInstanceState("none", "result", &result1),
+			),
+		},
+		{
+			Config: `resource "random_password" "test" { length = 12 }`,
+			Check: ComposeTestCheckFunc(
+				testExtractResourceAttr("random_password.test", "result", &result2),
+				testCheckAttributeValuesDiffer(&result1, &result2),
+			),
+		},
+	}
+
+	Test(t, TestCase{
+		ExternalProviders: map[string]ExternalProvider{
+			"random": {
+				Source: "registry.terraform.io/hashicorp/random",
+			},
+		},
+		WorkingDir: workingDir,
+		Steps:      testSteps,
+	})
+
+	workingDirPath := filepath.Dir(workingDir)
+
+	for k := range testSteps {
+		dir := workingDirPath + "_" + strconv.Itoa(k+1)
+
+		_, err := os.ReadDir(dir)
+		if err != nil {
+			t.Fatalf("cannot read dir: %s", dir)
+		}
+	}
 }
 
 func TestTest_TestStep_ProviderFactories_Refresh_Inline(t *testing.T) {
@@ -1875,12 +1972,8 @@ func TestTest_TestStep_ProviderFactories_Refresh_Inline(t *testing.T) {
 }
 
 func TestTest_TestStep_ProviderFactories_CopyWorkingDir_EachTestStep(t *testing.T) {
-	t.Parallel()
-
-	err := os.Setenv(plugintest.EnvTfAccPersistWorkingDir, "1")
-	if err != nil {
-		t.Fatalf("cannot set %s env var: %s", plugintest.EnvTfAccPersistWorkingDir, err)
-	}
+	t.Setenv(plugintest.EnvTfAccPersistWorkingDir, "1")
+	workingDir := t.TempDir()
 
 	testSteps := []TestStep{
 		{
@@ -1918,10 +2011,11 @@ func TestTest_TestStep_ProviderFactories_CopyWorkingDir_EachTestStep(t *testing.
 				}, nil
 			},
 		},
-		Steps: testSteps,
+		WorkingDir: workingDir,
+		Steps:      testSteps,
 	})
 
-	workingDirPath := os.Getenv(plugintest.EnvTfAccPersistWorkingDirPath)
+	workingDirPath := filepath.Dir(workingDir)
 
 	for k := range testSteps {
 		dir := workingDirPath + "_" + strconv.Itoa(k+1)
@@ -1930,11 +2024,6 @@ func TestTest_TestStep_ProviderFactories_CopyWorkingDir_EachTestStep(t *testing.
 		if err != nil {
 			t.Fatalf("cannot read dir: %s", dir)
 		}
-	}
-
-	err = os.Unsetenv(plugintest.EnvTfAccPersistWorkingDir)
-	if err != nil {
-		t.Fatalf("cannot unset %s env var: %s", plugintest.EnvTfAccPersistWorkingDir, err)
 	}
 }
 
