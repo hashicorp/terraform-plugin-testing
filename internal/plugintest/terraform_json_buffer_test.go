@@ -1,21 +1,14 @@
 package plugintest
 
 import (
+	"bufio"
+	"os"
 	"regexp"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	tfjson "github.com/hashicorp/terraform-json"
 )
-
-var terraformJSONOutput = []string{
-	`{"@level":"info","@message":"Terraform 1.3.2","@module":"terraform.ui","@timestamp":"2023-01-16T17:02:14.232751Z","terraform":"1.3.2","type":"version","ui":"1.0"}`,
-	`{"@level":"warn","@message":"Warning: Empty or non-existent state","@module":"terraform.ui","@timestamp":"2023-01-16T17:02:14.250725Z","diagnostic":{"severity":"warning","summary":"Empty or non-existent state","detail":"There are currently no remote objects tracked in the state, so there is nothing to refresh."},"type":"diagnostic"}`,
-	`{"@level":"info","@message":"Outputs: 0","@module":"terraform.ui","@timestamp":"2023-01-16T17:02:14.251120Z","outputs":{},"type":"outputs"}`,
-	`{"@level":"info","@message":"random_password.test: Plan to create","@module":"terraform.ui","@timestamp":"2023-01-16T17:02:14.282021Z","change":{"resource":{"addr":"random_password.test","module":"","resource":"random_password.test","implied_provider":"random","resource_type":"random_password","resource_name":"test","resource_key":null},"action":"create"},"type":"planned_change"}`,
-	`{"@level":"info","@message":"Plan: 1 to add, 0 to change, 0 to destroy.","@module":"terraform.ui","@timestamp":"2023-01-16T17:02:14.282054Z","changes":{"add":1,"change":0,"remove":0,"operation":"plan"},"type":"change_summary"}`,
-	`{"@level":"error","@message":"Error: error diagnostic - summary","@module":"terraform.ui","@timestamp":"2023-01-16T17:02:14.626572Z","diagnostic":{"severity":"error","summary":"error diagnostic - summary","detail":""},"type":"diagnostic"}`,
-}
 
 func TestTerraformJSONDiagnostics_Contains(t *testing.T) {
 	t.Parallel()
@@ -96,16 +89,33 @@ func TestTerraformJSONBuffer_Parse(t *testing.T) {
 
 	tfJSON := NewTerraformJSONBuffer()
 
-	for _, v := range terraformJSONOutput {
-		_, err := tfJSON.Write([]byte(v + "\n"))
+	file, err := os.Open("../testdata/terraform-json-output.txt")
+	if err != nil {
+		t.Errorf("cannot read file: %s", err)
+	}
+	defer file.Close()
+
+	var fileEntries []string
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		txt := scanner.Text()
+
+		_, err := tfJSON.Write([]byte(txt + "\n"))
 		if err != nil {
-			t.Fatalf("cannot write to tfJSON: %s", err)
+			t.Errorf("cannot write to tfJSON: %s", err)
 		}
+
+		fileEntries = append(fileEntries, txt)
+	}
+
+	if err := scanner.Err(); err != nil {
+		t.Errorf("scanner error: %s", err)
 	}
 
 	tfJSON.Parse()
 
-	if diff := cmp.Diff(tfJSON.jsonOutput, terraformJSONOutput); diff != "" {
+	if diff := cmp.Diff(tfJSON.jsonOutput, fileEntries); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
 	}
 
@@ -131,11 +141,24 @@ func TestTerraformJSONBuffer_Diagnostics(t *testing.T) {
 
 	tfJSON := NewTerraformJSONBuffer()
 
-	for _, v := range terraformJSONOutput {
-		_, err := tfJSON.Write([]byte(v + "\n"))
+	file, err := os.Open("../testdata/terraform-json-output.txt")
+	if err != nil {
+		t.Errorf("cannot read file: %s", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		txt := scanner.Text()
+
+		_, err := tfJSON.Write([]byte(txt + "\n"))
 		if err != nil {
-			t.Fatalf("cannot write to tfJSON: %s", err)
+			t.Errorf("cannot write to tfJSON: %s", err)
 		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		t.Errorf("scanner error: %s", err)
 	}
 
 	tfJSON.Parse()
@@ -162,16 +185,33 @@ func TestTerraformJSONBuffer_JsonOutput(t *testing.T) {
 
 	tfJSON := NewTerraformJSONBuffer()
 
-	for _, v := range terraformJSONOutput {
-		_, err := tfJSON.Write([]byte(v + "\n"))
+	file, err := os.Open("../testdata/terraform-json-output.txt")
+	if err != nil {
+		t.Errorf("cannot read file: %s", err)
+	}
+	defer file.Close()
+
+	var fileEntries []string
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		txt := scanner.Text()
+
+		_, err := tfJSON.Write([]byte(txt + "\n"))
 		if err != nil {
-			t.Fatalf("cannot write to tfJSON: %s", err)
+			t.Errorf("cannot write to tfJSON: %s", err)
 		}
+
+		fileEntries = append(fileEntries, txt)
+	}
+
+	if err := scanner.Err(); err != nil {
+		t.Errorf("scanner error: %s", err)
 	}
 
 	tfJSON.Parse()
 
-	if diff := cmp.Diff(tfJSON.JsonOutput(), terraformJSONOutput); diff != "" {
+	if diff := cmp.Diff(tfJSON.JsonOutput(), fileEntries); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
 	}
 }
