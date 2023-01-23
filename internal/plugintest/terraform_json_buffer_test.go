@@ -1,4 +1,4 @@
-package resource
+package plugintest
 
 import (
 	"regexp"
@@ -9,7 +9,7 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 )
 
-var stdoutJSON = []string{
+var terraformJSONOutput = []string{
 	`{"@level":"info","@message":"Terraform 1.3.2","@module":"terraform.ui","@timestamp":"2023-01-16T17:02:14.232751Z","terraform":"1.3.2","type":"version","ui":"1.0"}`,
 	`{"@level":"warn","@message":"Warning: Empty or non-existent state","@module":"terraform.ui","@timestamp":"2023-01-16T17:02:14.250725Z","diagnostic":{"severity":"warning","summary":"Empty or non-existent state","detail":"There are currently no remote objects tracked in the state, so there is nothing to refresh."},"type":"diagnostic"}`,
 	`{"@level":"info","@message":"Outputs: 0","@module":"terraform.ui","@timestamp":"2023-01-16T17:02:14.251120Z","outputs":{},"type":"outputs"}`,
@@ -22,15 +22,15 @@ var stdoutJSON = []string{
 func TestStdout_GetJSONOutputStr(t *testing.T) {
 	t.Parallel()
 
-	stdout := NewStdout()
+	terraformJSONBuffer := NewTerraformJSONBuffer()
 
-	for _, v := range stdoutJSON {
-		stdout.Write([]byte(v + "\n"))
+	for _, v := range terraformJSONOutput {
+		terraformJSONBuffer.Write([]byte(v + "\n"))
 	}
 
-	jsonOutputStr := stdout.GetJSONOutputStr()
+	jsonOutputStr := terraformJSONBuffer.GetJSONOutputStr()
 
-	if diff := cmp.Diff(jsonOutputStr, strings.Join(stdoutJSON, "\n")); diff != "" {
+	if diff := cmp.Diff(jsonOutputStr, strings.Join(terraformJSONOutput, "\n")); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
 	}
 }
@@ -48,13 +48,13 @@ func TestStdout_DiagnosticFound(t *testing.T) {
 			regex:        regexp.MustCompile(`.*error diagnostic - summary`),
 			severity:     tfjson.DiagnosticSeverityError,
 			expected:     true,
-			expectedJSON: stdoutJSON,
+			expectedJSON: terraformJSONOutput,
 		},
 		"not-found": {
 			regex:        regexp.MustCompile(`.*warning diagnostic - summary`),
 			severity:     tfjson.DiagnosticSeverityError,
 			expected:     false,
-			expectedJSON: stdoutJSON,
+			expectedJSON: terraformJSONOutput,
 		},
 	}
 
@@ -62,16 +62,16 @@ func TestStdout_DiagnosticFound(t *testing.T) {
 		name, testCase := name, testCase
 
 		t.Run(name, func(t *testing.T) {
-			stdout := NewStdout()
+			terraformJSONBuffer := NewTerraformJSONBuffer()
 
-			for _, v := range stdoutJSON {
-				_, err := stdout.Write([]byte(v + "\n"))
+			for _, v := range terraformJSONOutput {
+				_, err := terraformJSONBuffer.Write([]byte(v + "\n"))
 				if err != nil {
-					t.Errorf("error writing to stdout: %s", err)
+					t.Errorf("error writing to terraformJSONBuffer: %s", err)
 				}
 			}
 
-			isFound, output := stdout.DiagnosticFound(testCase.regex, testCase.severity)
+			isFound, output := terraformJSONBuffer.DiagnosticFound(testCase.regex, testCase.severity)
 
 			if diff := cmp.Diff(isFound, testCase.expected); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)

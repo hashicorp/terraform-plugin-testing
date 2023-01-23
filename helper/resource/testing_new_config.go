@@ -18,7 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, stdout *Stdout) error {
+func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, terraformJSONBuffer *plugintest.TerraformJSONBuffer) error {
 	t.Helper()
 
 	err := wd.SetConfig(ctx, step.mergedConfig(ctx, c))
@@ -29,7 +29,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	// require a refresh before applying
 	// failing to do this will result in data sources not being updated
 	err = runProviderCommand(ctx, t, func() error {
-		return wd.RefreshJSON(ctx, stdout)
+		return wd.RefreshJSON(ctx, terraformJSONBuffer)
 	}, wd, providers)
 	if err != nil {
 		target := &tfexec.ErrVersionMismatch{}
@@ -41,7 +41,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				return fmt.Errorf("Error running pre-apply refresh: %w", err)
 			}
 		} else {
-			return fmt.Errorf("Error running pre-apply refresh: %s", stdout.GetJSONOutputStr())
+			return fmt.Errorf("Error running pre-apply refresh: %s", terraformJSONBuffer.GetJSONOutputStr())
 		}
 	}
 
@@ -54,9 +54,9 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		// Plan!
 		err := runProviderCommand(ctx, t, func() error {
 			if step.Destroy {
-				return wd.CreateDestroyPlanJSON(ctx, stdout)
+				return wd.CreateDestroyPlanJSON(ctx, terraformJSONBuffer)
 			}
-			return wd.CreatePlanJSON(ctx, stdout)
+			return wd.CreatePlanJSON(ctx, terraformJSONBuffer)
 		}, wd, providers)
 		if err != nil {
 			target := &tfexec.ErrVersionMismatch{}
@@ -71,7 +71,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 					return fmt.Errorf("Error running pre-apply plan: %w", err)
 				}
 			} else {
-				return fmt.Errorf("Error running pre-apply plan: %s", stdout.GetJSONOutputStr())
+				return fmt.Errorf("Error running pre-apply plan: %s", terraformJSONBuffer.GetJSONOutputStr())
 			}
 		}
 
@@ -92,7 +92,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 		// Apply the diff, creating real resources
 		err = runProviderCommand(ctx, t, func() error {
-			return wd.ApplyJSON(ctx, stdout)
+			return wd.ApplyJSON(ctx, terraformJSONBuffer)
 		}, wd, providers)
 		if err != nil {
 			target := &tfexec.ErrVersionMismatch{}
@@ -108,9 +108,9 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				}
 			} else {
 				if step.Destroy {
-					return fmt.Errorf("Error running destroy: %s", stdout.GetJSONOutputStr())
+					return fmt.Errorf("Error running destroy: %s", terraformJSONBuffer.GetJSONOutputStr())
 				}
-				return fmt.Errorf("Error running apply: %s", stdout.GetJSONOutputStr())
+				return fmt.Errorf("Error running apply: %s", terraformJSONBuffer.GetJSONOutputStr())
 			}
 		}
 
@@ -150,9 +150,9 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	// do a plan
 	err = runProviderCommand(ctx, t, func() error {
 		if step.Destroy {
-			return wd.CreateDestroyPlanJSON(ctx, stdout)
+			return wd.CreateDestroyPlanJSON(ctx, terraformJSONBuffer)
 		}
-		return wd.CreatePlanJSON(ctx, stdout)
+		return wd.CreatePlanJSON(ctx, terraformJSONBuffer)
 	}, wd, providers)
 	if err != nil {
 		target := &tfexec.ErrVersionMismatch{}
@@ -167,7 +167,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				return fmt.Errorf("Error running post-apply plan: %w", err)
 			}
 		} else {
-			return fmt.Errorf("Error running post-apply plan: %s", stdout.GetJSONOutputStr())
+			return fmt.Errorf("Error running post-apply plan: %s", terraformJSONBuffer.GetJSONOutputStr())
 		}
 	}
 
@@ -197,7 +197,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	// do a refresh
 	if !step.Destroy || (step.Destroy && !step.PreventPostDestroyRefresh) {
 		err := runProviderCommand(ctx, t, func() error {
-			return wd.RefreshJSON(ctx, stdout)
+			return wd.RefreshJSON(ctx, terraformJSONBuffer)
 		}, wd, providers)
 		if err != nil {
 			target := &tfexec.ErrVersionMismatch{}
@@ -209,7 +209,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 					return fmt.Errorf("Error running post-apply refresh: %w", err)
 				}
 			} else {
-				return fmt.Errorf("Error running post-apply refresh: %s", stdout.GetJSONOutputStr())
+				return fmt.Errorf("Error running post-apply refresh: %s", terraformJSONBuffer.GetJSONOutputStr())
 			}
 		}
 	}
@@ -217,9 +217,9 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	// do another plan
 	err = runProviderCommand(ctx, t, func() error {
 		if step.Destroy {
-			return wd.CreateDestroyPlanJSON(ctx, stdout)
+			return wd.CreateDestroyPlanJSON(ctx, terraformJSONBuffer)
 		}
-		return wd.CreatePlanJSON(ctx, stdout)
+		return wd.CreatePlanJSON(ctx, terraformJSONBuffer)
 	}, wd, providers)
 	if err != nil {
 		target := &tfexec.ErrVersionMismatch{}
@@ -234,7 +234,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				return fmt.Errorf("Error running second post-apply plan: %w", err)
 			}
 		} else {
-			return fmt.Errorf("Error running second post-apply plan: %s", stdout.GetJSONOutputStr())
+			return fmt.Errorf("Error running second post-apply plan: %s", terraformJSONBuffer.GetJSONOutputStr())
 		}
 	}
 
