@@ -120,8 +120,8 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	// acts as default for import tests
 	var appliedCfg string
 
-	// terraformJSONBuffer (io.Writer) is supplied to all terraform commands that are using streaming json output.
-	terraformJSONBuffer := plugintest.NewTerraformJSONBuffer()
+	// tfJSON (io.Writer) is supplied to all terraform commands that are using streaming json output.
+	tfJSON := plugintest.NewTerraformJSONBuffer()
 
 	for stepIndex, step := range c.Steps {
 		stepNumber := stepIndex + 1 // 1-based indexing for humans
@@ -249,7 +249,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.RefreshState {
 			logging.HelperResourceTrace(ctx, "TestStep is RefreshState mode")
 
-			err := testStepNewRefreshState(ctx, t, wd, step, providers, terraformJSONBuffer)
+			err := testStepNewRefreshState(ctx, t, wd, step, providers, tfJSON)
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -262,12 +262,12 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				}
 
 				errorFound := step.ExpectError.MatchString(err.Error())
-				jsonErrorFound, jsonDiags := terraformJSONBuffer.DiagnosticFound(step.ExpectError, tfjson.DiagnosticSeverityError)
+				jsonErrorFound := tfJSON.Diagnostics().Contains(step.ExpectError, tfjson.DiagnosticSeverityError)
 
 				errorOutput := []string{err.Error()}
 
 				if jsonErrorFound {
-					errorOutput = jsonDiags
+					errorOutput = tfJSON.JsonOutput()
 				}
 
 				if !errorFound && !jsonErrorFound {
@@ -295,14 +295,14 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if step.ExpectWarning != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectWarning")
 
-				warningFound, jsonDiags := terraformJSONBuffer.DiagnosticFound(step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
+				warningFound := tfJSON.Diagnostics().Contains(step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
 
 				if !warningFound {
 					logging.HelperResourceError(ctx,
 						fmt.Sprintf("Expected a warning with pattern (%s)", step.ExpectWarning.String()),
 						map[string]interface{}{logging.KeyError: err},
 					)
-					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), strings.Join(jsonDiags, "\n"))
+					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), strings.Join(tfJSON.JsonOutput(), "\n"))
 				}
 			}
 
@@ -314,7 +314,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.Config != "" {
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
-			err := testStepNewConfig(ctx, t, c, wd, step, providers, terraformJSONBuffer)
+			err := testStepNewConfig(ctx, t, c, wd, step, providers, tfJSON)
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -327,12 +327,12 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				}
 
 				errorFound := step.ExpectError.MatchString(err.Error())
-				jsonErrorFound, jsonDiags := terraformJSONBuffer.DiagnosticFound(step.ExpectError, tfjson.DiagnosticSeverityError)
+				jsonErrorFound := tfJSON.Diagnostics().Contains(step.ExpectError, tfjson.DiagnosticSeverityError)
 
 				errorOutput := []string{err.Error()}
 
 				if jsonErrorFound {
-					errorOutput = jsonDiags
+					errorOutput = tfJSON.JsonOutput()
 				}
 
 				if !errorFound && !jsonErrorFound {
@@ -340,7 +340,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						fmt.Sprintf("Expected an error with pattern (%s)", step.ExpectError.String()),
 						map[string]interface{}{logging.KeyError: strings.Join(errorOutput, "")},
 					)
-					t.Fatalf("Step %d/%d, expected an error matching pattern, no match on: %s", stepNumber, len(c.Steps), jsonDiags)
+					t.Fatalf("Step %d/%d, expected an error matching pattern, no match on: %s", stepNumber, len(c.Steps), errorOutput)
 				}
 			} else {
 				if err != nil && c.ErrorCheck != nil {
@@ -362,14 +362,14 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if step.ExpectWarning != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectWarning")
 
-				warningFound, jsonDiags := terraformJSONBuffer.DiagnosticFound(step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
+				warningFound := tfJSON.Diagnostics().Contains(step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
 
 				if !warningFound {
 					logging.HelperResourceError(ctx,
 						fmt.Sprintf("Expected a warning with pattern (%s)", step.ExpectWarning.String()),
 						map[string]interface{}{logging.KeyError: err},
 					)
-					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), strings.Join(jsonDiags, "\n"))
+					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), strings.Join(tfJSON.JsonOutput(), "\n"))
 				}
 			}
 

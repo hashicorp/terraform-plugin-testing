@@ -2,7 +2,6 @@ package plugintest
 
 import (
 	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -15,46 +14,65 @@ var terraformJSONOutput = []string{
 	`{"@level":"info","@message":"Outputs: 0","@module":"terraform.ui","@timestamp":"2023-01-16T17:02:14.251120Z","outputs":{},"type":"outputs"}`,
 	`{"@level":"info","@message":"random_password.test: Plan to create","@module":"terraform.ui","@timestamp":"2023-01-16T17:02:14.282021Z","change":{"resource":{"addr":"random_password.test","module":"","resource":"random_password.test","implied_provider":"random","resource_type":"random_password","resource_name":"test","resource_key":null},"action":"create"},"type":"planned_change"}`,
 	`{"@level":"info","@message":"Plan: 1 to add, 0 to change, 0 to destroy.","@module":"terraform.ui","@timestamp":"2023-01-16T17:02:14.282054Z","changes":{"add":1,"change":0,"remove":0,"operation":"plan"},"type":"change_summary"}`,
-	`{"format_version":"1.0"}`,
 	`{"@level":"error","@message":"Error: error diagnostic - summary","@module":"terraform.ui","@timestamp":"2023-01-16T17:02:14.626572Z","diagnostic":{"severity":"error","summary":"error diagnostic - summary","detail":""},"type":"diagnostic"}`,
 }
 
-func TestStdout_GetJSONOutputStr(t *testing.T) {
-	t.Parallel()
-
-	terraformJSONBuffer := NewTerraformJSONBuffer()
-
-	for _, v := range terraformJSONOutput {
-		terraformJSONBuffer.Write([]byte(v + "\n"))
-	}
-
-	jsonOutputStr := terraformJSONBuffer.GetJSONOutputStr()
-
-	if diff := cmp.Diff(jsonOutputStr, strings.Join(terraformJSONOutput, "\n")); diff != "" {
-		t.Errorf("unexpected difference: %s", diff)
-	}
-}
-
-func TestStdout_DiagnosticFound(t *testing.T) {
+func TestTerraformJSONDiagnostics_Contains(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		regex        *regexp.Regexp
-		severity     tfjson.DiagnosticSeverity
-		expected     bool
-		expectedJSON []string
+		diags    []tfjson.Diagnostic
+		regex    *regexp.Regexp
+		severity tfjson.DiagnosticSeverity
+		expected bool
 	}{
-		"found": {
-			regex:        regexp.MustCompile(`.*error diagnostic - summary`),
-			severity:     tfjson.DiagnosticSeverityError,
-			expected:     true,
-			expectedJSON: terraformJSONOutput,
+		"severity-not-found": {
+			diags: []tfjson.Diagnostic{
+				{
+					Severity: tfjson.DiagnosticSeverityError,
+					Summary:  "error summary",
+					Detail:   "error detail",
+				},
+			},
+			regex:    regexp.MustCompile("error summary"),
+			severity: tfjson.DiagnosticSeverityWarning,
+			expected: false,
 		},
-		"not-found": {
-			regex:        regexp.MustCompile(`.*warning diagnostic - summary`),
-			severity:     tfjson.DiagnosticSeverityError,
-			expected:     false,
-			expectedJSON: terraformJSONOutput,
+		"summary-not-found": {
+			diags: []tfjson.Diagnostic{
+				{
+					Severity: tfjson.DiagnosticSeverityError,
+					Summary:  "warning summary",
+					Detail:   "warning detail",
+				},
+			},
+			regex:    regexp.MustCompile("error detail"),
+			severity: tfjson.DiagnosticSeverityError,
+			expected: false,
+		},
+		"summary-found": {
+			diags: []tfjson.Diagnostic{
+				{
+					Severity: tfjson.DiagnosticSeverityError,
+					Summary:  "error summary",
+					Detail:   "error detail",
+				},
+			},
+			regex:    regexp.MustCompile("error summary"),
+			severity: tfjson.DiagnosticSeverityError,
+			expected: true,
+		},
+		"detail-found": {
+			diags: []tfjson.Diagnostic{
+				{
+					Severity: tfjson.DiagnosticSeverityError,
+					Summary:  "error summary",
+					Detail:   "error detail",
+				},
+			},
+			regex:    regexp.MustCompile("error detail"),
+			severity: tfjson.DiagnosticSeverityError,
+			expected: true,
 		},
 	}
 
@@ -62,24 +80,98 @@ func TestStdout_DiagnosticFound(t *testing.T) {
 		name, testCase := name, testCase
 
 		t.Run(name, func(t *testing.T) {
-			terraformJSONBuffer := NewTerraformJSONBuffer()
+			var tfJSONDiagnostics TerraformJSONDiagnostics = testCase.diags
 
-			for _, v := range terraformJSONOutput {
-				_, err := terraformJSONBuffer.Write([]byte(v + "\n"))
-				if err != nil {
-					t.Errorf("error writing to terraformJSONBuffer: %s", err)
-				}
-			}
-
-			isFound, output := terraformJSONBuffer.DiagnosticFound(testCase.regex, testCase.severity)
+			isFound := tfJSONDiagnostics.Contains(testCase.regex, testCase.severity)
 
 			if diff := cmp.Diff(isFound, testCase.expected); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)
 			}
-			if diff := cmp.Diff(output, testCase.expectedJSON); diff != "" {
-				t.Errorf("unexpected difference: %s", diff)
-			}
 		})
 	}
+}
 
+func TestTerraformJSONBuffer_Parse(t *testing.T) {
+	t.Parallel()
+
+	tfJSON := NewTerraformJSONBuffer()
+
+	for _, v := range terraformJSONOutput {
+		_, err := tfJSON.Write([]byte(v + "\n"))
+		if err != nil {
+			t.Fatalf("cannot write to tfJSON: %s", err)
+		}
+	}
+
+	tfJSON.Parse()
+
+	if diff := cmp.Diff(tfJSON.jsonOutput, terraformJSONOutput); diff != "" {
+		t.Errorf("unexpected difference: %s", diff)
+	}
+
+	var tfJSONDiagnostics TerraformJSONDiagnostics = []tfjson.Diagnostic{
+		{
+			Severity: tfjson.DiagnosticSeverityWarning,
+			Summary:  "Empty or non-existent state",
+			Detail:   "There are currently no remote objects tracked in the state, so there is nothing to refresh.",
+		},
+		{
+			Severity: tfjson.DiagnosticSeverityError,
+			Summary:  "error diagnostic - summary",
+		},
+	}
+
+	if diff := cmp.Diff(tfJSON.diagnostics, tfJSONDiagnostics); diff != "" {
+		t.Errorf("unexpected difference: %s", diff)
+	}
+}
+
+func TestTerraformJSONBuffer_Diagnostics(t *testing.T) {
+	t.Parallel()
+
+	tfJSON := NewTerraformJSONBuffer()
+
+	for _, v := range terraformJSONOutput {
+		_, err := tfJSON.Write([]byte(v + "\n"))
+		if err != nil {
+			t.Fatalf("cannot write to tfJSON: %s", err)
+		}
+	}
+
+	tfJSON.Parse()
+
+	var tfJSONDiagnostics TerraformJSONDiagnostics = []tfjson.Diagnostic{
+		{
+			Severity: tfjson.DiagnosticSeverityWarning,
+			Summary:  "Empty or non-existent state",
+			Detail:   "There are currently no remote objects tracked in the state, so there is nothing to refresh.",
+		},
+		{
+			Severity: tfjson.DiagnosticSeverityError,
+			Summary:  "error diagnostic - summary",
+		},
+	}
+
+	if diff := cmp.Diff(tfJSON.Diagnostics(), tfJSONDiagnostics); diff != "" {
+		t.Errorf("unexpected difference: %s", diff)
+	}
+}
+
+func TestTerraformJSONBuffer_JsonOutput(t *testing.T) {
+	t.Parallel()
+
+	tfJSON := NewTerraformJSONBuffer()
+
+	for _, v := range terraformJSONOutput {
+		_, err := tfJSON.Write([]byte(v + "\n"))
+		if err != nil {
+			t.Fatalf("cannot write to tfJSON: %s", err)
+		}
+	}
+
+	tfJSON.Parse()
+
+	if diff := cmp.Diff(tfJSON.JsonOutput(), terraformJSONOutput); diff != "" {
+		t.Errorf("unexpected difference: %s", diff)
+	}
 }

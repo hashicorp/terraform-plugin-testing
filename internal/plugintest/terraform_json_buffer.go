@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"regexp"
-	"strings"
 
 	tfjson "github.com/hashicorp/terraform-json"
 )
@@ -15,8 +14,29 @@ import (
 var _ io.Writer = &TerraformJSONBuffer{}
 var _ io.Reader = &TerraformJSONBuffer{}
 
+type TerraformJSONDiagnostics []tfjson.Diagnostic
+
+func (d TerraformJSONDiagnostics) Contains(r *regexp.Regexp, severity tfjson.DiagnosticSeverity) bool {
+	for _, v := range d {
+		if v.Severity != severity {
+			continue
+		}
+
+		if !r.MatchString(v.Summary) && !r.MatchString(v.Detail) {
+			continue
+		}
+
+		return true
+	}
+
+	return false
+}
+
 type TerraformJSONBuffer struct {
-	buf *bytes.Buffer
+	buf         *bytes.Buffer
+	diagnostics TerraformJSONDiagnostics
+	jsonOutput  []string
+	parsed      bool
 }
 
 func NewTerraformJSONBuffer() *TerraformJSONBuffer {
@@ -41,42 +61,12 @@ func (b *TerraformJSONBuffer) Read(p []byte) (n int, err error) {
 	return b.buf.Read(p)
 }
 
-func (b *TerraformJSONBuffer) GetJSONOutput() []string {
+func (b *TerraformJSONBuffer) Parse() {
 	if b.buf == nil {
 		log.Fatal("call NewTerraformJSONBuffer to initialise buffer")
 	}
 
 	scanner := bufio.NewScanner(b.buf)
-	var jsonOutput []string
-
-	for scanner.Scan() {
-		var outer struct{}
-
-		txt := scanner.Text()
-
-		if json.Unmarshal([]byte(txt), &outer) == nil {
-			jsonOutput = append(jsonOutput, txt)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	return jsonOutput
-}
-
-func (b *TerraformJSONBuffer) GetJSONOutputStr() string {
-	return strings.Join(b.GetJSONOutput(), "\n")
-}
-
-func (b *TerraformJSONBuffer) DiagnosticFound(r *regexp.Regexp, severity tfjson.DiagnosticSeverity) (bool, []string) {
-	if b.buf == nil {
-		log.Fatal("call NewTerraformJSONBuffer to initialise buffer")
-	}
-
-	scanner := bufio.NewScanner(b.buf)
-	var jsonOutput []string
 
 	for scanner.Scan() {
 		var outer struct {
@@ -85,22 +75,15 @@ func (b *TerraformJSONBuffer) DiagnosticFound(r *regexp.Regexp, severity tfjson.
 
 		txt := scanner.Text()
 
+		// This will only capture buffer entries that can be unmarshalled
+		// as JSON. If there are entries in the buffer that are not JSON
+		// they will be discarded.
 		if json.Unmarshal([]byte(txt), &outer) == nil {
-			jsonOutput = append(jsonOutput, txt)
+			b.jsonOutput = append(b.jsonOutput, txt)
 
-			if outer.Diagnostic.Severity == "" {
-				continue
+			if outer.Diagnostic.Severity != "" {
+				b.diagnostics = append(b.diagnostics, outer.Diagnostic)
 			}
-
-			if !r.MatchString(outer.Diagnostic.Summary) && !r.MatchString(outer.Diagnostic.Detail) {
-				continue
-			}
-
-			if outer.Diagnostic.Severity != severity {
-				continue
-			}
-
-			return true, jsonOutput
 		}
 	}
 
@@ -108,5 +91,21 @@ func (b *TerraformJSONBuffer) DiagnosticFound(r *regexp.Regexp, severity tfjson.
 		log.Fatal(err)
 	}
 
-	return false, jsonOutput
+	b.parsed = true
+}
+
+func (b *TerraformJSONBuffer) Diagnostics() TerraformJSONDiagnostics {
+	if !b.parsed {
+		b.Parse()
+	}
+
+	return b.diagnostics
+}
+
+func (b *TerraformJSONBuffer) JsonOutput() []string {
+	if !b.parsed {
+		b.Parse()
+	}
+
+	return b.jsonOutput
 }
