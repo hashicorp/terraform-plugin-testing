@@ -473,5 +473,5 @@ func copyWorkingDir(ctx context.Context, t testing.T, stepNumber int, wd *plugin
 		t.Fatalf("TestStep %d/%d error copying working directory files: %s", stepNumber, err)
 	}
 
-	t.Log(fmt.Sprintf("Working directory and files have been copied to: %s", dest))
+	t.Logf("Working directory and files have been copied to: %s", dest)
 }
