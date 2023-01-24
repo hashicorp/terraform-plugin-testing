@@ -5,11 +5,8 @@ package resource
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"strings"
 
-	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
 
@@ -19,8 +16,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, tfJSON *plugintest.TerraformJSONBuffer) error {
+func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) (plugintest.TerraformJSONDiagnostics, string, error) {
 	t.Helper()
+
+	var tfJSONDiags plugintest.TerraformJSONDiagnostics
+	var stdout string
 
 	var err error
 	// Explicitly ensure prior state exists before refresh.
@@ -36,20 +36,15 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 	}
 
 	err = runProviderCommand(ctx, t, func() error {
-		return wd.RefreshJSON(ctx, tfJSON)
+		refreshResponse, err := wd.Refresh(ctx)
+
+		tfJSONDiags = append(tfJSONDiags, refreshResponse.Diagnostics...)
+		stdout += refreshResponse.Stdout
+
+		return err
 	}, wd, providers)
 	if err != nil {
-		target := &tfexec.ErrVersionMismatch{}
-		if errors.As(err, &target) {
-			err = runProviderCommand(ctx, t, func() error {
-				return wd.Refresh(ctx)
-			}, wd, providers)
-			if err != nil {
-				return fmt.Errorf("Error running refresh: %w", err)
-			}
-		} else {
-			return fmt.Errorf("Error running refresh: %s", strings.Join(tfJSON.JsonOutput(), "\n"))
-		}
+		return tfJSONDiags, stdout, fmt.Errorf("Error running refresh: %w", err)
 	}
 
 	var refreshState *terraform.State
@@ -77,20 +72,15 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 
 	// do a plan
 	err = runProviderCommand(ctx, t, func() error {
-		return wd.CreatePlanJSON(ctx, tfJSON)
+		createPlanResponse, err := wd.CreatePlan(ctx)
+
+		tfJSONDiags = append(tfJSONDiags, createPlanResponse.Diagnostics...)
+		stdout += createPlanResponse.Stdout
+
+		return err
 	}, wd, providers)
 	if err != nil {
-		target := &tfexec.ErrVersionMismatch{}
-		if errors.As(err, &target) {
-			err = runProviderCommand(ctx, t, func() error {
-				return wd.CreatePlan(ctx)
-			}, wd, providers)
-			if err != nil {
-				return fmt.Errorf("Error running post-apply plan: %w", err)
-			}
-		} else {
-			return fmt.Errorf("Error running post-apply plan: %s", strings.Join(tfJSON.JsonOutput(), "\n"))
-		}
+		return tfJSONDiags, stdout, fmt.Errorf("Error running post-apply plan: %w", err)
 	}
 
 	var plan *tfjson.Plan
@@ -100,7 +90,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 		return err
 	}, wd, providers)
 	if err != nil {
-		return fmt.Errorf("Error retrieving post-apply plan: %w", err)
+		return tfJSONDiags, stdout, fmt.Errorf("Error retrieving post-apply plan: %w", err)
 	}
 
 	if !planIsEmpty(plan) && !step.ExpectNonEmptyPlan {
@@ -111,10 +101,10 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 			return err
 		}, wd, providers)
 		if err != nil {
-			return fmt.Errorf("Error retrieving formatted plan output: %w", err)
+			return tfJSONDiags, stdout, fmt.Errorf("Error retrieving formatted plan output: %w", err)
 		}
-		return fmt.Errorf("After refreshing state during this test step, a followup plan was not empty.\nstdout:\n\n%s", stdout)
+		return tfJSONDiags, stdout, fmt.Errorf("After refreshing state during this test step, a followup plan was not empty.\nstdout:\n\n%s", stdout)
 	}
 
-	return nil
+	return tfJSONDiags, stdout, nil
 }

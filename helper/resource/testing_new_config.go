@@ -7,9 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
-	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
 
@@ -19,31 +17,29 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, tfJSON *plugintest.TerraformJSONBuffer) error {
+func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) (plugintest.TerraformJSONDiagnostics, string, error) {
 	t.Helper()
+
+	var tfJSONDiags plugintest.TerraformJSONDiagnostics
+	var stdout string
 
 	err := wd.SetConfig(ctx, step.mergedConfig(ctx, c))
 	if err != nil {
-		return fmt.Errorf("Error setting config: %w", err)
+		return tfJSONDiags, stdout, fmt.Errorf("Error setting config: %w", err)
 	}
 
 	// require a refresh before applying
 	// failing to do this will result in data sources not being updated
 	err = runProviderCommand(ctx, t, func() error {
-		return wd.RefreshJSON(ctx, tfJSON)
+		refreshResponse, err := wd.Refresh(ctx)
+
+		tfJSONDiags = append(tfJSONDiags, refreshResponse.Diagnostics...)
+		stdout += refreshResponse.Stdout
+
+		return err
 	}, wd, providers)
 	if err != nil {
-		target := &tfexec.ErrVersionMismatch{}
-		if errors.As(err, &target) {
-			err = runProviderCommand(ctx, t, func() error {
-				return wd.Refresh(ctx)
-			}, wd, providers)
-			if err != nil {
-				return fmt.Errorf("Error running pre-apply refresh: %w", err)
-			}
-		} else {
-			return fmt.Errorf("Error running pre-apply refresh: %s", strings.Join(tfJSON.JsonOutput(), "\n"))
-		}
+		return tfJSONDiags, stdout, fmt.Errorf("Error running pre-apply refresh: %w", err)
 	}
 
 	// If this step is a PlanOnly step, skip over this first Plan and
@@ -55,25 +51,22 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		// Plan!
 		err := runProviderCommand(ctx, t, func() error {
 			if step.Destroy {
-				return wd.CreateDestroyPlanJSON(ctx, tfJSON)
+				createDestroyPlanResponse, err := wd.CreateDestroyPlan(ctx)
+
+				tfJSONDiags = append(tfJSONDiags, createDestroyPlanResponse.Diagnostics...)
+				stdout += createDestroyPlanResponse.Stdout
+
+				return err
 			}
-			return wd.CreatePlanJSON(ctx, tfJSON)
+			createPlanResponse, err := wd.CreatePlan(ctx)
+
+			tfJSONDiags = append(tfJSONDiags, createPlanResponse.Diagnostics...)
+			stdout += createPlanResponse.Stdout
+
+			return err
 		}, wd, providers)
 		if err != nil {
-			target := &tfexec.ErrVersionMismatch{}
-			if errors.As(err, &target) {
-				err = runProviderCommand(ctx, t, func() error {
-					if step.Destroy {
-						return wd.CreateDestroyPlan(ctx)
-					}
-					return wd.CreatePlan(ctx)
-				}, wd, providers)
-				if err != nil {
-					return fmt.Errorf("Error running pre-apply plan: %w", err)
-				}
-			} else {
-				return fmt.Errorf("Error running pre-apply plan: %s", strings.Join(tfJSON.JsonOutput(), "\n"))
-			}
+			return tfJSONDiags, stdout, fmt.Errorf("Error running pre-apply plan: %w", err)
 		}
 
 		// We need to keep a copy of the state prior to destroying such
@@ -88,31 +81,24 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			return nil
 		}, wd, providers)
 		if err != nil {
-			return fmt.Errorf("Error retrieving pre-apply state: %w", err)
+			return tfJSONDiags, stdout, fmt.Errorf("Error retrieving pre-apply state: %w", err)
 		}
 
 		// Apply the diff, creating real resources
 		err = runProviderCommand(ctx, t, func() error {
-			return wd.ApplyJSON(ctx, tfJSON)
+			applyResponse, err := wd.Apply(ctx)
+
+			tfJSONDiags = append(tfJSONDiags, applyResponse.Diagnostics...)
+			stdout += applyResponse.Stdout
+
+			return err
 		}, wd, providers)
 		if err != nil {
-			target := &tfexec.ErrVersionMismatch{}
-			if errors.As(err, &target) {
-				err = runProviderCommand(ctx, t, func() error {
-					return wd.Apply(ctx)
-				}, wd, providers)
-				if err != nil {
-					if step.Destroy {
-						return fmt.Errorf("Error running destroy: %w", err)
-					}
-					return fmt.Errorf("Error running apply: %w", err)
-				}
-			} else {
-				if step.Destroy {
-					return fmt.Errorf("Error running destroy: %s", strings.Join(tfJSON.JsonOutput(), "\n"))
-				}
-				return fmt.Errorf("Error running apply: %s", strings.Join(tfJSON.JsonOutput(), "\n"))
+			if step.Destroy {
+				return tfJSONDiags, stdout, fmt.Errorf("Error running destroy: %w", err)
 			}
+
+			return tfJSONDiags, stdout, fmt.Errorf("Error running apply: %w", err)
 		}
 
 		// Get the new state
@@ -125,7 +111,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			return nil
 		}, wd, providers)
 		if err != nil {
-			return fmt.Errorf("Error retrieving state after apply: %w", err)
+			return tfJSONDiags, stdout, fmt.Errorf("Error retrieving state after apply: %w", err)
 		}
 
 		// Run any configured checks
@@ -135,11 +121,11 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			state.IsBinaryDrivenTest = true
 			if step.Destroy {
 				if err := step.Check(stateBeforeApplication); err != nil {
-					return fmt.Errorf("Check failed: %w", err)
+					return tfJSONDiags, stdout, fmt.Errorf("Check failed: %w", err)
 				}
 			} else {
 				if err := step.Check(state); err != nil {
-					return fmt.Errorf("Check failed: %w", err)
+					return tfJSONDiags, stdout, fmt.Errorf("Check failed: %w", err)
 				}
 			}
 		}
@@ -151,25 +137,22 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	// do a plan
 	err = runProviderCommand(ctx, t, func() error {
 		if step.Destroy {
-			return wd.CreateDestroyPlanJSON(ctx, tfJSON)
+			createDestroyPlanResponse, err := wd.CreateDestroyPlan(ctx)
+
+			tfJSONDiags = append(tfJSONDiags, createDestroyPlanResponse.Diagnostics...)
+			stdout += createDestroyPlanResponse.Stdout
+
+			return err
 		}
-		return wd.CreatePlanJSON(ctx, tfJSON)
+		createPlanResponse, err := wd.CreatePlan(ctx)
+
+		tfJSONDiags = append(tfJSONDiags, createPlanResponse.Diagnostics...)
+		stdout += createPlanResponse.Stdout
+
+		return err
 	}, wd, providers)
 	if err != nil {
-		target := &tfexec.ErrVersionMismatch{}
-		if errors.As(err, &target) {
-			err = runProviderCommand(ctx, t, func() error {
-				if step.Destroy {
-					return wd.CreateDestroyPlan(ctx)
-				}
-				return wd.CreatePlan(ctx)
-			}, wd, providers)
-			if err != nil {
-				return fmt.Errorf("Error running post-apply plan: %w", err)
-			}
-		} else {
-			return fmt.Errorf("Error running post-apply plan: %s", strings.Join(tfJSON.JsonOutput(), "\n"))
-		}
+		return tfJSONDiags, stdout, fmt.Errorf("Error running post-apply plan: %w", err)
 	}
 
 	var plan *tfjson.Plan
@@ -179,64 +162,56 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return err
 	}, wd, providers)
 	if err != nil {
-		return fmt.Errorf("Error retrieving post-apply plan: %w", err)
+		return tfJSONDiags, stdout, fmt.Errorf("Error retrieving post-apply plan: %w", err)
 	}
 
 	if !planIsEmpty(plan) && !step.ExpectNonEmptyPlan {
-		var stdout string
+		var savedPlanRawStdout string
 		err = runProviderCommand(ctx, t, func() error {
 			var err error
-			stdout, err = wd.SavedPlanRawStdout(ctx)
+			savedPlanRawStdout, err = wd.SavedPlanRawStdout(ctx)
 			return err
 		}, wd, providers)
 		if err != nil {
-			return fmt.Errorf("Error retrieving formatted plan output: %w", err)
+			return tfJSONDiags, stdout, fmt.Errorf("Error retrieving formatted plan output: %w", err)
 		}
-		return fmt.Errorf("After applying this test step, the plan was not empty.\nstdout:\n\n%s", stdout)
+		return tfJSONDiags, stdout, fmt.Errorf("After applying this test step, the plan was not empty.\nstdout:\n\n%s", savedPlanRawStdout)
 	}
 
 	// do a refresh
 	if !step.Destroy || (step.Destroy && !step.PreventPostDestroyRefresh) {
-		err := runProviderCommand(ctx, t, func() error {
-			return wd.RefreshJSON(ctx, tfJSON)
+		err = runProviderCommand(ctx, t, func() error {
+			refreshResponse, err := wd.Refresh(ctx)
+
+			tfJSONDiags = append(tfJSONDiags, refreshResponse.Diagnostics...)
+			stdout += refreshResponse.Stdout
+
+			return err
 		}, wd, providers)
 		if err != nil {
-			target := &tfexec.ErrVersionMismatch{}
-			if errors.As(err, &target) {
-				err = runProviderCommand(ctx, t, func() error {
-					return wd.Refresh(ctx)
-				}, wd, providers)
-				if err != nil {
-					return fmt.Errorf("Error running post-apply refresh: %w", err)
-				}
-			} else {
-				return fmt.Errorf("Error running post-apply refresh: %s", strings.Join(tfJSON.JsonOutput(), "\n"))
-			}
+			return tfJSONDiags, stdout, fmt.Errorf("Error running post-apply refresh: %w", err)
 		}
 	}
 
 	// do another plan
 	err = runProviderCommand(ctx, t, func() error {
 		if step.Destroy {
-			return wd.CreateDestroyPlanJSON(ctx, tfJSON)
+			createDestroyPlanResponse, err := wd.CreateDestroyPlan(ctx)
+
+			tfJSONDiags = append(tfJSONDiags, createDestroyPlanResponse.Diagnostics...)
+			stdout += createDestroyPlanResponse.Stdout
+
+			return err
 		}
-		return wd.CreatePlanJSON(ctx, tfJSON)
+		createPlanResponse, err := wd.CreatePlan(ctx)
+
+		tfJSONDiags = append(tfJSONDiags, createPlanResponse.Diagnostics...)
+		stdout += createPlanResponse.Stdout
+
+		return err
 	}, wd, providers)
 	if err != nil {
-		target := &tfexec.ErrVersionMismatch{}
-		if errors.As(err, &target) {
-			err = runProviderCommand(ctx, t, func() error {
-				if step.Destroy {
-					return wd.CreateDestroyPlan(ctx)
-				}
-				return wd.CreatePlan(ctx)
-			}, wd, providers)
-			if err != nil {
-				return fmt.Errorf("Error running second post-apply plan: %w", err)
-			}
-		} else {
-			return fmt.Errorf("Error running second post-apply plan: %s", strings.Join(tfJSON.JsonOutput(), "\n"))
-		}
+		return tfJSONDiags, stdout, fmt.Errorf("Error running second post-apply plan: %w", err)
 	}
 
 	err = runProviderCommand(ctx, t, func() error {
@@ -245,23 +220,23 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return err
 	}, wd, providers)
 	if err != nil {
-		return fmt.Errorf("Error retrieving second post-apply plan: %w", err)
+		return tfJSONDiags, stdout, fmt.Errorf("Error retrieving second post-apply plan: %w", err)
 	}
 
 	// check if plan is empty
 	if !planIsEmpty(plan) && !step.ExpectNonEmptyPlan {
-		var stdout string
+		var savedPlanRawStdout string
 		err = runProviderCommand(ctx, t, func() error {
 			var err error
-			stdout, err = wd.SavedPlanRawStdout(ctx)
+			savedPlanRawStdout, err = wd.SavedPlanRawStdout(ctx)
 			return err
 		}, wd, providers)
 		if err != nil {
-			return fmt.Errorf("Error retrieving formatted second plan output: %w", err)
+			return tfJSONDiags, stdout, fmt.Errorf("Error retrieving formatted second plan output: %w", err)
 		}
-		return fmt.Errorf("After applying this test step and performing a `terraform refresh`, the plan was not empty.\nstdout\n\n%s", stdout)
+		return tfJSONDiags, stdout, fmt.Errorf("After applying this test step and performing a `terraform refresh`, the plan was not empty.\nstdout\n\n%s", savedPlanRawStdout)
 	} else if step.ExpectNonEmptyPlan && planIsEmpty(plan) {
-		return errors.New("Expected a non-empty plan, but got an empty plan")
+		return tfJSONDiags, stdout, errors.New("Expected a non-empty plan, but got an empty plan")
 	}
 
 	// ID-ONLY REFRESH
@@ -281,11 +256,11 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		}, wd, providers)
 
 		if err != nil {
-			return err
+			return tfJSONDiags, stdout, err
 		}
 
 		if state.Empty() {
-			return nil
+			return tfJSONDiags, stdout, nil
 		}
 
 		var idRefreshCheck *terraform.ResourceState
@@ -309,11 +284,11 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		// caught a different bug.
 		if idRefreshCheck != nil {
 			if err := testIDRefresh(ctx, t, c, wd, step, idRefreshCheck, providers); err != nil {
-				return fmt.Errorf(
+				return tfJSONDiags, stdout, fmt.Errorf(
 					"[ERROR] Test: ID-only test failed: %s", err)
 			}
 		}
 	}
 
-	return nil
+	return tfJSONDiags, stdout, nil
 }

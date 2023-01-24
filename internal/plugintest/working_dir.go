@@ -6,6 +6,7 @@ package plugintest
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -170,9 +171,28 @@ func (wd *WorkingDir) planFilename() string {
 	return filepath.Join(wd.baseDir, PlanFileName)
 }
 
-// CreatePlan runs "terraform plan" to create a saved plan file, which if successful
-// will then be used for the next call to Apply.
-func (wd *WorkingDir) CreatePlan(ctx context.Context) error {
+type CreatePlanResponse struct {
+	Diagnostics []tfjson.Diagnostic
+	Stdout      string
+}
+
+// CreatePlan runs CreatePlanJSON first and will fall back to running terraform plan if an error
+// is returned from CreatePlanJSON indicating that the version of Terraform that is being used
+// does not support the `-json` flag with "terraform plan". CreatePlan will create a saved plan
+// file, which if successful will then be used for the next call to Apply.
+func (wd *WorkingDir) CreatePlan(ctx context.Context) (CreatePlanResponse, error) {
+	tfJSON := NewTerraformJSONBuffer()
+	createPlanResponse := CreatePlanResponse{}
+
+	err := wd.CreatePlanJSON(ctx, tfJSON)
+	target := &tfexec.ErrVersionMismatch{}
+	if !errors.As(err, &target) {
+		createPlanResponse.Diagnostics = tfJSON.Diagnostics()
+		createPlanResponse.Stdout = tfJSON.RawOutput()
+
+		return createPlanResponse, err
+	}
+
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan command")
 
 	hasChanges, err := wd.tf.Plan(context.Background(), tfexec.Reattach(wd.reattachInfo), tfexec.Refresh(false), tfexec.Out(PlanFileName))
@@ -180,34 +200,34 @@ func (wd *WorkingDir) CreatePlan(ctx context.Context) error {
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI plan command")
 
 	if err != nil {
-		return err
+		return createPlanResponse, err
 	}
 
 	if !hasChanges {
 		logging.HelperResourceTrace(ctx, "Created plan with no changes")
 
-		return nil
+		return createPlanResponse, nil
 	}
 
 	stdout, err := wd.SavedPlanRawStdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("error retrieving formatted plan output: %w", err)
+		return createPlanResponse, fmt.Errorf("error retrieving formatted plan output: %w", err)
 	}
 
 	logging.HelperResourceTrace(ctx, "Created plan with changes", map[string]any{logging.KeyTestTerraformPlan: stdout})
 
-	return nil
+	return createPlanResponse, nil
 }
 
 // CreatePlanJSON runs "terraform plan" with `-json` to create a saved plan file,
 // which if successful will then be used for the next call to Apply.
 func (wd *WorkingDir) CreatePlanJSON(ctx context.Context, w io.Writer) error {
-	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan command")
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan -json command")
 
 	hasChanges, err := wd.tf.PlanJSON(context.Background(), w, tfexec.Reattach(wd.reattachInfo), tfexec.Refresh(false), tfexec.Out(PlanFileName))
 
-	logging.HelperResourceTrace(ctx, "Called Terraform CLI plan command")
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI plan -json command")
 
 	if err != nil {
 		return err
@@ -230,9 +250,28 @@ func (wd *WorkingDir) CreatePlanJSON(ctx context.Context, w io.Writer) error {
 	return nil
 }
 
-// CreateDestroyPlan runs "terraform plan -destroy" to create a saved plan
+type CreateDestroyPlanResponse struct {
+	Diagnostics []tfjson.Diagnostic
+	Stdout      string
+}
+
+// CreateDestroyPlan runs CreateDestroyPlanJSON first and will fall back to running terraform plan if an error
+// is returned from ApplyJSON indicating that the version of Terraform that is being used
+// does not support the `-json` flag with "terraform plan -destroy". CreateDestroyPlan will create a saved plan
 // file, which if successful will then be used for the next call to Apply.
-func (wd *WorkingDir) CreateDestroyPlan(ctx context.Context) error {
+func (wd *WorkingDir) CreateDestroyPlan(ctx context.Context) (CreateDestroyPlanResponse, error) {
+	tfJSON := NewTerraformJSONBuffer()
+	createDestroyPlanResponse := CreateDestroyPlanResponse{}
+
+	err := wd.CreateDestroyPlanJSON(ctx, tfJSON)
+	target := &tfexec.ErrVersionMismatch{}
+	if !errors.As(err, &target) {
+		createDestroyPlanResponse.Diagnostics = tfJSON.Diagnostics()
+		createDestroyPlanResponse.Stdout = tfJSON.RawOutput()
+
+		return createDestroyPlanResponse, err
+	}
+
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan -destroy command")
 
 	hasChanges, err := wd.tf.Plan(context.Background(), tfexec.Reattach(wd.reattachInfo), tfexec.Refresh(false), tfexec.Out(PlanFileName), tfexec.Destroy(true))
@@ -240,34 +279,34 @@ func (wd *WorkingDir) CreateDestroyPlan(ctx context.Context) error {
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI plan -destroy command")
 
 	if err != nil {
-		return err
+		return createDestroyPlanResponse, err
 	}
 
 	if !hasChanges {
 		logging.HelperResourceTrace(ctx, "Created destroy plan with no changes")
 
-		return nil
+		return createDestroyPlanResponse, nil
 	}
 
 	stdout, err := wd.SavedPlanRawStdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("error retrieving formatted plan output: %w", err)
+		return createDestroyPlanResponse, fmt.Errorf("error retrieving formatted plan output: %w", err)
 	}
 
 	logging.HelperResourceTrace(ctx, "Created destroy plan with changes", map[string]any{logging.KeyTestTerraformPlan: stdout})
 
-	return nil
+	return createDestroyPlanResponse, nil
 }
 
 // CreateDestroyPlanJSON runs "terraform plan -destroy -json" to create a saved plan
 // file, which if successful will then be used for the next call to Apply.
 func (wd *WorkingDir) CreateDestroyPlanJSON(ctx context.Context, w io.Writer) error {
-	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan -destroy command")
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan -destroy -json command")
 
 	hasChanges, err := wd.tf.PlanJSON(context.Background(), w, tfexec.Reattach(wd.reattachInfo), tfexec.Refresh(false), tfexec.Out(PlanFileName), tfexec.Destroy(true))
 
-	logging.HelperResourceTrace(ctx, "Called Terraform CLI plan -destroy command")
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI plan -destroy -json command")
 
 	if err != nil {
 		return err
@@ -290,11 +329,30 @@ func (wd *WorkingDir) CreateDestroyPlanJSON(ctx context.Context, w io.Writer) er
 	return nil
 }
 
-// Apply runs "terraform apply". If CreatePlan has previously completed
+type ApplyResponse struct {
+	Diagnostics []tfjson.Diagnostic
+	Stdout      string
+}
+
+// Apply runs ApplyJSON first and will fall back to running terraform apply if an error
+// is returned from ApplyJSON indicating that the version of Terraform that is being used
+// does not support the `-json` flag with "terraform apply". If CreatePlan has previously completed
 // successfully and the saved plan has not been cleared in the meantime then
 // this will apply the saved plan. Otherwise, it will implicitly create a new
 // plan and apply it.
-func (wd *WorkingDir) Apply(ctx context.Context) error {
+func (wd *WorkingDir) Apply(ctx context.Context) (ApplyResponse, error) {
+	tfJSON := NewTerraformJSONBuffer()
+	applyResponse := ApplyResponse{}
+
+	err := wd.ApplyJSON(ctx, tfJSON)
+	target := &tfexec.ErrVersionMismatch{}
+	if !errors.As(err, &target) {
+		applyResponse.Diagnostics = tfJSON.Diagnostics()
+		applyResponse.Stdout = tfJSON.RawOutput()
+
+		return applyResponse, err
+	}
+
 	args := []tfexec.ApplyOption{tfexec.Reattach(wd.reattachInfo), tfexec.Refresh(false)}
 	if wd.HasSavedPlan() {
 		args = append(args, tfexec.DirOrPlan(PlanFileName))
@@ -302,11 +360,11 @@ func (wd *WorkingDir) Apply(ctx context.Context) error {
 
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI apply command")
 
-	err := wd.tf.Apply(context.Background(), args...)
+	err = wd.tf.Apply(context.Background(), args...)
 
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI apply command")
 
-	return err
+	return applyResponse, err
 }
 
 // ApplyJSON runs "terraform apply" with the `-json` flag. The streaming JSON output
@@ -320,11 +378,11 @@ func (wd *WorkingDir) ApplyJSON(ctx context.Context, w io.Writer) error {
 		args = append(args, tfexec.DirOrPlan(PlanFileName))
 	}
 
-	logging.HelperResourceTrace(ctx, "Calling Terraform CLI apply command")
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI apply -json command")
 
 	err := wd.tf.ApplyJSON(context.Background(), w, args...)
 
-	logging.HelperResourceTrace(ctx, "Called Terraform CLI apply command")
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI apply -json command")
 
 	return err
 }
@@ -427,24 +485,43 @@ func (wd *WorkingDir) Taint(ctx context.Context, address string) error {
 	return err
 }
 
-// Refresh runs terraform refresh
-func (wd *WorkingDir) Refresh(ctx context.Context) error {
+type RefreshResponse struct {
+	Diagnostics []tfjson.Diagnostic
+	Stdout      string
+}
+
+// Refresh runs RefreshJSON first and will fall back to running terraform refresh if an error
+// is returned from RefreshJSON indicating that the version of Terraform that is being used
+// does not support the `-json` flag.
+func (wd *WorkingDir) Refresh(ctx context.Context) (RefreshResponse, error) {
+	tfJSON := NewTerraformJSONBuffer()
+	refreshResponse := RefreshResponse{}
+
+	err := wd.RefreshJSON(ctx, tfJSON)
+	target := &tfexec.ErrVersionMismatch{}
+	if !errors.As(err, &target) {
+		refreshResponse.Diagnostics = tfJSON.Diagnostics()
+		refreshResponse.Stdout = tfJSON.RawOutput()
+
+		return refreshResponse, err
+	}
+
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI refresh command")
 
-	err := wd.tf.Refresh(context.Background(), tfexec.Reattach(wd.reattachInfo))
+	err = wd.tf.Refresh(context.Background(), tfexec.Reattach(wd.reattachInfo))
 
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI refresh command")
 
-	return err
+	return refreshResponse, err
 }
 
-// RefreshJSON runs terraform refresh
+// RefreshJSON runs terraform refresh with `-json` flag
 func (wd *WorkingDir) RefreshJSON(ctx context.Context, w io.Writer) error {
-	logging.HelperResourceTrace(ctx, "Calling Terraform CLI refresh command")
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI refresh -json command")
 
 	err := wd.tf.RefreshJSON(context.Background(), w, tfexec.Reattach(wd.reattachInfo))
 
-	logging.HelperResourceTrace(ctx, "Called Terraform CLI refresh command")
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI refresh -json command")
 
 	return err
 }

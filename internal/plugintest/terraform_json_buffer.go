@@ -11,9 +11,6 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 )
 
-var _ io.Writer = &TerraformJSONBuffer{}
-var _ io.Reader = &TerraformJSONBuffer{}
-
 type TerraformJSONDiagnostics []tfjson.Diagnostic
 
 func (d TerraformJSONDiagnostics) Contains(r *regexp.Regexp, severity tfjson.DiagnosticSeverity) bool {
@@ -32,10 +29,17 @@ func (d TerraformJSONDiagnostics) Contains(r *regexp.Regexp, severity tfjson.Dia
 	return false
 }
 
+var _ io.Writer = &TerraformJSONBuffer{}
+var _ io.Reader = &TerraformJSONBuffer{}
+
+// TerraformJSONBuffer is used for storing and processing streaming
+// JSON output generated when running terraform commands with the
+// `-json` flag.
 type TerraformJSONBuffer struct {
 	buf         *bytes.Buffer
 	diagnostics TerraformJSONDiagnostics
 	jsonOutput  []string
+	rawOutput   string
 	parsed      bool
 }
 
@@ -69,11 +73,13 @@ func (b *TerraformJSONBuffer) Parse() {
 	scanner := bufio.NewScanner(b.buf)
 
 	for scanner.Scan() {
+		txt := scanner.Text()
+
+		b.rawOutput += "\n" + txt
+
 		var outer struct {
 			Diagnostic tfjson.Diagnostic
 		}
-
-		txt := scanner.Text()
 
 		// This will only capture buffer entries that can be unmarshalled
 		// as JSON. If there are entries in the buffer that are not JSON
@@ -108,4 +114,12 @@ func (b *TerraformJSONBuffer) JsonOutput() []string {
 	}
 
 	return b.jsonOutput
+}
+
+func (b *TerraformJSONBuffer) RawOutput() string {
+	if !b.parsed {
+		b.Parse()
+	}
+
+	return b.rawOutput
 }

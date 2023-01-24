@@ -120,9 +120,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	// acts as default for import tests
 	var appliedCfg string
 
-	// tfJSON (io.Writer) is supplied to all terraform commands that are using streaming json output.
-	tfJSON := plugintest.NewTerraformJSONBuffer()
-
 	for stepIndex, step := range c.Steps {
 		stepNumber := stepIndex + 1 // 1-based indexing for humans
 		ctx = logging.TestStepNumberContext(ctx, stepNumber)
@@ -249,7 +246,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.RefreshState {
 			logging.HelperResourceTrace(ctx, "TestStep is RefreshState mode")
 
-			err := testStepNewRefreshState(ctx, t, wd, step, providers, tfJSON)
+			tfJSONDiags, stdout, err := testStepNewRefreshState(ctx, t, wd, step, providers)
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -262,22 +259,20 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				}
 
 				errorFound := step.ExpectError.MatchString(err.Error())
-				jsonErrorFound := tfJSON.Diagnostics().Contains(step.ExpectError, tfjson.DiagnosticSeverityError)
+				jsonErrorFound := tfJSONDiags.Contains(step.ExpectError, tfjson.DiagnosticSeverityError)
 
-				errorOutput := []string{err.Error()}
-
-				if jsonErrorFound {
-					errorOutput = tfJSON.JsonOutput()
-				}
+				errorOutput := []string{err.Error(), stdout}
 
 				if !errorFound && !jsonErrorFound {
 					logging.HelperResourceError(ctx,
 						fmt.Sprintf("Error running refresh: expected an error with pattern (%s)", step.ExpectError.String()),
 						map[string]interface{}{logging.KeyError: strings.Join(errorOutput, "")},
 					)
-					t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
+					t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), strings.Join(errorOutput, "\n"))
 				}
 			} else {
+				// TODO: ErrorCheck will be broken if errors that are being checked that would have
+				// previously been present in err are now in stdout.
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
 					err = c.ErrorCheck(err)
@@ -295,14 +290,16 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if step.ExpectWarning != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectWarning")
 
-				warningFound := tfJSON.Diagnostics().Contains(step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
+				warningFound := tfJSONDiags.Contains(step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
 
 				if !warningFound {
 					logging.HelperResourceError(ctx,
 						fmt.Sprintf("Expected a warning with pattern (%s)", step.ExpectWarning.String()),
 						map[string]interface{}{logging.KeyError: err},
 					)
-					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), strings.Join(tfJSON.JsonOutput(), "\n"))
+					// TODO: Using stdout will show all entries in the Terraform stdout whereas the warning will only
+					// be found if it's in the JSON output.
+					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), stdout)
 				}
 			}
 
@@ -314,7 +311,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.Config != "" {
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
-			err := testStepNewConfig(ctx, t, c, wd, step, providers, tfJSON)
+			tfJSONDiags, stdout, err := testStepNewConfig(ctx, t, c, wd, step, providers)
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -327,13 +324,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				}
 
 				errorFound := step.ExpectError.MatchString(err.Error())
-				jsonErrorFound := tfJSON.Diagnostics().Contains(step.ExpectError, tfjson.DiagnosticSeverityError)
+				jsonErrorFound := tfJSONDiags.Contains(step.ExpectError, tfjson.DiagnosticSeverityError)
 
-				errorOutput := []string{err.Error()}
-
-				if jsonErrorFound {
-					errorOutput = tfJSON.JsonOutput()
-				}
+				errorOutput := []string{err.Error(), stdout}
 
 				if !errorFound && !jsonErrorFound {
 					logging.HelperResourceError(ctx,
@@ -343,6 +336,8 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					t.Fatalf("Step %d/%d, expected an error matching pattern, no match on: %s", stepNumber, len(c.Steps), errorOutput)
 				}
 			} else {
+				// TODO: ErrorCheck will be broken if errors that are being checked that would have
+				// previously been present in err are now in stdout.
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
 
@@ -362,14 +357,16 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if step.ExpectWarning != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectWarning")
 
-				warningFound := tfJSON.Diagnostics().Contains(step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
+				warningFound := tfJSONDiags.Contains(step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
 
 				if !warningFound {
 					logging.HelperResourceError(ctx,
 						fmt.Sprintf("Expected a warning with pattern (%s)", step.ExpectWarning.String()),
 						map[string]interface{}{logging.KeyError: err},
 					)
-					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), strings.Join(tfJSON.JsonOutput(), "\n"))
+					// TODO: Using stdout will show all entries in the Terraform stdout whereas the warning will only
+					// be found if it's in the JSON output.
+					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), stdout)
 				}
 			}
 
@@ -437,7 +434,11 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 	// Refresh!
 	err = runProviderCommand(ctx, t, func() error {
-		err = wd.Refresh(ctx)
+		// TODO: Need to handle the possibility that the error no longer requires all
+		// of the required info for debugging in the case that terraform refresh with
+		// -json has been run and the information that was in the error is now in
+		// RefreshResponse.Stdout
+		_, err := wd.Refresh(ctx)
 		if err != nil {
 			t.Fatalf("Error running terraform refresh: %s", err)
 		}
