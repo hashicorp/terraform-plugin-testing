@@ -16,7 +16,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) (plugintest.TerraformJSONDiagnostics, string, error) {
+type testStepNewRefreshStateResponse struct {
+	tfJSONDiags plugintest.TerraformJSONDiagnostics
+	stdout      string
+}
+
+func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) (testStepNewRefreshStateResponse, error) {
 	t.Helper()
 
 	var tfJSONDiags plugintest.TerraformJSONDiagnostics
@@ -44,7 +49,10 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 		return err
 	}, wd, providers)
 	if err != nil {
-		return tfJSONDiags, stdout, fmt.Errorf("Error running refresh: %w", err)
+		return testStepNewRefreshStateResponse{
+			tfJSONDiags: tfJSONDiags,
+			stdout:      stdout,
+		}, fmt.Errorf("Error running refresh: %w", err)
 	}
 
 	var refreshState *terraform.State
@@ -80,7 +88,10 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 		return err
 	}, wd, providers)
 	if err != nil {
-		return tfJSONDiags, stdout, fmt.Errorf("Error running post-apply plan: %w", err)
+		return testStepNewRefreshStateResponse{
+			tfJSONDiags: tfJSONDiags,
+			stdout:      stdout,
+		}, fmt.Errorf("Error running post-apply plan: %w", err)
 	}
 
 	var plan *tfjson.Plan
@@ -90,7 +101,10 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 		return err
 	}, wd, providers)
 	if err != nil {
-		return tfJSONDiags, stdout, fmt.Errorf("Error retrieving post-apply plan: %w", err)
+		return testStepNewRefreshStateResponse{
+			tfJSONDiags: tfJSONDiags,
+			stdout:      stdout,
+		}, fmt.Errorf("Error retrieving post-apply plan: %w", err)
 	}
 
 	if !planIsEmpty(plan) && !step.ExpectNonEmptyPlan {
@@ -101,10 +115,19 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 			return err
 		}, wd, providers)
 		if err != nil {
-			return tfJSONDiags, stdout, fmt.Errorf("Error retrieving formatted plan output: %w", err)
+			return testStepNewRefreshStateResponse{
+				tfJSONDiags: tfJSONDiags,
+				stdout:      stdout,
+			}, fmt.Errorf("Error retrieving formatted plan output: %w", err)
 		}
-		return tfJSONDiags, stdout, fmt.Errorf("After refreshing state during this test step, a followup plan was not empty.\nstdout:\n\n%s", stdout)
+		return testStepNewRefreshStateResponse{
+			tfJSONDiags: tfJSONDiags,
+			stdout:      stdout,
+		}, fmt.Errorf("After refreshing state during this test step, a followup plan was not empty.\nstdout:\n\n%s", stdout)
 	}
 
-	return tfJSONDiags, stdout, nil
+	return testStepNewRefreshStateResponse{
+		tfJSONDiags: tfJSONDiags,
+		stdout:      stdout,
+	}, nil
 }

@@ -246,7 +246,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.RefreshState {
 			logging.HelperResourceTrace(ctx, "TestStep is RefreshState mode")
 
-			tfJSONDiags, stdout, err := testStepNewRefreshState(ctx, t, wd, step, providers)
+			testStepNewRefreshStateResponse, err := testStepNewRefreshState(ctx, t, wd, step, providers)
+			tfJSONDiags := testStepNewRefreshStateResponse.tfJSONDiags
+			stdout := testStepNewRefreshStateResponse.stdout
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -311,7 +313,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.Config != "" {
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
-			tfJSONDiags, stdout, err := testStepNewConfig(ctx, t, c, wd, step, providers)
+			testStepNewConfigResponse, err := testStepNewConfig(ctx, t, c, wd, step, providers)
+			tfJSONDiags := testStepNewConfigResponse.tfJSONDiags
+			stdout := testStepNewConfigResponse.stdout
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
