@@ -268,7 +268,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						fmt.Sprintf("Error running refresh: expected an error with pattern (%s)", step.ExpectError.String()),
 						map[string]interface{}{logging.KeyError: strings.Join(errorOutput, "")},
 					)
-					t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), strings.Join(errorOutput, "\n"))
+					t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), strings.Join(errorOutput, ""))
 				}
 			} else {
 				// TODO: ErrorCheck will be broken if errors that are being checked that would have
@@ -333,7 +333,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						fmt.Sprintf("Expected an error with pattern (%s)", step.ExpectError.String()),
 						map[string]interface{}{logging.KeyError: strings.Join(errorOutput, "")},
 					)
-					t.Fatalf("Step %d/%d, expected an error matching pattern, no match on: %s", stepNumber, len(c.Steps), errorOutput)
+					t.Fatalf("Step %d/%d, expected an error matching pattern, no match on: %s", stepNumber, len(c.Steps), strings.Join(errorOutput, ""))
 				}
 			} else {
 				// TODO: ErrorCheck will be broken if errors that are being checked that would have
