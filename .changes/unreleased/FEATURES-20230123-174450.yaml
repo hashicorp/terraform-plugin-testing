@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'helper/resource: Added `TestCase` type `WorkingDir` field to allow specifying
+  the base directory where testing files used by the testing module are generated'
+time: 2023-01-23T17:44:50.681427Z
+custom:
+  Issue: "18"

@@ -1823,9 +1823,37 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithPersistMatch_WithPe
 	for k := range testSteps {
 		dir := workingDirPath + "_" + strconv.Itoa(k+1)
 
-		_, err := os.ReadDir(dir)
+		dirEntries, err := os.ReadDir(dir)
 		if err != nil {
-			t.Fatalf("cannot read dir: %s", dir)
+			t.Errorf("cannot read dir: %s", dir)
+		}
+
+		var workingDirName string
+
+		// Relies upon convention of a directory being created that is prefixed "work".
+		for _, dirEntry := range dirEntries {
+			if strings.HasPrefix(dirEntry.Name(), "work") && dirEntry.IsDir() {
+				workingDirName = filepath.Join(dir, dirEntry.Name())
+				break
+			}
+		}
+
+		configPlanStateFiles := []string{
+			"terraform_plugin_test.tf",
+			"terraform.tfstate",
+			"tfplan",
+		}
+
+		for i, file := range configPlanStateFiles {
+			// Skip verifying plan for first test step as there is no plan file if the
+			// resource does not already exist.
+			if k == 0 && i > 1 {
+				break
+			}
+			_, err = os.Stat(filepath.Join(workingDirName, file))
+			if err != nil {
+				t.Errorf("cannot stat %s in %s: %s", file, workingDirName, err)
+			}
 		}
 	}
 }
@@ -1904,9 +1932,38 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch_
 	for k := range testSteps {
 		dir := workingDirPath + "_" + strconv.Itoa(k+1)
 
-		_, err := os.ReadDir(dir)
+		dirEntries, err := os.ReadDir(dir)
 		if err != nil {
-			t.Fatalf("cannot read dir: %s", dir)
+			t.Errorf("cannot read dir: %s", dir)
+		}
+
+		var workingDirName string
+
+		// Relies upon convention of a directory being created that is prefixed "work".
+		for _, dirEntry := range dirEntries {
+			if strings.HasPrefix(dirEntry.Name(), "work") && dirEntry.IsDir() {
+				workingDirName = filepath.Join(dir, dirEntry.Name())
+				break
+			}
+		}
+
+		configPlanStateFiles := []string{
+			"terraform_plugin_test.tf",
+			"terraform.tfstate",
+			"tfplan",
+		}
+
+		for i, file := range configPlanStateFiles {
+			// Skip verifying state and plan for first test step as ImportStatePersist is
+			// false so the state is not persisted and there is no plan file if the
+			// resource does not already exist.
+			if k == 0 && i > 0 {
+				break
+			}
+			_, err = os.Stat(filepath.Join(workingDirName, file))
+			if err != nil {
+				t.Errorf("cannot stat %s in %s: %s", file, workingDirName, err)
+			}
 		}
 	}
 }

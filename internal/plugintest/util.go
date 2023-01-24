@@ -77,22 +77,22 @@ func CopyFile(src, dest string) error {
 
 	srcFile, err := os.Open(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to open file: %w", err)
 	}
 	defer srcFile.Close()
 
 	destFile, err := os.Create(dest)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to create file: %w", err)
 	}
 	defer destFile.Close()
 
 	if _, err = io.Copy(destFile, srcFile); err != nil {
-		return err
+		return fmt.Errorf("unable to copy: %w", err)
 	}
 
 	if srcFileInfo, err = os.Stat(src); err != nil {
-		return err
+		return fmt.Errorf("unable to stat: %w", err)
 	}
 
 	return os.Chmod(dest, srcFileInfo.Mode())
@@ -103,16 +103,16 @@ func CopyFile(src, dest string) error {
 func CopyDir(src string, dest string) error {
 	srcInfo, err := os.Stat(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to stat: %w", err)
 	}
 
 	if err = os.MkdirAll(dest, srcInfo.Mode()); err != nil {
-		return err
+		return fmt.Errorf("unable to create dir: %w", err)
 	}
 
 	dirEntries, err := os.ReadDir(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to read dir: %w", err)
 	}
 
 	for _, dirEntry := range dirEntries {
@@ -121,11 +121,11 @@ func CopyDir(src string, dest string) error {
 
 		if dirEntry.IsDir() {
 			if err = CopyDir(srcFilepath, destFilepath); err != nil {
-				return err
+				return fmt.Errorf("unable to copy directory: %w", err)
 			}
 		} else {
 			if err = CopyFile(srcFilepath, destFilepath); err != nil {
-				return err
+				return fmt.Errorf("unable to copy file: %w", err)
 			}
 		}
 	}
