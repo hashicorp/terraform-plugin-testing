@@ -2803,6 +2803,60 @@ func TestTest_TestStep_ProviderFactories_ExpectWarningDestroy(t *testing.T) {
 	})
 }
 
+func TestTest_TestStep_ProviderFactories_ErrorCheck(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		ErrorCheck: func(err error) error {
+			r := regexp.MustCompile("error summary")
+
+			if r.MatchString(err.Error()) {
+				return nil
+			}
+
+			return err
+		},
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"example": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return &schema.Provider{
+					ResourcesMap: map[string]*schema.Resource{
+						"example_resource": {
+							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) diag.Diagnostics {
+								d.SetId("id")
+
+								return diag.Diagnostics{
+									diag.Diagnostic{
+										Severity: 0,
+										Summary:  "error summary",
+										Detail:   "error detail",
+									},
+								}
+							},
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							Schema: map[string]*schema.Schema{
+								"id": {
+									Computed: true,
+									Type:     schema.TypeString,
+								},
+							},
+						},
+					},
+				}, nil
+			},
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "example_resource" "test" { }`,
+			},
+		},
+	})
+}
+
 func setTimeForTest(t time.Time) func() {
 	return func() {
 		getTimeForTest = func() time.Time {

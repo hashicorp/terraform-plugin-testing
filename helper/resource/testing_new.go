@@ -273,11 +273,30 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), strings.Join(errorOutput, ""))
 				}
 			} else {
-				// TODO: ErrorCheck will be broken if errors that are being checked that would have
-				// previously been present in err are now in stdout.
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
+
+					// This is a "best effort" to supply ErrorCheck with the contents of the
+					// error diagnostics returned from running the Terraform command when
+					// executed with the -json flag. If ErrorCheck functions are using
+					// regexp to perform matches that include line breaks then these will
+					// likely no longer behave as expected and therefore potentially
+					// represent a breaking change.
+					var diagStrings []string
+
+					for _, v := range tfJSONDiags {
+						if v.Severity != tfjson.DiagnosticSeverityError {
+							continue
+						}
+
+						diagStrings = append(diagStrings, "Error: "+v.Summary)
+						diagStrings = append(diagStrings, v.Detail)
+					}
+
+					err = fmt.Errorf("%s\n"+strings.Join(diagStrings, "\n"), err)
+
 					err = c.ErrorCheck(err)
+
 					logging.HelperResourceDebug(ctx, "Called TestCase ErrorCheck")
 				}
 				if err != nil {
@@ -340,10 +359,27 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					t.Fatalf("Step %d/%d, expected an error matching pattern, no match on: %s", stepNumber, len(c.Steps), strings.Join(errorOutput, ""))
 				}
 			} else {
-				// TODO: ErrorCheck will be broken if errors that are being checked that would have
-				// previously been present in err are now in stdout.
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
+
+					// This is a "best effort" to supply ErrorCheck with the contents of the
+					// error diagnostics returned from running the Terraform command when
+					// executed with the -json flag. If ErrorCheck functions are using
+					// regexp to perform matches that include line breaks then these will
+					// likely no longer behave as expected and therefore potentially
+					// represent a breaking change.
+					var diagStrings []string
+
+					for _, v := range tfJSONDiags {
+						if v.Severity != tfjson.DiagnosticSeverityError {
+							continue
+						}
+
+						diagStrings = append(diagStrings, "Error: "+v.Summary)
+						diagStrings = append(diagStrings, v.Detail)
+					}
+
+					err = fmt.Errorf("%s\n"+strings.Join(diagStrings, "\n"), err)
 
 					err = c.ErrorCheck(err)
 
