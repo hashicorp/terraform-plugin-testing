@@ -1,7 +1,7 @@
 [
   { "heading": "Testing" },
   { "title": "Overview", "path": "" },
-  { "title": "Migrate to the Testing Module", "path": "migrating" },
+  { "title": "Migrating from SDK", "path": "migrating" },
   {
     "title": "Acceptance Testing",
     "routes": [
