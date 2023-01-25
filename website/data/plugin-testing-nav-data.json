@@ -24,11 +24,6 @@
     ]
   },
   {
-    "title": "Testing API",
-    "path": "testing-api",
-    "hidden": true
-  },
-  {
     "title": "Testing Patterns",
     "path": "testing-patterns"
   },
