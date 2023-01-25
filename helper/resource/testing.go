@@ -418,6 +418,15 @@ type TestCase struct {
 	// IDRefreshIgnore is a list of configuration keys that will be ignored
 	// during ID-only refresh testing.
 	IDRefreshIgnore []string
+
+	// WorkingDir sets the base directory where testing files used by the testing
+	// module are generated. If WorkingDir is unset, a randomized, temporary
+	// directory is used.
+	//
+	// Use the TF_ACC_PERSIST_WORKING_DIR environment variable, conventionally
+	// set to "1", to persist any working directory files. Otherwise, this directory is
+	// automatically cleaned up at the end of the TestCase.
+	WorkingDir string
 }
 
 // ExternalProvider holds information about third-party providers that should
