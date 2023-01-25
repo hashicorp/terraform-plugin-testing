@@ -1,6 +1,6 @@
 # Terraform Documentation
 
-This directory contains the portions of [the Terraform website][terraform.io] that pertain to the Terraform Plugin SDK.
+This directory contains the portions of [the Terraform website][terraform.io] that pertain to the Terraform Plugin Testing.
 
 The files in this directory are intended to be used in conjunction with
 [the `terraform-website` repository](https://github.com/hashicorp/terraform-website), which brings all of the
