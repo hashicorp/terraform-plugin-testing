@@ -38,5 +38,5 @@ The website reads content from release tags to generate documentation for all ve
 
 You cannot edit documentation for past versions of `terraform-plugin-testing` on the site. Documentation is an artifact of a product release. We push docs fixes forward for the next release, rather than retroactively fixing older versions.
 
-[nav-data]: ../website/data/plugin-sdk-nav-data.json
+[nav-data]: ../website/data/plugin-testing-nav-data.json
 [terraform.io]: https://www.terraform.io/
