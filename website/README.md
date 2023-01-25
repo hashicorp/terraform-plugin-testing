@@ -28,7 +28,7 @@ To preview your content, complete the following steps:
 
 **Launch Site Locally**
 
-1. Navigate into your local `terraform-plugin-sdk` top-level directory and run `make website`.
+1. Navigate into your local `terraform-plugin-testing` top-level directory and run `make website`.
 1. Open `http://localhost:3000` in your web browser. While the preview is running, you can edit pages and Next.js will automatically rebuild them.
 1. When you're done with the preview, press `ctrl-C` in your terminal to stop the server.
 
