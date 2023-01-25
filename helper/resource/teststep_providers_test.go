@@ -1820,8 +1820,8 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithPersistMatch_WithPe
 
 	workingDirPath := filepath.Dir(workingDir)
 
-	for k := range testSteps {
-		dir := workingDirPath + "_" + strconv.Itoa(k+1)
+	for testStepIndex := range testSteps {
+		dir := workingDirPath + "_" + strconv.Itoa(testStepIndex+1)
 
 		dirEntries, err := os.ReadDir(dir)
 		if err != nil {
@@ -1844,10 +1844,10 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithPersistMatch_WithPe
 			"tfplan",
 		}
 
-		for i, file := range configPlanStateFiles {
+		for _, file := range configPlanStateFiles {
 			// Skip verifying plan for first test step as there is no plan file if the
 			// resource does not already exist.
-			if k == 0 && i > 1 {
+			if testStepIndex == 0 && file == "tfplan" {
 				break
 			}
 			_, err = os.Stat(filepath.Join(workingDirName, file))
@@ -1929,8 +1929,8 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch_
 
 	workingDirPath := filepath.Dir(workingDir)
 
-	for k := range testSteps {
-		dir := workingDirPath + "_" + strconv.Itoa(k+1)
+	for testStepIndex := range testSteps {
+		dir := workingDirPath + "_" + strconv.Itoa(testStepIndex+1)
 
 		dirEntries, err := os.ReadDir(dir)
 		if err != nil {
@@ -1953,11 +1953,11 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch_
 			"tfplan",
 		}
 
-		for i, file := range configPlanStateFiles {
+		for _, file := range configPlanStateFiles {
 			// Skip verifying state and plan for first test step as ImportStatePersist is
 			// false so the state is not persisted and there is no plan file if the
 			// resource does not already exist.
-			if k == 0 && i > 0 {
+			if testStepIndex == 0 && (file == "terraform.tfstate" || file == "tfplan") {
 				break
 			}
 			_, err = os.Stat(filepath.Join(workingDirName, file))
