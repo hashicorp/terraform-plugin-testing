@@ -23,7 +23,7 @@ DOCKER_RUN_FLAGS=-it \
 		--rm \
 		--tty \
 		--volume "$(PWD)/docs:/app/docs" \
-		--volume "$(PWD)/img:/app/public" \
+		--volume "$(PWD)/img:/app/public/img" \
 		--volume "$(PWD)/data:/app/data" \
 		--volume "$(PWD)/redirects.js:/app/redirects.js" \
 		--volume "next-dir:/app/website-preview/.next" \
