@@ -7,7 +7,7 @@
 
 # Set the preview mode for the website shell to "developer" or "io"
 PREVIEW_MODE ?= developer
-REPO ?= terraform-plugin-sdk
+REPO ?= terraform-plugin-testing
 
 # Enable setting alternate docker tool, e.g. 'make DOCKER_CMD=podman'
 DOCKER_CMD ?= docker
