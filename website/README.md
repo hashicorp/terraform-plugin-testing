@@ -36,7 +36,7 @@ To preview your content, complete the following steps:
 
 The website reads content from release tags to generate documentation for all versions of `terraform-plugin-sdk` documentation. Changes merged into `main` will be included in the documentation for the next product release.
 
-You cannot edit documentation for past versions of `terraform-plugin-sdk` on the site. Documentation is an artifact of a product release. We push docs fixes forward for the next release, rather than retroactively fixing older versions.
+You cannot edit documentation for past versions of `terraform-plugin-testing` on the site. Documentation is an artifact of a product release. We push docs fixes forward for the next release, rather than retroactively fixing older versions.
 
 [nav-data]: ../website/data/plugin-sdk-nav-data.json
 [terraform.io]: https://www.terraform.io/
