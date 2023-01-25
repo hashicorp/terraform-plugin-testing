@@ -5,6 +5,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -318,9 +319,14 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						fmt.Sprintf("Expected a warning with pattern (%s)", step.ExpectWarning.String()),
 						map[string]interface{}{logging.KeyError: err},
 					)
-					// TODO: Using stdout will show all entries in the Terraform stdout whereas the warning will only
-					// be found if it's in the JSON output.
-					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), stdout)
+
+					tfJSONDiagsMarshalled, err := json.Marshal(tfJSONDiags)
+					if err != nil {
+						t.Fatalf("could not marshal tfJSON: %s", err)
+					}
+
+					t.Errorf("Step %d/%d, expected a warning matching pattern: %q, no match on: %s", stepNumber, len(c.Steps), step.ExpectWarning.String(), tfJSONDiagsMarshalled)
+					t.Fatalf("Stdout: %s", stdout)
 				}
 			}
 
@@ -404,9 +410,14 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						fmt.Sprintf("Expected a warning with pattern (%s)", step.ExpectWarning.String()),
 						map[string]interface{}{logging.KeyError: err},
 					)
-					// TODO: Using stdout will show all entries in the Terraform stdout whereas the warning will only
-					// be found if it's in the JSON output.
-					t.Fatalf("Step %d/%d, expected a warning matching pattern, no match on: %s", stepNumber, len(c.Steps), stdout)
+
+					tfJSONDiagsMarshalled, err := json.Marshal(tfJSONDiags)
+					if err != nil {
+						t.Fatalf("could not marshal tfJSON: %s", err)
+					}
+
+					t.Errorf("Step %d/%d, expected a warning matching pattern: %q, no match on: %s", stepNumber, len(c.Steps), step.ExpectWarning.String(), tfJSONDiagsMarshalled)
+					t.Fatalf("Stdout: %s", stdout)
 				}
 			}
 
@@ -474,13 +485,9 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 	// Refresh!
 	err = runProviderCommand(ctx, t, func() error {
-		// TODO: Need to handle the possibility that the error no longer requires all
-		// of the required info for debugging in the case that terraform refresh with
-		// -json has been run and the information that was in the error is now in
-		// RefreshResponse.Stdout
-		_, err := wd.Refresh(ctx)
+		refreshResponse, err := wd.Refresh(ctx)
 		if err != nil {
-			t.Fatalf("Error running terraform refresh: %s", err)
+			t.Fatalf("Error running terraform refresh: %s", err, refreshResponse.Stdout)
 		}
 		state, err = getState(ctx, t, wd)
 		if err != nil {
