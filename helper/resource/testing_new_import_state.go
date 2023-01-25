@@ -94,7 +94,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	if step.ImportStatePersist {
 		importWd = wd
 	} else {
-		importWd = helper.RequireNewWorkingDir(ctx, t)
+		importWd = helper.RequireNewWorkingDir(ctx, t, "")
 		defer importWd.Close()
 	}
 
