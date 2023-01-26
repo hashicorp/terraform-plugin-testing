@@ -31,7 +31,7 @@ import (
 )
 
 // flagSweep is a flag available when running tests on the command line. It
-// contains a comma seperated list of regions to for the sweeper functions to
+// contains a comma separated list of regions to for the sweeper functions to
 // run in.  This flag bypasses the normal Test path and instead runs functions designed to
 // clean up any leaked resources a testing environment could have created. It is
 // a best effort attempt, and relies on Provider authors to implement "Sweeper"
@@ -52,7 +52,7 @@ import (
 
 var flagSweep = flag.String("sweep", "", "List of Regions to run available Sweepers")
 var flagSweepAllowFailures = flag.Bool("sweep-allow-failures", false, "Enable to allow Sweeper Tests to continue after failures")
-var flagSweepRun = flag.String("sweep-run", "", "Comma seperated list of Sweeper Tests to run")
+var flagSweepRun = flag.String("sweep-run", "", "Comma separated list of Sweeper Tests to run")
 var sweeperFuncs map[string]*Sweeper
 
 // SweeperFunc is a signature for a function that acts as a sweeper. It
@@ -186,7 +186,7 @@ func runSweepers(regions []string, sweepers map[string]*Sweeper, allowFailures b
 	return sweeperRunList, nil
 }
 
-// filterSweepers takes a comma seperated string listing the names of sweepers
+// filterSweepers takes a comma separated string listing the names of sweepers
 // to be ran, and returns a filtered set from the list of all of sweepers to
 // run based on the names given.
 func filterSweepers(f string, source map[string]*Sweeper) map[string]*Sweeper {
@@ -233,7 +233,7 @@ func filterSweeperWithDependencies(name string, source map[string]*Sweeper) map[
 	return result
 }
 
-// runSweeperWithRegion recieves a sweeper and a region, and recursively calls
+// runSweeperWithRegion receives a sweeper and a region, and recursively calls
 // itself with that region for every dependency found for that sweeper. If there
 // are no dependencies, invoke the contained sweeper fun with the region, and
 // add the success/fail status to the sweeperRunList.

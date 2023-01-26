@@ -2369,6 +2369,7 @@ func composeImportStateCheck(fs ...ImportStateCheckFunc) ImportStateCheckFunc {
 	}
 }
 
+//nolint:unparam // Generic test function
 func testExtractResourceAttrInstanceState(id, attributeName string, attributeValue *string) ImportStateCheckFunc {
 	return func(is []*terraform.InstanceState) error {
 		for _, v := range is {
@@ -2407,6 +2408,7 @@ func testCheckResourceAttrInstanceState(id *string, attributeName, attributeValu
 	}
 }
 
+//nolint:unparam // Generic test function
 func testExtractResourceAttr(resourceName string, attributeName string, attributeValue *string) TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
