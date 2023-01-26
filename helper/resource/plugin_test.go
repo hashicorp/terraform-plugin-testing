@@ -244,6 +244,8 @@ func TestSdkProviderFactoriesMerge(t *testing.T) {
 }
 
 func TestRunProviderCommand(t *testing.T) {
+	t.Parallel()
+
 	currentDir, err := os.Getwd()
 
 	if err != nil {

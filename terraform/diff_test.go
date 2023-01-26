@@ -10,6 +10,8 @@ import (
 )
 
 func TestInstanceDiff_ChangeType(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		diff   *InstanceDiff
 		Result diffChangeType
@@ -82,6 +84,8 @@ func TestInstanceDiff_ChangeType(t *testing.T) {
 }
 
 func TestInstanceDiff_Empty(t *testing.T) {
+	t.Parallel()
+
 	var rd *InstanceDiff
 
 	if !rd.Empty() {
@@ -114,6 +118,8 @@ func TestInstanceDiff_Empty(t *testing.T) {
 }
 
 func TestInstanceDiff_RequiresNew(t *testing.T) {
+	t.Parallel()
+
 	rd := &InstanceDiff{
 		Attributes: map[string]*ResourceAttrDiff{
 			"foo": {},
@@ -132,6 +138,8 @@ func TestInstanceDiff_RequiresNew(t *testing.T) {
 }
 
 func TestInstanceDiff_RequiresNew_nil(t *testing.T) {
+	t.Parallel()
+
 	var rd *InstanceDiff
 
 	if rd.RequiresNew() {
@@ -140,6 +148,8 @@ func TestInstanceDiff_RequiresNew_nil(t *testing.T) {
 }
 
 func TestInstanceDiffSame(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		One, Two *InstanceDiff
 		Same     bool
@@ -810,7 +820,11 @@ func TestInstanceDiffSame(t *testing.T) {
 	}
 
 	for i, tc := range cases {
+		i, tc := i, tc
+
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			t.Parallel()
+
 			same, reason := tc.One.Same(tc.Two)
 			if same != tc.Same {
 				t.Fatalf("%d: expected same: %t, got %t (%s)\n\n one: %#v\n\ntwo: %#v",
@@ -825,6 +839,8 @@ func TestInstanceDiffSame(t *testing.T) {
 }
 
 func TestCountFlatmapContainerValues(t *testing.T) {
+	t.Parallel()
+
 	for i, tc := range []struct {
 		attrs map[string]string
 		key   string
@@ -851,7 +867,11 @@ func TestCountFlatmapContainerValues(t *testing.T) {
 			count: "2",
 		},
 	} {
+		i, tc := i, tc
+
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			t.Parallel()
+
 			count := countFlatmapContainerValues(tc.key, tc.attrs)
 			if count != tc.count {
 				t.Fatalf("expected %q, got %q", tc.count, count)

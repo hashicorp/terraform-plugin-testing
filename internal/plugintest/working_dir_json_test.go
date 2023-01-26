@@ -17,6 +17,8 @@ import (
 // This test also proves that when changing the HCL and JSON formats back and
 // forth, the framework deletes the previous configuration file.
 func TestJSONConfig(t *testing.T) {
+	t.Parallel()
+
 	providerFactories := map[string]func() (*schema.Provider, error){
 		"tst": func() (*schema.Provider, error) { return tstProvider(), nil }, //nolint:unparam // required signature
 	}

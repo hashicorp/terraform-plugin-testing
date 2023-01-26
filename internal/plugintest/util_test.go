@@ -9,6 +9,8 @@ import (
 )
 
 func TestCopyFile(t *testing.T) {
+	t.Parallel()
+
 	srcDir := t.TempDir()
 
 	_, err := os.Create(filepath.Join(srcDir, "src.txt"))
@@ -39,6 +41,8 @@ func TestCopyFile(t *testing.T) {
 }
 
 func TestCopyDir(t *testing.T) {
+	t.Parallel()
+
 	srcDir := t.TempDir()
 
 	_, err := os.Create(filepath.Join(srcDir, "src.txt"))

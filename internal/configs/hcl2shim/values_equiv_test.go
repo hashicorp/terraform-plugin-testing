@@ -12,6 +12,8 @@ import (
 )
 
 func TestValuesSDKEquivalent(t *testing.T) {
+	t.Parallel()
+
 	piBig, _, err := big.ParseFloat("3.14159265358979323846264338327950288419716939937510582097494459", 10, 512, big.ToZero)
 	if err != nil {
 		t.Fatal(err)
@@ -417,7 +419,11 @@ func TestValuesSDKEquivalent(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
+
 		t.Run(fmt.Sprintf("%#v ≈ %#v", test.A, test.B), func(t *testing.T) {
+			t.Parallel()
+
 			run(t, test.A, test.B, test.Want)
 		})
 		// This function is symmetrical, so we'll also test in reverse so

@@ -12,6 +12,8 @@ import (
 )
 
 func TestTestCheckTypeSetElemAttr(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		Description       string
 		ResourceAddress   string
@@ -400,7 +402,11 @@ func TestTestCheckTypeSetElemAttr(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		testCase := testCase
+
 		t.Run(testCase.Description, func(t *testing.T) {
+			t.Parallel()
+
 			err := TestCheckTypeSetElemAttr(testCase.ResourceAddress, testCase.ResourceAttribute, testCase.Value)(testCase.TerraformState)
 
 			if err != nil {
@@ -424,6 +430,8 @@ func TestTestCheckTypeSetElemAttr(t *testing.T) {
 }
 
 func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		Description             string
 		FirstResourceAddress    string
@@ -1002,7 +1010,11 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		testCase := testCase
+
 		t.Run(testCase.Description, func(t *testing.T) {
+			t.Parallel()
+
 			err := TestCheckTypeSetElemAttrPair(
 				testCase.FirstResourceAddress,
 				testCase.FirstResourceAttribute,
@@ -1030,6 +1042,8 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 }
 
 func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		Description       string
 		ResourceAddress   string
@@ -1740,7 +1754,11 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		testCase := testCase
+
 		t.Run(testCase.Description, func(t *testing.T) {
+			t.Parallel()
+
 			err := TestMatchTypeSetElemNestedAttrs(testCase.ResourceAddress, testCase.ResourceAttribute, testCase.Values)(testCase.TerraformState)
 
 			if err != nil {
@@ -1764,6 +1782,8 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 }
 
 func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		Description       string
 		ResourceAddress   string
@@ -2573,7 +2593,11 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		testCase := testCase
+
 		t.Run(testCase.Description, func(t *testing.T) {
+			t.Parallel()
+
 			err := TestCheckTypeSetElemNestedAttrs(testCase.ResourceAddress, testCase.ResourceAttribute, testCase.Values)(testCase.TerraformState)
 
 			if err != nil {

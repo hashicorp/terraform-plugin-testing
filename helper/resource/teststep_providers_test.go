@@ -1782,6 +1782,7 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithPersistMatch(t *tes
 	})
 }
 
+//nolint:paralleltest // Can't use t.Parallel with t.Setenv
 func TestTest_TestStep_ProviderFactories_Import_External_WithPersistMatch_WithPersistWorkingDir(t *testing.T) {
 	var result1, result2 string
 
@@ -1891,6 +1892,7 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch(
 	})
 }
 
+//nolint:paralleltest // Can't use t.Parallel with t.Setenv
 func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch_WithPersistWorkingDir(t *testing.T) {
 	var result1, result2 string
 
@@ -2028,6 +2030,7 @@ func TestTest_TestStep_ProviderFactories_Refresh_Inline(t *testing.T) {
 	})
 }
 
+//nolint:paralleltest // Can't use t.Parallel with t.Setenv
 func TestTest_TestStep_ProviderFactories_CopyWorkingDir_EachTestStep(t *testing.T) {
 	t.Setenv(plugintest.EnvTfAccPersistWorkingDir, "1")
 	workingDir := t.TempDir()
