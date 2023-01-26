@@ -16,6 +16,8 @@ import (
 )
 
 func TestStateValidate(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		In  *State
 		Err bool
@@ -52,6 +54,8 @@ func TestStateValidate(t *testing.T) {
 }
 
 func TestStateAddModule(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		In  []addrs.ModuleInstance
 		Out [][]string
@@ -118,6 +122,8 @@ func TestStateAddModule(t *testing.T) {
 }
 
 func TestStateDeepCopy(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		State *State
 	}{
@@ -177,7 +183,11 @@ func TestStateDeepCopy(t *testing.T) {
 	}
 
 	for i, tc := range cases {
+		i, tc := i, tc
+
 		t.Run(fmt.Sprintf("copy-%d", i), func(t *testing.T) {
+			t.Parallel()
+
 			actual := tc.State.DeepCopy()
 			expected := tc.State
 			if !reflect.DeepEqual(actual, expected) {
@@ -188,6 +198,8 @@ func TestStateDeepCopy(t *testing.T) {
 }
 
 func TestStateEqual(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		Name     string
 		Result   bool
@@ -377,7 +389,11 @@ func TestStateEqual(t *testing.T) {
 	}
 
 	for i, tc := range cases {
+		i, tc := i, tc
+
 		t.Run(fmt.Sprintf("%d-%s", i, tc.Name), func(t *testing.T) {
+			t.Parallel()
+
 			if tc.One.Equal(tc.Two) != tc.Result {
 				t.Fatalf("Bad: %d\n\n%s\n\n%s", i, tc.One.String(), tc.Two.String())
 			}
@@ -389,6 +405,8 @@ func TestStateEqual(t *testing.T) {
 }
 
 func TestStateCompareAges(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		Result   StateAgeComparison
 		Err      bool
@@ -481,6 +499,8 @@ func TestStateCompareAges(t *testing.T) {
 }
 
 func TestStateSameLineage(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		Result   bool
 		One, Two *State
@@ -539,6 +559,8 @@ func TestStateSameLineage(t *testing.T) {
 }
 
 func TestStateRemove(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		Address  string
 		One, Two *State
@@ -824,6 +846,8 @@ func TestStateRemove(t *testing.T) {
 }
 
 func TestResourceStateEqual(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		Result   bool
 		One, Two *ResourceState
@@ -911,6 +935,8 @@ func TestResourceStateEqual(t *testing.T) {
 }
 
 func TestInstanceStateEmpty(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		In     *InstanceState
 		Result bool
@@ -939,6 +965,8 @@ func TestInstanceStateEmpty(t *testing.T) {
 }
 
 func TestInstanceStateEqual(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		Result   bool
 		One, Two *InstanceState
@@ -992,6 +1020,8 @@ func TestInstanceStateEqual(t *testing.T) {
 }
 
 func TestStateEmpty(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		In     *State
 		Result bool
@@ -1028,6 +1058,8 @@ func TestStateEmpty(t *testing.T) {
 }
 
 func TestStateHasResources(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		In     *State
 		Result bool
@@ -1086,6 +1118,8 @@ func TestStateHasResources(t *testing.T) {
 }
 
 func TestStateIsRemote(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		In     *State
 		Result bool
@@ -1114,6 +1148,8 @@ func TestStateIsRemote(t *testing.T) {
 }
 
 func TestInstanceState_MergeDiff(t *testing.T) {
+	t.Parallel()
+
 	is := InstanceState{
 		ID: "foo",
 		Attributes: map[string]string{
@@ -1160,6 +1196,8 @@ func TestInstanceState_MergeDiff(t *testing.T) {
 // right partial state. This never failed but is put here for completion
 // of the test case for GH-12183.
 func TestInstanceState_MergeDiff_computedSet(t *testing.T) {
+	t.Parallel()
+
 	is := InstanceState{}
 
 	diff := &InstanceDiff{
@@ -1196,6 +1234,8 @@ func TestInstanceState_MergeDiff_computedSet(t *testing.T) {
 }
 
 func TestInstanceState_MergeDiff_nil(t *testing.T) {
+	t.Parallel()
+
 	var is *InstanceState
 
 	diff := &InstanceDiff{
@@ -1219,6 +1259,8 @@ func TestInstanceState_MergeDiff_nil(t *testing.T) {
 }
 
 func TestInstanceState_MergeDiff_nilDiff(t *testing.T) {
+	t.Parallel()
+
 	is := InstanceState{
 		ID: "foo",
 		Attributes: map[string]string{
@@ -1238,6 +1280,8 @@ func TestInstanceState_MergeDiff_nilDiff(t *testing.T) {
 }
 
 func TestParseResourceStateKey(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		Input       string
 		Expected    *ResourceStateKey
@@ -1304,6 +1348,8 @@ func TestParseResourceStateKey(t *testing.T) {
 }
 
 func TestResourceNameSort(t *testing.T) {
+	t.Parallel()
+
 	names := []string{
 		"a",
 		"b",
