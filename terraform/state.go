@@ -373,6 +373,7 @@ func (s *State) Remove(addr ...string) error {
 		case *ResourceState:
 			s.removeResource(path, v)
 		case *InstanceState:
+			//nolint:forcetypeassert
 			s.removeInstance(r.Parent.Value.(*ResourceState), v)
 		default:
 			return fmt.Errorf("unknown type to delete: %T", r.Value)
@@ -556,7 +557,12 @@ func (s *State) DeepCopy() *State {
 		panic(err)
 	}
 
-	return copiedState.(*State)
+	state, ok := copiedState.(*State)
+	if !ok {
+		panic(fmt.Errorf("unexpected type %T for copiedState", state))
+	}
+
+	return state
 }
 
 func (s *State) Init() {
@@ -1399,7 +1405,12 @@ func (s *InstanceState) DeepCopy() *InstanceState {
 		panic(err)
 	}
 
-	return copiedState.(*InstanceState)
+	instanceState, ok := copiedState.(*InstanceState)
+	if !ok {
+		panic(fmt.Errorf("unexpected type %T for copiedState", copiedState))
+	}
+
+	return instanceState
 }
 
 func (s *InstanceState) Empty() bool {

@@ -2095,7 +2095,11 @@ func TestTest_TestStep_ProviderFactories_RefreshWithPlanModifier_Inline(t *testi
 						"random_password": {
 							CustomizeDiff: customdiff.All(
 								func(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
-									special := d.Get("special").(bool)
+									special, ok := d.Get("special").(bool)
+									if !ok {
+										return fmt.Errorf("unexpected type %T for 'special' key", d.Get("special"))
+									}
+
 									if special == true {
 										err := d.SetNew("special", false)
 										if err != nil {
@@ -2175,7 +2179,10 @@ func TestTest_TestStep_ProviderFactories_Import_Inline_With_Data_Source(t *testi
 					DataSourcesMap: map[string]*schema.Resource{
 						"http": {
 							ReadContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) (diags diag.Diagnostics) {
-								url := d.Get("url").(string)
+								url, ok := d.Get("url").(string)
+								if !ok {
+									return diag.Errorf("unexpected type %T for 'url' key", d.Get("url"))
+								}
 
 								responseHeaders := map[string]string{
 									"headerOne":   "one",

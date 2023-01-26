@@ -1457,7 +1457,12 @@ func TestMatchOutput(name string, r *regexp.Regexp) TestCheckFunc {
 			return fmt.Errorf("Not found: %s", name)
 		}
 
-		if !r.MatchString(rs.Value.(string)) {
+		valStr, ok := rs.Value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for resource value", rs.Value)
+		}
+
+		if !r.MatchString(valStr) {
 			return fmt.Errorf(
 				"Output '%s': %#v didn't match %q",
 				name,

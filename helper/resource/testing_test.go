@@ -103,7 +103,10 @@ func TestComposeAggregateTestCheckFunc(t *testing.T) {
 		t.Fatalf("Expected errors")
 	}
 
-	multi := err.(*multierror.Error)
+	multi, ok := err.(*multierror.Error)
+	if !ok {
+		t.Fatalf("unexpected type %T for err", err)
+	}
 	if !strings.Contains(multi.Errors[0].Error(), "Error 1") {
 		t.Fatalf("Expected Error 1, Got %s", multi.Errors[0])
 	}

@@ -110,6 +110,7 @@ func TestWaitForState_inconsistent_positive(t *testing.T) {
 	}
 
 	if idx != 4 {
+		//nolint:forcetypeassert // Internal test
 		t.Fatalf("Expected index 4, given %d", idx.(int))
 	}
 }

@@ -56,7 +56,11 @@ func tstProvider() *schema.Provider {
 }
 
 func resourceTstTCreate(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	d.SetId(d.Get("s").(string))
+	strVal, ok := d.Get("s").(string)
+	if !ok {
+		return diag.Errorf("unexpected type %T for 's' key", d.Get("s"))
+	}
+	d.SetId(strVal)
 	return nil
 }
 
