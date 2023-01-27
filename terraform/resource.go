@@ -58,6 +58,7 @@ func NewResourceConfigRaw(raw map[string]interface{}) *ResourceConfig {
 	// something is relying on the fact that in the old world the raw and
 	// config maps were always distinct, and thus you could in principle mutate
 	// one without affecting the other. (I sure hope nobody was doing that, though!)
+	//nolint:forcetypeassert
 	cfg := hcl2shim.ConfigValueFromHCL2(v).(map[string]interface{})
 
 	return &ResourceConfig{
@@ -163,7 +164,10 @@ func (c *ResourceConfig) DeepCopy() *ResourceConfig {
 	}
 
 	// Force the type
-	result := copiedConfig.(*ResourceConfig)
+	result, ok := copiedConfig.(*ResourceConfig)
+	if !ok {
+		panic(fmt.Errorf("unexpected type %T for copiedConfig", copiedConfig))
+	}
 
 	return result
 }

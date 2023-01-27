@@ -13,6 +13,8 @@ import (
 )
 
 func TestRandIntRange(t *testing.T) {
+	t.Parallel()
+
 	v := RandInt()
 	if vv := RandIntRange(v, v+1); vv != v {
 		t.Errorf("expected RandIntRange(%d, %d) to return %d, got %d", v, v+1, v, vv)
@@ -20,6 +22,8 @@ func TestRandIntRange(t *testing.T) {
 }
 
 func TestRandIpAddress(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		s           string
 		expected    *regexp.Regexp

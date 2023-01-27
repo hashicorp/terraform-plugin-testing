@@ -10,6 +10,8 @@ import (
 )
 
 func TestParseResourceAddress(t *testing.T) {
+	t.Parallel()
+
 	cases := map[string]struct {
 		Input    string
 		Expected *resourceAddress
@@ -187,7 +189,11 @@ func TestParseResourceAddress(t *testing.T) {
 	}
 
 	for tn, tc := range cases {
+		tn, tc := tn, tc
+
 		t.Run(tn, func(t *testing.T) {
+			t.Parallel()
+
 			out, err := parseResourceAddress(tc.Input)
 			if (err != nil) != tc.Err {
 				t.Fatalf("%s: unexpected err: %#v", tn, err)
@@ -212,6 +218,8 @@ func TestParseResourceAddress(t *testing.T) {
 }
 
 func TestResourceAddressLess(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		A    string
 		B    string
@@ -280,7 +288,11 @@ func TestResourceAddressLess(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
+
 		t.Run(fmt.Sprintf("%s < %s", test.A, test.B), func(t *testing.T) {
+			t.Parallel()
+
 			addrA, err := parseResourceAddress(test.A)
 			if err != nil {
 				t.Fatal(err)

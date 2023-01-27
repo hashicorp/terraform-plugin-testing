@@ -11,6 +11,8 @@ import (
 )
 
 func TestBlockEmptyValue(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		Schema *Block
 		Want   cty.Value
@@ -161,7 +163,11 @@ func TestBlockEmptyValue(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
+
 		t.Run(fmt.Sprintf("%#v", test.Schema), func(t *testing.T) {
+			t.Parallel()
+
 			got := test.Schema.EmptyValue()
 			if !test.Want.RawEquals(got) {
 				t.Errorf("wrong result\nschema: %#v\ngot: %#v\nwant: %#v", test.Schema, got, test.Want)

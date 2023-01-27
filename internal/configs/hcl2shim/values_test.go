@@ -14,6 +14,8 @@ import (
 )
 
 func TestConfigValueFromHCL2Block(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		Input  cty.Value
 		Schema *configschema.Block
@@ -239,7 +241,11 @@ func TestConfigValueFromHCL2Block(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
+
 		t.Run(fmt.Sprintf("%#v", test.Input), func(t *testing.T) {
+			t.Parallel()
+
 			got := ConfigValueFromHCL2Block(test.Input, test.Schema)
 			if !reflect.DeepEqual(got, test.Want) {
 				t.Errorf("wrong result\ninput: %#v\ngot:   %#v\nwant:  %#v", test.Input, got, test.Want)
@@ -249,6 +255,8 @@ func TestConfigValueFromHCL2Block(t *testing.T) {
 }
 
 func TestConfigValueFromHCL2(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		Input cty.Value
 		Want  interface{}
@@ -326,7 +334,11 @@ func TestConfigValueFromHCL2(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
+
 		t.Run(fmt.Sprintf("%#v", test.Input), func(t *testing.T) {
+			t.Parallel()
+
 			got := ConfigValueFromHCL2(test.Input)
 			if !reflect.DeepEqual(got, test.Want) {
 				t.Errorf("wrong result\ninput: %#v\ngot:   %#v\nwant:  %#v", test.Input, got, test.Want)
@@ -336,6 +348,8 @@ func TestConfigValueFromHCL2(t *testing.T) {
 }
 
 func TestHCL2ValueFromConfigValue(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		Input interface{}
 		Want  cty.Value
@@ -409,7 +423,11 @@ func TestHCL2ValueFromConfigValue(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
+
 		t.Run(fmt.Sprintf("%#v", test.Input), func(t *testing.T) {
+			t.Parallel()
+
 			got := HCL2ValueFromConfigValue(test.Input)
 			if !got.RawEquals(test.Want) {
 				t.Errorf("wrong result\ninput: %#v\ngot:   %#v\nwant:  %#v", test.Input, got, test.Want)

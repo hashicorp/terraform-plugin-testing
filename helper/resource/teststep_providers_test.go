@@ -1782,6 +1782,7 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithPersistMatch(t *tes
 	})
 }
 
+//nolint:paralleltest // Can't use t.Parallel with t.Setenv
 func TestTest_TestStep_ProviderFactories_Import_External_WithPersistMatch_WithPersistWorkingDir(t *testing.T) {
 	var result1, result2 string
 
@@ -1891,6 +1892,7 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch(
 	})
 }
 
+//nolint:paralleltest // Can't use t.Parallel with t.Setenv
 func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch_WithPersistWorkingDir(t *testing.T) {
 	var result1, result2 string
 
@@ -2028,6 +2030,7 @@ func TestTest_TestStep_ProviderFactories_Refresh_Inline(t *testing.T) {
 	})
 }
 
+//nolint:paralleltest // Can't use t.Parallel with t.Setenv
 func TestTest_TestStep_ProviderFactories_CopyWorkingDir_EachTestStep(t *testing.T) {
 	t.Setenv(plugintest.EnvTfAccPersistWorkingDir, "1")
 	workingDir := t.TempDir()
@@ -2095,7 +2098,11 @@ func TestTest_TestStep_ProviderFactories_RefreshWithPlanModifier_Inline(t *testi
 						"random_password": {
 							CustomizeDiff: customdiff.All(
 								func(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
-									special := d.Get("special").(bool)
+									special, ok := d.Get("special").(bool)
+									if !ok {
+										return fmt.Errorf("unexpected type %T for 'special' key", d.Get("special"))
+									}
+
 									if special == true {
 										err := d.SetNew("special", false)
 										if err != nil {
@@ -2175,7 +2182,10 @@ func TestTest_TestStep_ProviderFactories_Import_Inline_With_Data_Source(t *testi
 					DataSourcesMap: map[string]*schema.Resource{
 						"http": {
 							ReadContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) (diags diag.Diagnostics) {
-								url := d.Get("url").(string)
+								url, ok := d.Get("url").(string)
+								if !ok {
+									return diag.Errorf("unexpected type %T for 'url' key", d.Get("url"))
+								}
 
 								responseHeaders := map[string]string{
 									"headerOne":   "one",
@@ -2369,6 +2379,7 @@ func composeImportStateCheck(fs ...ImportStateCheckFunc) ImportStateCheckFunc {
 	}
 }
 
+//nolint:unparam // Generic test function
 func testExtractResourceAttrInstanceState(id, attributeName string, attributeValue *string) ImportStateCheckFunc {
 	return func(is []*terraform.InstanceState) error {
 		for _, v := range is {
@@ -2407,6 +2418,7 @@ func testCheckResourceAttrInstanceState(id *string, attributeName, attributeValu
 	}
 }
 
+//nolint:unparam // Generic test function
 func testExtractResourceAttr(resourceName string, attributeName string, attributeValue *string) TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]

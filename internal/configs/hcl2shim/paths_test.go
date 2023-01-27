@@ -21,6 +21,8 @@ var (
 )
 
 func TestPathFromFlatmap(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		Flatmap string
 		Type    cty.Type
@@ -209,7 +211,11 @@ func TestPathFromFlatmap(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
+
 		t.Run(fmt.Sprintf("%s as %#v", test.Flatmap, test.Type), func(t *testing.T) {
+			t.Parallel()
+
 			got, err := requiresReplacePath(test.Flatmap, test.Type)
 
 			if test.WantErr != "" {
@@ -234,6 +240,8 @@ func TestPathFromFlatmap(t *testing.T) {
 }
 
 func TestRequiresReplace(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range []struct {
 		name     string
 		attrs    []string
@@ -356,7 +364,11 @@ func TestRequiresReplace(t *testing.T) {
 			},
 		},
 	} {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			rp, err := RequiresReplace(tc.attrs, tc.ty)
 			if err != nil {
 				t.Fatal(err)
@@ -370,6 +382,8 @@ func TestRequiresReplace(t *testing.T) {
 }
 
 func TestFlatmapKeyFromPath(t *testing.T) {
+	t.Parallel()
+
 	for i, tc := range []struct {
 		path cty.Path
 		attr string
@@ -399,7 +413,11 @@ func TestFlatmapKeyFromPath(t *testing.T) {
 			attr: "attr.key.obj_attr.0.force_new",
 		},
 	} {
+		i, tc := i, tc
+
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			t.Parallel()
+
 			attr := FlatmapKeyFromPath(tc.path)
 			if attr != tc.attr {
 				t.Fatalf("expected:%q got:%q", tc.attr, attr)

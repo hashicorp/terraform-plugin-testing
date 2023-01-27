@@ -10,7 +10,11 @@ import (
 )
 
 func TestDiagnosticsErr(t *testing.T) {
+	t.Parallel()
+
 	t.Run("empty", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		err := diags.Err()
 		if err != nil {
@@ -18,6 +22,8 @@ func TestDiagnosticsErr(t *testing.T) {
 		}
 	})
 	t.Run("warning only", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		diags = append(diags, SimpleWarning("bad"))
 		err := diags.Err()
@@ -26,6 +32,8 @@ func TestDiagnosticsErr(t *testing.T) {
 		}
 	})
 	t.Run("one error", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		diags = append(diags, FromError(errors.New("didn't work")))
 		err := diags.Err()
@@ -37,6 +45,8 @@ func TestDiagnosticsErr(t *testing.T) {
 		}
 	})
 	t.Run("two errors", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		diags = append(diags, FromError(errors.New("didn't work")))
 		diags = append(diags, FromError(errors.New("didn't work either")))
@@ -55,6 +65,8 @@ func TestDiagnosticsErr(t *testing.T) {
 		}
 	})
 	t.Run("error and warning", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		diags = append(diags, FromError(errors.New("didn't work")))
 		diags = append(diags, SimpleWarning("didn't work either"))
@@ -80,7 +92,11 @@ func TestDiagnosticsErr(t *testing.T) {
 }
 
 func TestDiagnosticsErrWithWarnings(t *testing.T) {
+	t.Parallel()
+
 	t.Run("empty", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		err := diags.ErrWithWarnings()
 		if err != nil {
@@ -88,6 +104,8 @@ func TestDiagnosticsErrWithWarnings(t *testing.T) {
 		}
 	})
 	t.Run("warning only", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		diags = append(diags, SimpleWarning("bad"))
 		err := diags.ErrWithWarnings()
@@ -100,6 +118,8 @@ func TestDiagnosticsErrWithWarnings(t *testing.T) {
 		}
 	})
 	t.Run("one error", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		diags = append(diags, FromError(errors.New("didn't work")))
 		err := diags.ErrWithWarnings()
@@ -111,6 +131,8 @@ func TestDiagnosticsErrWithWarnings(t *testing.T) {
 		}
 	})
 	t.Run("two errors", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		diags = append(diags, FromError(errors.New("didn't work")))
 		diags = append(diags, FromError(errors.New("didn't work either")))
@@ -129,6 +151,8 @@ func TestDiagnosticsErrWithWarnings(t *testing.T) {
 		}
 	})
 	t.Run("error and warning", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		diags = append(diags, FromError(errors.New("didn't work")))
 		diags = append(diags, SimpleWarning("didn't work either"))
@@ -154,7 +178,11 @@ func TestDiagnosticsErrWithWarnings(t *testing.T) {
 }
 
 func TestDiagnosticsNonFatalErr(t *testing.T) {
+	t.Parallel()
+
 	t.Run("empty", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		err := diags.NonFatalErr()
 		if err != nil {
@@ -162,6 +190,8 @@ func TestDiagnosticsNonFatalErr(t *testing.T) {
 		}
 	})
 	t.Run("warning only", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		diags = append(diags, SimpleWarning("bad"))
 		err := diags.NonFatalErr()
@@ -174,6 +204,8 @@ func TestDiagnosticsNonFatalErr(t *testing.T) {
 		}
 	})
 	t.Run("one error", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		diags = append(diags, FromError(errors.New("didn't work")))
 		err := diags.NonFatalErr()
@@ -188,6 +220,8 @@ func TestDiagnosticsNonFatalErr(t *testing.T) {
 		}
 	})
 	t.Run("two errors", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		diags = append(diags, FromError(errors.New("didn't work")))
 		diags = append(diags, FromError(errors.New("didn't work either")))
@@ -209,6 +243,8 @@ func TestDiagnosticsNonFatalErr(t *testing.T) {
 		}
 	})
 	t.Run("error and warning", func(t *testing.T) {
+		t.Parallel()
+
 		var diags Diagnostics
 		diags = append(diags, FromError(errors.New("didn't work")))
 		diags = append(diags, SimpleWarning("didn't work either"))

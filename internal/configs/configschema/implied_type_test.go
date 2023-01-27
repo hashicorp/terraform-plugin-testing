@@ -10,6 +10,8 @@ import (
 )
 
 func TestBlockImpliedType(t *testing.T) {
+	t.Parallel()
+
 	tests := map[string]struct {
 		Schema *Block
 		Want   cty.Type
@@ -117,7 +119,11 @@ func TestBlockImpliedType(t *testing.T) {
 	}
 
 	for name, test := range tests {
+		name, test := name, test
+
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			got := test.Schema.ImpliedType()
 			if !got.Equals(test.Want) {
 				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)

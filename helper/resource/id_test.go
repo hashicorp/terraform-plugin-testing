@@ -14,6 +14,8 @@ var allDigits = regexp.MustCompile(`^\d+$`)
 var allHex = regexp.MustCompile(`^[a-f0-9]+$`)
 
 func TestUniqueId(t *testing.T) {
+	t.Parallel()
+
 	split := func(rest string) (timestamp, increment string) {
 		return rest[:18], rest[18:]
 	}

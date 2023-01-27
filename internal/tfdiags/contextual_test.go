@@ -11,6 +11,8 @@ import (
 )
 
 func TestGetAttribute(t *testing.T) {
+	t.Parallel()
+
 	path := cty.Path{
 		cty.GetAttrStep{Name: "foo"},
 		cty.IndexStep{Key: cty.NumberIntVal(0)},
