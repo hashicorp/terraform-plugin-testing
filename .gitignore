@@ -1,1 +1,5 @@
+node_modules
+website-preview
+
 .idea
+.vscode/settings.json
