@@ -249,7 +249,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 			testStepNewRefreshStateResponse, err := testStepNewRefreshState(ctx, t, wd, step, providers)
 			refreshTfJSONDiags := testStepNewRefreshStateResponse.tfJSONDiags
-			refreshStdout := testStepNewRefreshStateResponse.stdout
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -264,14 +263,25 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				errorFound := step.ExpectError.MatchString(err.Error())
 				jsonErrorFound := refreshTfJSONDiags.Contains(step.ExpectError, tfjson.DiagnosticSeverityError)
 
-				errorOutput := []string{err.Error(), refreshStdout}
+				errorOutput := []string{err.Error()}
+
+				for _, v := range refreshTfJSONDiags {
+					if v.Severity == tfjson.DiagnosticSeverityError {
+						b, err := json.Marshal(v)
+						if err != nil {
+							t.Errorf("could not marshal tfjson diagnostic: %s", err)
+						}
+
+						errorOutput = append(errorOutput, string(b))
+					}
+				}
 
 				if !errorFound && !jsonErrorFound {
 					logging.HelperResourceError(ctx,
 						fmt.Sprintf("Error running refresh: expected an error with pattern (%s)", step.ExpectError.String()),
 						map[string]interface{}{logging.KeyError: strings.Join(errorOutput, "")},
 					)
-					t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), strings.Join(errorOutput, ""))
+					t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), strings.Join(errorOutput, "\n"))
 				}
 			} else {
 				if err != nil && c.ErrorCheck != nil {
@@ -305,7 +315,21 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						"Error running refresh",
 						map[string]interface{}{logging.KeyError: err},
 					)
-					t.Fatalf("Step %d/%d error running refresh: %s", stepNumber, len(c.Steps), err)
+
+					errorOutput := []string{err.Error()}
+
+					for _, v := range refreshTfJSONDiags {
+						if v.Severity == tfjson.DiagnosticSeverityError {
+							b, err := json.Marshal(v)
+							if err != nil {
+								t.Errorf("could not marshal tfjson diagnostic: %s", err)
+							}
+
+							errorOutput = append(errorOutput, string(b))
+						}
+					}
+
+					t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), strings.Join(errorOutput, "\n"))
 				}
 			}
 
@@ -326,7 +350,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					}
 
 					t.Errorf("Step %d/%d, expected a warning matching pattern: %q, no match on: %s", stepNumber, len(c.Steps), step.ExpectWarning.String(), tfJSONDiagsMarshalled)
-					t.Fatalf("Stdout: %s", refreshStdout)
 				}
 			}
 
@@ -340,7 +363,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 			testStepNewConfigResponse, err := testStepNewConfig(ctx, t, c, wd, step, providers)
 			newConfigTfJSONDiags := testStepNewConfigResponse.tfJSONDiags
-			newConfigStdout := testStepNewConfigResponse.stdout
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -355,7 +377,18 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				errorFound := step.ExpectError.MatchString(err.Error())
 				jsonErrorFound := newConfigTfJSONDiags.Contains(step.ExpectError, tfjson.DiagnosticSeverityError)
 
-				errorOutput := []string{err.Error(), newConfigStdout}
+				errorOutput := []string{err.Error()}
+
+				for _, v := range newConfigTfJSONDiags {
+					if v.Severity == tfjson.DiagnosticSeverityError {
+						b, err := json.Marshal(v)
+						if err != nil {
+							t.Errorf("could not marshal tfjson Diagnostic: %s", err)
+						}
+
+						errorOutput = append(errorOutput, string(b))
+					}
+				}
 
 				if !errorFound && !jsonErrorFound {
 					logging.HelperResourceError(ctx,
@@ -396,7 +429,21 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						"Unexpected error",
 						map[string]interface{}{logging.KeyError: err},
 					)
-					t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), err)
+
+					errorOutput := []string{err.Error()}
+
+					for _, v := range newConfigTfJSONDiags {
+						if v.Severity == tfjson.DiagnosticSeverityError {
+							b, err := json.Marshal(v)
+							if err != nil {
+								t.Errorf("could not marshall tfjson Diagnostic: %s", err)
+							}
+
+							errorOutput = append(errorOutput, string(b))
+						}
+					}
+
+					t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), strings.Join(errorOutput, "\n"))
 				}
 			}
 
@@ -417,7 +464,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					}
 
 					t.Errorf("Step %d/%d, expected a warning matching pattern: %q, no match on: %s", stepNumber, len(c.Steps), step.ExpectWarning.String(), tfJSONDiagsMarshalled)
-					t.Fatalf("Stdout: %s", newConfigStdout)
 				}
 			}
 
