@@ -265,15 +265,13 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 				errorOutput := []string{err.Error()}
 
-				for _, v := range refreshTfJSONDiags {
-					if v.Severity == tfjson.DiagnosticSeverityError {
-						b, err := json.Marshal(v)
-						if err != nil {
-							t.Errorf("could not marshal tfjson diagnostic: %s", err)
-						}
-
-						errorOutput = append(errorOutput, string(b))
+				for _, v := range refreshTfJSONDiags.Errors() {
+					b, err := json.Marshal(v)
+					if err != nil {
+						t.Errorf("could not marshal tfjson diagnostic: %s", err)
 					}
+
+					errorOutput = append(errorOutput, string(b))
 				}
 
 				if !errorFound && !jsonErrorFound {
@@ -295,11 +293,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					// represent a breaking change.
 					var diagStrings []string
 
-					for _, v := range refreshTfJSONDiags {
-						if v.Severity != tfjson.DiagnosticSeverityError {
-							continue
-						}
-
+					for _, v := range refreshTfJSONDiags.Errors() {
 						diagStrings = append(diagStrings, "Error: "+v.Summary)
 						diagStrings = append(diagStrings, v.Detail)
 					}
@@ -319,14 +313,12 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					errorOutput := []string{err.Error()}
 
 					for _, v := range refreshTfJSONDiags {
-						if v.Severity == tfjson.DiagnosticSeverityError {
-							b, err := json.Marshal(v)
-							if err != nil {
-								t.Errorf("could not marshal tfjson diagnostic: %s", err)
-							}
-
-							errorOutput = append(errorOutput, string(b))
+						b, err := json.Marshal(v)
+						if err != nil {
+							t.Errorf("could not marshal tfjson diagnostic: %s", err)
 						}
+
+						errorOutput = append(errorOutput, string(b))
 					}
 
 					t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), strings.Join(errorOutput, "\n"))
@@ -344,12 +336,18 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						map[string]interface{}{logging.KeyError: err},
 					)
 
-					tfJSONDiagsMarshalled, err := json.Marshal(refreshTfJSONDiags)
-					if err != nil {
-						t.Fatalf("could not marshal tfJSON: %s", err)
+					var warningDiags []string
+
+					for _, v := range refreshTfJSONDiags.Warnings() {
+						b, err := json.Marshal(v)
+						if err != nil {
+							t.Errorf("could not marshal tfjson diagnostic: %s", err)
+						}
+
+						warningDiags = append(warningDiags, string(b))
 					}
 
-					t.Errorf("Step %d/%d, expected a warning matching pattern: %q, no match on: %s", stepNumber, len(c.Steps), step.ExpectWarning.String(), tfJSONDiagsMarshalled)
+					t.Errorf("Step %d/%d, expected a warning matching pattern: %q, no match on: %s", stepNumber, len(c.Steps), step.ExpectWarning.String(), strings.Join(warningDiags, "\n"))
 				}
 			}
 
@@ -379,15 +377,13 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 				errorOutput := []string{err.Error()}
 
-				for _, v := range newConfigTfJSONDiags {
-					if v.Severity == tfjson.DiagnosticSeverityError {
-						b, err := json.Marshal(v)
-						if err != nil {
-							t.Errorf("could not marshal tfjson Diagnostic: %s", err)
-						}
-
-						errorOutput = append(errorOutput, string(b))
+				for _, v := range newConfigTfJSONDiags.Errors() {
+					b, err := json.Marshal(v)
+					if err != nil {
+						t.Errorf("could not marshal tfjson Diagnostic: %s", err)
 					}
+
+					errorOutput = append(errorOutput, string(b))
 				}
 
 				if !errorFound && !jsonErrorFound {
@@ -409,11 +405,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					// represent a breaking change.
 					var diagStrings []string
 
-					for _, v := range newConfigTfJSONDiags {
-						if v.Severity != tfjson.DiagnosticSeverityError {
-							continue
-						}
-
+					for _, v := range newConfigTfJSONDiags.Errors() {
 						diagStrings = append(diagStrings, "Error: "+v.Summary)
 						diagStrings = append(diagStrings, v.Detail)
 					}
@@ -432,15 +424,13 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 					errorOutput := []string{err.Error()}
 
-					for _, v := range newConfigTfJSONDiags {
-						if v.Severity == tfjson.DiagnosticSeverityError {
-							b, err := json.Marshal(v)
-							if err != nil {
-								t.Errorf("could not marshall tfjson Diagnostic: %s", err)
-							}
-
-							errorOutput = append(errorOutput, string(b))
+					for _, v := range newConfigTfJSONDiags.Errors() {
+						b, err := json.Marshal(v)
+						if err != nil {
+							t.Errorf("could not marshall tfjson Diagnostic: %s", err)
 						}
+
+						errorOutput = append(errorOutput, string(b))
 					}
 
 					t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), strings.Join(errorOutput, "\n"))
@@ -458,12 +448,18 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						map[string]interface{}{logging.KeyError: err},
 					)
 
-					tfJSONDiagsMarshalled, err := json.Marshal(newConfigTfJSONDiags)
-					if err != nil {
-						t.Fatalf("could not marshal tfJSON: %s", err)
+					var warningDiags []string
+
+					for _, v := range newConfigTfJSONDiags.Warnings() {
+						b, err := json.Marshal(v)
+						if err != nil {
+							t.Errorf("could not marshal tfjson diagnostic: %s", err)
+						}
+
+						warningDiags = append(warningDiags, string(b))
 					}
 
-					t.Errorf("Step %d/%d, expected a warning matching pattern: %q, no match on: %s", stepNumber, len(c.Steps), step.ExpectWarning.String(), tfJSONDiagsMarshalled)
+					t.Errorf("Step %d/%d, expected a warning matching pattern: %q, no match on: %s", stepNumber, len(c.Steps), step.ExpectWarning.String(), strings.Join(warningDiags, "\n"))
 				}
 			}
 

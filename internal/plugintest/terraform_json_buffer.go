@@ -29,6 +29,30 @@ func (d TerraformJSONDiagnostics) Contains(r *regexp.Regexp, severity tfjson.Dia
 	return false
 }
 
+func (d TerraformJSONDiagnostics) Errors() TerraformJSONDiagnostics {
+	var tfJSONDiagnostics TerraformJSONDiagnostics
+
+	for _, v := range d {
+		if v.Severity == tfjson.DiagnosticSeverityError {
+			tfJSONDiagnostics = append(tfJSONDiagnostics, v)
+		}
+	}
+
+	return tfJSONDiagnostics
+}
+
+func (d TerraformJSONDiagnostics) Warnings() TerraformJSONDiagnostics {
+	var tfJSONDiagnostics TerraformJSONDiagnostics
+
+	for _, v := range d {
+		if v.Severity == tfjson.DiagnosticSeverityWarning {
+			tfJSONDiagnostics = append(tfJSONDiagnostics, v)
+		}
+	}
+
+	return tfJSONDiagnostics
+}
+
 var _ io.Writer = &TerraformJSONBuffer{}
 var _ io.Reader = &TerraformJSONBuffer{}
 

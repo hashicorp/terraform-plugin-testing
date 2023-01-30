@@ -84,6 +84,107 @@ func TestTerraformJSONDiagnostics_Contains(t *testing.T) {
 	}
 }
 
+func TestTerraformJSONDiagnostics_Errors(t *testing.T) {
+	testCases := map[string]struct {
+		diags    []tfjson.Diagnostic
+		expected TerraformJSONDiagnostics
+	}{
+		"errors-found": {
+			diags: []tfjson.Diagnostic{
+				{
+					Severity: tfjson.DiagnosticSeverityError,
+					Summary:  "error 1 summary",
+					Detail:   "error 1 detail",
+				},
+				{
+					Severity: tfjson.DiagnosticSeverityWarning,
+					Summary:  "warning summary",
+					Detail:   "warning detail",
+				},
+				{
+					Severity: tfjson.DiagnosticSeverityError,
+					Summary:  "error 2 summary",
+					Detail:   "error 2 detail",
+				},
+			},
+			expected: []tfjson.Diagnostic{
+				{
+					Severity: tfjson.DiagnosticSeverityError,
+					Summary:  "error 1 summary",
+					Detail:   "error 1 detail",
+				},
+				{
+					Severity: tfjson.DiagnosticSeverityError,
+					Summary:  "error 2 summary",
+					Detail:   "error 2 detail",
+				},
+			},
+		},
+	}
+
+	for name, testCase := range testCases {
+		name, testCase := name, testCase
+
+		t.Run(name, func(t *testing.T) {
+			var tfJSONDiagnostics TerraformJSONDiagnostics = testCase.diags
+
+			actual := tfJSONDiagnostics.Errors()
+
+			if diff := cmp.Diff(actual, testCase.expected); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
+			}
+		})
+	}
+}
+
+func TestTerraformJSONDiagnostics_Warnings(t *testing.T) {
+	testCases := map[string]struct {
+		diags    []tfjson.Diagnostic
+		expected TerraformJSONDiagnostics
+	}{
+		"warnings-found": {
+			diags: []tfjson.Diagnostic{
+				{
+					Severity: tfjson.DiagnosticSeverityError,
+					Summary:  "error 1 summary",
+					Detail:   "error 1 detail",
+				},
+				{
+					Severity: tfjson.DiagnosticSeverityWarning,
+					Summary:  "warning summary",
+					Detail:   "warning detail",
+				},
+				{
+					Severity: tfjson.DiagnosticSeverityError,
+					Summary:  "error 2 summary",
+					Detail:   "error 2 detail",
+				},
+			},
+			expected: []tfjson.Diagnostic{
+				{
+					Severity: tfjson.DiagnosticSeverityWarning,
+					Summary:  "warning summary",
+					Detail:   "warning detail",
+				},
+			},
+		},
+	}
+
+	for name, testCase := range testCases {
+		name, testCase := name, testCase
+
+		t.Run(name, func(t *testing.T) {
+			var tfJSONDiagnostics TerraformJSONDiagnostics = testCase.diags
+
+			actual := tfJSONDiagnostics.Warnings()
+
+			if diff := cmp.Diff(actual, testCase.expected); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
+			}
+		})
+	}
+}
+
 func TestTerraformJSONBuffer_Parse(t *testing.T) {
 	t.Parallel()
 
