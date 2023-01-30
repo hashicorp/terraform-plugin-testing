@@ -19,20 +19,17 @@ import (
 
 type testStepNewConfigResponse struct {
 	tfJSONDiags plugintest.TerraformJSONDiagnostics
-	stdout      string
 }
 
 func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) (testStepNewConfigResponse, error) {
 	t.Helper()
 
 	var tfJSONDiags plugintest.TerraformJSONDiagnostics
-	var stdout string
 
 	err := wd.SetConfig(ctx, step.mergedConfig(ctx, c))
 	if err != nil {
 		return testStepNewConfigResponse{
 			tfJSONDiags: tfJSONDiags,
-			stdout:      stdout,
 		}, fmt.Errorf("Error setting config: %w", err)
 	}
 
@@ -42,14 +39,12 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		refreshResponse, err := wd.Refresh(ctx)
 
 		tfJSONDiags = append(tfJSONDiags, refreshResponse.Diagnostics...)
-		stdout += refreshResponse.Stdout
 
 		return err
 	}, wd, providers)
 	if err != nil {
 		return testStepNewConfigResponse{
 			tfJSONDiags: tfJSONDiags,
-			stdout:      stdout,
 		}, fmt.Errorf("Error running pre-apply refresh: %w", err)
 	}
 
@@ -65,21 +60,18 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				createDestroyPlanResponse, err := wd.CreateDestroyPlan(ctx)
 
 				tfJSONDiags = append(tfJSONDiags, createDestroyPlanResponse.Diagnostics...)
-				stdout += createDestroyPlanResponse.Stdout
 
 				return err
 			}
 			createPlanResponse, err := wd.CreatePlan(ctx)
 
 			tfJSONDiags = append(tfJSONDiags, createPlanResponse.Diagnostics...)
-			stdout += createPlanResponse.Stdout
 
 			return err
 		}, wd, providers)
 		if err != nil {
 			return testStepNewConfigResponse{
 				tfJSONDiags: tfJSONDiags,
-				stdout:      stdout,
 			}, fmt.Errorf("Error running pre-apply plan: %w", err)
 		}
 
@@ -97,7 +89,6 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		if err != nil {
 			return testStepNewConfigResponse{
 				tfJSONDiags: tfJSONDiags,
-				stdout:      stdout,
 			}, fmt.Errorf("Error retrieving pre-apply state: %w", err)
 		}
 
@@ -106,7 +97,6 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			applyResponse, err := wd.Apply(ctx)
 
 			tfJSONDiags = append(tfJSONDiags, applyResponse.Diagnostics...)
-			stdout += applyResponse.Stdout
 
 			return err
 		}, wd, providers)
@@ -114,13 +104,11 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			if step.Destroy {
 				return testStepNewConfigResponse{
 					tfJSONDiags: tfJSONDiags,
-					stdout:      stdout,
 				}, fmt.Errorf("Error running destroy: %w", err)
 			}
 
 			return testStepNewConfigResponse{
 				tfJSONDiags: tfJSONDiags,
-				stdout:      stdout,
 			}, fmt.Errorf("Error running apply: %w", err)
 		}
 
@@ -136,7 +124,6 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		if err != nil {
 			return testStepNewConfigResponse{
 				tfJSONDiags: tfJSONDiags,
-				stdout:      stdout,
 			}, fmt.Errorf("Error retrieving state after apply: %w", err)
 		}
 
@@ -149,14 +136,12 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				if err := step.Check(stateBeforeApplication); err != nil {
 					return testStepNewConfigResponse{
 						tfJSONDiags: tfJSONDiags,
-						stdout:      stdout,
 					}, fmt.Errorf("Check failed: %w", err)
 				}
 			} else {
 				if err := step.Check(state); err != nil {
 					return testStepNewConfigResponse{
 						tfJSONDiags: tfJSONDiags,
-						stdout:      stdout,
 					}, fmt.Errorf("Check failed: %w", err)
 				}
 			}
@@ -172,21 +157,18 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			createDestroyPlanResponse, err := wd.CreateDestroyPlan(ctx)
 
 			tfJSONDiags = append(tfJSONDiags, createDestroyPlanResponse.Diagnostics...)
-			stdout += createDestroyPlanResponse.Stdout
 
 			return err
 		}
 		createPlanResponse, err := wd.CreatePlan(ctx)
 
 		tfJSONDiags = append(tfJSONDiags, createPlanResponse.Diagnostics...)
-		stdout += createPlanResponse.Stdout
 
 		return err
 	}, wd, providers)
 	if err != nil {
 		return testStepNewConfigResponse{
 			tfJSONDiags: tfJSONDiags,
-			stdout:      stdout,
 		}, fmt.Errorf("Error running post-apply plan: %w", err)
 	}
 
@@ -199,7 +181,6 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	if err != nil {
 		return testStepNewConfigResponse{
 			tfJSONDiags: tfJSONDiags,
-			stdout:      stdout,
 		}, fmt.Errorf("Error retrieving post-apply plan: %w", err)
 	}
 
@@ -213,12 +194,10 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		if err != nil {
 			return testStepNewConfigResponse{
 				tfJSONDiags: tfJSONDiags,
-				stdout:      stdout,
 			}, fmt.Errorf("Error retrieving formatted plan output: %w", err)
 		}
 		return testStepNewConfigResponse{
 			tfJSONDiags: tfJSONDiags,
-			stdout:      stdout,
 		}, fmt.Errorf("After applying this test step, the plan was not empty.\nstdout:\n\n%s", savedPlanRawStdout)
 	}
 
@@ -228,14 +207,12 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			refreshResponse, err := wd.Refresh(ctx)
 
 			tfJSONDiags = append(tfJSONDiags, refreshResponse.Diagnostics...)
-			stdout += refreshResponse.Stdout
 
 			return err
 		}, wd, providers)
 		if err != nil {
 			return testStepNewConfigResponse{
 				tfJSONDiags: tfJSONDiags,
-				stdout:      stdout,
 			}, fmt.Errorf("Error running post-apply refresh: %w", err)
 		}
 	}
@@ -246,21 +223,18 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			createDestroyPlanResponse, err := wd.CreateDestroyPlan(ctx)
 
 			tfJSONDiags = append(tfJSONDiags, createDestroyPlanResponse.Diagnostics...)
-			stdout += createDestroyPlanResponse.Stdout
 
 			return err
 		}
 		createPlanResponse, err := wd.CreatePlan(ctx)
 
 		tfJSONDiags = append(tfJSONDiags, createPlanResponse.Diagnostics...)
-		stdout += createPlanResponse.Stdout
 
 		return err
 	}, wd, providers)
 	if err != nil {
 		return testStepNewConfigResponse{
 			tfJSONDiags: tfJSONDiags,
-			stdout:      stdout,
 		}, fmt.Errorf("Error running second post-apply plan: %w", err)
 	}
 
@@ -272,7 +246,6 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	if err != nil {
 		return testStepNewConfigResponse{
 			tfJSONDiags: tfJSONDiags,
-			stdout:      stdout,
 		}, fmt.Errorf("Error retrieving second post-apply plan: %w", err)
 	}
 
@@ -287,17 +260,14 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		if err != nil {
 			return testStepNewConfigResponse{
 				tfJSONDiags: tfJSONDiags,
-				stdout:      stdout,
 			}, fmt.Errorf("Error retrieving formatted second plan output: %w", err)
 		}
 		return testStepNewConfigResponse{
 			tfJSONDiags: tfJSONDiags,
-			stdout:      stdout,
 		}, fmt.Errorf("After applying this test step and performing a `terraform refresh`, the plan was not empty.\nstdout\n\n%s", savedPlanRawStdout)
 	} else if step.ExpectNonEmptyPlan && planIsEmpty(plan) {
 		return testStepNewConfigResponse{
 			tfJSONDiags: tfJSONDiags,
-			stdout:      stdout,
 		}, errors.New("Expected a non-empty plan, but got an empty plan")
 	}
 
@@ -320,14 +290,12 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		if err != nil {
 			return testStepNewConfigResponse{
 				tfJSONDiags: tfJSONDiags,
-				stdout:      stdout,
 			}, err
 		}
 
 		if state.Empty() {
 			return testStepNewConfigResponse{
 				tfJSONDiags: tfJSONDiags,
-				stdout:      stdout,
 			}, nil
 		}
 
@@ -354,7 +322,6 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			if err := testIDRefresh(ctx, t, c, wd, step, idRefreshCheck, providers); err != nil {
 				return testStepNewConfigResponse{
 					tfJSONDiags: tfJSONDiags,
-					stdout:      stdout,
 				}, fmt.Errorf("[ERROR] Test: ID-only test failed: %s", err)
 			}
 		}
@@ -362,6 +329,5 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 	return testStepNewConfigResponse{
 		tfJSONDiags: tfJSONDiags,
-		stdout:      stdout,
 	}, nil
 }

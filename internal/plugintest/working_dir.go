@@ -173,7 +173,6 @@ func (wd *WorkingDir) planFilename() string {
 
 type CreatePlanResponse struct {
 	Diagnostics []tfjson.Diagnostic
-	Stdout      string
 }
 
 // CreatePlan runs CreatePlanJSON first and will fall back to running terraform plan if an error
@@ -187,8 +186,10 @@ func (wd *WorkingDir) CreatePlan(ctx context.Context) (CreatePlanResponse, error
 	err := wd.CreatePlanJSON(ctx, tfJSON)
 	target := &tfexec.ErrVersionMismatch{}
 	if !errors.As(err, &target) {
-		createPlanResponse.Diagnostics = tfJSON.Diagnostics()
-		createPlanResponse.Stdout = tfJSON.RawOutput()
+		createPlanResponse.Diagnostics, err = tfJSON.Diagnostics()
+		if err != nil {
+			return createPlanResponse, err
+		}
 
 		return createPlanResponse, err
 	}
@@ -252,7 +253,6 @@ func (wd *WorkingDir) CreatePlanJSON(ctx context.Context, w io.Writer) error {
 
 type CreateDestroyPlanResponse struct {
 	Diagnostics []tfjson.Diagnostic
-	Stdout      string
 }
 
 // CreateDestroyPlan runs CreateDestroyPlanJSON first and will fall back to running terraform plan if an error
@@ -266,8 +266,10 @@ func (wd *WorkingDir) CreateDestroyPlan(ctx context.Context) (CreateDestroyPlanR
 	err := wd.CreateDestroyPlanJSON(ctx, tfJSON)
 	target := &tfexec.ErrVersionMismatch{}
 	if !errors.As(err, &target) {
-		createDestroyPlanResponse.Diagnostics = tfJSON.Diagnostics()
-		createDestroyPlanResponse.Stdout = tfJSON.RawOutput()
+		createDestroyPlanResponse.Diagnostics, err = tfJSON.Diagnostics()
+		if err != nil {
+			return createDestroyPlanResponse, err
+		}
 
 		return createDestroyPlanResponse, err
 	}
@@ -331,7 +333,6 @@ func (wd *WorkingDir) CreateDestroyPlanJSON(ctx context.Context, w io.Writer) er
 
 type ApplyResponse struct {
 	Diagnostics []tfjson.Diagnostic
-	Stdout      string
 }
 
 // Apply runs ApplyJSON first and will fall back to running terraform apply if an error
@@ -347,8 +348,10 @@ func (wd *WorkingDir) Apply(ctx context.Context) (ApplyResponse, error) {
 	err := wd.ApplyJSON(ctx, tfJSON)
 	target := &tfexec.ErrVersionMismatch{}
 	if !errors.As(err, &target) {
-		applyResponse.Diagnostics = tfJSON.Diagnostics()
-		applyResponse.Stdout = tfJSON.RawOutput()
+		applyResponse.Diagnostics, err = tfJSON.Diagnostics()
+		if err != nil {
+			return applyResponse, err
+		}
 
 		return applyResponse, err
 	}
@@ -487,7 +490,6 @@ func (wd *WorkingDir) Taint(ctx context.Context, address string) error {
 
 type RefreshResponse struct {
 	Diagnostics []tfjson.Diagnostic
-	Stdout      string
 }
 
 // Refresh runs RefreshJSON first and will fall back to running terraform refresh if an error
@@ -500,8 +502,10 @@ func (wd *WorkingDir) Refresh(ctx context.Context) (RefreshResponse, error) {
 	err := wd.RefreshJSON(ctx, tfJSON)
 	target := &tfexec.ErrVersionMismatch{}
 	if !errors.As(err, &target) {
-		refreshResponse.Diagnostics = tfJSON.Diagnostics()
-		refreshResponse.Stdout = tfJSON.RawOutput()
+		refreshResponse.Diagnostics, err = tfJSON.Diagnostics()
+		if err != nil {
+			return refreshResponse, err
+		}
 
 		return refreshResponse, err
 	}

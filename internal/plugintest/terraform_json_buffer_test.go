@@ -214,7 +214,10 @@ func TestTerraformJSONBuffer_Parse(t *testing.T) {
 		t.Errorf("scanner error: %s", err)
 	}
 
-	tfJSON.Parse()
+	err = tfJSON.Parse()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
 
 	if diff := cmp.Diff(tfJSON.jsonOutput, fileEntries); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
@@ -262,8 +265,6 @@ func TestTerraformJSONBuffer_Diagnostics(t *testing.T) {
 		t.Errorf("scanner error: %s", err)
 	}
 
-	tfJSON.Parse()
-
 	var tfJSONDiagnostics TerraformJSONDiagnostics = []tfjson.Diagnostic{
 		{
 			Severity: tfjson.DiagnosticSeverityWarning,
@@ -276,7 +277,12 @@ func TestTerraformJSONBuffer_Diagnostics(t *testing.T) {
 		},
 	}
 
-	if diff := cmp.Diff(tfJSON.Diagnostics(), tfJSONDiagnostics); diff != "" {
+	diags, err := tfJSON.Diagnostics()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+
+	if diff := cmp.Diff(diags, tfJSONDiagnostics); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
 	}
 }
@@ -310,9 +316,12 @@ func TestTerraformJSONBuffer_JsonOutput(t *testing.T) {
 		t.Errorf("scanner error: %s", err)
 	}
 
-	tfJSON.Parse()
+	jsonOutput, err := tfJSON.JsonOutput()
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
 
-	if diff := cmp.Diff(tfJSON.JsonOutput(), fileEntries); diff != "" {
+	if diff := cmp.Diff(jsonOutput, fileEntries); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
 	}
 }

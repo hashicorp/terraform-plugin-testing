@@ -25,7 +25,6 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 	t.Helper()
 
 	var tfJSONDiags plugintest.TerraformJSONDiagnostics
-	var stdout string
 
 	var err error
 	// Explicitly ensure prior state exists before refresh.
@@ -44,14 +43,12 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 		refreshResponse, err := wd.Refresh(ctx)
 
 		tfJSONDiags = append(tfJSONDiags, refreshResponse.Diagnostics...)
-		stdout += refreshResponse.Stdout
 
 		return err
 	}, wd, providers)
 	if err != nil {
 		return testStepNewRefreshStateResponse{
 			tfJSONDiags: tfJSONDiags,
-			stdout:      stdout,
 		}, fmt.Errorf("Error running refresh: %w", err)
 	}
 
@@ -83,14 +80,12 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 		createPlanResponse, err := wd.CreatePlan(ctx)
 
 		tfJSONDiags = append(tfJSONDiags, createPlanResponse.Diagnostics...)
-		stdout += createPlanResponse.Stdout
 
 		return err
 	}, wd, providers)
 	if err != nil {
 		return testStepNewRefreshStateResponse{
 			tfJSONDiags: tfJSONDiags,
-			stdout:      stdout,
 		}, fmt.Errorf("Error running post-apply plan: %w", err)
 	}
 
@@ -103,7 +98,6 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 	if err != nil {
 		return testStepNewRefreshStateResponse{
 			tfJSONDiags: tfJSONDiags,
-			stdout:      stdout,
 		}, fmt.Errorf("Error retrieving post-apply plan: %w", err)
 	}
 
@@ -128,6 +122,5 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 
 	return testStepNewRefreshStateResponse{
 		tfJSONDiags: tfJSONDiags,
-		stdout:      stdout,
 	}, nil
 }

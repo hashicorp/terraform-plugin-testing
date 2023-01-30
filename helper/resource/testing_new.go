@@ -527,9 +527,9 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 	// Refresh!
 	err = runProviderCommand(ctx, t, func() error {
-		refreshResponse, err := wd.Refresh(ctx)
+		_, err := wd.Refresh(ctx)
 		if err != nil {
-			t.Fatalf("Error running terraform refresh: %s", err, refreshResponse.Stdout)
+			t.Fatalf("Error running terraform refresh: %s", err)
 		}
 		state, err = getState(ctx, t, wd)
 		if err != nil {

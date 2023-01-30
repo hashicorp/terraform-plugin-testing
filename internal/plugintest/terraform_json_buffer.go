@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
-	"log"
 	"regexp"
 
 	tfjson "github.com/hashicorp/terraform-json"
@@ -75,7 +75,7 @@ func NewTerraformJSONBuffer() *TerraformJSONBuffer {
 
 func (b *TerraformJSONBuffer) Write(p []byte) (n int, err error) {
 	if b.buf == nil {
-		log.Fatal("call NewTerraformJSONBuffer to initialise buffer")
+		return 0, fmt.Errorf("cannot write to uninitialized buffer, use NewTerraformJSONBuffer")
 	}
 
 	return b.buf.Write(p)
@@ -83,15 +83,15 @@ func (b *TerraformJSONBuffer) Write(p []byte) (n int, err error) {
 
 func (b *TerraformJSONBuffer) Read(p []byte) (n int, err error) {
 	if b.buf == nil {
-		log.Fatal("call NewTerraformJSONBuffer to initialise buffer")
+		return 0, fmt.Errorf("cannot write to uninitialized buffer, use NewTerraformJSONBuffer")
 	}
 
 	return b.buf.Read(p)
 }
 
-func (b *TerraformJSONBuffer) Parse() {
+func (b *TerraformJSONBuffer) Parse() error {
 	if b.buf == nil {
-		log.Fatal("call NewTerraformJSONBuffer to initialise buffer")
+		return fmt.Errorf("cannot write to uninitialized buffer, use NewTerraformJSONBuffer")
 	}
 
 	scanner := bufio.NewScanner(b.buf)
@@ -118,32 +118,43 @@ func (b *TerraformJSONBuffer) Parse() {
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error scanning buffer: %w", err)
 	}
 
 	b.parsed = true
+
+	return nil
 }
 
-func (b *TerraformJSONBuffer) Diagnostics() TerraformJSONDiagnostics {
+func (b *TerraformJSONBuffer) Diagnostics() (TerraformJSONDiagnostics, error) {
 	if !b.parsed {
-		b.Parse()
+		err := b.Parse()
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return b.diagnostics
+	return b.diagnostics, nil
 }
 
-func (b *TerraformJSONBuffer) JsonOutput() []string {
+func (b *TerraformJSONBuffer) JsonOutput() ([]string, error) {
 	if !b.parsed {
-		b.Parse()
+		err := b.Parse()
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return b.jsonOutput
+	return b.jsonOutput, nil
 }
 
-func (b *TerraformJSONBuffer) RawOutput() string {
+func (b *TerraformJSONBuffer) RawOutput() (string, error) {
 	if !b.parsed {
-		b.Parse()
+		err := b.Parse()
+		if err != nil {
+			return "", err
+		}
 	}
 
-	return b.rawOutput
+	return b.rawOutput, nil
 }
