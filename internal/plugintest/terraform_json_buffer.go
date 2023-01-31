@@ -89,15 +89,39 @@ func (b *TerraformJSONBuffer) Read(p []byte) (n int, err error) {
 	return b.buf.Read(p)
 }
 
+func read(r *bufio.Reader) ([]byte, error) {
+	var (
+		isPrefix = true
+		err      error
+		line, ln []byte
+	)
+
+	for isPrefix && err == nil {
+		line, isPrefix, err = r.ReadLine()
+		ln = append(ln, line...)
+	}
+
+	return ln, err
+}
+
 func (b *TerraformJSONBuffer) Parse() error {
 	if b.buf == nil {
 		return fmt.Errorf("cannot write to uninitialized buffer, use NewTerraformJSONBuffer")
 	}
 
-	scanner := bufio.NewScanner(b.buf)
+	reader := bufio.NewReader(b.buf)
 
-	for scanner.Scan() {
-		txt := scanner.Text()
+	for {
+		line, err := read(reader)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return fmt.Errorf("cannot read line: %s", err)
+		}
+
+		txt := string(line)
 
 		b.rawOutput += "\n" + txt
 
@@ -115,10 +139,6 @@ func (b *TerraformJSONBuffer) Parse() error {
 				b.diagnostics = append(b.diagnostics, outer.Diagnostic)
 			}
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("error scanning buffer: %w", err)
 	}
 
 	b.parsed = true
