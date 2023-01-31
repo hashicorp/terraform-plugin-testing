@@ -16,6 +16,8 @@ import (
 )
 
 func TestResourceConfigGet(t *testing.T) {
+	t.Parallel()
+
 	fooStringSchema := &configschema.Block{
 		Attributes: map[string]*configschema.Attribute{
 			"foo": {Type: cty.String, Optional: true},
@@ -184,10 +186,14 @@ func TestResourceConfigGet(t *testing.T) {
 	}
 
 	for i, tc := range cases {
+		i, tc := i, tc
+
 		rc := NewResourceConfigShimmed(tc.Config, tc.Schema)
 
 		// Test getting a key
 		t.Run(fmt.Sprintf("get-%d", i), func(t *testing.T) {
+			t.Parallel()
+
 			v, ok := rc.Get(tc.Key)
 			if ok && v == nil {
 				t.Fatal("(nil, true) returned from Get")
@@ -200,6 +206,8 @@ func TestResourceConfigGet(t *testing.T) {
 
 		// Test copying and equality
 		t.Run(fmt.Sprintf("copy-and-equal-%d", i), func(t *testing.T) {
+			t.Parallel()
+
 			copiedConfig := rc.DeepCopy()
 			if !reflect.DeepEqual(copiedConfig, rc) {
 				t.Fatalf("bad:\n\n%#v\n\n%#v", copiedConfig, rc)
@@ -216,6 +224,8 @@ func TestResourceConfigGet(t *testing.T) {
 }
 
 func TestResourceConfigDeepCopy_nil(t *testing.T) {
+	t.Parallel()
+
 	var nilRc *ResourceConfig
 	actual := nilRc.DeepCopy()
 	if actual != nil {
@@ -224,6 +234,8 @@ func TestResourceConfigDeepCopy_nil(t *testing.T) {
 }
 
 func TestResourceConfigDeepCopy_nilComputed(t *testing.T) {
+	t.Parallel()
+
 	rc := &ResourceConfig{}
 	actual := rc.DeepCopy()
 	if actual.ComputedKeys != nil {
@@ -232,6 +244,8 @@ func TestResourceConfigDeepCopy_nilComputed(t *testing.T) {
 }
 
 func TestResourceConfigEqual_nil(t *testing.T) {
+	t.Parallel()
+
 	var nilRc *ResourceConfig
 	notNil := NewResourceConfigShimmed(cty.EmptyObjectVal, &configschema.Block{})
 
@@ -245,6 +259,8 @@ func TestResourceConfigEqual_nil(t *testing.T) {
 }
 
 func TestResourceConfigEqual_computedKeyOrder(t *testing.T) {
+	t.Parallel()
+
 	v := cty.ObjectVal(map[string]cty.Value{
 		"foo": cty.UnknownVal(cty.String),
 	})
@@ -266,6 +282,8 @@ func TestResourceConfigEqual_computedKeyOrder(t *testing.T) {
 }
 
 func TestUnknownCheckWalker(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		Name   string
 		Input  interface{}
@@ -300,7 +318,11 @@ func TestUnknownCheckWalker(t *testing.T) {
 	}
 
 	for i, tc := range cases {
+		i, tc := i, tc
+
 		t.Run(fmt.Sprintf("%d-%s", i, tc.Name), func(t *testing.T) {
+			t.Parallel()
+
 			var w unknownCheckWalker
 			if err := reflectwalk.Walk(tc.Input, &w); err != nil {
 				t.Fatalf("err: %s", err)
@@ -314,6 +336,8 @@ func TestUnknownCheckWalker(t *testing.T) {
 }
 
 func TestNewResourceConfigShimmed(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range []struct {
 		Name     string
 		Val      cty.Value
@@ -667,7 +691,11 @@ func TestNewResourceConfigShimmed(t *testing.T) {
 			},
 		},
 	} {
-		t.Run(tc.Name, func(*testing.T) {
+		tc := tc
+
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
 			cfg := NewResourceConfigShimmed(tc.Val, tc.Schema)
 			if !tc.Expected.Equal(cfg) {
 				t.Fatalf("expected:\n%#v\ngot:\n%#v", tc.Expected, cfg)

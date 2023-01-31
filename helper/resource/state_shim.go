@@ -66,12 +66,14 @@ func shimOutputState(so *tfjson.StateOutput) (*terraform.OutputState, error) {
 		case string:
 			elements := make([]interface{}, len(v))
 			for i, el := range v {
+				//nolint:forcetypeassert // Guaranteed by type switch
 				elements[i] = el.(string)
 			}
 			os.Value = elements
 		case bool:
 			elements := make([]interface{}, len(v))
 			for i, el := range v {
+				//nolint:forcetypeassert // Guaranteed by type switch
 				elements[i] = el.(bool)
 			}
 			os.Value = elements
@@ -79,6 +81,7 @@ func shimOutputState(so *tfjson.StateOutput) (*terraform.OutputState, error) {
 		case json.Number:
 			elements := make([]interface{}, len(v))
 			for i, el := range v {
+				//nolint:forcetypeassert // Guaranteed by type switch
 				elements[i] = el.(json.Number)
 			}
 			os.Value = elements

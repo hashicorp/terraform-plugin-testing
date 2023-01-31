@@ -16,6 +16,8 @@ import (
 )
 
 func TestShimState(t *testing.T) {
+	t.Parallel()
+
 	type expectedError struct {
 		Prefix string
 	}
@@ -1087,7 +1089,11 @@ func TestShimState(t *testing.T) {
 	}
 
 	for i, tc := range testCases {
+		i, tc := i, tc
+
 		t.Run(fmt.Sprintf("%d-%s", i, tc.Name), func(t *testing.T) {
+			t.Parallel()
+
 			var rawState tfjson.State
 			rawState.UseJSONNumber(true)
 

@@ -67,6 +67,8 @@ func testExpectTFatal(t *testing.T, testLogic func()) {
 }
 
 func TestParallelTest(t *testing.T) {
+	t.Parallel()
+
 	mt := new(mockT)
 
 	ParallelTest(mt, TestCase{
@@ -89,6 +91,8 @@ func TestParallelTest(t *testing.T) {
 }
 
 func TestComposeAggregateTestCheckFunc(t *testing.T) {
+	t.Parallel()
+
 	check1 := func(s *terraform.State) error {
 		return errors.New("Error 1")
 	}
@@ -103,7 +107,10 @@ func TestComposeAggregateTestCheckFunc(t *testing.T) {
 		t.Fatalf("Expected errors")
 	}
 
-	multi := err.(*multierror.Error)
+	multi, ok := err.(*multierror.Error)
+	if !ok {
+		t.Fatalf("unexpected type %T for err", err)
+	}
 	if !strings.Contains(multi.Errors[0].Error(), "Error 1") {
 		t.Fatalf("Expected Error 1, Got %s", multi.Errors[0])
 	}
@@ -113,6 +120,8 @@ func TestComposeAggregateTestCheckFunc(t *testing.T) {
 }
 
 func TestComposeTestCheckFunc(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		F      []TestCheckFunc
 		Result string
@@ -181,6 +190,8 @@ func (t *mockT) Name() string {
 }
 
 func TestTest_Main(t *testing.T) {
+	t.Parallel()
+
 	flag.Parse()
 	if *flagSweep == "" {
 		// Tests for the TestMain method used for Sweepers will panic without the -sweep
@@ -209,8 +220,10 @@ func TestTest_Main(t *testing.T) {
 	for _, tc := range cases {
 		// reset sweepers
 		sweeperFuncs = map[string]*Sweeper{}
-
+		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
 			for n, s := range tc.Sweepers {
 				AddTestSweepers(n, s)
 			}
@@ -223,6 +236,8 @@ func TestTest_Main(t *testing.T) {
 }
 
 func TestFilterSweepers(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		Name             string
 		Sweepers         map[string]*Sweeper
@@ -417,8 +432,11 @@ func TestFilterSweepers(t *testing.T) {
 	for _, tc := range cases {
 		// reset sweepers
 		sweeperFuncs = map[string]*Sweeper{}
+		tc := tc
 
 		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
 			actualSweepers := filterSweepers(tc.Filter, tc.Sweepers)
 
 			var keys []string
@@ -436,6 +454,8 @@ func TestFilterSweepers(t *testing.T) {
 }
 
 func TestFilterSweeperWithDependencies(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		Name             string
 		Sweepers         map[string]*Sweeper
@@ -657,8 +677,11 @@ func TestFilterSweeperWithDependencies(t *testing.T) {
 	for _, tc := range cases {
 		// reset sweepers
 		sweeperFuncs = map[string]*Sweeper{}
+		tc := tc
 
 		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
 			actualSweepers := filterSweeperWithDependencies(tc.StartingSweeper, tc.Sweepers)
 
 			var keys []string
@@ -676,6 +699,8 @@ func TestFilterSweeperWithDependencies(t *testing.T) {
 }
 
 func TestRunSweepers(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		Name            string
 		Sweepers        map[string]*Sweeper
@@ -831,8 +856,11 @@ func TestRunSweepers(t *testing.T) {
 	for _, tc := range cases {
 		// reset sweepers
 		sweeperFuncs = map[string]*Sweeper{}
+		tc := tc
 
 		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
 			sweeperRunList, err := runSweepers([]string{"test"}, tc.Sweepers, tc.AllowFailures)
 			fmt.Printf("sweeperRunList: %#v\n", sweeperRunList)
 
@@ -2091,6 +2119,8 @@ func TestTestCheckNoResourceAttr(t *testing.T) {
 }
 
 func TestTestCheckResourceAttrPair(t *testing.T) {
+	t.Parallel()
+
 	tests := map[string]struct {
 		nameFirst  string
 		keyFirst   string
@@ -2359,7 +2389,11 @@ func TestTestCheckResourceAttrPair(t *testing.T) {
 	}
 
 	for name, test := range tests {
+		name, test := name, test
+
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			fn := TestCheckResourceAttrPair(test.nameFirst, test.keyFirst, test.nameSecond, test.keySecond)
 			err := fn(test.state)
 

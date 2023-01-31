@@ -331,6 +331,8 @@ func TestFlatmapValueFromHCL2FromFlatmap(t *testing.T) {
 	}
 }
 func TestHCL2ValueFromFlatmap(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		Flatmap map[string]string
 		Type    cty.Type
@@ -738,7 +740,11 @@ func TestHCL2ValueFromFlatmap(t *testing.T) {
 	}
 
 	for i, test := range tests {
+		i, test := i, test
+
 		t.Run(fmt.Sprintf("%d %#v as %#v", i, test.Flatmap, test.Type), func(t *testing.T) {
+			t.Parallel()
+
 			got, err := HCL2ValueFromFlatmap(test.Flatmap, test.Type)
 
 			if test.WantErr != "" {

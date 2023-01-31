@@ -244,6 +244,8 @@ func TestSdkProviderFactoriesMerge(t *testing.T) {
 }
 
 func TestRunProviderCommand(t *testing.T) {
+	t.Parallel()
+
 	currentDir, err := os.Getwd()
 
 	if err != nil {
@@ -261,7 +263,7 @@ func TestRunProviderCommand(t *testing.T) {
 			funcCalled = true
 			return nil
 		},
-		helper.RequireNewWorkingDir(ctx, t),
+		helper.RequireNewWorkingDir(ctx, t, ""),
 		&providerFactories{
 			legacy: map[string]func() (*schema.Provider, error){
 				"examplecloud": func() (*schema.Provider, error) { //nolint:unparam // required signature

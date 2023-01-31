@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 changesDir: .changes
 unreleasedDir: unreleased
 changelogPath: CHANGELOG.md
@@ -14,7 +17,7 @@ kinds:
   - label: BREAKING CHANGES
   - label: NOTES
   - label: FEATURES
-  - label: IMPROVEMENTS
+  - label: ENHANCEMENTS
   - label: BUG FIXES
 newlines:
   afterKind: 1

@@ -10,6 +10,8 @@ import (
 )
 
 func TestUniqueStrings(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		Input    []string
 		Expected []string
@@ -41,7 +43,11 @@ func TestUniqueStrings(t *testing.T) {
 	}
 
 	for i, tc := range cases {
+		i, tc := i, tc
+
 		t.Run(fmt.Sprintf("unique-%d", i), func(t *testing.T) {
+			t.Parallel()
+
 			actual := uniqueStrings(tc.Input)
 			if !reflect.DeepEqual(tc.Expected, actual) {
 				t.Fatalf("Expected: %q\nGot: %q", tc.Expected, actual)

@@ -12,6 +12,8 @@ import (
 )
 
 func TestCoerceValue(t *testing.T) {
+	t.Parallel()
+
 	tests := map[string]struct {
 		Schema    *Block
 		Input     cty.Value
@@ -544,7 +546,11 @@ func TestCoerceValue(t *testing.T) {
 	}
 
 	for name, test := range tests {
+		name, test := name, test
+
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			gotValue, gotErrObj := test.Schema.CoerceValue(test.Input)
 
 			if gotErrObj == nil {

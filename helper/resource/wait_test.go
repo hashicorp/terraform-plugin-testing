@@ -58,6 +58,8 @@ func TestRetry_timeout(t *testing.T) {
 }
 
 func TestRetry_hang(t *testing.T) {
+	t.Parallel()
+
 	old := refreshGracePeriod
 	refreshGracePeriod = 50 * time.Millisecond
 	defer func() {

@@ -6,7 +6,10 @@ package resource
 import (
 	"context"
 	"fmt"
-	"regexp"
+	"os"
+	"path/filepath"
+  "regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -26,6 +29,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
+	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
@@ -1785,6 +1789,83 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithPersistMatch(t *tes
 	})
 }
 
+//nolint:paralleltest // Can't use t.Parallel with t.Setenv
+func TestTest_TestStep_ProviderFactories_Import_External_WithPersistMatch_WithPersistWorkingDir(t *testing.T) {
+	var result1, result2 string
+
+	t.Setenv(plugintest.EnvTfAccPersistWorkingDir, "1")
+	workingDir := t.TempDir()
+
+	testSteps := []TestStep{
+		{
+			Config:             `resource "random_password" "test" { length = 12 }`,
+			ResourceName:       "random_password.test",
+			ImportState:        true,
+			ImportStateId:      "Z=:cbrJE?Ltg",
+			ImportStatePersist: true,
+			ImportStateCheck: composeImportStateCheck(
+				testExtractResourceAttrInstanceState("none", "result", &result1),
+			),
+		},
+		{
+			Config: `resource "random_password" "test" { length = 12 }`,
+			Check: ComposeTestCheckFunc(
+				testExtractResourceAttr("random_password.test", "result", &result2),
+				testCheckAttributeValuesEqual(&result1, &result2),
+			),
+		},
+	}
+
+	Test(t, TestCase{
+		ExternalProviders: map[string]ExternalProvider{
+			"random": {
+				Source: "registry.terraform.io/hashicorp/random",
+			},
+		},
+		WorkingDir: workingDir,
+		Steps:      testSteps,
+	})
+
+	workingDirPath := filepath.Dir(workingDir)
+
+	for testStepIndex := range testSteps {
+		dir := workingDirPath + "_" + strconv.Itoa(testStepIndex+1)
+
+		dirEntries, err := os.ReadDir(dir)
+		if err != nil {
+			t.Errorf("cannot read dir: %s", dir)
+		}
+
+		var workingDirName string
+
+		// Relies upon convention of a directory being created that is prefixed "work".
+		for _, dirEntry := range dirEntries {
+			if strings.HasPrefix(dirEntry.Name(), "work") && dirEntry.IsDir() {
+				workingDirName = filepath.Join(dir, dirEntry.Name())
+				break
+			}
+		}
+
+		configPlanStateFiles := []string{
+			"terraform_plugin_test.tf",
+			"terraform.tfstate",
+			"tfplan",
+		}
+
+		for _, file := range configPlanStateFiles {
+			// Skip verifying plan for first test step as there is no plan file if the
+			// resource does not already exist.
+			if testStepIndex == 0 && file == "tfplan" {
+				break
+			}
+			_, err = os.Stat(filepath.Join(workingDirName, file))
+			if err != nil {
+				t.Errorf("cannot stat %s in %s: %s", file, workingDirName, err)
+			}
+		}
+	}
+}
+
 func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch(t *testing.T) {
 	var result1, result2 string
 
@@ -1816,6 +1897,84 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch(
 			},
 		},
 	})
+}
+
+//nolint:paralleltest // Can't use t.Parallel with t.Setenv
+func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch_WithPersistWorkingDir(t *testing.T) {
+	var result1, result2 string
+
+	t.Setenv(plugintest.EnvTfAccPersistWorkingDir, "1")
+	workingDir := t.TempDir()
+
+	testSteps := []TestStep{
+		{
+			Config:             `resource "random_password" "test" { length = 12 }`,
+			ResourceName:       "random_password.test",
+			ImportState:        true,
+			ImportStateId:      "Z=:cbrJE?Ltg",
+			ImportStatePersist: false,
+			ImportStateCheck: composeImportStateCheck(
+				testExtractResourceAttrInstanceState("none", "result", &result1),
+			),
+		},
+		{
+			Config: `resource "random_password" "test" { length = 12 }`,
+			Check: ComposeTestCheckFunc(
+				testExtractResourceAttr("random_password.test", "result", &result2),
+				testCheckAttributeValuesDiffer(&result1, &result2),
+			),
+		},
+	}
+
+	Test(t, TestCase{
+		ExternalProviders: map[string]ExternalProvider{
+			"random": {
+				Source: "registry.terraform.io/hashicorp/random",
+			},
+		},
+		WorkingDir: workingDir,
+		Steps:      testSteps,
+	})
+
+	workingDirPath := filepath.Dir(workingDir)
+
+	for testStepIndex := range testSteps {
+		dir := workingDirPath + "_" + strconv.Itoa(testStepIndex+1)
+
+		dirEntries, err := os.ReadDir(dir)
+		if err != nil {
+			t.Errorf("cannot read dir: %s", dir)
+		}
+
+		var workingDirName string
+
+		// Relies upon convention of a directory being created that is prefixed "work".
+		for _, dirEntry := range dirEntries {
+			if strings.HasPrefix(dirEntry.Name(), "work") && dirEntry.IsDir() {
+				workingDirName = filepath.Join(dir, dirEntry.Name())
+				break
+			}
+		}
+
+		configPlanStateFiles := []string{
+			"terraform_plugin_test.tf",
+			"terraform.tfstate",
+			"tfplan",
+		}
+
+		for _, file := range configPlanStateFiles {
+			// Skip verifying state and plan for first test step as ImportStatePersist is
+			// false so the state is not persisted and there is no plan file if the
+			// resource does not already exist.
+			if testStepIndex == 0 && (file == "terraform.tfstate" || file == "tfplan") {
+				break
+			}
+			_, err = os.Stat(filepath.Join(workingDirName, file))
+			if err != nil {
+				t.Errorf("cannot stat %s in %s: %s", file, workingDirName, err)
+			}
+		}
+	}
 }
 
 func TestTest_TestStep_ProviderFactories_Refresh_Inline(t *testing.T) {
@@ -1878,6 +2037,63 @@ func TestTest_TestStep_ProviderFactories_Refresh_Inline(t *testing.T) {
 	})
 }
 
+//nolint:paralleltest // Can't use t.Parallel with t.Setenv
+func TestTest_TestStep_ProviderFactories_CopyWorkingDir_EachTestStep(t *testing.T) {
+	t.Setenv(plugintest.EnvTfAccPersistWorkingDir, "1")
+	workingDir := t.TempDir()
+
+	testSteps := []TestStep{
+		{
+			Config: `resource "random_password" "test" { }`,
+		},
+		{
+			Config: `resource "random_password" "test" { }`,
+		},
+	}
+
+	Test(t, TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"random": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return &schema.Provider{
+					ResourcesMap: map[string]*schema.Resource{
+						"random_password": {
+							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) diag.Diagnostics {
+								d.SetId("id")
+								return nil
+							},
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							Schema: map[string]*schema.Schema{
+								"id": {
+									Computed: true,
+									Type:     schema.TypeString,
+								},
+							},
+						},
+					},
+				}, nil
+			},
+		},
+		WorkingDir: workingDir,
+		Steps:      testSteps,
+	})
+
+	workingDirPath := filepath.Dir(workingDir)
+
+	for k := range testSteps {
+		dir := workingDirPath + "_" + strconv.Itoa(k+1)
+
+		_, err := os.ReadDir(dir)
+		if err != nil {
+			t.Fatalf("cannot read dir: %s", dir)
+		}
+	}
+}
+
 func TestTest_TestStep_ProviderFactories_RefreshWithPlanModifier_Inline(t *testing.T) {
 	t.Parallel()
 
@@ -1889,7 +2105,11 @@ func TestTest_TestStep_ProviderFactories_RefreshWithPlanModifier_Inline(t *testi
 						"random_password": {
 							CustomizeDiff: customdiff.All(
 								func(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
-									special := d.Get("special").(bool)
+									special, ok := d.Get("special").(bool)
+									if !ok {
+										return fmt.Errorf("unexpected type %T for 'special' key", d.Get("special"))
+									}
+
 									if special == true {
 										err := d.SetNew("special", false)
 										if err != nil {
@@ -1969,7 +2189,10 @@ func TestTest_TestStep_ProviderFactories_Import_Inline_With_Data_Source(t *testi
 					DataSourcesMap: map[string]*schema.Resource{
 						"http": {
 							ReadContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) (diags diag.Diagnostics) {
-								url := d.Get("url").(string)
+								url, ok := d.Get("url").(string)
+								if !ok {
+									return diag.Errorf("unexpected type %T for 'url' key", d.Get("url"))
+								}
 
 								responseHeaders := map[string]string{
 									"headerOne":   "one",
@@ -2881,6 +3104,7 @@ func composeImportStateCheck(fs ...ImportStateCheckFunc) ImportStateCheckFunc {
 	}
 }
 
+//nolint:unparam // Generic test function
 func testExtractResourceAttrInstanceState(id, attributeName string, attributeValue *string) ImportStateCheckFunc {
 	return func(is []*terraform.InstanceState) error {
 		for _, v := range is {
@@ -2919,6 +3143,7 @@ func testCheckResourceAttrInstanceState(id *string, attributeName, attributeValu
 	}
 }
 
+//nolint:unparam // Generic test function
 func testExtractResourceAttr(resourceName string, attributeName string, attributeValue *string) TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
