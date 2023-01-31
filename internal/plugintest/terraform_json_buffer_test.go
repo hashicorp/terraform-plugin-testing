@@ -75,6 +75,8 @@ func TestTerraformJSONDiagnostics_Contains(t *testing.T) {
 		name, testCase := name, testCase
 
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			var tfJSONDiagnostics TerraformJSONDiagnostics = testCase.diags
 
 			isFound := tfJSONDiagnostics.Contains(testCase.regex, testCase.severity)
@@ -87,6 +89,8 @@ func TestTerraformJSONDiagnostics_Contains(t *testing.T) {
 }
 
 func TestTerraformJSONDiagnostics_Errors(t *testing.T) {
+	t.Parallel()
+
 	testCases := map[string]struct {
 		diags    []tfjson.Diagnostic
 		expected TerraformJSONDiagnostics
@@ -128,6 +132,8 @@ func TestTerraformJSONDiagnostics_Errors(t *testing.T) {
 		name, testCase := name, testCase
 
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			var tfJSONDiagnostics TerraformJSONDiagnostics = testCase.diags
 
 			actual := tfJSONDiagnostics.Errors()
@@ -140,6 +146,8 @@ func TestTerraformJSONDiagnostics_Errors(t *testing.T) {
 }
 
 func TestTerraformJSONDiagnostics_Warnings(t *testing.T) {
+	t.Parallel()
+
 	testCases := map[string]struct {
 		diags    []tfjson.Diagnostic
 		expected TerraformJSONDiagnostics
@@ -176,6 +184,8 @@ func TestTerraformJSONDiagnostics_Warnings(t *testing.T) {
 		name, testCase := name, testCase
 
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			var tfJSONDiagnostics TerraformJSONDiagnostics = testCase.diags
 
 			actual := tfJSONDiagnostics.Warnings()
