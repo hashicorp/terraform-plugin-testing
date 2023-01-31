@@ -2,8 +2,10 @@ package plugintest
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -189,37 +191,26 @@ func TestTerraformJSONBuffer_Parse(t *testing.T) {
 	t.Parallel()
 
 	tfJSON := NewTerraformJSONBuffer()
-
-	file, err := os.Open("../testdata/terraform-json-output.txt")
+	err := tfJSON.ReadFile("../testdata/terraform-json-output.txt")
 	if err != nil {
-		t.Errorf("cannot read file: %s", err)
-	}
-	defer file.Close()
-
-	var fileEntries []string
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		txt := scanner.Text()
-
-		_, err := tfJSON.Write([]byte(txt + "\n"))
-		if err != nil {
-			t.Errorf("cannot write to tfJSON: %s", err)
-		}
-
-		fileEntries = append(fileEntries, txt)
+		t.Errorf("ReadFile err: %s", err)
 	}
 
-	if err := scanner.Err(); err != nil {
-		t.Errorf("scanner error: %s", err)
+	entries, err := fileEntries("../testdata/terraform-json-output.txt")
+	if err != nil {
+		t.Errorf("fileEntries error: %s", err)
 	}
 
 	err = tfJSON.Parse()
 	if err != nil {
-		t.Errorf("unexpected error: %s", err)
+		t.Errorf("parse error: %s", err)
 	}
 
-	if diff := cmp.Diff(tfJSON.jsonOutput, fileEntries); diff != "" {
+	if diff := cmp.Diff(strings.Split(strings.Trim(tfJSON.rawOutput, "\n"), "\n"), entries); diff != "" {
+		t.Errorf("unexpected difference: %s", diff)
+	}
+
+	if diff := cmp.Diff(tfJSON.jsonOutput, entries); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
 	}
 
@@ -243,26 +234,9 @@ func TestTerraformJSONBuffer_Parse(t *testing.T) {
 func TestTerraformJSONBuffer_Diagnostics(t *testing.T) {
 	t.Parallel()
 
-	tfJSON := NewTerraformJSONBuffer()
-
-	file, err := os.Open("../testdata/terraform-json-output.txt")
+	tfJSON, err := NewTerraformJSONBufferFromFile("../testdata/terraform-json-output.txt")
 	if err != nil {
-		t.Errorf("cannot read file: %s", err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		txt := scanner.Text()
-
-		_, err := tfJSON.Write([]byte(txt + "\n"))
-		if err != nil {
-			t.Errorf("cannot write to tfJSON: %s", err)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		t.Errorf("scanner error: %s", err)
+		t.Errorf("NewTerraformJSONBufferFromFile err: %s", err)
 	}
 
 	var tfJSONDiagnostics TerraformJSONDiagnostics = []tfjson.Diagnostic{
@@ -279,7 +253,7 @@ func TestTerraformJSONBuffer_Diagnostics(t *testing.T) {
 
 	diags, err := tfJSON.Diagnostics()
 	if err != nil {
-		t.Errorf("unexpected error: %s", err)
+		t.Errorf("Diagnostics error: %s", err)
 	}
 
 	if diff := cmp.Diff(diags, tfJSONDiagnostics); diff != "" {
@@ -292,28 +266,14 @@ func TestTerraformJSONBuffer_JsonOutput(t *testing.T) {
 
 	tfJSON := NewTerraformJSONBuffer()
 
-	file, err := os.Open("../testdata/terraform-json-output.txt")
+	err := tfJSON.ReadFile("../testdata/terraform-json-output.txt")
 	if err != nil {
-		t.Errorf("cannot read file: %s", err)
-	}
-	defer file.Close()
-
-	var fileEntries []string
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		txt := scanner.Text()
-
-		_, err := tfJSON.Write([]byte(txt + "\n"))
-		if err != nil {
-			t.Errorf("cannot write to tfJSON: %s", err)
-		}
-
-		fileEntries = append(fileEntries, txt)
+		t.Errorf("ReadFile err: %s", err)
 	}
 
-	if err := scanner.Err(); err != nil {
-		t.Errorf("scanner error: %s", err)
+	entries, err := fileEntries("../testdata/terraform-json-output.txt")
+	if err != nil {
+		t.Errorf("fileEntries error: %s", err)
 	}
 
 	jsonOutput, err := tfJSON.JsonOutput()
@@ -321,7 +281,28 @@ func TestTerraformJSONBuffer_JsonOutput(t *testing.T) {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	if diff := cmp.Diff(jsonOutput, fileEntries); diff != "" {
+	if diff := cmp.Diff(jsonOutput, entries); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
 	}
+}
+
+func fileEntries(filePath string) ([]string, error) {
+	var fileEntries []string
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fileEntries, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		fileEntries = append(fileEntries, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fileEntries, fmt.Errorf("scanner error: %s", err)
+	}
+
+	return fileEntries, nil
 }

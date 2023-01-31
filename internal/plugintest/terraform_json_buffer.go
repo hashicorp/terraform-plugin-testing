@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"regexp"
 
 	tfjson "github.com/hashicorp/terraform-json"
@@ -73,6 +74,24 @@ func NewTerraformJSONBuffer() *TerraformJSONBuffer {
 	}
 }
 
+func NewTerraformJSONBufferFromFile(path string) (*TerraformJSONBuffer, error) {
+	tfJSON := NewTerraformJSONBuffer()
+
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read file: %w", err)
+	}
+
+	defer file.Close()
+
+	_, err = io.Copy(tfJSON, file)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy file contents to buffer: %w", err)
+	}
+
+	return tfJSON, nil
+}
+
 func (b *TerraformJSONBuffer) Write(p []byte) (n int, err error) {
 	if b.buf == nil {
 		return 0, fmt.Errorf("cannot write to uninitialized buffer, use NewTerraformJSONBuffer")
@@ -89,19 +108,20 @@ func (b *TerraformJSONBuffer) Read(p []byte) (n int, err error) {
 	return b.buf.Read(p)
 }
 
-func read(r *bufio.Reader) ([]byte, error) {
-	var (
-		isPrefix = true
-		err      error
-		line, ln []byte
-	)
-
-	for isPrefix && err == nil {
-		line, isPrefix, err = r.ReadLine()
-		ln = append(ln, line...)
+func (b *TerraformJSONBuffer) ReadFile(path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("cannot read file: %w", err)
 	}
 
-	return ln, err
+	defer file.Close()
+
+	_, err = io.Copy(b, file)
+	if err != nil {
+		return fmt.Errorf("cannot copy file contents to buffer: %w", err)
+	}
+
+	return nil
 }
 
 func (b *TerraformJSONBuffer) Parse() error {
@@ -118,7 +138,7 @@ func (b *TerraformJSONBuffer) Parse() error {
 				break
 			}
 
-			return fmt.Errorf("cannot read line: %s", err)
+			return fmt.Errorf("cannot read line during Parse: %s", err)
 		}
 
 		txt := string(line)
@@ -177,4 +197,19 @@ func (b *TerraformJSONBuffer) RawOutput() (string, error) {
 	}
 
 	return b.rawOutput, nil
+}
+
+func read(r *bufio.Reader) ([]byte, error) {
+	var (
+		isPrefix = true
+		err      error
+		line, ln []byte
+	)
+
+	for isPrefix && err == nil {
+		line, isPrefix, err = r.ReadLine()
+		ln = append(ln, line...)
+	}
+
+	return ln, err
 }
