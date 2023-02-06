@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'helper/resource: Added `TF_ACC_PERSIST_WORKING_DIR` environment variable to
-  allow persisting of Terraform files generated during each test step'
-time: 2023-01-18T10:03:43.12743Z
-custom:
-  Issue: "18"
