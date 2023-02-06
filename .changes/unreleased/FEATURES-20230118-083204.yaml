@@ -1,0 +1,8 @@
+kind: FEATURES
+body: 'helper/resource: Added `TestStep` type `ExpectWarning` field, which enables
+  verifying that a warning has been emitted during plan, apply, refresh and destroy.
+  Requires that Terraform 0.15.3 or later is used as it makes use of the Terraform
+  [machine-readable UI](https://developer.hashicorp.com/terraform/internals/machine-readable-ui)'
+time: 2023-01-18T08:32:04.688764Z
+custom:
+  Issue: "16"

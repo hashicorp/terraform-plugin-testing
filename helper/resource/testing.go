@@ -510,6 +510,14 @@ type TestStep struct {
 	// test to pass.
 	ExpectError *regexp.Regexp
 
+	// ExpectWarning requires the use of Terraform 0.15.3 or later as it makes
+	// use of the Terraform [machine-readable UI](https://developer.hashicorp.com/terraform/internals/machine-readable-ui).
+	//
+	// ExpectWarning allows the construction of test cases that we expect to pass
+	// with a warning. The specified regexp must match against stdout for the
+	// test to pass.
+	ExpectWarning *regexp.Regexp
+
 	// PlanOnly can be set to only run `plan` with this configuration, and not
 	// actually apply it. This is useful for ensuring config changes result in
 	// no-op plans

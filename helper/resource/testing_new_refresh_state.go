@@ -16,8 +16,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {
+type testStepNewRefreshStateResponse struct {
+	tfJSONDiags plugintest.TerraformJSONDiagnostics
+	stdout      string
+}
+
+func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) (testStepNewRefreshStateResponse, error) {
 	t.Helper()
+
+	var tfJSONDiags plugintest.TerraformJSONDiagnostics
 
 	var err error
 	// Explicitly ensure prior state exists before refresh.
@@ -33,10 +40,16 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 	}
 
 	err = runProviderCommand(ctx, t, func() error {
-		return wd.Refresh(ctx)
+		refreshResponse, err := wd.Refresh(ctx)
+
+		tfJSONDiags = append(tfJSONDiags, refreshResponse.Diagnostics...)
+
+		return err
 	}, wd, providers)
 	if err != nil {
-		return err
+		return testStepNewRefreshStateResponse{
+			tfJSONDiags: tfJSONDiags,
+		}, fmt.Errorf("Error running refresh: %w", err)
 	}
 
 	var refreshState *terraform.State
@@ -64,10 +77,16 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 
 	// do a plan
 	err = runProviderCommand(ctx, t, func() error {
-		return wd.CreatePlan(ctx)
+		createPlanResponse, err := wd.CreatePlan(ctx)
+
+		tfJSONDiags = append(tfJSONDiags, createPlanResponse.Diagnostics...)
+
+		return err
 	}, wd, providers)
 	if err != nil {
-		return fmt.Errorf("Error running post-apply plan: %w", err)
+		return testStepNewRefreshStateResponse{
+			tfJSONDiags: tfJSONDiags,
+		}, fmt.Errorf("Error running post-apply plan: %w", err)
 	}
 
 	var plan *tfjson.Plan
@@ -77,7 +96,9 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 		return err
 	}, wd, providers)
 	if err != nil {
-		return fmt.Errorf("Error retrieving post-apply plan: %w", err)
+		return testStepNewRefreshStateResponse{
+			tfJSONDiags: tfJSONDiags,
+		}, fmt.Errorf("Error retrieving post-apply plan: %w", err)
 	}
 
 	if !planIsEmpty(plan) && !step.ExpectNonEmptyPlan {
@@ -88,10 +109,18 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 			return err
 		}, wd, providers)
 		if err != nil {
-			return fmt.Errorf("Error retrieving formatted plan output: %w", err)
+			return testStepNewRefreshStateResponse{
+				tfJSONDiags: tfJSONDiags,
+				stdout:      stdout,
+			}, fmt.Errorf("Error retrieving formatted plan output: %w", err)
 		}
-		return fmt.Errorf("After refreshing state during this test step, a followup plan was not empty.\nstdout:\n\n%s", stdout)
+		return testStepNewRefreshStateResponse{
+			tfJSONDiags: tfJSONDiags,
+			stdout:      stdout,
+		}, fmt.Errorf("After refreshing state during this test step, a followup plan was not empty.\nstdout:\n\n%s", stdout)
 	}
 
-	return nil
+	return testStepNewRefreshStateResponse{
+		tfJSONDiags: tfJSONDiags,
+	}, nil
 }

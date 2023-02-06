@@ -5,6 +5,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -253,26 +254,61 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.RefreshState {
 			logging.HelperResourceTrace(ctx, "TestStep is RefreshState mode")
 
-			err := testStepNewRefreshState(ctx, t, wd, step, providers)
+			testStepNewRefreshStateResponse, err := testStepNewRefreshState(ctx, t, wd, step, providers)
+			refreshTfJSONDiags := testStepNewRefreshStateResponse.tfJSONDiags
+
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
+
 				if err == nil {
 					logging.HelperResourceError(ctx,
 						"Error running refresh: expected an error but got none",
 					)
 					t.Fatalf("Step %d/%d error running refresh: expected an error but got none", stepNumber, len(c.Steps))
 				}
-				if !step.ExpectError.MatchString(err.Error()) {
+
+				errorFound := step.ExpectError.MatchString(err.Error())
+				jsonErrorFound := refreshTfJSONDiags.Contains(step.ExpectError, tfjson.DiagnosticSeverityError)
+
+				errorOutput := []string{err.Error()}
+
+				for _, v := range refreshTfJSONDiags.Errors() {
+					b, err := json.Marshal(v)
+					if err != nil {
+						t.Errorf("could not marshal tfjson diagnostic: %s", err)
+					}
+
+					errorOutput = append(errorOutput, string(b))
+				}
+
+				if !errorFound && !jsonErrorFound {
 					logging.HelperResourceError(ctx,
 						fmt.Sprintf("Error running refresh: expected an error with pattern (%s)", step.ExpectError.String()),
-						map[string]interface{}{logging.KeyError: err},
+						map[string]interface{}{logging.KeyError: strings.Join(errorOutput, "")},
 					)
-					t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
+					t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), strings.Join(errorOutput, "\n"))
 				}
 			} else {
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
+
+					// This is a "best effort" to supply ErrorCheck with the contents of the
+					// error diagnostics returned from running the Terraform command when
+					// executed with the -json flag. If ErrorCheck functions are using
+					// regexp to perform matches that include line breaks then these will
+					// likely no longer behave as expected and therefore potentially
+					// represent a breaking change.
+					var diagStrings []string
+
+					for _, v := range refreshTfJSONDiags.Errors() {
+						diagStrings = append(diagStrings, "Error: "+v.Summary)
+						diagStrings = append(diagStrings, v.Detail)
+					}
+
+					err = fmt.Errorf("%s\n"+strings.Join(diagStrings, "\n"), err)
+
 					err = c.ErrorCheck(err)
+
 					logging.HelperResourceDebug(ctx, "Called TestCase ErrorCheck")
 				}
 				if err != nil {
@@ -280,7 +316,45 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						"Error running refresh",
 						map[string]interface{}{logging.KeyError: err},
 					)
-					t.Fatalf("Step %d/%d error running refresh: %s", stepNumber, len(c.Steps), err)
+
+					errorOutput := []string{err.Error()}
+
+					for _, v := range refreshTfJSONDiags {
+						b, err := json.Marshal(v)
+						if err != nil {
+							t.Errorf("could not marshal tfjson diagnostic: %s", err)
+						}
+
+						errorOutput = append(errorOutput, string(b))
+					}
+
+					t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), strings.Join(errorOutput, "\n"))
+				}
+			}
+
+			if step.ExpectWarning != nil {
+				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectWarning")
+
+				warningFound := refreshTfJSONDiags.Contains(step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
+
+				if !warningFound {
+					logging.HelperResourceError(ctx,
+						fmt.Sprintf("Expected a warning with pattern (%s)", step.ExpectWarning.String()),
+						map[string]interface{}{logging.KeyError: err},
+					)
+
+					var warningDiags []string
+
+					for _, v := range refreshTfJSONDiags.Warnings() {
+						b, err := json.Marshal(v)
+						if err != nil {
+							t.Errorf("could not marshal tfjson diagnostic: %s", err)
+						}
+
+						warningDiags = append(warningDiags, string(b))
+					}
+
+					t.Errorf("Step %d/%d, expected a warning matching pattern: %q, no match on: %s", stepNumber, len(c.Steps), step.ExpectWarning.String(), strings.Join(warningDiags, "\n"))
 				}
 			}
 
@@ -292,7 +366,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.Config != "" {
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
-			err := testStepNewConfig(ctx, t, c, wd, step, providers)
+			testStepNewConfigResponse, err := testStepNewConfig(ctx, t, c, wd, step, providers)
+			newConfigTfJSONDiags := testStepNewConfigResponse.tfJSONDiags
+
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 
@@ -302,16 +378,46 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					)
 					t.Fatalf("Step %d/%d, expected an error but got none", stepNumber, len(c.Steps))
 				}
-				if !step.ExpectError.MatchString(err.Error()) {
+
+				errorFound := step.ExpectError.MatchString(err.Error())
+				jsonErrorFound := newConfigTfJSONDiags.Contains(step.ExpectError, tfjson.DiagnosticSeverityError)
+
+				errorOutput := []string{err.Error()}
+
+				for _, v := range newConfigTfJSONDiags.Errors() {
+					b, err := json.Marshal(v)
+					if err != nil {
+						t.Errorf("could not marshal tfjson Diagnostic: %s", err)
+					}
+
+					errorOutput = append(errorOutput, string(b))
+				}
+
+				if !errorFound && !jsonErrorFound {
 					logging.HelperResourceError(ctx,
 						fmt.Sprintf("Expected an error with pattern (%s)", step.ExpectError.String()),
-						map[string]interface{}{logging.KeyError: err},
+						map[string]interface{}{logging.KeyError: strings.Join(errorOutput, "")},
 					)
-					t.Fatalf("Step %d/%d, expected an error with pattern, no match on: %s", stepNumber, len(c.Steps), err)
+					t.Fatalf("Step %d/%d, expected an error matching pattern, no match on: %s", stepNumber, len(c.Steps), strings.Join(errorOutput, ""))
 				}
 			} else {
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
+
+					// This is a "best effort" to supply ErrorCheck with the contents of the
+					// error diagnostics returned from running the Terraform command when
+					// executed with the -json flag. If ErrorCheck functions are using
+					// regexp to perform matches that include line breaks then these will
+					// likely no longer behave as expected and therefore potentially
+					// represent a breaking change.
+					var diagStrings []string
+
+					for _, v := range newConfigTfJSONDiags.Errors() {
+						diagStrings = append(diagStrings, "Error: "+v.Summary)
+						diagStrings = append(diagStrings, v.Detail)
+					}
+
+					err = fmt.Errorf("%s\n"+strings.Join(diagStrings, "\n"), err)
 
 					err = c.ErrorCheck(err)
 
@@ -322,7 +428,45 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						"Unexpected error",
 						map[string]interface{}{logging.KeyError: err},
 					)
-					t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), err)
+
+					errorOutput := []string{err.Error()}
+
+					for _, v := range newConfigTfJSONDiags.Errors() {
+						b, err := json.Marshal(v)
+						if err != nil {
+							t.Errorf("could not marshall tfjson Diagnostic: %s", err)
+						}
+
+						errorOutput = append(errorOutput, string(b))
+					}
+
+					t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), strings.Join(errorOutput, "\n"))
+				}
+			}
+
+			if step.ExpectWarning != nil {
+				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectWarning")
+
+				warningFound := newConfigTfJSONDiags.Contains(step.ExpectWarning, tfjson.DiagnosticSeverityWarning)
+
+				if !warningFound {
+					logging.HelperResourceError(ctx,
+						fmt.Sprintf("Expected a warning with pattern (%s)", step.ExpectWarning.String()),
+						map[string]interface{}{logging.KeyError: err},
+					)
+
+					var warningDiags []string
+
+					for _, v := range newConfigTfJSONDiags.Warnings() {
+						b, err := json.Marshal(v)
+						if err != nil {
+							t.Errorf("could not marshal tfjson diagnostic: %s", err)
+						}
+
+						warningDiags = append(warningDiags, string(b))
+					}
+
+					t.Errorf("Step %d/%d, expected a warning matching pattern: %q, no match on: %s", stepNumber, len(c.Steps), step.ExpectWarning.String(), strings.Join(warningDiags, "\n"))
 				}
 			}
 
@@ -394,7 +538,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 	// Refresh!
 	err = runProviderCommand(ctx, t, func() error {
-		err = wd.Refresh(ctx)
+		_, err := wd.Refresh(ctx)
 		if err != nil {
 			t.Fatalf("Error running terraform refresh: %s", err)
 		}
