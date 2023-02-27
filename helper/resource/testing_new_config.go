@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/hashicorp/go-multierror"
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
 
@@ -49,6 +50,24 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		}, wd, providers)
 		if err != nil {
 			return fmt.Errorf("Error running pre-apply plan: %w", err)
+		}
+
+		// If there are expectations for the planned diffs of resources, we assert those with the saved plan file
+		if len(step.ExpectedResourceChanges) > 0 {
+			var plan *tfjson.Plan
+			err = runProviderCommand(ctx, t, func() error {
+				var err error
+				plan, err = wd.SavedPlan(ctx)
+				return err
+			}, wd, providers)
+			if err != nil {
+				return fmt.Errorf("Error retrieving pre-apply plan: %w", err)
+			}
+
+			err = assertExpectedResourceChanges(step, plan)
+			if err != nil {
+				return fmt.Errorf("Error asserting ExpectedResourceChanges: %w", err)
+			}
 		}
 
 		// We need to keep a copy of the state prior to destroying such
@@ -242,4 +261,62 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	}
 
 	return nil
+}
+
+// TODO: refactor this logic?
+func assertExpectedResourceChanges(step TestStep, plan *tfjson.Plan) error {
+	var result *multierror.Error
+	for resource, expectedChange := range step.ExpectedResourceChanges {
+		foundResource := false
+
+		for _, rc := range plan.ResourceChanges {
+			if resource == rc.Address {
+				switch expectedChange {
+				case DiffNoop:
+					if !rc.Change.Actions.NoOp() {
+						result = multierror.Append(result, fmt.Errorf("'%s' - expected NoOp, got action(s): %v", rc.Address, rc.Change.Actions))
+					}
+				case DiffCreate:
+					if !rc.Change.Actions.Create() {
+						result = multierror.Append(result, fmt.Errorf("'%s' - expected Create, got action(s): %v", rc.Address, rc.Change.Actions))
+					}
+				case DiffRead:
+					if !rc.Change.Actions.Read() {
+						result = multierror.Append(result, fmt.Errorf("'%s' - expected Read, got action(s): %v", rc.Address, rc.Change.Actions))
+					}
+				case DiffUpdate:
+					if !rc.Change.Actions.Update() {
+						result = multierror.Append(result, fmt.Errorf("'%s' - expected Update, got action(s): %v", rc.Address, rc.Change.Actions))
+					}
+				case DiffDestroy:
+					if !rc.Change.Actions.Delete() {
+						result = multierror.Append(result, fmt.Errorf("'%s' - expected Destroy, got action(s): %v", rc.Address, rc.Change.Actions))
+					}
+				case DiffDestroyBeforeCreate:
+					if !rc.Change.Actions.DestroyBeforeCreate() {
+						result = multierror.Append(result, fmt.Errorf("'%s' - expected DestroyBeforeCreate, got action(s): %v", rc.Address, rc.Change.Actions))
+					}
+				case DiffCreateBeforeDestroy:
+					if !rc.Change.Actions.CreateBeforeDestroy() {
+						result = multierror.Append(result, fmt.Errorf("'%s' - expected CreateBeforeDestroy, got action(s): %v", rc.Address, rc.Change.Actions))
+					}
+				case DiffReplace:
+					if !rc.Change.Actions.Replace() {
+						result = multierror.Append(result, fmt.Errorf("%s - expected Replace, got action(s): %v", rc.Address, rc.Change.Actions))
+					}
+				default:
+					result = multierror.Append(result, fmt.Errorf("%s - unexpected DiffChangeType byte: %d", rc.Address, expectedChange))
+				}
+
+				foundResource = true
+				break
+			}
+		}
+
+		if !foundResource {
+			result = multierror.Append(result, fmt.Errorf("%s - Resource not found in planned ResourceChanges", resource))
+		}
+	}
+
+	return result.ErrorOrNil()
 }

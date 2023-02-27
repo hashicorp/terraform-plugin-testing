@@ -510,6 +510,9 @@ type TestStep struct {
 	// test to pass.
 	ExpectError *regexp.Regexp
 
+	// TODO: document
+	ExpectedResourceChanges map[string]DiffChangeType
+
 	// PlanOnly can be set to only run `plan` with this configuration, and not
 	// actually apply it. This is useful for ensuring config changes result in
 	// no-op plans
