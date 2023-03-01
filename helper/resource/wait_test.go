@@ -30,9 +30,9 @@ func TestRetry(t *testing.T) {
 }
 
 // make sure a slow StateRefreshFunc is allowed to complete after timeout
+//
+//nolint:paralleltest // This test tends to fail when run in parallel and w/ test explorer
 func TestRetry_grace(t *testing.T) {
-	t.Parallel()
-
 	f := func() *RetryError {
 		time.Sleep(1 * time.Second)
 		return nil
