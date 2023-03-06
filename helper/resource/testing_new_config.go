@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hashicorp/go-multierror"
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
 
@@ -53,7 +52,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		}
 
 		// Run pre-apply plan assertions
-		if len(step.PreApplyPlanAsserts) > 0 {
+		if len(step.ConfigPlanAsserts.PreApply) > 0 {
 			var plan *tfjson.Plan
 			err = runProviderCommand(ctx, t, func() error {
 				var err error
@@ -64,9 +63,9 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				return fmt.Errorf("Error retrieving pre-apply plan: %w", err)
 			}
 
-			err = runPlanAssertions(plan, step.PreApplyPlanAsserts)
+			err = runPlanAssertions(plan, step.ConfigPlanAsserts.PreApply)
 			if err != nil {
-				return fmt.Errorf("Pre-apply Plan Assertion(s) failed: %w", err)
+				return fmt.Errorf("Pre-apply plan assertion(s) failed: %w", err)
 			}
 		}
 
@@ -150,6 +149,14 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("Error retrieving post-apply plan: %w", err)
 	}
 
+	// Run post-apply, pre-refresh plan assertions
+	if len(step.ConfigPlanAsserts.PostApplyPreRefresh) > 0 {
+		err = runPlanAssertions(plan, step.ConfigPlanAsserts.PostApplyPreRefresh)
+		if err != nil {
+			return fmt.Errorf("Post-apply, pre-refresh plan assertion(s) failed: %w", err)
+		}
+	}
+
 	if !planIsEmpty(plan) && !step.ExpectNonEmptyPlan {
 		var stdout string
 		err = runProviderCommand(ctx, t, func() error {
@@ -191,6 +198,14 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	}, wd, providers)
 	if err != nil {
 		return fmt.Errorf("Error retrieving second post-apply plan: %w", err)
+	}
+
+	// Run post-apply, post-refresh plan assertions
+	if len(step.ConfigPlanAsserts.PostApplyPostRefresh) > 0 {
+		err = runPlanAssertions(plan, step.ConfigPlanAsserts.PostApplyPostRefresh)
+		if err != nil {
+			return fmt.Errorf("Post-apply, post-refresh plan assertion(s) failed: %w", err)
+		}
 	}
 
 	// check if plan is empty
@@ -261,17 +276,4 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	}
 
 	return nil
-}
-
-func runPlanAssertions(plan *tfjson.Plan, planAsserts []PlanAssert) error {
-	var result *multierror.Error
-
-	for _, planAssert := range planAsserts {
-		err := planAssert.RunAssert(plan)
-		if err != nil {
-			result = multierror.Append(result, err)
-		}
-	}
-
-	return result.ErrorOrNil()
 }

@@ -510,8 +510,9 @@ type TestStep struct {
 	// test to pass.
 	ExpectError *regexp.Regexp
 
-	// TODO: document
-	PreApplyPlanAsserts []PlanAssert
+	ConfigPlanAsserts ConfigPlanAsserts
+
+	RefreshPlanAsserts RefreshPlanAsserts
 
 	// TODO: Add PostApplyPlanAsserts, SecondPostApplyPlanAsserts?
 
@@ -682,6 +683,20 @@ type TestStep struct {
 	// for performing import testing where the prior TestStep configuration
 	// contained a provider outside the one under test.
 	ExternalProviders map[string]ExternalProvider
+}
+
+// TODO: document all fields / move to a different file/package?
+type ConfigPlanAsserts struct {
+	PreApply []PlanAssert
+
+	PostApplyPreRefresh []PlanAssert
+
+	// TODO: should this be named 2nd post apply? Since refresh is not guaranteed
+	PostApplyPostRefresh []PlanAssert
+}
+
+type RefreshPlanAsserts struct {
+	PostRefresh []PlanAssert
 }
 
 // ParallelTest performs an acceptance test on a resource, allowing concurrency

@@ -26,8 +26,10 @@ func Test_ExpectedResourceAction_NoOp(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", ResourceActionNoop),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", ResourceActionNoop),
+					},
 				},
 			},
 		},
@@ -48,8 +50,10 @@ func Test_ExpectedResourceAction_NoOp_NoMatch(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", ResourceActionNoop),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", ResourceActionNoop),
+					},
 				},
 				ExpectError: regexp.MustCompile(`expected NoOp, got action\(s\): \[create\]`),
 			},
@@ -71,8 +75,10 @@ func Test_ExpectedResourceAction_Create(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", ResourceActionCreate),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", ResourceActionCreate),
+					},
 				},
 			},
 		},
@@ -98,8 +104,10 @@ func Test_ExpectedResourceAction_Create_NoMatch(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 15
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", ResourceActionCreate),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", ResourceActionCreate),
+					},
 				},
 				ExpectError: regexp.MustCompile(`expected Create, got action\(s\): \[delete create\]`),
 			},
@@ -130,8 +138,10 @@ func Test_ExpectedResourceAction_Read(t *testing.T) {
 						unknown_val = random_string.one.result
 					}
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("data.null_data_source.two", ResourceActionRead),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("data.null_data_source.two", ResourceActionRead),
+					},
 				},
 			},
 		},
@@ -155,8 +165,10 @@ func Test_ExpectedResourceAction_Read_NoMatch(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 15
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", ResourceActionRead),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", ResourceActionRead),
+					},
 				},
 				ExpectError: regexp.MustCompile(`expected Read, got action\(s\): \[create\]`),
 			},
@@ -183,8 +195,10 @@ func Test_ExpectedResourceAction_Update(t *testing.T) {
 				Config: `resource "time_offset" "one" {
 					offset_days = 2
 				  }`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("time_offset.one", ResourceActionUpdate),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("time_offset.one", ResourceActionUpdate),
+					},
 				},
 			},
 		},
@@ -205,8 +219,10 @@ func Test_ExpectedResourceAction_Update_NoMatch(t *testing.T) {
 				Config: `resource "time_offset" "one" {
 					offset_days = 1
 				  }`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("time_offset.one", ResourceActionUpdate),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("time_offset.one", ResourceActionUpdate),
+					},
 				},
 				ExpectError: regexp.MustCompile(`expected Update, got action\(s\): \[create\]`),
 			},
@@ -231,8 +247,10 @@ func Test_ExpectedResourceAction_Destroy(t *testing.T) {
 			},
 			{
 				Config: ` `,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", ResourceActionDestroy),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", ResourceActionDestroy),
+					},
 				},
 			},
 		},
@@ -253,8 +271,10 @@ func Test_ExpectedResourceAction_Destroy_NoMatch(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", ResourceActionDestroy),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", ResourceActionDestroy),
+					},
 				},
 				ExpectError: regexp.MustCompile(`expected Destroy, got action\(s\): \[create\]`),
 			},
@@ -281,8 +301,10 @@ func Test_ExpectedResourceAction_DestroyBeforeCreate(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 15
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", ResourceActionDestroyBeforeCreate),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", ResourceActionDestroyBeforeCreate),
+					},
 				},
 			},
 		},
@@ -303,8 +325,10 @@ func Test_ExpectedResourceAction_DestroyBeforeCreate_NoMatch(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", ResourceActionDestroyBeforeCreate),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", ResourceActionDestroyBeforeCreate),
+					},
 				},
 				ExpectError: regexp.MustCompile(`expected DestroyBeforeCreate, got action\(s\): \[create\]`),
 			},
@@ -337,8 +361,10 @@ func Test_ExpectedResourceAction_CreateBeforeDestroy(t *testing.T) {
 						create_before_destroy = true
 					}
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", ResourceActionCreateBeforeDestroy),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", ResourceActionCreateBeforeDestroy),
+					},
 				},
 			},
 		},
@@ -359,8 +385,10 @@ func Test_ExpectedResourceAction_CreateBeforeDestroy_NoMatch(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", ResourceActionCreateBeforeDestroy),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", ResourceActionCreateBeforeDestroy),
+					},
 				},
 				ExpectError: regexp.MustCompile(`expected CreateBeforeDestroy, got action\(s\): \[create\]`),
 			},
@@ -401,9 +429,11 @@ func Test_ExpectedResourceAction_Replace(t *testing.T) {
 						create_before_destroy = true
 					}
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", ResourceActionReplace),
-					ExpectResourceAction("random_string.two", ResourceActionReplace),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", ResourceActionReplace),
+						ExpectResourceAction("random_string.two", ResourceActionReplace),
+					},
 				},
 			},
 		},
@@ -424,8 +454,10 @@ func Test_ExpectedResourceAction_Replace_NoMatch(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", ResourceActionReplace),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", ResourceActionReplace),
+					},
 				},
 				ExpectError: regexp.MustCompile(`expected Replace, got action\(s\): \[create\]`),
 			},
@@ -436,8 +468,10 @@ func Test_ExpectedResourceAction_Replace_NoMatch(t *testing.T) {
 						create_before_destroy = true
 					}
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.two", ResourceActionReplace),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.two", ResourceActionReplace),
+					},
 				},
 				ExpectError: regexp.MustCompile(`expected Replace, got action\(s\): \[create\]`),
 			},
@@ -459,8 +493,10 @@ func Test_ExpectedResourceAction_NoResourceFound(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.doesntexist", ResourceActionCreate),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.doesntexist", ResourceActionCreate),
+					},
 				},
 				ExpectError: regexp.MustCompile(`random_string.doesntexist - Resource not found in planned ResourceChanges`),
 			},
@@ -482,8 +518,10 @@ func Test_ExpectedResourceAction_InvalidDiffChangeType(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", 0),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", 0),
+					},
 				},
 				ExpectError: regexp.MustCompile(`random_string.one - unexpected DiffChangeType byte: 0`),
 			},
@@ -491,8 +529,10 @@ func Test_ExpectedResourceAction_InvalidDiffChangeType(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				PreApplyPlanAsserts: []r.PlanAssert{
-					ExpectResourceAction("random_string.one", 9),
+				ConfigPlanAsserts: r.ConfigPlanAsserts{
+					PreApply: []r.PlanAssert{
+						ExpectResourceAction("random_string.one", 9),
+					},
 				},
 				ExpectError: regexp.MustCompile(`random_string.one - unexpected DiffChangeType byte: 9`),
 			},
