@@ -510,11 +510,13 @@ type TestStep struct {
 	// test to pass.
 	ExpectError *regexp.Regexp
 
+	// TODO: is this naming good?
+	// TODO: document
 	ConfigPlanAsserts ConfigPlanAsserts
 
+	// TODO: is this naming good?
+	// TODO: document
 	RefreshPlanAsserts RefreshPlanAsserts
-
-	// TODO: Add PostApplyPlanAsserts, SecondPostApplyPlanAsserts?
 
 	// PlanOnly can be set to only run `plan` with this configuration, and not
 	// actually apply it. This is useful for ensuring config changes result in
@@ -695,6 +697,8 @@ type ConfigPlanAsserts struct {
 	PostApplyPostRefresh []PlanAssert
 }
 
+// TODO: is this naming good?
+// TODO: document
 type RefreshPlanAsserts struct {
 	PostRefresh []PlanAssert
 }
