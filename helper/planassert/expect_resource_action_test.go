@@ -498,13 +498,13 @@ func Test_ExpectedResourceAction_NoResourceFound(t *testing.T) {
 						ExpectResourceAction("random_string.doesntexist", ResourceActionCreate),
 					},
 				},
-				ExpectError: regexp.MustCompile(`random_string.doesntexist - Resource not found in planned ResourceChanges`),
+				ExpectError: regexp.MustCompile(`random_string.doesntexist - Resource not found in plan ResourceChanges`),
 			},
 		},
 	})
 }
 
-func Test_ExpectedResourceAction_InvalidDiffChangeType(t *testing.T) {
+func Test_ExpectedResourceAction_InvalidResourceActionType(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -523,7 +523,7 @@ func Test_ExpectedResourceAction_InvalidDiffChangeType(t *testing.T) {
 						ExpectResourceAction("random_string.one", 0),
 					},
 				},
-				ExpectError: regexp.MustCompile(`random_string.one - unexpected DiffChangeType byte: 0`),
+				ExpectError: regexp.MustCompile(`random_string.one - unexpected ResourceActionType byte: 0`),
 			},
 			{
 				Config: `resource "random_string" "one" {
@@ -534,40 +534,8 @@ func Test_ExpectedResourceAction_InvalidDiffChangeType(t *testing.T) {
 						ExpectResourceAction("random_string.one", 9),
 					},
 				},
-				ExpectError: regexp.MustCompile(`random_string.one - unexpected DiffChangeType byte: 9`),
+				ExpectError: regexp.MustCompile(`random_string.one - unexpected ResourceActionType byte: 9`),
 			},
 		},
 	})
 }
-
-// TODO: for RFC
-// PreApplyPlanAsserts: []r.PlanAssert{
-// 	planassert.ExpectResourceAction("random_string.one", ResourceActionReplace),
-// 	planassert.ExpectResourceAction("random_string.two", ResourceActionReplace),
-// },
-// PostApplyPlanAsserts: []PlanAsserts{
-// 	// planasserts -> new package?
-// 	// Types could be functions that accept *tfjson.plan and return error
-// 	// All asserts would run and aggregate into an error message
-// 	// Could have PrePlanAsserts + PostPlanAsserts + SecondPostApplyPlanAsserts, all taking in an array of PlanAsserts
-// 	planassert.ExpectResourceAction("random_string.one", planassert.ResourceActionReplace),
-// 	planassert.ExpectResourceReplaceReason("random_string.one", tfjson.ReplaceBecauseCannotUpdate),
-// 	planassert.ExpectResourceReplacePaths("random_string.one", "length"),
-// 	planassert.ExpectResourceAction("random_string.two", planassert.ResourceActionReplace),
-// 	planassert.ExpectEmptyPlan(),
-// 	planassert.ExpectDrift("random_string.one"),
-// 	planassert.ExpectNoDrift("random_string.two"),
-// },
-// SecondPostApplyPlanAsserts: []PlanAsserts{
-// 	// planassert -> new package?
-// 	// Types could be functions that accept *tfjson.plan and return error
-// 	// All asserts would run and aggregate into an error message
-// 	// Could have PrePlanAsserts + PostPlanAsserts, both taking in an array of PlanAsserts
-// 	planassert.ExpectResourceAction("random_string.one", planassert.ResourceActionReplace),
-// 	planassert.ExpectResourceReplaceReason("random_string.one", tfjson.ReplaceBecauseCannotUpdate),
-// 	planassert.ExpectResourceReplacePaths("random_string.one", "length"),
-// 	planassert.ExpectResourceAction("random_string.two", planassert.ResourceActionReplace),
-// 	planassert.ExpectEmptyPlan(),
-// 	planassert.ExpectDrift("random_string.one"),
-// 	planassert.ExpectNoDrift("random_string.two"),
-// },

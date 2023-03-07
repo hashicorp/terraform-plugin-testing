@@ -10,18 +10,15 @@ import (
 var _ resource.PlanAssert = expectResourceAction{}
 
 type expectResourceAction struct {
-	resourceName string
-	actionType   ResourceActionType
+	resourceAddress string
+	actionType      ResourceActionType
 }
 
-// RunAssert implements PlanAssert
-// TODO: document
-// TODO: refactor logic
 func (e expectResourceAction) RunAssert(plan *tfjson.Plan) error {
 	foundResource := false
 
 	for _, rc := range plan.ResourceChanges {
-		if e.resourceName == rc.Address {
+		if e.resourceAddress == rc.Address {
 			switch e.actionType {
 			case ResourceActionNoop:
 				if !rc.Change.Actions.NoOp() {
@@ -56,7 +53,7 @@ func (e expectResourceAction) RunAssert(plan *tfjson.Plan) error {
 					return fmt.Errorf("%s - expected Replace, got action(s): %v", rc.Address, rc.Change.Actions)
 				}
 			default:
-				return fmt.Errorf("%s - unexpected DiffChangeType byte: %d", rc.Address, e.actionType)
+				return fmt.Errorf("%s - unexpected ResourceActionType byte: %d", rc.Address, e.actionType)
 			}
 
 			foundResource = true
@@ -65,15 +62,16 @@ func (e expectResourceAction) RunAssert(plan *tfjson.Plan) error {
 	}
 
 	if !foundResource {
-		return fmt.Errorf("%s - Resource not found in planned ResourceChanges", e.resourceName)
+		return fmt.Errorf("%s - Resource not found in plan ResourceChanges", e.resourceAddress)
 	}
 
 	return nil
 }
 
-func ExpectResourceAction(resourceName string, actionType ResourceActionType) resource.PlanAssert {
+// TODO: document
+func ExpectResourceAction(resourceAddress string, actionType ResourceActionType) resource.PlanAssert {
 	return expectResourceAction{
-		resourceName: resourceName,
-		actionType:   actionType,
+		resourceAddress: resourceAddress,
+		actionType:      actionType,
 	}
 }
