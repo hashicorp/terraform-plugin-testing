@@ -3,4 +3,4 @@ body: 'helper/resource: Deprecated `PrefixedUniqueId()` and `UniqueId()`. Use th
   `github.com/hashicorp/terraform-plugin-sdk/v2/helper/id` package instead.'
 time: 2023-03-09T11:02:05.211873-05:00
 custom:
-  Issue: "999999"
+  Issue: "96"
