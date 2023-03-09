@@ -503,6 +503,8 @@ type TestStep struct {
 
 	// ExpectNonEmptyPlan can be set to true for specific types of tests that are
 	// looking to verify that a diff occurs
+	// TODO: deprecate and describe how to replace (ConfigPlanAsserts.PostApplyPostRefresh or RefreshPlanAsserts.PostRefresh)
+	// TODO: describe implicit empty plan behavior and how to replace? documentation?
 	ExpectNonEmptyPlan bool
 
 	// ExpectError allows the construction of test cases that we expect to fail
