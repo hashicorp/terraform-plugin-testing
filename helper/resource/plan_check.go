@@ -32,6 +32,7 @@ func runPlanChecks(t testing.T, plan *tfjson.Plan, planChecks []PlanCheck) error
 		planCheck.RunCheck(PlanCheckRequest{Plan: plan}, &resp)
 
 		if resp.SkipTest {
+			// TODO: better msg
 			t.Skip("skipping test caused by plan check")
 		}
 		if resp.Error != nil {

@@ -97,6 +97,40 @@ func Test_ConfigPlanChecks_PreApply_Errors(t *testing.T) {
 	})
 }
 
+func Test_ConfigPlanChecks_PreApply_Skipped(t *testing.T) {
+	t.Parallel()
+
+	spy1 := &planCheckSpy{}
+	spy2 := &planCheckSpy{skip: true}
+	spy3 := &planCheckSpy{
+		err: errors.New("spy3 check failed"),
+	}
+
+	Test(t, TestCase{
+		ExternalProviders: map[string]ExternalProvider{
+			"random": {
+				Source: "registry.terraform.io/hashicorp/random",
+			},
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "random_string" "one" {
+					length = 16
+				}`,
+				ConfigPlanChecks: ConfigPlanChecks{
+					PreApply: []PlanCheck{
+						spy1,
+						spy2,
+						spy3,
+					},
+				},
+			},
+		},
+	})
+
+	t.Fatal("expected spy2 check to skip test")
+}
+
 func Test_ConfigPlanChecks_PostApplyPreRefresh_Called(t *testing.T) {
 	t.Parallel()
 
@@ -166,6 +200,40 @@ func Test_ConfigPlanChecks_PostApplyPreRefresh_Errors(t *testing.T) {
 	})
 }
 
+func Test_ConfigPlanChecks_PostApplyPreRefresh_Skipped(t *testing.T) {
+	t.Parallel()
+
+	spy1 := &planCheckSpy{}
+	spy2 := &planCheckSpy{skip: true}
+	spy3 := &planCheckSpy{
+		err: errors.New("spy3 check failed"),
+	}
+
+	Test(t, TestCase{
+		ExternalProviders: map[string]ExternalProvider{
+			"random": {
+				Source: "registry.terraform.io/hashicorp/random",
+			},
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "random_string" "one" {
+					length = 16
+				}`,
+				ConfigPlanChecks: ConfigPlanChecks{
+					PostApplyPreRefresh: []PlanCheck{
+						spy1,
+						spy2,
+						spy3,
+					},
+				},
+			},
+		},
+	})
+
+	t.Fatal("expected spy2 check to skip test")
+}
+
 func Test_ConfigPlanChecks_PostApplyPostRefresh_Called(t *testing.T) {
 	t.Parallel()
 
@@ -233,4 +301,38 @@ func Test_ConfigPlanChecks_PostApplyPostRefresh_Errors(t *testing.T) {
 			},
 		},
 	})
+}
+
+func Test_ConfigPlanChecks_PostApplyPostRefresh_Skipped(t *testing.T) {
+	t.Parallel()
+
+	spy1 := &planCheckSpy{}
+	spy2 := &planCheckSpy{skip: true}
+	spy3 := &planCheckSpy{
+		err: errors.New("spy3 check failed"),
+	}
+
+	Test(t, TestCase{
+		ExternalProviders: map[string]ExternalProvider{
+			"random": {
+				Source: "registry.terraform.io/hashicorp/random",
+			},
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "random_string" "one" {
+					length = 16
+				}`,
+				ConfigPlanChecks: ConfigPlanChecks{
+					PostApplyPostRefresh: []PlanCheck{
+						spy1,
+						spy2,
+						spy3,
+					},
+				},
+			},
+		},
+	})
+
+	t.Fatal("expected spy2 check to skip test")
 }
