@@ -1,4 +1,4 @@
-package planassert
+package plancheck
 
 // TODO: is this a good name?
 // TODO: document type and all aliases below

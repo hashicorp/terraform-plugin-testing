@@ -28,11 +28,11 @@ func TestTest_TestStep_ExpectError_NewConfig(t *testing.T) {
 	})
 }
 
-func Test_ConfigPlanAsserts_PreApply_Called(t *testing.T) {
+func Test_ConfigPlanChecks_PreApply_Called(t *testing.T) {
 	t.Parallel()
 
-	spy1 := &planAssertSpy{}
-	spy2 := &planAssertSpy{}
+	spy1 := &planCheckSpy{}
+	spy2 := &planCheckSpy{}
 	Test(t, TestCase{
 		ExternalProviders: map[string]ExternalProvider{
 			"random": {
@@ -44,8 +44,8 @@ func Test_ConfigPlanAsserts_PreApply_Called(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				ConfigPlanAsserts: ConfigPlanAsserts{
-					PreApply: []PlanAssert{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PreApply: []PlanCheck{
 						spy1,
 						spy2,
 					},
@@ -55,23 +55,23 @@ func Test_ConfigPlanAsserts_PreApply_Called(t *testing.T) {
 	})
 
 	if !spy1.called {
-		t.Error("expected ConfigPlanAsserts.PreApply spy1 to be called at least once")
+		t.Error("expected ConfigPlanChecks.PreApply spy1 to be called at least once")
 	}
 
 	if !spy2.called {
-		t.Error("expected ConfigPlanAsserts.PreApply spy2 to be called at least once")
+		t.Error("expected ConfigPlanChecks.PreApply spy2 to be called at least once")
 	}
 }
 
-func Test_ConfigPlanAsserts_PreApply_Errors(t *testing.T) {
+func Test_ConfigPlanChecks_PreApply_Errors(t *testing.T) {
 	t.Parallel()
 
-	spy1 := &planAssertSpy{}
-	spy2 := &planAssertSpy{
-		err: errors.New("spy2 assert failed"),
+	spy1 := &planCheckSpy{}
+	spy2 := &planCheckSpy{
+		err: errors.New("spy2 check failed"),
 	}
-	spy3 := &planAssertSpy{
-		err: errors.New("spy3 assert failed"),
+	spy3 := &planCheckSpy{
+		err: errors.New("spy3 check failed"),
 	}
 	Test(t, TestCase{
 		ExternalProviders: map[string]ExternalProvider{
@@ -84,24 +84,24 @@ func Test_ConfigPlanAsserts_PreApply_Errors(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				ConfigPlanAsserts: ConfigPlanAsserts{
-					PreApply: []PlanAssert{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PreApply: []PlanCheck{
 						spy1,
 						spy2,
 						spy3,
 					},
 				},
-				ExpectError: regexp.MustCompile(`.*?(spy2 assert failed)\n.*?(spy3 assert failed)`),
+				ExpectError: regexp.MustCompile(`.*?(spy2 check failed)\n.*?(spy3 check failed)`),
 			},
 		},
 	})
 }
 
-func Test_ConfigPlanAsserts_PostApplyPreRefresh_Called(t *testing.T) {
+func Test_ConfigPlanChecks_PostApplyPreRefresh_Called(t *testing.T) {
 	t.Parallel()
 
-	spy1 := &planAssertSpy{}
-	spy2 := &planAssertSpy{}
+	spy1 := &planCheckSpy{}
+	spy2 := &planCheckSpy{}
 	Test(t, TestCase{
 		ExternalProviders: map[string]ExternalProvider{
 			"random": {
@@ -113,8 +113,8 @@ func Test_ConfigPlanAsserts_PostApplyPreRefresh_Called(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				ConfigPlanAsserts: ConfigPlanAsserts{
-					PostApplyPreRefresh: []PlanAssert{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PostApplyPreRefresh: []PlanCheck{
 						spy1,
 						spy2,
 					},
@@ -124,23 +124,23 @@ func Test_ConfigPlanAsserts_PostApplyPreRefresh_Called(t *testing.T) {
 	})
 
 	if !spy1.called {
-		t.Error("expected ConfigPlanAsserts.PostApplyPreRefresh spy1 to be called at least once")
+		t.Error("expected ConfigPlanChecks.PostApplyPreRefresh spy1 to be called at least once")
 	}
 
 	if !spy2.called {
-		t.Error("expected ConfigPlanAsserts.PostApplyPreRefresh spy2 to be called at least once")
+		t.Error("expected ConfigPlanChecks.PostApplyPreRefresh spy2 to be called at least once")
 	}
 }
 
-func Test_ConfigPlanAsserts_PostApplyPreRefresh_Errors(t *testing.T) {
+func Test_ConfigPlanChecks_PostApplyPreRefresh_Errors(t *testing.T) {
 	t.Parallel()
 
-	spy1 := &planAssertSpy{}
-	spy2 := &planAssertSpy{
-		err: errors.New("spy2 assert failed"),
+	spy1 := &planCheckSpy{}
+	spy2 := &planCheckSpy{
+		err: errors.New("spy2 check failed"),
 	}
-	spy3 := &planAssertSpy{
-		err: errors.New("spy3 assert failed"),
+	spy3 := &planCheckSpy{
+		err: errors.New("spy3 check failed"),
 	}
 	Test(t, TestCase{
 		ExternalProviders: map[string]ExternalProvider{
@@ -153,24 +153,24 @@ func Test_ConfigPlanAsserts_PostApplyPreRefresh_Errors(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				ConfigPlanAsserts: ConfigPlanAsserts{
-					PostApplyPreRefresh: []PlanAssert{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PostApplyPreRefresh: []PlanCheck{
 						spy1,
 						spy2,
 						spy3,
 					},
 				},
-				ExpectError: regexp.MustCompile(`.*?(spy2 assert failed)\n.*?(spy3 assert failed)`),
+				ExpectError: regexp.MustCompile(`.*?(spy2 check failed)\n.*?(spy3 check failed)`),
 			},
 		},
 	})
 }
 
-func Test_ConfigPlanAsserts_PostApplyPostRefresh_Called(t *testing.T) {
+func Test_ConfigPlanChecks_PostApplyPostRefresh_Called(t *testing.T) {
 	t.Parallel()
 
-	spy1 := &planAssertSpy{}
-	spy2 := &planAssertSpy{}
+	spy1 := &planCheckSpy{}
+	spy2 := &planCheckSpy{}
 	Test(t, TestCase{
 		ExternalProviders: map[string]ExternalProvider{
 			"random": {
@@ -182,8 +182,8 @@ func Test_ConfigPlanAsserts_PostApplyPostRefresh_Called(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				ConfigPlanAsserts: ConfigPlanAsserts{
-					PostApplyPostRefresh: []PlanAssert{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PostApplyPostRefresh: []PlanCheck{
 						spy1,
 						spy2,
 					},
@@ -193,23 +193,23 @@ func Test_ConfigPlanAsserts_PostApplyPostRefresh_Called(t *testing.T) {
 	})
 
 	if !spy1.called {
-		t.Error("expected ConfigPlanAsserts.PostApplyPostRefresh spy1 to be called at least once")
+		t.Error("expected ConfigPlanChecks.PostApplyPostRefresh spy1 to be called at least once")
 	}
 
 	if !spy2.called {
-		t.Error("expected ConfigPlanAsserts.PostApplyPostRefresh spy2 to be called at least once")
+		t.Error("expected ConfigPlanChecks.PostApplyPostRefresh spy2 to be called at least once")
 	}
 }
 
-func Test_ConfigPlanAsserts_PostApplyPostRefresh_Errors(t *testing.T) {
+func Test_ConfigPlanChecks_PostApplyPostRefresh_Errors(t *testing.T) {
 	t.Parallel()
 
-	spy1 := &planAssertSpy{}
-	spy2 := &planAssertSpy{
-		err: errors.New("spy2 assert failed"),
+	spy1 := &planCheckSpy{}
+	spy2 := &planCheckSpy{
+		err: errors.New("spy2 check failed"),
 	}
-	spy3 := &planAssertSpy{
-		err: errors.New("spy3 assert failed"),
+	spy3 := &planCheckSpy{
+		err: errors.New("spy3 check failed"),
 	}
 	Test(t, TestCase{
 		ExternalProviders: map[string]ExternalProvider{
@@ -222,14 +222,14 @@ func Test_ConfigPlanAsserts_PostApplyPostRefresh_Errors(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				ConfigPlanAsserts: ConfigPlanAsserts{
-					PostApplyPostRefresh: []PlanAssert{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PostApplyPostRefresh: []PlanCheck{
 						spy1,
 						spy2,
 						spy3,
 					},
 				},
-				ExpectError: regexp.MustCompile(`.*?(spy2 assert failed)\n.*?(spy3 assert failed)`),
+				ExpectError: regexp.MustCompile(`.*?(spy2 check failed)\n.*?(spy3 check failed)`),
 			},
 		},
 	})

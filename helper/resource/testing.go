@@ -503,7 +503,7 @@ type TestStep struct {
 
 	// ExpectNonEmptyPlan can be set to true for specific types of tests that are
 	// looking to verify that a diff occurs
-	// TODO: deprecate and describe how to replace (ConfigPlanAsserts.PostApplyPostRefresh or RefreshPlanAsserts.PostRefresh)
+	// TODO: deprecate and describe how to replace (ConfigPlanChecks.PostApplyPostRefresh or RefreshPlanChecks.PostRefresh)
 	// TODO: describe implicit empty plan behavior and how to replace? documentation?
 	ExpectNonEmptyPlan bool
 
@@ -514,11 +514,11 @@ type TestStep struct {
 
 	// TODO: is this naming good?
 	// TODO: document
-	ConfigPlanAsserts ConfigPlanAsserts
+	ConfigPlanChecks ConfigPlanChecks
 
 	// TODO: is this naming good?
 	// TODO: document
-	RefreshPlanAsserts RefreshPlanAsserts
+	RefreshPlanChecks RefreshPlanChecks
 
 	// PlanOnly can be set to only run `plan` with this configuration, and not
 	// actually apply it. This is useful for ensuring config changes result in
@@ -690,19 +690,19 @@ type TestStep struct {
 }
 
 // TODO: document all fields / move to a different file/package?
-type ConfigPlanAsserts struct {
-	PreApply []PlanAssert
+type ConfigPlanChecks struct {
+	PreApply []PlanCheck
 
-	PostApplyPreRefresh []PlanAssert
+	PostApplyPreRefresh []PlanCheck
 
 	// TODO: should this be named 2nd post apply? Since refresh is not guaranteed
-	PostApplyPostRefresh []PlanAssert
+	PostApplyPostRefresh []PlanCheck
 }
 
 // TODO: is this naming good?
 // TODO: document
-type RefreshPlanAsserts struct {
-	PostRefresh []PlanAssert
+type RefreshPlanChecks struct {
+	PostRefresh []PlanCheck
 }
 
 // ParallelTest performs an acceptance test on a resource, allowing concurrency

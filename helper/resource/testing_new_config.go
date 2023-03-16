@@ -51,8 +51,8 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			return fmt.Errorf("Error running pre-apply plan: %w", err)
 		}
 
-		// Run pre-apply plan assertions
-		if len(step.ConfigPlanAsserts.PreApply) > 0 {
+		// Run pre-apply plan checks
+		if len(step.ConfigPlanChecks.PreApply) > 0 {
 			var plan *tfjson.Plan
 			err = runProviderCommand(ctx, t, func() error {
 				var err error
@@ -63,9 +63,9 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				return fmt.Errorf("Error retrieving pre-apply plan: %w", err)
 			}
 
-			err = runPlanAssertions(plan, step.ConfigPlanAsserts.PreApply)
+			err = runPlanChecks(t, plan, step.ConfigPlanChecks.PreApply)
 			if err != nil {
-				return fmt.Errorf("Pre-apply plan assertion(s) failed: %w", err)
+				return fmt.Errorf("Pre-apply plan check(s) failed: %w", err)
 			}
 		}
 
@@ -149,11 +149,11 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("Error retrieving post-apply plan: %w", err)
 	}
 
-	// Run post-apply, pre-refresh plan assertions
-	if len(step.ConfigPlanAsserts.PostApplyPreRefresh) > 0 {
-		err = runPlanAssertions(plan, step.ConfigPlanAsserts.PostApplyPreRefresh)
+	// Run post-apply, pre-refresh plan checks
+	if len(step.ConfigPlanChecks.PostApplyPreRefresh) > 0 {
+		err = runPlanChecks(t, plan, step.ConfigPlanChecks.PostApplyPreRefresh)
 		if err != nil {
-			return fmt.Errorf("Post-apply, pre-refresh plan assertion(s) failed: %w", err)
+			return fmt.Errorf("Post-apply, pre-refresh plan check(s) failed: %w", err)
 		}
 	}
 
@@ -200,11 +200,11 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("Error retrieving second post-apply plan: %w", err)
 	}
 
-	// Run post-apply, post-refresh plan assertions
-	if len(step.ConfigPlanAsserts.PostApplyPostRefresh) > 0 {
-		err = runPlanAssertions(plan, step.ConfigPlanAsserts.PostApplyPostRefresh)
+	// Run post-apply, post-refresh plan checks
+	if len(step.ConfigPlanChecks.PostApplyPostRefresh) > 0 {
+		err = runPlanChecks(t, plan, step.ConfigPlanChecks.PostApplyPostRefresh)
 		if err != nil {
-			return fmt.Errorf("Post-apply, post-refresh plan assertion(s) failed: %w", err)
+			return fmt.Errorf("Post-apply, post-refresh plan check(s) failed: %w", err)
 		}
 	}
 

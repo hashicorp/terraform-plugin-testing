@@ -6,11 +6,11 @@ import (
 	"testing"
 )
 
-func Test_RefreshPlanAsserts_PostRefresh_Called(t *testing.T) {
+func Test_RefreshPlanChecks_PostRefresh_Called(t *testing.T) {
 	t.Parallel()
 
-	spy1 := &planAssertSpy{}
-	spy2 := &planAssertSpy{}
+	spy1 := &planCheckSpy{}
+	spy2 := &planCheckSpy{}
 	Test(t, TestCase{
 		ExternalProviders: map[string]ExternalProvider{
 			"random": {
@@ -25,8 +25,8 @@ func Test_RefreshPlanAsserts_PostRefresh_Called(t *testing.T) {
 			},
 			{
 				RefreshState: true,
-				RefreshPlanAsserts: RefreshPlanAsserts{
-					PostRefresh: []PlanAssert{
+				RefreshPlanChecks: RefreshPlanChecks{
+					PostRefresh: []PlanCheck{
 						spy1,
 						spy2,
 					},
@@ -36,23 +36,23 @@ func Test_RefreshPlanAsserts_PostRefresh_Called(t *testing.T) {
 	})
 
 	if !spy1.called {
-		t.Error("expected RefreshPlanAsserts.PostRefresh spy1 to be called at least once")
+		t.Error("expected RefreshPlanChecks.PostRefresh spy1 to be called at least once")
 	}
 
 	if !spy2.called {
-		t.Error("expected RefreshPlanAsserts.PostRefresh spy2 to be called at least once")
+		t.Error("expected RefreshPlanChecks.PostRefresh spy2 to be called at least once")
 	}
 }
 
-func Test_RefreshPlanAsserts_PostRefresh_Errors(t *testing.T) {
+func Test_RefreshPlanChecks_PostRefresh_Errors(t *testing.T) {
 	t.Parallel()
 
-	spy1 := &planAssertSpy{}
-	spy2 := &planAssertSpy{
-		err: errors.New("spy2 assert failed"),
+	spy1 := &planCheckSpy{}
+	spy2 := &planCheckSpy{
+		err: errors.New("spy2 check failed"),
 	}
-	spy3 := &planAssertSpy{
-		err: errors.New("spy3 assert failed"),
+	spy3 := &planCheckSpy{
+		err: errors.New("spy3 check failed"),
 	}
 	Test(t, TestCase{
 		ExternalProviders: map[string]ExternalProvider{
@@ -68,14 +68,14 @@ func Test_RefreshPlanAsserts_PostRefresh_Errors(t *testing.T) {
 			},
 			{
 				RefreshState: true,
-				RefreshPlanAsserts: RefreshPlanAsserts{
-					PostRefresh: []PlanAssert{
+				RefreshPlanChecks: RefreshPlanChecks{
+					PostRefresh: []PlanCheck{
 						spy1,
 						spy2,
 						spy3,
 					},
 				},
-				ExpectError: regexp.MustCompile(`.*?(spy2 assert failed)\n.*?(spy3 assert failed)`),
+				ExpectError: regexp.MustCompile(`.*?(spy2 check failed)\n.*?(spy3 check failed)`),
 			},
 		},
 	})

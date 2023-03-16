@@ -22,8 +22,8 @@
         "path": "acceptance-tests/sweepers"
       },
       {
-        "title": "Plan Assertions",
-        "path": "acceptance-tests/plan-assertions"
+        "title": "Plan Checks",
+        "path": "acceptance-tests/plan-checks"
       }
     ]
   },

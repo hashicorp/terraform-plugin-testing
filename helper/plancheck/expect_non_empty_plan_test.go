@@ -1,4 +1,4 @@
-package planassert
+package plancheck
 
 import (
 	"regexp"
@@ -26,8 +26,8 @@ func Test_ExpectNonEmptyPlan(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 12
 				}`,
-				ConfigPlanAsserts: r.ConfigPlanAsserts{
-					PreApply: []r.PlanAssert{
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []r.PlanCheck{
 						ExpectNonEmptyPlan(),
 					},
 				},
@@ -55,8 +55,8 @@ func Test_ExpectNonEmptyPlan_Error(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				ConfigPlanAsserts: r.ConfigPlanAsserts{
-					PreApply: []r.PlanAssert{
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []r.PlanCheck{
 						ExpectNonEmptyPlan(),
 					},
 				},
