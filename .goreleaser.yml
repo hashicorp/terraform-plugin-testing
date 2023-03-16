@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 project_name: terraform-plugin-testing
-build:
-  skip: true
+builds:
+  - skip: true
 milestones:
   - close: true
 release:
