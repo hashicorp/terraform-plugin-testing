@@ -1,10 +1,11 @@
-package plancheck
+package plancheck_test
 
 import (
 	"regexp"
 	"testing"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func Test_ExpectEmptyPlan(t *testing.T) {
@@ -28,7 +29,7 @@ func Test_ExpectEmptyPlan(t *testing.T) {
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []r.PlanCheck{
-						ExpectEmptyPlan(),
+						plancheck.ExpectEmptyPlan(),
 					},
 				},
 			},
@@ -69,7 +70,7 @@ func Test_ExpectEmptyPlan_Error(t *testing.T) {
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []r.PlanCheck{
-						ExpectEmptyPlan(),
+						plancheck.ExpectEmptyPlan(),
 					},
 				},
 				ExpectError: regexp.MustCompile(`.*?(random_string.one has planned action\(s\): \[delete create\])\n.*?(random_string.three has planned action\(s\): \[delete create\])`),
