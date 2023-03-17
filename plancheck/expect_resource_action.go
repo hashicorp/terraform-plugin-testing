@@ -1,6 +1,7 @@
 package plancheck
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -13,7 +14,7 @@ type expectResourceAction struct {
 	actionType      ResourceActionType
 }
 
-func (e expectResourceAction) RunCheck(req resource.PlanCheckRequest, resp *resource.PlanCheckResponse) {
+func (e expectResourceAction) CheckPlan(ctx context.Context, req resource.CheckPlanRequest, resp *resource.CheckPlanResponse) {
 	foundResource := false
 
 	for _, rc := range req.Plan.ResourceChanges {

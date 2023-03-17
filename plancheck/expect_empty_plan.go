@@ -1,6 +1,7 @@
 package plancheck
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hashicorp/go-multierror"
@@ -11,7 +12,7 @@ var _ resource.PlanCheck = expectEmptyPlan{}
 
 type expectEmptyPlan struct{}
 
-func (e expectEmptyPlan) RunCheck(req resource.PlanCheckRequest, resp *resource.PlanCheckResponse) {
+func (e expectEmptyPlan) CheckPlan(ctx context.Context, req resource.CheckPlanRequest, resp *resource.CheckPlanResponse) {
 	var result *multierror.Error
 
 	for _, rc := range req.Plan.ResourceChanges {

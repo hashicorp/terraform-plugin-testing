@@ -82,7 +82,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 
 	// Run post-refresh plan checks
 	if len(step.RefreshPlanChecks.PostRefresh) > 0 {
-		err = runPlanChecks(t, plan, step.RefreshPlanChecks.PostRefresh)
+		err = runPlanChecks(ctx, t, plan, step.RefreshPlanChecks.PostRefresh)
 		if err != nil {
 			return fmt.Errorf("Post-refresh plan check(s) failed: %w", err)
 		}

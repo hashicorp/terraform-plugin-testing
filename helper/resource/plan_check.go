@@ -1,6 +1,8 @@
 package resource
 
 import (
+	"context"
+
 	"github.com/hashicorp/go-multierror"
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
@@ -8,28 +10,28 @@ import (
 
 // TODO: document
 type PlanCheck interface {
-	RunCheck(req PlanCheckRequest, resp *PlanCheckResponse)
+	CheckPlan(ctx context.Context, req CheckPlanRequest, resp *CheckPlanResponse)
 }
 
 // TODO: document
-type PlanCheckRequest struct {
+type CheckPlanRequest struct {
 	Plan *tfjson.Plan
 }
 
 // TODO: document
-type PlanCheckResponse struct {
+type CheckPlanResponse struct {
 	Error    error
 	SkipTest bool
 }
 
-func runPlanChecks(t testing.T, plan *tfjson.Plan, planChecks []PlanCheck) error {
+func runPlanChecks(ctx context.Context, t testing.T, plan *tfjson.Plan, planChecks []PlanCheck) error {
 	t.Helper()
 
 	var result *multierror.Error
 
 	for _, planCheck := range planChecks {
-		resp := PlanCheckResponse{}
-		planCheck.RunCheck(PlanCheckRequest{Plan: plan}, &resp)
+		resp := CheckPlanResponse{}
+		planCheck.CheckPlan(ctx, CheckPlanRequest{Plan: plan}, &resp)
 
 		if resp.SkipTest {
 			// TODO: better msg
