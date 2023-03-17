@@ -65,7 +65,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 			err = runPlanChecks(ctx, t, plan, step.ConfigPlanChecks.PreApply)
 			if err != nil {
-				return fmt.Errorf("Pre-apply plan check(s) failed: %w", err)
+				return fmt.Errorf("Pre-apply plan check(s) failed:\n%w", err)
 			}
 		}
 
@@ -153,7 +153,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	if len(step.ConfigPlanChecks.PostApplyPreRefresh) > 0 {
 		err = runPlanChecks(ctx, t, plan, step.ConfigPlanChecks.PostApplyPreRefresh)
 		if err != nil {
-			return fmt.Errorf("Post-apply, pre-refresh plan check(s) failed: %w", err)
+			return fmt.Errorf("Post-apply, pre-refresh plan check(s) failed:\n%w", err)
 		}
 	}
 
@@ -204,7 +204,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	if len(step.ConfigPlanChecks.PostApplyPostRefresh) > 0 {
 		err = runPlanChecks(ctx, t, plan, step.ConfigPlanChecks.PostApplyPostRefresh)
 		if err != nil {
-			return fmt.Errorf("Post-apply, post-refresh plan check(s) failed: %w", err)
+			return fmt.Errorf("Post-apply, post-refresh plan check(s) failed:\n%w", err)
 		}
 	}
 

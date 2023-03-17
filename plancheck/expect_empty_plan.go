@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/internal/errorshim"
 )
 
 var _ resource.PlanCheck = expectEmptyPlan{}
@@ -13,15 +13,17 @@ var _ resource.PlanCheck = expectEmptyPlan{}
 type expectEmptyPlan struct{}
 
 func (e expectEmptyPlan) CheckPlan(ctx context.Context, req resource.CheckPlanRequest, resp *resource.CheckPlanResponse) {
-	var result *multierror.Error
+	var result error
 
 	for _, rc := range req.Plan.ResourceChanges {
 		if !rc.Change.Actions.NoOp() {
-			result = multierror.Append(result, fmt.Errorf("expected empty plan, but %s has planned action(s): %v", rc.Address, rc.Change.Actions))
+			// TODO: Once Go 1.20 is the minimum supported version for this module, replace with `errors.Join` function
+			// - https://github.com/hashicorp/terraform-plugin-testing/issues/99
+			result = errorshim.Join(result, fmt.Errorf("expected empty plan, but %s has planned action(s): %v", rc.Address, rc.Change.Actions))
 		}
 	}
 
-	resp.Error = result.ErrorOrNil()
+	resp.Error = result
 }
 
 // TODO: document

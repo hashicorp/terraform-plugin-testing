@@ -3,8 +3,8 @@ package resource
 import (
 	"context"
 
-	"github.com/hashicorp/go-multierror"
 	tfjson "github.com/hashicorp/terraform-json"
+	"github.com/hashicorp/terraform-plugin-testing/internal/errorshim"
 	"github.com/mitchellh/go-testing-interface"
 )
 
@@ -27,7 +27,7 @@ type CheckPlanResponse struct {
 func runPlanChecks(ctx context.Context, t testing.T, plan *tfjson.Plan, planChecks []PlanCheck) error {
 	t.Helper()
 
-	var result *multierror.Error
+	var result error
 
 	for _, planCheck := range planChecks {
 		resp := CheckPlanResponse{}
@@ -38,9 +38,11 @@ func runPlanChecks(ctx context.Context, t testing.T, plan *tfjson.Plan, planChec
 			t.Skip("skipping test caused by plan check")
 		}
 		if resp.Error != nil {
-			result = multierror.Append(result, resp.Error)
+			// TODO: Once Go 1.20 is the minimum supported version for this module, replace with `errors.Join` function
+			// - https://github.com/hashicorp/terraform-plugin-testing/issues/99
+			result = errorshim.Join(result, resp.Error)
 		}
 	}
 
-	return result.ErrorOrNil()
+	return result
 }
