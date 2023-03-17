@@ -1,0 +1,7 @@
+kind: NOTES
+body: 'helper/resource: Deprecated `RetryContext()`, `StateChangeConf`, and associated
+  `*Error` types. Use the `github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry`
+  package instead.'
+time: 2023-03-09T11:04:44.570331-05:00
+custom:
+  Issue: "96"
