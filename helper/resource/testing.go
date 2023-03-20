@@ -504,8 +504,12 @@ type TestStep struct {
 
 	// ExpectNonEmptyPlan can be set to true for specific types of tests that are
 	// looking to verify that a diff occurs
-	// TODO: deprecate and describe how to replace (ConfigPlanChecks.PostApplyPostRefresh or RefreshPlanChecks.PostRefresh)
-	// TODO: describe implicit empty plan behavior and how to replace? documentation?
+	//
+	// Deprecated: Please replace by using the plan check provided in the testing plancheck package: [plancheck.ExpectNonEmptyPlan]
+	//   - For Config (plan/apply) testing, add the above plan check to the slice: TestStep.ConfigPlanChecks.PostApplyPostRefresh
+	//   - For Refresh testing, add the above plan check to the slice: TestStep.RefreshPlanChecks.PostRefresh
+	//
+	// [plancheck.ExpectNonEmptyPlan]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectNonEmptyPlan
 	ExpectNonEmptyPlan bool
 
 	// ExpectError allows the construction of test cases that we expect to fail
@@ -513,12 +517,18 @@ type TestStep struct {
 	// test to pass.
 	ExpectError *regexp.Regexp
 
-	// TODO: is this naming good?
-	// TODO: document
+	// ConfigPlanChecks allows assertions to be made against the plan file at different points of a Config (apply) test using a plan check.
+	// Custom plan checks can be created by implementing the [PlanCheck] interface, or by using a PlanCheck implementation from the provided [plancheck] package
+	//
+	// [PlanCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#PlanCheck
+	// [plancheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck
 	ConfigPlanChecks ConfigPlanChecks
 
-	// TODO: is this naming good?
-	// TODO: document
+	// RefreshPlanChecks allows assertions to be made against the plan file at different points of a Refresh test using a plan check.
+	// Custom plan checks can be created by implementing the [PlanCheck] interface, or by using a PlanCheck implementation from the provided [plancheck] package
+	//
+	// [PlanCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#PlanCheck
+	// [plancheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck
 	RefreshPlanChecks RefreshPlanChecks
 
 	// PlanOnly can be set to only run `plan` with this configuration, and not
@@ -690,19 +700,25 @@ type TestStep struct {
 	ExternalProviders map[string]ExternalProvider
 }
 
-// TODO: document all fields / move to a different file/package?
+// ConfigPlanChecks defines the different points in a Config TestStep when plan checks can be run.
 type ConfigPlanChecks struct {
+	// PreApply runs all plan checks in the slice. This occurs before the apply of a Config test is run. This slice cannot be populated
+	// with TestStep.PlanOnly, as there is no PreApply plan run with that flag set. All errors by plan checks in this slice are aggregated, reported, and will result in a test failure.
 	PreApply []plancheck.PlanCheck
 
+	// PostApplyPreRefresh runs all plan checks in the slice. This occurs after the apply and before the refresh of a Config test is run.
+	// All errors by plan checks in this slice are aggregated, reported, and will result in a test failure.
 	PostApplyPreRefresh []plancheck.PlanCheck
 
-	// TODO: should this be named 2nd post apply? Since refresh is not guaranteed
+	// PostApplyPostRefresh runs all plan checks in the slice. This occurs after the apply and refresh of a Config test are run.
+	// All errors by plan checks in this slice are aggregated, reported, and will result in a test failure.
 	PostApplyPostRefresh []plancheck.PlanCheck
 }
 
-// TODO: is this naming good?
-// TODO: document
+// RefreshPlanChecks defines the different points in a Refresh TestStep when plan checks can be run.
 type RefreshPlanChecks struct {
+	// PostRefresh runs all plan checks in the slice. This occurs after the refresh of the Refresh test is run.
+	// All errors by plan checks in this slice are aggregated, reported, and will result in a test failure.
 	PostRefresh []plancheck.PlanCheck
 }
 
