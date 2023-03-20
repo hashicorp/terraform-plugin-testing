@@ -10,7 +10,7 @@ import (
 
 // TODO: document
 type PlanCheck interface {
-	CheckPlan(ctx context.Context, req CheckPlanRequest, resp *CheckPlanResponse)
+	CheckPlan(context.Context, CheckPlanRequest, *CheckPlanResponse)
 }
 
 // TODO: document
