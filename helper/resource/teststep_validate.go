@@ -59,6 +59,9 @@ func (s TestStep) hasProviders(_ context.Context) bool {
 //   - No overlapping ExternalProviders and ProviderFactories entries
 //   - ResourceName is not empty when ImportState is true, ImportStateIdFunc
 //     is not set, and ImportStateId is not set.
+//   - ConfigPlanChecks (PreApply, PostApplyPreRefresh, PostApplyPostRefresh) are only set when Config is set.
+//   - ConfigPlanChecks.PreApply are only set when PlanOnly is false.
+//   - RefreshPlanChecks (PostRefresh) are only set when RefreshState is set.
 func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) error {
 	ctx = logging.TestStepNumberContext(ctx, req.StepNumber)
 
@@ -122,6 +125,38 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 			logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 			return err
 		}
+	}
+
+	if len(s.ConfigPlanChecks.PreApply) > 0 {
+		if s.Config == "" {
+			err := fmt.Errorf("TestStep ConfigPlanChecks.PreApply must only be specified with Config")
+			logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
+			return err
+		}
+
+		if s.PlanOnly {
+			err := fmt.Errorf("TestStep ConfigPlanChecks.PreApply cannot be run with PlanOnly")
+			logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
+			return err
+		}
+	}
+
+	if len(s.ConfigPlanChecks.PostApplyPreRefresh) > 0 && s.Config == "" {
+		err := fmt.Errorf("TestStep ConfigPlanChecks.PostApplyPreRefresh must only be specified with Config")
+		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
+		return err
+	}
+
+	if len(s.ConfigPlanChecks.PostApplyPostRefresh) > 0 && s.Config == "" {
+		err := fmt.Errorf("TestStep ConfigPlanChecks.PostApplyPostRefresh must only be specified with Config")
+		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
+		return err
+	}
+
+	if len(s.RefreshPlanChecks.PostRefresh) > 0 && !s.RefreshState {
+		err := fmt.Errorf("TestStep RefreshPlanChecks.PostRefresh must only be specified with RefreshState")
+		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
+		return err
 	}
 
 	return nil

@@ -5,6 +5,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -189,6 +190,57 @@ func TestTestStepValidate(t *testing.T) {
 				TestCaseHasProviders: true,
 			},
 			expectedError: fmt.Errorf("Providers must only be specified either at the TestCase or TestStep level"),
+		},
+		"configplanchecks-preapply-not-config-mode": {
+			testStep: TestStep{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PreApply: []PlanCheck{&planCheckSpy{}},
+				},
+				RefreshState: true,
+			},
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep ConfigPlanChecks.PreApply must only be specified with Config"),
+		},
+		"configplanchecks-preapply-not-planonly": {
+			testStep: TestStep{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PreApply: []PlanCheck{&planCheckSpy{}},
+				},
+				Config:   "# not empty",
+				PlanOnly: true,
+			},
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep ConfigPlanChecks.PreApply cannot be run with PlanOnly"),
+		},
+		"configplanchecks-postapplyprerefresh-not-config-mode": {
+			testStep: TestStep{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PostApplyPreRefresh: []PlanCheck{&planCheckSpy{}},
+				},
+				RefreshState: true,
+			},
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep ConfigPlanChecks.PostApplyPreRefresh must only be specified with Config"),
+		},
+		"configplanchecks-postapplypostrefresh-not-config-mode": {
+			testStep: TestStep{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PostApplyPostRefresh: []PlanCheck{&planCheckSpy{}},
+				},
+				RefreshState: true,
+			},
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep ConfigPlanChecks.PostApplyPostRefresh must only be specified with Config"),
+		},
+		"refreshplanchecks-postrefresh-not-refresh-mode": {
+			testStep: TestStep{
+				RefreshPlanChecks: RefreshPlanChecks{
+					PostRefresh: []PlanCheck{&planCheckSpy{}},
+				},
+				Config: "# not empty",
+			},
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep RefreshPlanChecks.PostRefresh must only be specified with RefreshState"),
 		},
 	}
 
