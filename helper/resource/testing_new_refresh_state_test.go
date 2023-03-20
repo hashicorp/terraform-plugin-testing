@@ -85,7 +85,7 @@ func Test_RefreshPlanChecks_PostRefresh_Skipped(t *testing.T) {
 	t.Parallel()
 
 	spy1 := &planCheckSpy{}
-	spy2 := &planCheckSpy{skip: true}
+	spy2 := &planCheckSpy{skip: "skipping on purpose!"}
 	spy3 := &planCheckSpy{
 		err: errors.New("spy3 check failed"),
 	}

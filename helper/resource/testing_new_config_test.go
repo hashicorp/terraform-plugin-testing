@@ -101,7 +101,7 @@ func Test_ConfigPlanChecks_PreApply_Skipped(t *testing.T) {
 	t.Parallel()
 
 	spy1 := &planCheckSpy{}
-	spy2 := &planCheckSpy{skip: true}
+	spy2 := &planCheckSpy{skip: "skipping on purpose!"}
 	spy3 := &planCheckSpy{
 		err: errors.New("spy3 check failed"),
 	}
@@ -204,7 +204,7 @@ func Test_ConfigPlanChecks_PostApplyPreRefresh_Skipped(t *testing.T) {
 	t.Parallel()
 
 	spy1 := &planCheckSpy{}
-	spy2 := &planCheckSpy{skip: true}
+	spy2 := &planCheckSpy{skip: "skipping on purpose!"}
 	spy3 := &planCheckSpy{
 		err: errors.New("spy3 check failed"),
 	}
@@ -307,7 +307,7 @@ func Test_ConfigPlanChecks_PostApplyPostRefresh_Skipped(t *testing.T) {
 	t.Parallel()
 
 	spy1 := &planCheckSpy{}
-	spy2 := &planCheckSpy{skip: true}
+	spy2 := &planCheckSpy{skip: "skipping on purpose!"}
 	spy3 := &planCheckSpy{
 		err: errors.New("spy3 check failed"),
 	}

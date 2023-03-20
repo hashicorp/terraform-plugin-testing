@@ -6,12 +6,12 @@ var _ PlanCheck = &planCheckSpy{}
 
 type planCheckSpy struct {
 	err    error
-	skip   bool
+	skip   string
 	called bool
 }
 
 func (s *planCheckSpy) CheckPlan(ctx context.Context, req CheckPlanRequest, resp *CheckPlanResponse) {
 	s.called = true
-	resp.SkipTest = s.skip
+	resp.Skip = s.skip
 	resp.Error = s.err
 }
