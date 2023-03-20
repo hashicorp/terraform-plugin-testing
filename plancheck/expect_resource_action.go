@@ -3,18 +3,16 @@ package plancheck
 import (
 	"context"
 	"fmt"
-
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-var _ resource.PlanCheck = expectResourceAction{}
+var _ PlanCheck = expectResourceAction{}
 
 type expectResourceAction struct {
 	resourceAddress string
 	actionType      ResourceActionType
 }
 
-func (e expectResourceAction) CheckPlan(ctx context.Context, req resource.CheckPlanRequest, resp *resource.CheckPlanResponse) {
+func (e expectResourceAction) CheckPlan(ctx context.Context, req CheckPlanRequest, resp *CheckPlanResponse) {
 	foundResource := false
 
 	for _, rc := range req.Plan.ResourceChanges {
@@ -77,7 +75,7 @@ func (e expectResourceAction) CheckPlan(ctx context.Context, req resource.CheckP
 }
 
 // TODO: document
-func ExpectResourceAction(resourceAddress string, actionType ResourceActionType) resource.PlanCheck {
+func ExpectResourceAction(resourceAddress string, actionType ResourceActionType) PlanCheck {
 	return expectResourceAction{
 		resourceAddress: resourceAddress,
 		actionType:      actionType,

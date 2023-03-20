@@ -3,15 +3,13 @@ package plancheck
 import (
 	"context"
 	"errors"
-
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-var _ resource.PlanCheck = expectNonEmptyPlan{}
+var _ PlanCheck = expectNonEmptyPlan{}
 
 type expectNonEmptyPlan struct{}
 
-func (e expectNonEmptyPlan) CheckPlan(ctx context.Context, req resource.CheckPlanRequest, resp *resource.CheckPlanResponse) {
+func (e expectNonEmptyPlan) CheckPlan(ctx context.Context, req CheckPlanRequest, resp *CheckPlanResponse) {
 	for _, rc := range req.Plan.ResourceChanges {
 		if !rc.Change.Actions.NoOp() {
 			return
@@ -22,6 +20,6 @@ func (e expectNonEmptyPlan) CheckPlan(ctx context.Context, req resource.CheckPla
 }
 
 // TODO: document
-func ExpectNonEmptyPlan() resource.PlanCheck {
+func ExpectNonEmptyPlan() PlanCheck {
 	return expectNonEmptyPlan{}
 }

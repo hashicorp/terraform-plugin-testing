@@ -28,7 +28,7 @@ func Test_ExpectNonEmptyPlan(t *testing.T) {
 					length = 12
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
 					},
 				},
@@ -57,7 +57,7 @@ func Test_ExpectNonEmptyPlan_Error(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNonEmptyPlan(),
 					},
 				},

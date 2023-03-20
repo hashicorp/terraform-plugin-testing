@@ -12,6 +12,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -194,7 +195,7 @@ func TestTestStepValidate(t *testing.T) {
 		"configplanchecks-preapply-not-config-mode": {
 			testStep: TestStep{
 				ConfigPlanChecks: ConfigPlanChecks{
-					PreApply: []PlanCheck{&planCheckSpy{}},
+					PreApply: []plancheck.PlanCheck{&planCheckSpy{}},
 				},
 				RefreshState: true,
 			},
@@ -204,7 +205,7 @@ func TestTestStepValidate(t *testing.T) {
 		"configplanchecks-preapply-not-planonly": {
 			testStep: TestStep{
 				ConfigPlanChecks: ConfigPlanChecks{
-					PreApply: []PlanCheck{&planCheckSpy{}},
+					PreApply: []plancheck.PlanCheck{&planCheckSpy{}},
 				},
 				Config:   "# not empty",
 				PlanOnly: true,
@@ -215,7 +216,7 @@ func TestTestStepValidate(t *testing.T) {
 		"configplanchecks-postapplyprerefresh-not-config-mode": {
 			testStep: TestStep{
 				ConfigPlanChecks: ConfigPlanChecks{
-					PostApplyPreRefresh: []PlanCheck{&planCheckSpy{}},
+					PostApplyPreRefresh: []plancheck.PlanCheck{&planCheckSpy{}},
 				},
 				RefreshState: true,
 			},
@@ -225,7 +226,7 @@ func TestTestStepValidate(t *testing.T) {
 		"configplanchecks-postapplypostrefresh-not-config-mode": {
 			testStep: TestStep{
 				ConfigPlanChecks: ConfigPlanChecks{
-					PostApplyPostRefresh: []PlanCheck{&planCheckSpy{}},
+					PostApplyPostRefresh: []plancheck.PlanCheck{&planCheckSpy{}},
 				},
 				RefreshState: true,
 			},
@@ -235,7 +236,7 @@ func TestTestStepValidate(t *testing.T) {
 		"refreshplanchecks-postrefresh-not-refresh-mode": {
 			testStep: TestStep{
 				RefreshPlanChecks: RefreshPlanChecks{
-					PostRefresh: []PlanCheck{&planCheckSpy{}},
+					PostRefresh: []plancheck.PlanCheck{&planCheckSpy{}},
 				},
 				Config: "# not empty",
 			},

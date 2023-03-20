@@ -23,6 +23,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/addrs"
@@ -691,18 +692,18 @@ type TestStep struct {
 
 // TODO: document all fields / move to a different file/package?
 type ConfigPlanChecks struct {
-	PreApply []PlanCheck
+	PreApply []plancheck.PlanCheck
 
-	PostApplyPreRefresh []PlanCheck
+	PostApplyPreRefresh []plancheck.PlanCheck
 
 	// TODO: should this be named 2nd post apply? Since refresh is not guaranteed
-	PostApplyPostRefresh []PlanCheck
+	PostApplyPostRefresh []plancheck.PlanCheck
 }
 
 // TODO: is this naming good?
 // TODO: document
 type RefreshPlanChecks struct {
-	PostRefresh []PlanCheck
+	PostRefresh []plancheck.PlanCheck
 }
 
 // ParallelTest performs an acceptance test on a resource, allowing concurrency

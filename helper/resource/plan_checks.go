@@ -5,32 +5,18 @@ import (
 
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/hashicorp/terraform-plugin-testing/internal/errorshim"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/mitchellh/go-testing-interface"
 )
 
-// TODO: document
-type PlanCheck interface {
-	CheckPlan(context.Context, CheckPlanRequest, *CheckPlanResponse)
-}
-
-// TODO: document
-type CheckPlanRequest struct {
-	Plan *tfjson.Plan
-}
-
-// TODO: document
-type CheckPlanResponse struct {
-	Error error
-}
-
-func runPlanChecks(ctx context.Context, t testing.T, plan *tfjson.Plan, planChecks []PlanCheck) error {
+func runPlanChecks(ctx context.Context, t testing.T, plan *tfjson.Plan, planChecks []plancheck.PlanCheck) error {
 	t.Helper()
 
 	var result error
 
 	for _, planCheck := range planChecks {
-		resp := CheckPlanResponse{}
-		planCheck.CheckPlan(ctx, CheckPlanRequest{Plan: plan}, &resp)
+		resp := plancheck.CheckPlanResponse{}
+		planCheck.CheckPlan(ctx, plancheck.CheckPlanRequest{Plan: plan}, &resp)
 
 		if resp.Error != nil {
 			// TODO: Once Go 1.20 is the minimum supported version for this module, replace with `errors.Join` function

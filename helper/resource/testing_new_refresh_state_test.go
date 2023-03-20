@@ -4,6 +4,8 @@ import (
 	"errors"
 	"regexp"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func Test_RefreshPlanChecks_PostRefresh_Called(t *testing.T) {
@@ -26,7 +28,7 @@ func Test_RefreshPlanChecks_PostRefresh_Called(t *testing.T) {
 			{
 				RefreshState: true,
 				RefreshPlanChecks: RefreshPlanChecks{
-					PostRefresh: []PlanCheck{
+					PostRefresh: []plancheck.PlanCheck{
 						spy1,
 						spy2,
 					},
@@ -69,7 +71,7 @@ func Test_RefreshPlanChecks_PostRefresh_Errors(t *testing.T) {
 			{
 				RefreshState: true,
 				RefreshPlanChecks: RefreshPlanChecks{
-					PostRefresh: []PlanCheck{
+					PostRefresh: []plancheck.PlanCheck{
 						spy1,
 						spy2,
 						spy3,

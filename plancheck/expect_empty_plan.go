@@ -4,15 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/errorshim"
 )
 
-var _ resource.PlanCheck = expectEmptyPlan{}
+var _ PlanCheck = expectEmptyPlan{}
 
 type expectEmptyPlan struct{}
 
-func (e expectEmptyPlan) CheckPlan(ctx context.Context, req resource.CheckPlanRequest, resp *resource.CheckPlanResponse) {
+func (e expectEmptyPlan) CheckPlan(ctx context.Context, req CheckPlanRequest, resp *CheckPlanResponse) {
 	var result error
 
 	for _, rc := range req.Plan.ResourceChanges {
@@ -27,6 +26,6 @@ func (e expectEmptyPlan) CheckPlan(ctx context.Context, req resource.CheckPlanRe
 }
 
 // TODO: document
-func ExpectEmptyPlan() resource.PlanCheck {
+func ExpectEmptyPlan() PlanCheck {
 	return expectEmptyPlan{}
 }

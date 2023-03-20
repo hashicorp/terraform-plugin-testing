@@ -4,6 +4,8 @@ import (
 	"errors"
 	"regexp"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func TestTest_TestStep_ExpectError_NewConfig(t *testing.T) {
@@ -45,7 +47,7 @@ func Test_ConfigPlanChecks_PreApply_Called(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: ConfigPlanChecks{
-					PreApply: []PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						spy1,
 						spy2,
 					},
@@ -85,7 +87,7 @@ func Test_ConfigPlanChecks_PreApply_Errors(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: ConfigPlanChecks{
-					PreApply: []PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						spy1,
 						spy2,
 						spy3,
@@ -114,7 +116,7 @@ func Test_ConfigPlanChecks_PostApplyPreRefresh_Called(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: ConfigPlanChecks{
-					PostApplyPreRefresh: []PlanCheck{
+					PostApplyPreRefresh: []plancheck.PlanCheck{
 						spy1,
 						spy2,
 					},
@@ -154,7 +156,7 @@ func Test_ConfigPlanChecks_PostApplyPreRefresh_Errors(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: ConfigPlanChecks{
-					PostApplyPreRefresh: []PlanCheck{
+					PostApplyPreRefresh: []plancheck.PlanCheck{
 						spy1,
 						spy2,
 						spy3,
@@ -183,7 +185,7 @@ func Test_ConfigPlanChecks_PostApplyPostRefresh_Called(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: ConfigPlanChecks{
-					PostApplyPostRefresh: []PlanCheck{
+					PostApplyPostRefresh: []plancheck.PlanCheck{
 						spy1,
 						spy2,
 					},
@@ -223,7 +225,7 @@ func Test_ConfigPlanChecks_PostApplyPostRefresh_Errors(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: ConfigPlanChecks{
-					PostApplyPostRefresh: []PlanCheck{
+					PostApplyPostRefresh: []plancheck.PlanCheck{
 						spy1,
 						spy2,
 						spy3,

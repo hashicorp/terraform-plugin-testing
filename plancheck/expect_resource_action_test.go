@@ -28,7 +28,7 @@ func Test_ExpectedResourceAction_NoOp(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", plancheck.ResourceActionNoop),
 					},
 				},
@@ -52,7 +52,7 @@ func Test_ExpectedResourceAction_NoOp_NoMatch(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", plancheck.ResourceActionNoop),
 					},
 				},
@@ -77,7 +77,7 @@ func Test_ExpectedResourceAction_Create(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", plancheck.ResourceActionCreate),
 					},
 				},
@@ -106,7 +106,7 @@ func Test_ExpectedResourceAction_Create_NoMatch(t *testing.T) {
 					length = 15
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", plancheck.ResourceActionCreate),
 					},
 				},
@@ -140,7 +140,7 @@ func Test_ExpectedResourceAction_Read(t *testing.T) {
 					}
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("data.null_data_source.two", plancheck.ResourceActionRead),
 					},
 				},
@@ -167,7 +167,7 @@ func Test_ExpectedResourceAction_Read_NoMatch(t *testing.T) {
 					length = 15
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", plancheck.ResourceActionRead),
 					},
 				},
@@ -197,7 +197,7 @@ func Test_ExpectedResourceAction_Update(t *testing.T) {
 					offset_days = 2
 				  }`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("time_offset.one", plancheck.ResourceActionUpdate),
 					},
 				},
@@ -221,7 +221,7 @@ func Test_ExpectedResourceAction_Update_NoMatch(t *testing.T) {
 					offset_days = 1
 				  }`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("time_offset.one", plancheck.ResourceActionUpdate),
 					},
 				},
@@ -249,7 +249,7 @@ func Test_ExpectedResourceAction_Destroy(t *testing.T) {
 			{
 				Config: ` `,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", plancheck.ResourceActionDestroy),
 					},
 				},
@@ -273,7 +273,7 @@ func Test_ExpectedResourceAction_Destroy_NoMatch(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", plancheck.ResourceActionDestroy),
 					},
 				},
@@ -303,7 +303,7 @@ func Test_ExpectedResourceAction_DestroyBeforeCreate(t *testing.T) {
 					length = 15
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", plancheck.ResourceActionDestroyBeforeCreate),
 					},
 				},
@@ -327,7 +327,7 @@ func Test_ExpectedResourceAction_DestroyBeforeCreate_NoMatch(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", plancheck.ResourceActionDestroyBeforeCreate),
 					},
 				},
@@ -363,7 +363,7 @@ func Test_ExpectedResourceAction_CreateBeforeDestroy(t *testing.T) {
 					}
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", plancheck.ResourceActionCreateBeforeDestroy),
 					},
 				},
@@ -387,7 +387,7 @@ func Test_ExpectedResourceAction_CreateBeforeDestroy_NoMatch(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", plancheck.ResourceActionCreateBeforeDestroy),
 					},
 				},
@@ -431,7 +431,7 @@ func Test_ExpectedResourceAction_Replace(t *testing.T) {
 					}
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", plancheck.ResourceActionReplace),
 						plancheck.ExpectResourceAction("random_string.two", plancheck.ResourceActionReplace),
 					},
@@ -456,7 +456,7 @@ func Test_ExpectedResourceAction_Replace_NoMatch(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", plancheck.ResourceActionReplace),
 					},
 				},
@@ -470,7 +470,7 @@ func Test_ExpectedResourceAction_Replace_NoMatch(t *testing.T) {
 					}
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.two", plancheck.ResourceActionReplace),
 					},
 				},
@@ -495,7 +495,7 @@ func Test_ExpectedResourceAction_NoResourceFound(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.doesntexist", plancheck.ResourceActionCreate),
 					},
 				},
@@ -520,7 +520,7 @@ func Test_ExpectedResourceAction_InvalidResourceActionType(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", 0),
 					},
 				},
@@ -531,7 +531,7 @@ func Test_ExpectedResourceAction_InvalidResourceActionType(t *testing.T) {
 					length = 16
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []r.PlanCheck{
+					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", 9),
 					},
 				},
