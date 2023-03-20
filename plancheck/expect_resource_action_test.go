@@ -521,21 +521,10 @@ func Test_ExpectedResourceAction_InvalidResourceActionType(t *testing.T) {
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectResourceAction("random_string.one", 0),
+						plancheck.ExpectResourceAction("random_string.one", "Invalid"),
 					},
 				},
-				ExpectError: regexp.MustCompile(`random_string.one - unexpected ResourceActionType byte: 0`),
-			},
-			{
-				Config: `resource "random_string" "one" {
-					length = 16
-				}`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectResourceAction("random_string.one", 9),
-					},
-				},
-				ExpectError: regexp.MustCompile(`random_string.one - unexpected ResourceActionType byte: 9`),
+				ExpectError: regexp.MustCompile(`random_string.one - unexpected ResourceActionType: Invalid`),
 			},
 		},
 	})

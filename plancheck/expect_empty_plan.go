@@ -11,6 +11,7 @@ var _ PlanCheck = expectEmptyPlan{}
 
 type expectEmptyPlan struct{}
 
+// CheckPlan implements the plan check logic.
 func (e expectEmptyPlan) CheckPlan(ctx context.Context, req CheckPlanRequest, resp *CheckPlanResponse) {
 	var result error
 
@@ -25,7 +26,8 @@ func (e expectEmptyPlan) CheckPlan(ctx context.Context, req CheckPlanRequest, re
 	resp.Error = result
 }
 
-// TODO: document
+// ExpectEmptyPlan returns a plan check that asserts that there are no resource changes in the plan.
+// All resource changes found will be aggregated and returned in a plan check error.
 func ExpectEmptyPlan() PlanCheck {
 	return expectEmptyPlan{}
 }
