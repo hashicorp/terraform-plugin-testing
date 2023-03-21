@@ -1,0 +1,6 @@
+kind: ENHANCEMENTS
+body: 'helper/resource: Added plan check functionality to config and refresh modes
+  with new fields `TestStep.ConfigPlanChecks` and `TestStep.RefreshPlanChecks`'
+time: 2023-03-21T17:40:20.521786-04:00
+custom:
+  Issue: "63"

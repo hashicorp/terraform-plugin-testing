@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'plancheck: Added `ExpectResourceAction` built-in plan check, which asserts
+  that a given resource will have a specific resource change type in the plan'
+time: 2023-03-21T17:36:39.391477-04:00
+custom:
+  Issue: "63"
