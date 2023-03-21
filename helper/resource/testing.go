@@ -504,12 +504,6 @@ type TestStep struct {
 
 	// ExpectNonEmptyPlan can be set to true for specific types of tests that are
 	// looking to verify that a diff occurs
-	//
-	// Deprecated: Please replace by using the plan check provided in the testing plancheck package: [plancheck.ExpectNonEmptyPlan]
-	//   - For Config (plan/apply) testing, add the above plan check to the slice: TestStep.ConfigPlanChecks.PostApplyPostRefresh
-	//   - For Refresh testing, add the above plan check to the slice: TestStep.RefreshPlanChecks.PostRefresh
-	//
-	// [plancheck.ExpectNonEmptyPlan]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectNonEmptyPlan
 	ExpectNonEmptyPlan bool
 
 	// ExpectError allows the construction of test cases that we expect to fail
