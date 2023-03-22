@@ -33,20 +33,20 @@ package example_test
 import (
 	"testing"
 
-	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func Test_Random_ForcesRecreate(t *testing.T) {
 	t.Parallel()
 
-	r.Test(t, r.TestCase{
-		ExternalProviders: map[string]r.ExternalProvider{
+	resource.Test(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
 			"random": {
 				Source: "registry.terraform.io/hashicorp/random",
 			},
 		},
-		Steps: []r.TestStep{
+		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_string" "one" {
 					length = 16
@@ -56,7 +56,7 @@ func Test_Random_ForcesRecreate(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 15
 				}`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
+				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("random_string.one", plancheck.ResourceActionDestroyBeforeCreate),
 					},
@@ -75,20 +75,20 @@ package example_test
 import (
 	"testing"
 
-	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func Test_Time_UpdateInPlace(t *testing.T) {
 	t.Parallel()
 
-	r.Test(t, r.TestCase{
-		ExternalProviders: map[string]r.ExternalProvider{
+	resource.Test(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source: "registry.terraform.io/hashicorp/time",
 			},
 		},
-		Steps: []r.TestStep{
+		Steps: []resource.TestStep{
 			{
 				Config: `resource "time_offset" "one" {
 					offset_days = 1
@@ -98,7 +98,7 @@ func Test_Time_UpdateInPlace(t *testing.T) {
 				Config: `resource "time_offset" "one" {
 					offset_days = 2
 				  }`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
+				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("time_offset.one", plancheck.ResourceActionUpdate),
 					},
@@ -116,20 +116,20 @@ package example_test
 import (
 	"testing"
 
-	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func Test_Time_UpdateInPlace_and_NoOp(t *testing.T) {
 	t.Parallel()
 
-	r.Test(t, r.TestCase{
-		ExternalProviders: map[string]r.ExternalProvider{
+	resource.Test(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source: "registry.terraform.io/hashicorp/time",
 			},
 		},
-		Steps: []r.TestStep{
+		Steps: []resource.TestStep{
 			{
 				Config: `resource "time_offset" "one" {
 					offset_days = 1
@@ -145,7 +145,7 @@ func Test_Time_UpdateInPlace_and_NoOp(t *testing.T) {
 				  resource "time_offset" "two" {
 					offset_days = 1
 				  }`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
+				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("time_offset.one", plancheck.ResourceActionUpdate),
 						plancheck.ExpectResourceAction("time_offset.two", plancheck.ResourceActionNoop),
@@ -205,20 +205,20 @@ import (
 	"fmt"
 	"testing"
 
-	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
 func Test_CustomPlanCheck_ExpectEmptyPlan(t *testing.T) {
 	t.Parallel()
 
-	r.Test(t, r.TestCase{
-		ExternalProviders: map[string]r.ExternalProvider{
+	resource.Test(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
 			"random": {
 				Source: "registry.terraform.io/hashicorp/random",
 			},
 		},
-		Steps: []r.TestStep{
+		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_string" "one" {
 					length = 16
@@ -228,7 +228,7 @@ func Test_CustomPlanCheck_ExpectEmptyPlan(t *testing.T) {
 				Config: `resource "random_string" "one" {
 					length = 16
 				}`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
+				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						ExpectEmptyPlan(),
 					},
