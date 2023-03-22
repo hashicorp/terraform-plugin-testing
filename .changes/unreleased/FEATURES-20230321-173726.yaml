@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'plancheck: Added `ExpectEmptyPlan` built-in plan check, which asserts that
-  there are no resource changes in the plan'
-time: 2023-03-21T17:37:26.076041-04:00
-custom:
-  Issue: "63"

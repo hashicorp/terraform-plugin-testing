@@ -1,9 +1,0 @@
-kind: NOTES
-body: 'helper/resource: Deprecated Terraform module-based `TestCheckFunc`, such
-  as `TestCheckModuleResourceAttr`. Provider testing should always be possible
-  within the root module of a Terraform configuration. Terraform module testing
-  should be performed with Terraform core functionality or using tooling
-  outside this Go module.'
-time: 2023-03-22T10:45:31.410428-04:00
-custom:
-  Issue: "109"

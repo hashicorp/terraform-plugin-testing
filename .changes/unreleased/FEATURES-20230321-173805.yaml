@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'plancheck: Added `ExpectNonEmptyPlan` built-in plan check, which asserts that
-  there is at least one resource change in the plan'
-time: 2023-03-21T17:38:05.815307-04:00
-custom:
-  Issue: "63"
