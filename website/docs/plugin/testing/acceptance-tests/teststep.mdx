@@ -82,7 +82,7 @@ applying and checking a basic configuration, followed by applying a modified
 configuration with updated or additional checks is a common pattern used to test
 update functionality.
 
-## Check Functions
+## State Check Functions
 
 After the configuration for a `TestStep` is applied, Terraform’s testing
 framework provides developers an opportunity to check the results by providing a
@@ -294,6 +294,9 @@ func testAccCheckExampleWidgetExists(resourceName string, widget *example.Widget
 }
 ```
 
-## Next Steps
+## Plan Checks
+Before and after the configuration for a `TestStep` is applied, Terraform's testing framework provides developers an opportunity to make test assertions against `terraform plan` results via the plan file. This is provided via [Plan Checks](/terraform/plugin/testing/acceptance-tests/plan-checks), which provide both built-in plan checks and an interface to implement custom plan checks.
+
+## Sweepers
 
 Acceptance Testing is an essential approach to validating the implementation of a Terraform Provider. Using actual APIs to provision resources for testing can leave behind real infrastructure that costs money between tests. The reasons for these leaks can vary, regardless Terraform provides a mechanism known as [Sweepers](/terraform/plugin/testing/acceptance-tests/sweepers) to help keep the testing account clean.
