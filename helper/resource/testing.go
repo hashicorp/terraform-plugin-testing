@@ -23,6 +23,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/addrs"
@@ -510,6 +511,20 @@ type TestStep struct {
 	// test to pass.
 	ExpectError *regexp.Regexp
 
+	// ConfigPlanChecks allows assertions to be made against the plan file at different points of a Config (apply) test using a plan check.
+	// Custom plan checks can be created by implementing the [PlanCheck] interface, or by using a PlanCheck implementation from the provided [plancheck] package
+	//
+	// [PlanCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#PlanCheck
+	// [plancheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck
+	ConfigPlanChecks ConfigPlanChecks
+
+	// RefreshPlanChecks allows assertions to be made against the plan file at different points of a Refresh test using a plan check.
+	// Custom plan checks can be created by implementing the [PlanCheck] interface, or by using a PlanCheck implementation from the provided [plancheck] package
+	//
+	// [PlanCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#PlanCheck
+	// [plancheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck
+	RefreshPlanChecks RefreshPlanChecks
+
 	// PlanOnly can be set to only run `plan` with this configuration, and not
 	// actually apply it. This is useful for ensuring config changes result in
 	// no-op plans
@@ -677,6 +692,28 @@ type TestStep struct {
 	// for performing import testing where the prior TestStep configuration
 	// contained a provider outside the one under test.
 	ExternalProviders map[string]ExternalProvider
+}
+
+// ConfigPlanChecks defines the different points in a Config TestStep when plan checks can be run.
+type ConfigPlanChecks struct {
+	// PreApply runs all plan checks in the slice. This occurs before the apply of a Config test is run. This slice cannot be populated
+	// with TestStep.PlanOnly, as there is no PreApply plan run with that flag set. All errors by plan checks in this slice are aggregated, reported, and will result in a test failure.
+	PreApply []plancheck.PlanCheck
+
+	// PostApplyPreRefresh runs all plan checks in the slice. This occurs after the apply and before the refresh of a Config test is run.
+	// All errors by plan checks in this slice are aggregated, reported, and will result in a test failure.
+	PostApplyPreRefresh []plancheck.PlanCheck
+
+	// PostApplyPostRefresh runs all plan checks in the slice. This occurs after the apply and refresh of a Config test are run.
+	// All errors by plan checks in this slice are aggregated, reported, and will result in a test failure.
+	PostApplyPostRefresh []plancheck.PlanCheck
+}
+
+// RefreshPlanChecks defines the different points in a Refresh TestStep when plan checks can be run.
+type RefreshPlanChecks struct {
+	// PostRefresh runs all plan checks in the slice. This occurs after the refresh of the Refresh test is run.
+	// All errors by plan checks in this slice are aggregated, reported, and will result in a test failure.
+	PostRefresh []plancheck.PlanCheck
 }
 
 // ParallelTest performs an acceptance test on a resource, allowing concurrency

@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'plancheck: Introduced new `plancheck` package with interface and built-in plan
+  check functionality'
+time: 2023-03-21T17:35:06.650327-04:00
+custom:
+  Issue: "63"

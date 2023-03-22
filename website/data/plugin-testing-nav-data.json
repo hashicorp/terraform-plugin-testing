@@ -18,6 +18,10 @@
         "path": "acceptance-tests/teststep"
       },
       {
+        "title": "Plan Checks",
+        "path": "acceptance-tests/plan-checks"
+      },
+      {
         "title": "Sweepers",
         "path": "acceptance-tests/sweepers"
       }
