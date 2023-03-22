@@ -914,6 +914,14 @@ func TestCheckResourceAttrSet(name, key string) TestCheckFunc {
 
 // TestCheckModuleResourceAttrSet - as per TestCheckResourceAttrSet but with
 // support for non-root modules
+//
+// Deprecated: This functionality is deprecated without replacement. The
+// terraform-plugin-testing Go module is intended for provider testing, which
+// should always be possible within the root module of a configuration. This
+// functionality is a carryover of when this code was used within Terraform
+// core to test both providers and modules. Modern testing implementations to
+// verify interactions between modules should be tested in Terraform core or
+// using tooling outside this Go module.
 func TestCheckModuleResourceAttrSet(mp []string, name string, key string) TestCheckFunc {
 	mpt := addrs.Module(mp).UnkeyedInstanceShim()
 	return checkIfIndexesIntoTypeSet(key, func(s *terraform.State) error {
@@ -1005,6 +1013,14 @@ func TestCheckResourceAttr(name, key, value string) TestCheckFunc {
 
 // TestCheckModuleResourceAttr - as per TestCheckResourceAttr but with
 // support for non-root modules
+//
+// Deprecated: This functionality is deprecated without replacement. The
+// terraform-plugin-testing Go module is intended for provider testing, which
+// should always be possible within the root module of a configuration. This
+// functionality is a carryover of when this code was used within Terraform
+// core to test both providers and modules. Modern testing implementations to
+// verify interactions between modules should be tested in Terraform core or
+// using tooling outside this Go module.
 func TestCheckModuleResourceAttr(mp []string, name string, key string, value string) TestCheckFunc {
 	mpt := addrs.Module(mp).UnkeyedInstanceShim()
 	return checkIfIndexesIntoTypeSet(key, func(s *terraform.State) error {
@@ -1169,6 +1185,14 @@ func TestCheckNoResourceAttr(name, key string) TestCheckFunc {
 
 // TestCheckModuleNoResourceAttr - as per TestCheckNoResourceAttr but with
 // support for non-root modules
+//
+// Deprecated: This functionality is deprecated without replacement. The
+// terraform-plugin-testing Go module is intended for provider testing, which
+// should always be possible within the root module of a configuration. This
+// functionality is a carryover of when this code was used within Terraform
+// core to test both providers and modules. Modern testing implementations to
+// verify interactions between modules should be tested in Terraform core or
+// using tooling outside this Go module.
 func TestCheckModuleNoResourceAttr(mp []string, name string, key string) TestCheckFunc {
 	mpt := addrs.Module(mp).UnkeyedInstanceShim()
 	return checkIfIndexesIntoTypeSet(key, func(s *terraform.State) error {
@@ -1265,6 +1289,14 @@ func TestMatchResourceAttr(name, key string, r *regexp.Regexp) TestCheckFunc {
 
 // TestModuleMatchResourceAttr - as per TestMatchResourceAttr but with
 // support for non-root modules
+//
+// Deprecated: This functionality is deprecated without replacement. The
+// terraform-plugin-testing Go module is intended for provider testing, which
+// should always be possible within the root module of a configuration. This
+// functionality is a carryover of when this code was used within Terraform
+// core to test both providers and modules. Modern testing implementations to
+// verify interactions between modules should be tested in Terraform core or
+// using tooling outside this Go module.
 func TestModuleMatchResourceAttr(mp []string, name string, key string, r *regexp.Regexp) TestCheckFunc {
 	mpt := addrs.Module(mp).UnkeyedInstanceShim()
 	return checkIfIndexesIntoTypeSet(key, func(s *terraform.State) error {
@@ -1304,6 +1336,14 @@ func TestCheckResourceAttrPtr(name string, key string, value *string) TestCheckF
 
 // TestCheckModuleResourceAttrPtr - as per TestCheckResourceAttrPtr but with
 // support for non-root modules
+//
+// Deprecated: This functionality is deprecated without replacement. The
+// terraform-plugin-testing Go module is intended for provider testing, which
+// should always be possible within the root module of a configuration. This
+// functionality is a carryover of when this code was used within Terraform
+// core to test both providers and modules. Modern testing implementations to
+// verify interactions between modules should be tested in Terraform core or
+// using tooling outside this Go module.
 func TestCheckModuleResourceAttrPtr(mp []string, name string, key string, value *string) TestCheckFunc {
 	return func(s *terraform.State) error {
 		return TestCheckModuleResourceAttr(mp, name, key, *value)(s)
@@ -1361,6 +1401,14 @@ func TestCheckResourceAttrPair(nameFirst, keyFirst, nameSecond, keySecond string
 
 // TestCheckModuleResourceAttrPair - as per TestCheckResourceAttrPair but with
 // support for non-root modules
+//
+// Deprecated: This functionality is deprecated without replacement. The
+// terraform-plugin-testing Go module is intended for provider testing, which
+// should always be possible within the root module of a configuration. This
+// functionality is a carryover of when this code was used within Terraform
+// core to test both providers and modules. Modern testing implementations to
+// verify interactions between modules should be tested in Terraform core or
+// using tooling outside this Go module.
 func TestCheckModuleResourceAttrPair(mpFirst []string, nameFirst string, keyFirst string, mpSecond []string, nameSecond string, keySecond string) TestCheckFunc {
 	mptFirst := addrs.Module(mpFirst).UnkeyedInstanceShim()
 	mptSecond := addrs.Module(mpSecond).UnkeyedInstanceShim()
