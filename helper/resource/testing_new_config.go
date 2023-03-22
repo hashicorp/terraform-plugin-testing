@@ -51,6 +51,24 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			return fmt.Errorf("Error running pre-apply plan: %w", err)
 		}
 
+		// Run pre-apply plan checks
+		if len(step.ConfigPlanChecks.PreApply) > 0 {
+			var plan *tfjson.Plan
+			err = runProviderCommand(ctx, t, func() error {
+				var err error
+				plan, err = wd.SavedPlan(ctx)
+				return err
+			}, wd, providers)
+			if err != nil {
+				return fmt.Errorf("Error retrieving pre-apply plan: %w", err)
+			}
+
+			err = runPlanChecks(ctx, t, plan, step.ConfigPlanChecks.PreApply)
+			if err != nil {
+				return fmt.Errorf("Pre-apply plan check(s) failed:\n%w", err)
+			}
+		}
+
 		// We need to keep a copy of the state prior to destroying such
 		// that the destroy steps can verify their behavior in the
 		// check function
@@ -131,6 +149,14 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("Error retrieving post-apply plan: %w", err)
 	}
 
+	// Run post-apply, pre-refresh plan checks
+	if len(step.ConfigPlanChecks.PostApplyPreRefresh) > 0 {
+		err = runPlanChecks(ctx, t, plan, step.ConfigPlanChecks.PostApplyPreRefresh)
+		if err != nil {
+			return fmt.Errorf("Post-apply, pre-refresh plan check(s) failed:\n%w", err)
+		}
+	}
+
 	if !planIsEmpty(plan) && !step.ExpectNonEmptyPlan {
 		var stdout string
 		err = runProviderCommand(ctx, t, func() error {
@@ -172,6 +198,14 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	}, wd, providers)
 	if err != nil {
 		return fmt.Errorf("Error retrieving second post-apply plan: %w", err)
+	}
+
+	// Run post-apply, post-refresh plan checks
+	if len(step.ConfigPlanChecks.PostApplyPostRefresh) > 0 {
+		err = runPlanChecks(ctx, t, plan, step.ConfigPlanChecks.PostApplyPostRefresh)
+		if err != nil {
+			return fmt.Errorf("Post-apply, post-refresh plan check(s) failed:\n%w", err)
+		}
 	}
 
 	// check if plan is empty

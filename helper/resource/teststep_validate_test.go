@@ -5,12 +5,14 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -189,6 +191,57 @@ func TestTestStepValidate(t *testing.T) {
 				TestCaseHasProviders: true,
 			},
 			expectedError: fmt.Errorf("Providers must only be specified either at the TestCase or TestStep level"),
+		},
+		"configplanchecks-preapply-not-config-mode": {
+			testStep: TestStep{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{&planCheckSpy{}},
+				},
+				RefreshState: true,
+			},
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep ConfigPlanChecks.PreApply must only be specified with Config"),
+		},
+		"configplanchecks-preapply-not-planonly": {
+			testStep: TestStep{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{&planCheckSpy{}},
+				},
+				Config:   "# not empty",
+				PlanOnly: true,
+			},
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep ConfigPlanChecks.PreApply cannot be run with PlanOnly"),
+		},
+		"configplanchecks-postapplyprerefresh-not-config-mode": {
+			testStep: TestStep{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PostApplyPreRefresh: []plancheck.PlanCheck{&planCheckSpy{}},
+				},
+				RefreshState: true,
+			},
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep ConfigPlanChecks.PostApplyPreRefresh must only be specified with Config"),
+		},
+		"configplanchecks-postapplypostrefresh-not-config-mode": {
+			testStep: TestStep{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{&planCheckSpy{}},
+				},
+				RefreshState: true,
+			},
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep ConfigPlanChecks.PostApplyPostRefresh must only be specified with Config"),
+		},
+		"refreshplanchecks-postrefresh-not-refresh-mode": {
+			testStep: TestStep{
+				RefreshPlanChecks: RefreshPlanChecks{
+					PostRefresh: []plancheck.PlanCheck{&planCheckSpy{}},
+				},
+				Config: "# not empty",
+			},
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep RefreshPlanChecks.PostRefresh must only be specified with RefreshState"),
 		},
 	}
 
