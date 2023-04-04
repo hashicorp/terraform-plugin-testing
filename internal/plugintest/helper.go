@@ -92,6 +92,10 @@ func InitHelper(ctx context.Context, config *Config) (*Helper, error) {
 // Call this before returning from TestMain to minimize the amount of detritus
 // left behind in the filesystem after the tests complete.
 func (h *Helper) Close() error {
+	if os.Getenv(EnvTfAccPersistWorkingDir) != "" {
+		return nil
+	}
+
 	if h.execTempDir != "" {
 		err := os.RemoveAll(h.execTempDir)
 		if err != nil {

@@ -1819,10 +1819,8 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithPersistMatch_WithPe
 		Steps:      testSteps,
 	})
 
-	workingDirPath := filepath.Dir(workingDir)
-
 	for testStepIndex := range testSteps {
-		dir := workingDirPath + "_" + strconv.Itoa(testStepIndex+1)
+		dir := filepath.Join(workingDir, fmt.Sprintf("step_%s", strconv.Itoa(testStepIndex+1)))
 
 		dirEntries, err := os.ReadDir(dir)
 		if err != nil {
@@ -1929,10 +1927,8 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch_
 		Steps:      testSteps,
 	})
 
-	workingDirPath := filepath.Dir(workingDir)
-
 	for testStepIndex := range testSteps {
-		dir := workingDirPath + "_" + strconv.Itoa(testStepIndex+1)
+		dir := filepath.Join(workingDir, fmt.Sprintf("step_%s", strconv.Itoa(testStepIndex+1)))
 
 		dirEntries, err := os.ReadDir(dir)
 		if err != nil {
@@ -1949,23 +1945,11 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch_
 			}
 		}
 
-		configPlanStateFiles := []string{
-			"terraform_plugin_test.tf",
-			"terraform.tfstate",
-			"tfplan",
-		}
-
-		for _, file := range configPlanStateFiles {
-			// Skip verifying state and plan for first test step as ImportStatePersist is
-			// false so the state is not persisted and there is no plan file if the
-			// resource does not already exist.
-			if testStepIndex == 0 && (file == "terraform.tfstate" || file == "tfplan") {
-				break
-			}
-			_, err = os.Stat(filepath.Join(workingDirName, file))
-			if err != nil {
-				t.Errorf("cannot stat %s in %s: %s", file, workingDirName, err)
-			}
+		// Only stat the terraform_plugin_test.tf file as 2 working directories are
+		// created because import state is not persisted.
+		_, err = os.Stat(filepath.Join(workingDirName, "terraform_plugin_test.tf"))
+		if err != nil {
+			t.Errorf("cannot stat %s in %s: %s", "terraform_plugin_test.tf", workingDirName, err)
 		}
 	}
 }
@@ -2075,10 +2059,8 @@ func TestTest_TestStep_ProviderFactories_CopyWorkingDir_EachTestStep(t *testing.
 		Steps:      testSteps,
 	})
 
-	workingDirPath := filepath.Dir(workingDir)
-
 	for k := range testSteps {
-		dir := workingDirPath + "_" + strconv.Itoa(k+1)
+		dir := filepath.Join(workingDir, fmt.Sprintf("step_%s", strconv.Itoa(k+1)))
 
 		_, err := os.ReadDir(dir)
 		if err != nil {
