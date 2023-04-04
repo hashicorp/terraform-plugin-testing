@@ -9,7 +9,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
@@ -102,7 +101,7 @@ func CopyFile(src, dest string) error {
 
 // CopyDir recursively copies directories and files
 // from src to dest.
-func CopyDir(src, dest string, stepNumber int) error {
+func CopyDir(src, dest, baseDirName string) error {
 	srcInfo, err := os.Stat(src)
 	if err != nil {
 		return fmt.Errorf("unable to stat: %w", err)
@@ -121,21 +120,12 @@ func CopyDir(src, dest string, stepNumber int) error {
 		srcFilepath := path.Join(src, dirEntry.Name())
 		destFilepath := path.Join(dest, dirEntry.Name())
 
-		if srcFilepath == dest {
+		if !strings.Contains(srcFilepath, baseDirName) {
 			continue
 		}
 
-		for x := 1; x <= stepNumber; x++ {
-			destWithoutStepNumber := strings.TrimRight(dest, strconv.Itoa(stepNumber))
-			destWithNumber := destWithoutStepNumber + strconv.Itoa(x)
-
-			if destWithNumber == srcFilepath {
-				continue
-			}
-		}
-
 		if dirEntry.IsDir() {
-			if err = CopyDir(srcFilepath, destFilepath, stepNumber); err != nil {
+			if err = CopyDir(srcFilepath, destFilepath, baseDirName); err != nil {
 				return fmt.Errorf("unable to copy directory: %w", err)
 			}
 		} else {

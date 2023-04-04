@@ -50,7 +50,7 @@ func TestCopyDir(t *testing.T) {
 		t.Fatalf("cannot create src file: %s", err)
 	}
 
-	err = CopyDir(srcDir, srcDir+"_1", 1)
+	err = CopyDir(srcDir, srcDir+"_1", "")
 	if err != nil {
 		t.Fatalf("cannot copy dir: %s", err)
 	}

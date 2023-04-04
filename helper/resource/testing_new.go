@@ -463,7 +463,10 @@ func copyWorkingDir(ctx context.Context, t testing.T, stepNumber int, wd *plugin
 
 	dest := filepath.Join(workingDir, fmt.Sprintf("%s%s", "step_", strconv.Itoa(stepNumber)))
 
-	err := plugintest.CopyDir(workingDir, dest, stepNumber)
+	baseDir := wd.BaseDir()
+	rootBaseDir := strings.TrimLeft(baseDir, workingDir)
+
+	err := plugintest.CopyDir(workingDir, dest, rootBaseDir)
 	if err != nil {
 		logging.HelperResourceError(ctx,
 			"Unexpected error copying working directory files",

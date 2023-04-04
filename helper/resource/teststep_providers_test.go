@@ -1945,11 +1945,23 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch_
 			}
 		}
 
-		// Only stat the terraform_plugin_test.tf file as 2 working directories are
-		// created because import state is not persisted.
-		_, err = os.Stat(filepath.Join(workingDirName, "terraform_plugin_test.tf"))
-		if err != nil {
-			t.Errorf("cannot stat %s in %s: %s", "terraform_plugin_test.tf", workingDirName, err)
+		configPlanStateFiles := []string{
+			"terraform_plugin_test.tf",
+			"terraform.tfstate",
+			"tfplan",
+		}
+
+		for _, file := range configPlanStateFiles {
+			// Skip verifying state and plan for first test step as ImportStatePersist is
+			// false so the state is not persisted and there is no plan file if the
+			// resource does not already exist.
+			if testStepIndex == 0 && (file == "terraform.tfstate" || file == "tfplan") {
+				break
+			}
+			_, err = os.Stat(filepath.Join(workingDirName, file))
+			if err != nil {
+				t.Errorf("cannot stat %s in %s: %s", file, workingDirName, err)
+			}
 		}
 	}
 }
