@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: 'helper/resource: Fix path used when persisting working directory'
+time: 2023-04-04T10:08:28.3828+01:00
+custom:
+  Issue: "113"

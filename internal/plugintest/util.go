@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 func symlinkFile(src string, dest string) error {
@@ -100,7 +101,7 @@ func CopyFile(src, dest string) error {
 
 // CopyDir recursively copies directories and files
 // from src to dest.
-func CopyDir(src string, dest string) error {
+func CopyDir(src, dest, baseDirName string) error {
 	srcInfo, err := os.Stat(src)
 	if err != nil {
 		return fmt.Errorf("unable to stat: %w", err)
@@ -119,8 +120,12 @@ func CopyDir(src string, dest string) error {
 		srcFilepath := path.Join(src, dirEntry.Name())
 		destFilepath := path.Join(dest, dirEntry.Name())
 
+		if !strings.Contains(srcFilepath, baseDirName) {
+			continue
+		}
+
 		if dirEntry.IsDir() {
-			if err = CopyDir(srcFilepath, destFilepath); err != nil {
+			if err = CopyDir(srcFilepath, destFilepath, baseDirName); err != nil {
 				return fmt.Errorf("unable to copy directory: %w", err)
 			}
 		} else {

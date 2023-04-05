@@ -1819,10 +1819,8 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithPersistMatch_WithPe
 		Steps:      testSteps,
 	})
 
-	workingDirPath := filepath.Dir(workingDir)
-
 	for testStepIndex := range testSteps {
-		dir := workingDirPath + "_" + strconv.Itoa(testStepIndex+1)
+		dir := filepath.Join(workingDir, fmt.Sprintf("step_%s", strconv.Itoa(testStepIndex+1)))
 
 		dirEntries, err := os.ReadDir(dir)
 		if err != nil {
@@ -1929,10 +1927,8 @@ func TestTest_TestStep_ProviderFactories_Import_External_WithoutPersistNonMatch_
 		Steps:      testSteps,
 	})
 
-	workingDirPath := filepath.Dir(workingDir)
-
 	for testStepIndex := range testSteps {
-		dir := workingDirPath + "_" + strconv.Itoa(testStepIndex+1)
+		dir := filepath.Join(workingDir, fmt.Sprintf("step_%s", strconv.Itoa(testStepIndex+1)))
 
 		dirEntries, err := os.ReadDir(dir)
 		if err != nil {
@@ -2075,10 +2071,8 @@ func TestTest_TestStep_ProviderFactories_CopyWorkingDir_EachTestStep(t *testing.
 		Steps:      testSteps,
 	})
 
-	workingDirPath := filepath.Dir(workingDir)
-
 	for k := range testSteps {
-		dir := workingDirPath + "_" + strconv.Itoa(k+1)
+		dir := filepath.Join(workingDir, fmt.Sprintf("step_%s", strconv.Itoa(k+1)))
 
 		_, err := os.ReadDir(dir)
 		if err != nil {

@@ -47,10 +47,19 @@ type WorkingDir struct {
 	reattachInfo tfexec.ReattachInfo
 }
 
+// BaseDir returns the path to the root of the working directory tree.
+func (wd *WorkingDir) BaseDir() string {
+	return wd.baseDir
+}
+
 // Close deletes the directories and files created to represent the receiving
 // working directory. After this method is called, the working directory object
 // is invalid and may no longer be used.
 func (wd *WorkingDir) Close() error {
+	if os.Getenv(EnvTfAccPersistWorkingDir) != "" {
+		return nil
+	}
+
 	return os.RemoveAll(wd.baseDir)
 }
 
