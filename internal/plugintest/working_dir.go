@@ -355,6 +355,17 @@ func (wd *WorkingDir) Taint(ctx context.Context, address string) error {
 	return err
 }
 
+// RemoveState runs terraform state rm
+func (wd *WorkingDir) RemoveState(ctx context.Context, address string) error {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI state rm command")
+
+	err := wd.tf.StateRm(context.Background(), address)
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI state rm command")
+
+	return err
+}
+
 // Refresh runs terraform refresh
 func (wd *WorkingDir) Refresh(ctx context.Context) error {
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI refresh command")

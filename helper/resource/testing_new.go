@@ -328,6 +328,18 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 			appliedCfg = step.mergedConfig(ctx, c)
 
+			if stepNumber > 1 && len(step.RemoveState) > 0 && !step.ImportState && !step.RefreshState {
+				err := testStepRemoveState(ctx, step, wd)
+
+				if err != nil {
+					logging.HelperResourceError(ctx,
+						"TestStep error remove state resources",
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("TestStep %d/%d error remove state resources: %s", stepNumber, len(c.Steps), err)
+				}
+			}
+
 			logging.HelperResourceDebug(ctx, "Finished TestStep")
 
 			continue
