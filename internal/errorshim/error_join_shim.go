@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // TODO: Once Go 1.20 is the minimum supported version delete this package, replace all usages with `errors` package
 // - https://github.com/hashicorp/terraform-plugin-testing/issues/99
 package errorshim
