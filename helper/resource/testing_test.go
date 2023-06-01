@@ -27,45 +27,6 @@ func init() {
 	}
 }
 
-// testExpectTFatal provides a wrapper for logic which should call
-// (*testing.T).Fatal() or (*testing.T).Fatalf().
-//
-// Since we do not want the wrapping test to fail when an expected test error
-// occurs, it is required that the testLogic passed in uses
-// github.com/mitchellh/go-testing-interface.RuntimeT instead of the real
-// *testing.T.
-//
-// If Fatal() or Fatalf() is not called in the logic, the real (*testing.T).Fatal() will
-// be called to fail the test.
-func testExpectTFatal(t *testing.T, testLogic func()) {
-	t.Helper()
-
-	var recoverIface interface{}
-
-	func() {
-		defer func() {
-			recoverIface = recover()
-		}()
-
-		testLogic()
-	}()
-
-	if recoverIface == nil {
-		t.Fatalf("expected t.Fatal(), got none")
-	}
-
-	recoverStr, ok := recoverIface.(string)
-
-	if !ok {
-		t.Fatalf("expected string from recover(), got: %v (%T)", recoverIface, recoverIface)
-	}
-
-	// this string is hardcoded in github.com/mitchellh/go-testing-interface
-	if !strings.HasPrefix(recoverStr, "testing.T failed, see logs for output") {
-		t.Fatalf("expected t.Fatal(), got: %s", recoverStr)
-	}
-}
-
 func TestParallelTest(t *testing.T) {
 	t.Parallel()
 
