@@ -7,6 +7,9 @@ import (
 // All will return the first non-nil error or non-empty skip message
 // if any of the given checks return a non-nil error or non-empty skip message.
 // Otherwise, it will return a nil error and empty skip message (run the test)
+//
+// Use of All is only necessary when used in conjunction with Any as the
+// TerraformVersionChecks field automatically applies a logical AND.
 func All(terraformVersionChecks ...TerraformVersionCheck) TerraformVersionCheck {
 	return allCheck{
 		terraformVersionChecks: terraformVersionChecks,
