@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'tfversion: Added `RequireNot` built-in version check, which fails the test
+  if the Terraform CLI version matches the given version.'
+time: 2023-06-02T12:47:32.000508-04:00
+custom:
+  Issue: "128"
