@@ -30,6 +30,8 @@ func Test_RequireBetween(t *testing.T) { //nolint:paralleltest
 		},
 		Steps: []r.TestStep{
 			{
+				//module_variable_optional_attrs experiment is deprecated in TF v1.3.0
+				//precondition block is only available in TF v1.2.0+
 				Config: `
 					terraform {
   						experiments = [module_variable_optional_attrs]

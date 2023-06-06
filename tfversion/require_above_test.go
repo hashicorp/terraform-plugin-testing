@@ -30,6 +30,7 @@ func Test_RequireAbove(t *testing.T) { //nolint:paralleltest
 		},
 		Steps: []r.TestStep{
 			{
+				//nullable argument only available in TF v1.1.0+
 				Config: `variable "a" {
   					nullable = true
 					default  = "hello"

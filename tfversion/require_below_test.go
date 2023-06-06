@@ -30,6 +30,7 @@ func Test_RequireBelow(t *testing.T) { //nolint:paralleltest
 		},
 		Steps: []r.TestStep{
 			{
+				//module_variable_optional_attrs experiment is deprecated in TF v1.3.0
 				Config: `
 					terraform {
   						experiments = [module_variable_optional_attrs]

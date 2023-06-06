@@ -26,8 +26,8 @@ func Test_Any_RunTest(t *testing.T) { //nolint:paralleltest
 		},
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.Any(
-				tfversion.RequireNot(version.Must(version.NewVersion("1.1.0"))),
-				tfversion.RequireBelow(version.Must(version.NewVersion("1.2.0"))),
+				tfversion.RequireNot(version.Must(version.NewVersion("1.1.0"))),   //returns error
+				tfversion.RequireBelow(version.Must(version.NewVersion("1.2.0"))), //returns nil
 			),
 		},
 		Steps: []r.TestStep{
@@ -52,8 +52,8 @@ func Test_Any_SkipTest(t *testing.T) { //nolint:paralleltest
 		},
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.Any(
-				tfversion.SkipIf(version.Must(version.NewVersion("1.1.0"))),
-				tfversion.SkipBelow(version.Must(version.NewVersion("1.2.0"))),
+				tfversion.SkipIf(version.Must(version.NewVersion("1.1.0"))),    //returns skip
+				tfversion.SkipBelow(version.Must(version.NewVersion("1.2.0"))), //returns skip
 			),
 		},
 		Steps: []r.TestStep{
@@ -79,9 +79,9 @@ func Test_Any_Error(t *testing.T) { //nolint:paralleltest
 			},
 			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 				tfversion.Any(
-					tfversion.SkipIf(version.Must(version.NewVersion("1.1.0"))),
-					tfversion.RequireNot(version.Must(version.NewVersion("1.1.0"))),
-					tfversion.RequireAbove(version.Must(version.NewVersion("1.2.0"))),
+					tfversion.SkipIf(version.Must(version.NewVersion("1.1.0"))),       //returns skip
+					tfversion.RequireNot(version.Must(version.NewVersion("1.1.0"))),   //returns error
+					tfversion.RequireAbove(version.Must(version.NewVersion("1.2.0"))), //returns error
 				),
 			},
 			Steps: []r.TestStep{

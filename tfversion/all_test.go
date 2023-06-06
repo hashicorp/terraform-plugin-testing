@@ -27,9 +27,9 @@ func Test_All_RunTest(t *testing.T) { //nolint:paralleltest
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.Any(
 				tfversion.All(
-					tfversion.RequireNot(version.Must(version.NewVersion("0.15.0"))),
-					tfversion.SkipIf(version.Must(version.NewVersion("1.2.0"))),
-					tfversion.RequireBelow(version.Must(version.NewVersion("1.2.0"))),
+					tfversion.RequireNot(version.Must(version.NewVersion("0.15.0"))),  //returns nil
+					tfversion.SkipIf(version.Must(version.NewVersion("1.2.0"))),       //returns nil
+					tfversion.RequireBelow(version.Must(version.NewVersion("1.2.0"))), //returns nil
 				),
 			),
 		},
@@ -56,10 +56,10 @@ func Test_All_SkipTest(t *testing.T) { //nolint:paralleltest
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.Any(
 				tfversion.All(
-					tfversion.RequireNot(version.Must(version.NewVersion("0.15.0"))),
-					tfversion.SkipBelow(version.Must(version.NewVersion("1.2.0"))),
-					tfversion.SkipIf(version.Must(version.NewVersion("1.0.7"))),
-					tfversion.RequireBelow(version.Must(version.NewVersion("1.2.0"))),
+					tfversion.RequireNot(version.Must(version.NewVersion("0.15.0"))),  //returns nil
+					tfversion.SkipBelow(version.Must(version.NewVersion("1.2.0"))),    //returns skip
+					tfversion.SkipIf(version.Must(version.NewVersion("1.0.7"))),       //returns skip
+					tfversion.RequireBelow(version.Must(version.NewVersion("1.2.0"))), //returns nil
 				),
 			),
 		},
@@ -87,9 +87,9 @@ func Test_All_Error(t *testing.T) { //nolint:paralleltest
 			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 				tfversion.Any(
 					tfversion.All(
-						tfversion.RequireNot(version.Must(version.NewVersion("1.1.0"))),
-						tfversion.SkipIf(version.Must(version.NewVersion("1.1.0"))),
-						tfversion.RequireAbove(version.Must(version.NewVersion("1.2.0"))),
+						tfversion.RequireNot(version.Must(version.NewVersion("1.1.0"))),   //returns error
+						tfversion.SkipIf(version.Must(version.NewVersion("1.1.0"))),       //returns skip
+						tfversion.RequireAbove(version.Must(version.NewVersion("1.2.0"))), //returns nil
 					),
 				),
 			},
