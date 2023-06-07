@@ -169,7 +169,7 @@ func TestAccExampleWidget_basic(t *testing.T) {
   resource.Test(t, resource.TestCase{
     PreCheck:     func() { testAccPreCheck(t) },
 	TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-		tfversion.SkipBelow(version.Must(version.NewVersion("1.1.0"))), //built-in check from tfversion package
+		tfversion.SkipBelow(tfversion.Version1_1_0), // built-in check from tfversion package
 	},
     // ...
   })
@@ -202,7 +202,7 @@ func TestAccExampleWidget_basic(t *testing.T) {
   resource.Test(t, resource.TestCase{
     PreCheck:     func() { testAccPreCheck(t) },
 	TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-		tfversion.SkipBelow(version.Must(version.NewVersion("1.1.0"))),
+		tfversion.SkipBelow(tfversion.Version1_1_0),
 	},
     Providers:    testAccProviders,
     // ...
@@ -248,7 +248,7 @@ func TestAccExampleWidget_basic(t *testing.T) {
   resource.Test(t, resource.TestCase{
     PreCheck:     func() { testAccPreCheck(t) },
 	TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-		tfversion.SkipBelow(version.Must(version.NewVersion("1.1.0"))),
+		tfversion.SkipBelow(tfversion.Version1_1_0),
 	},
     Providers:    testAccProviders,
     CheckDestroy: testAccCheckExampleResourceDestroy,
@@ -319,7 +319,7 @@ func TestAccExampleWidget_basic(t *testing.T) {
   resource.Test(t, resource.TestCase{
     PreCheck:     func() { testAccPreCheck(t) },
 	TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-		tfversion.SkipBelow(version.Must(version.NewVersion("1.1.0"))),
+		tfversion.SkipBelow(tfversion.Version1_1_0),
 	},
     Providers:    testAccProviders,
     CheckDestroy: testAccCheckExampleResourceDestroy,
