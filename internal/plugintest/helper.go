@@ -85,7 +85,11 @@ func InitHelper(ctx context.Context, config *Config) (*Helper, error) {
 		return nil, fmt.Errorf("unable to create terraform-exec instance: %w", err)
 	}
 
-	tfVersion, _, _ := tf.Version(ctx, false)
+	tfVersion, _, err := tf.Version(ctx, false)
+
+	if err != nil {
+		return nil, fmt.Errorf("error calling terraform version command: %w", err)
+	}
 
 	return &Helper{
 		baseDir:       baseDir,
