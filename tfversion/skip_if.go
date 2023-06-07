@@ -24,7 +24,7 @@ type skipIfCheck struct {
 }
 
 // CheckTerraformVersion satisfies the TerraformVersionCheck interface.
-func (s skipIfCheck) CheckTerraformVersion(ctx context.Context, req CheckTFVersionRequest, resp *CheckTFVersionResponse) {
+func (s skipIfCheck) CheckTerraformVersion(ctx context.Context, req CheckTerraformVersionRequest, resp *CheckTerraformVersionResponse) {
 
 	if req.TerraformVersion.Equal(s.version) {
 		resp.Skip = fmt.Sprintf("Terraform CLI version is %s: skipping test.", s.version)

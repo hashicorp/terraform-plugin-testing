@@ -24,7 +24,7 @@ type requireNotCheck struct {
 }
 
 // CheckTerraformVersion satisfies the TerraformVersionCheck interface.
-func (s requireNotCheck) CheckTerraformVersion(ctx context.Context, req CheckTFVersionRequest, resp *CheckTFVersionResponse) {
+func (s requireNotCheck) CheckTerraformVersion(ctx context.Context, req CheckTerraformVersionRequest, resp *CheckTerraformVersionResponse) {
 
 	if req.TerraformVersion.Equal(s.version) {
 		resp.Error = fmt.Errorf("unexpected Terraform CLI version: %s", s.version)

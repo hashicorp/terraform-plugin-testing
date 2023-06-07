@@ -26,7 +26,7 @@ type requireAboveCheck struct {
 }
 
 // CheckTerraformVersion satisfies the TerraformVersionCheck interface.
-func (r requireAboveCheck) CheckTerraformVersion(ctx context.Context, req CheckTFVersionRequest, resp *CheckTFVersionResponse) {
+func (r requireAboveCheck) CheckTerraformVersion(ctx context.Context, req CheckTerraformVersionRequest, resp *CheckTerraformVersionResponse) {
 
 	if req.TerraformVersion.LessThan(r.minimumVersion) {
 		resp.Error = fmt.Errorf("expected Terraform CLI version above %s but detected version is %s",

@@ -27,14 +27,14 @@ type anyCheck struct {
 }
 
 // CheckTerraformVersion satisfies the TerraformVersionCheck interface.
-func (a anyCheck) CheckTerraformVersion(ctx context.Context, req CheckTFVersionRequest, resp *CheckTFVersionResponse) {
+func (a anyCheck) CheckTerraformVersion(ctx context.Context, req CheckTerraformVersionRequest, resp *CheckTerraformVersionResponse) {
 	var joinedErrors error
 	strBuilder := strings.Builder{}
 
 	for _, subCheck := range a.terraformVersionChecks {
-		checkResp := CheckTFVersionResponse{}
+		checkResp := CheckTerraformVersionResponse{}
 
-		subCheck.CheckTerraformVersion(ctx, CheckTFVersionRequest{TerraformVersion: req.TerraformVersion}, &checkResp)
+		subCheck.CheckTerraformVersion(ctx, CheckTerraformVersionRequest{TerraformVersion: req.TerraformVersion}, &checkResp)
 
 		if checkResp.Error == nil && checkResp.Skip == "" {
 			resp.Error = nil

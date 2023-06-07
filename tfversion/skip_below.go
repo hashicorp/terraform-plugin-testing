@@ -26,7 +26,7 @@ type skipBelowCheck struct {
 }
 
 // CheckTerraformVersion satisfies the TerraformVersionCheck interface.
-func (s skipBelowCheck) CheckTerraformVersion(ctx context.Context, req CheckTFVersionRequest, resp *CheckTFVersionResponse) {
+func (s skipBelowCheck) CheckTerraformVersion(ctx context.Context, req CheckTerraformVersionRequest, resp *CheckTerraformVersionResponse) {
 
 	if req.TerraformVersion.LessThan(s.minimumVersion) {
 		resp.Skip = fmt.Sprintf("Terraform CLI version %s is below minimum version %s: skipping test",

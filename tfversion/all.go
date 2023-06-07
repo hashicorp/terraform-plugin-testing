@@ -25,12 +25,12 @@ type allCheck struct {
 }
 
 // CheckTerraformVersion satisfies the TerraformVersionCheck interface.
-func (a allCheck) CheckTerraformVersion(ctx context.Context, req CheckTFVersionRequest, resp *CheckTFVersionResponse) {
+func (a allCheck) CheckTerraformVersion(ctx context.Context, req CheckTerraformVersionRequest, resp *CheckTerraformVersionResponse) {
 
 	for _, subCheck := range a.terraformVersionChecks {
-		checkResp := CheckTFVersionResponse{}
+		checkResp := CheckTerraformVersionResponse{}
 
-		subCheck.CheckTerraformVersion(ctx, CheckTFVersionRequest{TerraformVersion: req.TerraformVersion}, &checkResp)
+		subCheck.CheckTerraformVersion(ctx, CheckTerraformVersionRequest{TerraformVersion: req.TerraformVersion}, &checkResp)
 
 		if checkResp.Error != nil {
 			resp.Error = checkResp.Error

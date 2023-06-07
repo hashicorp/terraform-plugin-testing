@@ -29,7 +29,7 @@ type requireBetweenCheck struct {
 }
 
 // CheckTerraformVersion satisfies the TerraformVersionCheck interface.
-func (s requireBetweenCheck) CheckTerraformVersion(ctx context.Context, req CheckTFVersionRequest, resp *CheckTFVersionResponse) {
+func (s requireBetweenCheck) CheckTerraformVersion(ctx context.Context, req CheckTerraformVersionRequest, resp *CheckTerraformVersionResponse) {
 
 	if req.TerraformVersion.LessThan(s.minimumVersion) || req.TerraformVersion.GreaterThanOrEqual(s.maximumVersion) {
 		resp.Error = fmt.Errorf("expected Terraform CLI version between %s and %s but detected version is %s",

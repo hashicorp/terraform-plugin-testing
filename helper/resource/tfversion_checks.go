@@ -16,8 +16,8 @@ func runTFVersionChecks(ctx context.Context, t testing.T, terraformVersion *vers
 	t.Helper()
 
 	for _, tfVersionCheck := range terraformVersionChecks {
-		resp := tfversion.CheckTFVersionResponse{}
-		tfVersionCheck.CheckTerraformVersion(ctx, tfversion.CheckTFVersionRequest{TerraformVersion: terraformVersion}, &resp)
+		resp := tfversion.CheckTerraformVersionResponse{}
+		tfVersionCheck.CheckTerraformVersion(ctx, tfversion.CheckTerraformVersionRequest{TerraformVersion: terraformVersion}, &resp)
 
 		if resp.Error != nil {
 			t.Fatalf(resp.Error.Error())

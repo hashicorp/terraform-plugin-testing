@@ -18,19 +18,19 @@ import (
 // interface for implementing their own custom logic.
 type TerraformVersionCheck interface {
 	// CheckTerraformVersion should implement the logic to either pass, error (failing the test), or skip (passing the test).
-	CheckTerraformVersion(context.Context, CheckTFVersionRequest, *CheckTFVersionResponse)
+	CheckTerraformVersion(context.Context, CheckTerraformVersionRequest, *CheckTerraformVersionResponse)
 }
 
-// CheckTFVersionRequest is the request received for the CheckTerraformVersion method of the
-// TerraformVersionCheck interface. The response of that method is CheckTFVersionResponse.
-type CheckTFVersionRequest struct {
+// CheckTerraformVersionRequest is the request received for the CheckTerraformVersion method of the
+// TerraformVersionCheck interface. The response of that method is CheckTerraformVersionResponse.
+type CheckTerraformVersionRequest struct {
 	// TerraformVersion is the version associated with the selected Terraform CLI binary.
 	TerraformVersion *version.Version
 }
 
-// CheckTFVersionResponse is the response returned for the CheckTerraformVersion method of the
-// TerraformVersionCheck interface. The request of that method is CheckTFVersionRequest.
-type CheckTFVersionResponse struct {
+// CheckTerraformVersionResponse is the response returned for the CheckTerraformVersion method of the
+// TerraformVersionCheck interface. The request of that method is CheckTerraformVersionRequest.
+type CheckTerraformVersionResponse struct {
 	// Error will result in failing the test with a given error message.
 	Error error
 
