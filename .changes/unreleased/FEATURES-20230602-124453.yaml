@@ -1,0 +1,7 @@
+kind: FEATURES
+body: 'tfversion: Added `SkipBetween` built-in version check, which skips the test
+  if the Terraform CLI version is between the given minimum (inclusive) and maximum
+  (exclusive).'
+time: 2023-06-02T12:44:53.737283-04:00
+custom:
+  Issue: "128"

@@ -144,6 +144,39 @@ func testAccPreCheck(t *testing.T) {
 }
 ```
 
+### TerraformVersionChecks
+
+**Type:** [`[]tfversion.TerraformVersionCheck`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#TerraformVersionCheck)
+
+**Default:** `nil`
+
+**Required:** no
+
+**TerraformVersionChecks** if non-nil, will be called after any defined PreChecks
+but before any test steps are executed. The [Terraform Version Checks](/terraform/plugin/testing/acceptance-tests/tfversion-checks)
+are generic checks that check logic against the Terraform CLI version and can
+immediately pass or fail a test before any test steps are executed.
+
+The tfversion package provides built-in checks for common scenarios.
+
+**Example usage:**
+
+```go
+// File: example/widget_test.go
+package example
+
+func TestAccExampleWidget_basic(t *testing.T) {
+  resource.Test(t, resource.TestCase{
+    PreCheck:     func() { testAccPreCheck(t) },
+	TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+		tfversion.SkipBelow(tfversion.Version1_1_0), // built-in check from tfversion package
+	},
+    // ...
+  })
+}
+
+```
+
 ### Providers
 
 **Type:** [`map[string]*schema.Provider`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema#Provider)
@@ -168,6 +201,9 @@ package example
 func TestAccExampleWidget_basic(t *testing.T) {
   resource.Test(t, resource.TestCase{
     PreCheck:     func() { testAccPreCheck(t) },
+	TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+		tfversion.SkipBelow(tfversion.Version1_1_0),
+	},
     Providers:    testAccProviders,
     // ...
   })
@@ -211,6 +247,9 @@ package example
 func TestAccExampleWidget_basic(t *testing.T) {
   resource.Test(t, resource.TestCase{
     PreCheck:     func() { testAccPreCheck(t) },
+	TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+		tfversion.SkipBelow(tfversion.Version1_1_0),
+	},
     Providers:    testAccProviders,
     CheckDestroy: testAccCheckExampleResourceDestroy,
     // ...
@@ -279,6 +318,9 @@ package example
 func TestAccExampleWidget_basic(t *testing.T) {
   resource.Test(t, resource.TestCase{
     PreCheck:     func() { testAccPreCheck(t) },
+	TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+		tfversion.SkipBelow(tfversion.Version1_1_0),
+	},
     Providers:    testAccProviders,
     CheckDestroy: testAccCheckExampleResourceDestroy,
     Steps: []resource.TestStep{

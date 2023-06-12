@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'tfversion: Introduced new `tfversion` package with interface and built-in Terraform
+  version check functionality'
+time: 2023-06-02T10:15:45.704158-04:00
+custom:
+  Issue: "128"
