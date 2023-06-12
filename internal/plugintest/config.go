@@ -93,7 +93,7 @@ func DiscoverConfig(ctx context.Context, sourceDir string) (*Config, error) {
 	installer := install.NewInstaller()
 	tfExec, err := installer.Ensure(context.Background(), sources)
 	if err != nil {
-		return nil, fmt.Errorf("error ensuring Terraform CLI binary: %w - sources: %v", err, sourceDetails)
+		return nil, fmt.Errorf("error ensuring Terraform CLI binary: %w -  attempted source(s): %v", err, sourceDetails)
 	}
 
 	ctx = logging.TestTerraformPathContext(ctx, tfExec)
