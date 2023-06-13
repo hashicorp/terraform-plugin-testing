@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'tfversion: Added `All` built-in version check, which fails or skips the test
-  if any of the given sub-checks return a non-nil error or non-empty skip message.'
-time: 2023-06-02T12:48:07.933978-04:00
-custom:
-  Issue: "128"

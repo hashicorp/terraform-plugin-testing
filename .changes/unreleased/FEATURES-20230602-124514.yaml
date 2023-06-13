@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'tfversion: Added `SkipIf` built-in version check, which skips the test if the
-  Terraform CLI version matches the given version.'
-time: 2023-06-02T12:45:14.812485-04:00
-custom:
-  Issue: "128"

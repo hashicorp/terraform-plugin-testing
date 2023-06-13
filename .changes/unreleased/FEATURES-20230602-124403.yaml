@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'tfversion: Added `SkipAbove` built-in version check, which skips the test if
-  the Terraform CLI version is above the given maximum.'
-time: 2023-06-02T12:44:03.123635-04:00
-custom:
-  Issue: "128"
