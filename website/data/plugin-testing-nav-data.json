@@ -18,6 +18,10 @@
         "path": "acceptance-tests/teststep"
       },
       {
+        "title": "Terraform Version Checks",
+        "path": "acceptance-tests/tfversion-checks"
+      },
+      {
         "title": "Plan Checks",
         "path": "acceptance-tests/plan-checks"
       },

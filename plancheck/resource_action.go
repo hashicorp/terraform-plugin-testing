@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package plancheck
 
 // ResourceActionType is a string enum type that routes to a specific terraform-json.Actions function for asserting resource changes.

@@ -25,6 +25,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/addrs"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
@@ -322,6 +323,12 @@ type TestCase struct {
 	// would run, so it can be used for some validation before running
 	// acceptance tests, such as verifying that keys are setup.
 	PreCheck func()
+
+	// TerraformVersionChecks is a list of checks to run against
+	// the Terraform CLI version which is running the testing.
+	// Each check is executed in order, respecting the first skip
+	// or fail response, unless the Any() meta check is also used.
+	TerraformVersionChecks []tfversion.TerraformVersionCheck
 
 	// ProviderFactories can be specified for the providers that are valid.
 	//
@@ -829,6 +836,17 @@ func Test(t testing.T, c TestCase) {
 			logging.HelperResourceError(ctx, "Unable to clean up temporary test files", map[string]interface{}{logging.KeyError: err})
 		}
 	}(helper)
+
+	// Run the TerraformVersionChecks if we have it.
+	// This is done after creating the helper because a working directory is required
+	// to retrieve the Terraform version.
+	if c.TerraformVersionChecks != nil {
+		logging.HelperResourceDebug(ctx, "Calling TestCase Terraform version checks")
+
+		runTFVersionChecks(ctx, t, helper.TerraformVersion(), c.TerraformVersionChecks)
+
+		logging.HelperResourceDebug(ctx, "Called TestCase Terraform version checks")
+	}
 
 	runNewTest(ctx, t, c, helper)
 

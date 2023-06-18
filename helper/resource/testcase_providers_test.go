@@ -14,6 +14,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
 func TestTestCaseProviderConfig(t *testing.T) {
@@ -332,7 +334,7 @@ func TestTest_TestCase_ExternalProvidersAndProviderFactories_NonHashiCorpNamespa
 func TestTest_TestCase_ExternalProviders_Error(t *testing.T) {
 	t.Parallel()
 
-	testExpectTFatal(t, func() {
+	plugintest.TestExpectTFatal(t, func() {
 		Test(&mockT{}, TestCase{
 			ExternalProviders: map[string]ExternalProvider{
 				"testnonexistent": {
@@ -368,7 +370,7 @@ func TestTest_TestCase_ProtoV5ProviderFactories(t *testing.T) {
 func TestTest_TestCase_ProtoV5ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
-	testExpectTFatal(t, func() {
+	plugintest.TestExpectTFatal(t, func() {
 		Test(&mockT{}, TestCase{
 			ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
 				"test": func() (tfprotov5.ProviderServer, error) { //nolint:unparam // required signature
@@ -404,7 +406,7 @@ func TestTest_TestCase_ProtoV6ProviderFactories(t *testing.T) {
 func TestTest_TestCase_ProtoV6ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
-	testExpectTFatal(t, func() {
+	plugintest.TestExpectTFatal(t, func() {
 		Test(&mockT{}, TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
@@ -440,7 +442,7 @@ func TestTest_TestCase_ProviderFactories(t *testing.T) {
 func TestTest_TestCase_ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
-	testExpectTFatal(t, func() {
+	plugintest.TestExpectTFatal(t, func() {
 		Test(&mockT{}, TestCase{
 			ProviderFactories: map[string]func() (*schema.Provider, error){
 				"test": func() (*schema.Provider, error) { //nolint:unparam // required signature

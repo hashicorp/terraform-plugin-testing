@@ -1053,7 +1053,7 @@ func TestTest_TestStep_ExternalProviders_DifferentVersions(t *testing.T) {
 func TestTest_TestStep_ExternalProviders_Error(t *testing.T) {
 	t.Parallel()
 
-	testExpectTFatal(t, func() {
+	plugintest.TestExpectTFatal(t, func() {
 		Test(&mockT{}, TestCase{
 			Steps: []TestStep{
 				{
@@ -1354,7 +1354,7 @@ func TestTest_TestStep_ProtoV5ProviderFactories(t *testing.T) {
 func TestTest_TestStep_ProtoV5ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
-	testExpectTFatal(t, func() {
+	plugintest.TestExpectTFatal(t, func() {
 		Test(&mockT{}, TestCase{
 			Steps: []TestStep{
 				{
@@ -1390,7 +1390,7 @@ func TestTest_TestStep_ProtoV6ProviderFactories(t *testing.T) {
 func TestTest_TestStep_ProtoV6ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
-	testExpectTFatal(t, func() {
+	plugintest.TestExpectTFatal(t, func() {
 		Test(&mockT{}, TestCase{
 			Steps: []TestStep{
 				{
@@ -1426,7 +1426,7 @@ func TestTest_TestStep_ProviderFactories(t *testing.T) {
 func TestTest_TestStep_ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
-	testExpectTFatal(t, func() {
+	plugintest.TestExpectTFatal(t, func() {
 		Test(&mockT{}, TestCase{
 			Steps: []TestStep{
 				{
