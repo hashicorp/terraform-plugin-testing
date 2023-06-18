@@ -88,7 +88,7 @@ func TestTestStepValidate(t *testing.T) {
 		"config-and-importstate-and-refreshstate-missing": {
 			testStep:                TestStep{},
 			testStepValidateRequest: testStepValidateRequest{},
-			expectedError:           fmt.Errorf("TestStep missing Config or ImportState or RefreshState"),
+			expectedError:           fmt.Errorf("TestStep missing Config or ImportState or RefreshState or RemoveState"),
 		},
 		"config-and-refreshstate-both-set": {
 			testStep: TestStep{
@@ -242,6 +242,36 @@ func TestTestStepValidate(t *testing.T) {
 			},
 			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
 			expectedError:           errors.New("TestStep RefreshPlanChecks.PostRefresh must only be specified with RefreshState"),
+		},
+		"removestate-first-step": {
+			testStep: TestStep{
+				RemoveState: []string{"resource.name"},
+			},
+			testStepValidateRequest: testStepValidateRequest{
+				StepNumber: 1,
+			},
+			expectedError: fmt.Errorf("TestStep cannot have RemoveState as first step"),
+		},
+		"removestate-and-importstate": {
+			testStep: TestStep{
+				ImportState: true,
+				RemoveState: []string{"resource.name"},
+			},
+			expectedError: fmt.Errorf("TestStep cannot have RemoveState and ImportState in same step"),
+		},
+		"removestate-and-refreshstate": {
+			testStep: TestStep{
+				RefreshState: true,
+				RemoveState:  []string{"resource.name"},
+			},
+			expectedError: fmt.Errorf("TestStep cannot have RemoveState and RefreshState in same step"),
+		},
+		"removestate-and-config": {
+			testStep: TestStep{
+				Config:      "# not empty",
+				RemoveState: []string{"resource.name"},
+			},
+			expectedError: fmt.Errorf("TestStep cannot have RemoveState and Config"),
 		},
 	}
 

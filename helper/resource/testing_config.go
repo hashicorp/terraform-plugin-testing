@@ -27,19 +27,3 @@ func testStepTaint(ctx context.Context, step TestStep, wd *plugintest.WorkingDir
 	}
 	return nil
 }
-
-func testStepRemoveState(ctx context.Context, step TestStep, wd *plugintest.WorkingDir) error {
-	if len(step.RemoveState) == 0 {
-		return nil
-	}
-
-	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using TestStep RemoveState: %v", step.RemoveState))
-
-	for _, p := range step.RemoveState {
-		err := wd.RemoveState(ctx, p)
-		if err != nil {
-			return fmt.Errorf("error remove state resource: %s", err)
-		}
-	}
-	return nil
-}

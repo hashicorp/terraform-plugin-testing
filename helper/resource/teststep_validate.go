@@ -67,8 +67,8 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 
 	logging.HelperResourceTrace(ctx, "Validating TestStep")
 
-	if s.Config == "" && !s.ImportState && !s.RefreshState {
-		err := fmt.Errorf("TestStep missing Config or ImportState or RefreshState")
+	if s.Config == "" && !s.ImportState && !s.RefreshState && len(s.RemoveState) == 0 {
+		err := fmt.Errorf("TestStep missing Config or ImportState or RefreshState or RemoveState")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
 	}
@@ -95,6 +95,32 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 		err := fmt.Errorf("TestStep cannot have ImportState and RefreshState in same step")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
+	}
+
+	if len(s.RemoveState) > 0 {
+		if req.StepNumber == 1 {
+			err := fmt.Errorf("TestStep cannot have RemoveState as first step")
+			logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
+			return err
+		}
+
+		if s.ImportState {
+			err := fmt.Errorf("TestStep cannot have RemoveState and ImportState in same step")
+			logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
+			return err
+		}
+
+		if s.RefreshState {
+			err := fmt.Errorf("TestStep cannot have RemoveState and RefreshState in same step")
+			logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
+			return err
+		}
+
+		if s.Config != "" {
+			err := fmt.Errorf("TestStep cannot have RemoveState and Config")
+			logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
+			return err
+		}
 	}
 
 	for name := range s.ExternalProviders {

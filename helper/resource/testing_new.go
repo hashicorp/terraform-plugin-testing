@@ -328,15 +328,46 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 			appliedCfg = step.mergedConfig(ctx, c)
 
-			if stepNumber > 1 && len(step.RemoveState) > 0 && !step.ImportState && !step.RefreshState {
-				err := testStepRemoveState(ctx, step, wd)
+			logging.HelperResourceDebug(ctx, "Finished TestStep")
 
-				if err != nil {
+			continue
+		}
+
+		if len(step.RemoveState) > 0 {
+			logging.HelperResourceTrace(ctx, "TestStep is RemoveState mode")
+
+			err := testStepRemoveState(ctx, step, wd)
+
+			if step.ExpectError != nil {
+				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
+
+				if err == nil {
 					logging.HelperResourceError(ctx,
-						"TestStep error remove state resources",
+						"Expected an error but got none",
+					)
+					t.Fatalf("Step %d/%d, expected an error but got none", stepNumber, len(c.Steps))
+				}
+				if !step.ExpectError.MatchString(err.Error()) {
+					logging.HelperResourceError(ctx,
+						fmt.Sprintf("Expected an error with pattern (%s)", step.ExpectError.String()),
 						map[string]interface{}{logging.KeyError: err},
 					)
-					t.Fatalf("TestStep %d/%d error remove state resources: %s", stepNumber, len(c.Steps), err)
+					t.Fatalf("Step %d/%d, expected an error with pattern, no match on: %s", stepNumber, len(c.Steps), err)
+				}
+			} else {
+				if err != nil && c.ErrorCheck != nil {
+					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
+
+					err = c.ErrorCheck(err)
+
+					logging.HelperResourceDebug(ctx, "Called TestCase ErrorCheck")
+				}
+				if err != nil {
+					logging.HelperResourceError(ctx,
+						"Unexpected error",
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), err)
 				}
 			}
 
