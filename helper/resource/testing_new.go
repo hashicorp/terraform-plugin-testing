@@ -214,7 +214,12 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.ImportState {
 			logging.HelperResourceTrace(ctx, "TestStep is ImportState mode")
 
-			err := testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, providers)
+			var err error
+			if step.ImportBlock {
+				err = testStepNewImportBlock(ctx, t, helper, wd, step, appliedCfg, providers)
+			} else {
+				err = testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, providers)
+			}
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 				if err == nil {

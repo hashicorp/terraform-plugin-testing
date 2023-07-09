@@ -560,11 +560,24 @@ type TestStep struct {
 	//---------------------------------------------------------------
 	// ImportState testing
 	//---------------------------------------------------------------
+	// Terraform has two workflows for importing resources: the import CLI
+	// command, which writes directly to state, and the import block in HCL,
+	// which imports to state via the normal plan and apply workflow.
 
 	// ImportState, if true, will test the functionality of ImportState
 	// by importing the resource with ResourceName (must be set) and the
 	// ID of that resource.
+	// By default, the "terraform import" command will be run. To test import
+	// block functionality instead, set ImportBlock to true.
 	ImportState bool
+
+	// ImportBlock, if true, enables a sub-mode of ImportState testing. In this
+	// mode, an import block is added to the config, and plan and apply are run.
+	ImportBlock bool
+
+	// ImportBlockConfig is an optional string with the import block
+	// configuration to use when ImportBlock is true.
+	ImportBlockConfig string
 
 	// ImportStateId is the ID to perform an ImportState operation with.
 	// This is optional. If it isn't set, then the resource ID is automatically
