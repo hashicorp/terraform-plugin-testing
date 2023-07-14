@@ -15,7 +15,7 @@ under test.
 ## Test Modes
 
 Terraform's test framework facilitates three distinct modes of acceptance tests,
-_Lifecycle (config)_, _Import_ and _Refresh_.
+_Lifecycle (config)_, _Import_, _Refresh_ and _RemoveState_.
 
 _Lifecycle (config)_ mode is the most common mode, and is used for testing plugins by
 providing one or more configuration files with the same logic as would be used
@@ -28,6 +28,17 @@ when running `terraform import`.
 _Refresh_ mode is used for testing resource functionality to refresh existing
 infrastructure, using the same logic as would be used when running
 `terraform refresh`.
+
+_RemoveState_ mode is used for testing resources that should not be deleted
+at the end of the `TestCase`. It allows to clean up state from particular resources
+that should not be automatically destroyed. For example, you want to write test
+for existing resource: you import it, do some test steps and at the end of all steps
+you need to keep, preventing automatic destroying.
+
+Usage:
+- should not be present in the same `TestStep` as `Config: "not empty"`, `ImportState` or `RefreshState`.
+- should not be present in the first `TestStep` similar to `RefreshState`.
+
 
 An acceptance test's mode is implicitly determined by the fields provided in the
 `TestStep` definition. The applicable fields are defined in the [TestStep

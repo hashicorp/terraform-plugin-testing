@@ -476,12 +476,6 @@ type TestStep struct {
 	// resources in the root module path.
 	Taint []string
 
-	// RemoveState list of resource addresses to be removed from state after
-	// applying config. Be sure to only include this at a step where the referenced
-	// address will be present in state, as it will fail the test if the resource
-	// is missing.
-	RemoveState []string
-
 	//---------------------------------------------------------------
 	// Test modes. One of the following groups of settings must be
 	// set to determine what the test step will do. Ideally we would've
@@ -489,6 +483,20 @@ type TestStep struct {
 	// want to re-type so instead we just determine which step logic
 	// to run based on what settings below are set.
 	//---------------------------------------------------------------
+
+	//---------------------------------------------------------------
+	// RemoveState testing
+	//---------------------------------------------------------------
+
+	// RemoveState is a list of resource addresses to be removed from state after
+	// applying config. Be sure to only include this at a step where the referenced
+	// address will be present in state, as it will fail the test if the resource
+	// is missing.
+	//
+	// Usage:
+	// - RemoveState should not be present in the same TestStep as Config: "not empty", ImportState or RefreshState.
+	// - RemoveState should not be present in the first TestStep similar to RefreshState.
+	RemoveState []string
 
 	//---------------------------------------------------------------
 	// Plan, Apply testing

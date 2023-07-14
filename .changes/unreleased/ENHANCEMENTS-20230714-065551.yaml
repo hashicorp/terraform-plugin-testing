@@ -1,0 +1,6 @@
+kind: ENHANCEMENTS
+body: Added `RemoveState` - new testing mode, which allows to delete listed resources
+  from state, to prevent their automatic destroying.
+time: 2023-07-14T06:55:51.777536+02:00
+custom:
+  Issue: "85"
