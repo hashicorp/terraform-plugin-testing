@@ -143,6 +143,21 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			copyWorkingDir(ctx, t, stepNumber, wd)
 		}
 
+		cfg, err := teststep.Configuration(
+			teststep.ConfigurationRequest{
+				Directory: step.ConfigDirectory,
+				Raw:       step.Config,
+			},
+		)
+
+		if err != nil {
+			logging.HelperResourceError(ctx,
+				"Error creating config",
+				map[string]interface{}{logging.KeyError: err},
+			)
+			t.Fatalf("Error creating config: %s", err)
+		}
+
 		stepNumber = stepIndex + 1 // 1-based indexing for humans
 		ctx = logging.TestStepNumberContext(ctx, stepNumber)
 
@@ -175,7 +190,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			}
 		}
 
-		if step.Config != "" && !step.Destroy && len(step.Taint) > 0 {
+		if cfg.HasConfiguration() && !step.Destroy && len(step.Taint) > 0 {
 			err := testStepTaint(ctx, step, wd)
 
 			if err != nil {
@@ -316,7 +331,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			continue
 		}
 
-		if step.Config != "" {
+		if cfg.HasConfiguration() {
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
 			err := testStepNewConfig(ctx, t, c, wd, step, providers)
@@ -353,6 +368,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				}
 			}
 
+			// TODO: Need to handle configuration defined through Directory and File.
 			appliedCfg, err = teststep.Configuration(
 				teststep.ConfigurationRequest{
 					Raw: step.mergedConfig(ctx, c),
