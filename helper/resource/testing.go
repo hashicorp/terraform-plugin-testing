@@ -490,11 +490,21 @@ type TestStep struct {
 
 	// Config a string of the configuration to give to Terraform. If this
 	// is set, then the TestCase will execute this step with the same logic
-	// as a `terraform apply`.
+	// as a `terraform apply`. If both Config and ConfigDirectory are set
+	// an error will be returned.
 	//
 	// JSON Configuration Syntax can be used and is assumed whenever Config
 	// contains valid JSON.
 	Config string
+
+	// ConfigDir is a relative directory path for the base Terraform
+	// configuration of the test.
+	//
+	// When running Terraform operations for the test, Terraform will
+	// be executed with copies of the files of this directory as its
+	// working directory. If both ConfigDirectory and Config are set
+	// an error will be returned.
+	ConfigDirectory string
 
 	// Check is called after the Config is applied. Use this step to
 	// make your own API calls to check the status of things, and to
