@@ -18,6 +18,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
@@ -93,7 +94,21 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	}()
 
 	if c.hasProviders(ctx) {
-		err := wd.SetConfig(ctx, c.providerConfig(ctx, false))
+		config, err := teststep.Configuration(
+			teststep.ConfigurationRequest{
+				Raw: c.providerConfig(ctx, false),
+			},
+		)
+
+		if err != nil {
+			logging.HelperResourceError(ctx,
+				"TestCase error creating provider configuration",
+				map[string]interface{}{logging.KeyError: err},
+			)
+			t.Fatalf("TestCase error creating provider configuration: %s", err)
+		}
+
+		err = wd.SetConfig(ctx, config)
 
 		if err != nil {
 			logging.HelperResourceError(ctx,
@@ -179,9 +194,21 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				protov6: protov6ProviderFactories(c.ProtoV6ProviderFactories).merge(step.ProtoV6ProviderFactories),
 			}
 
-			providerCfg := step.providerConfig(ctx, step.configHasProviderBlock(ctx))
+			config, err := teststep.Configuration(
+				teststep.ConfigurationRequest{
+					Raw: step.providerConfig(ctx, step.configHasProviderBlock(ctx)),
+				},
+			)
 
-			err := wd.SetConfig(ctx, providerCfg)
+			if err != nil {
+				logging.HelperResourceError(ctx,
+					"TestStep error creating provider configuration",
+					map[string]interface{}{logging.KeyError: err},
+				)
+				t.Fatalf("TestStep %d/%d error creating test provider configuration: %s", stepNumber, len(c.Steps), err)
+			}
+
+			err = wd.SetConfig(ctx, config)
 
 			if err != nil {
 				logging.HelperResourceError(ctx,
@@ -379,14 +406,45 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 	state.RootModule().Resources = make(map[string]*terraform.ResourceState)
 	state.RootModule().Resources[c.IDRefreshName] = &terraform.ResourceState{}
 
+	config, err := teststep.Configuration(
+		teststep.ConfigurationRequest{
+			Raw: c.providerConfig(ctx, step.configHasProviderBlock(ctx)),
+		},
+	)
+
+	if err != nil {
+		logging.HelperResourceError(ctx,
+			"Error creating provider configuration for import test config",
+			map[string]interface{}{logging.KeyError: err},
+		)
+		t.Fatalf("Error creating provider configuration for import test config: %s", err)
+	}
+
 	// Temporarily set the config to a minimal provider config for the refresh
 	// test. After the refresh we can reset it.
-	err := wd.SetConfig(ctx, c.providerConfig(ctx, step.configHasProviderBlock(ctx)))
+	err = wd.SetConfig(ctx, config)
 	if err != nil {
 		t.Fatalf("Error setting import test config: %s", err)
 	}
+
 	defer func() {
-		err = wd.SetConfig(ctx, step.Config)
+		config, err := teststep.Configuration(
+			teststep.ConfigurationRequest{
+				Directory: step.ConfigDirectory,
+				Raw:       step.Config,
+			},
+		)
+
+		if err != nil {
+			logging.HelperResourceError(ctx,
+				"Error creating provider configuration for resetting test config",
+				map[string]interface{}{logging.KeyError: err},
+			)
+			t.Fatalf("Error creating provider configuration for resetting test config: %s", err)
+		}
+
+		err = wd.SetConfig(ctx, config)
+
 		if err != nil {
 			t.Fatalf("Error resetting test config: %s", err)
 		}

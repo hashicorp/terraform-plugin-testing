@@ -14,6 +14,7 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
+	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 )
 
 const (
@@ -82,12 +83,12 @@ func (wd *WorkingDir) GetHelper() *Helper {
 // This must be called at least once before any call to Init, Plan, Apply, or
 // Destroy to establish the configuration. Any previously-set configuration is
 // discarded and any saved plan is cleared.
-func (wd *WorkingDir) SetConfig(ctx context.Context, cfg string) error {
+func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config) error {
 	logging.HelperResourceTrace(ctx, "Setting Terraform configuration", map[string]any{logging.KeyTestTerraformConfiguration: cfg})
 
 	outFilename := filepath.Join(wd.baseDir, ConfigFileName)
 	rmFilename := filepath.Join(wd.baseDir, ConfigFileNameJSON)
-	bCfg := []byte(cfg)
+	bCfg := []byte(cfg.GetRaw())
 	if json.Valid(bCfg) {
 		outFilename, rmFilename = rmFilename, outFilename
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
@@ -78,6 +79,8 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
+	// TODO: Refactor to inspect type implementing teststep.Config to determine if configuration
+	// is set.
 	// Create working directory for import tests
 	if step.Config == "" {
 		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
@@ -98,7 +101,17 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		defer importWd.Close()
 	}
 
-	err = importWd.SetConfig(ctx, step.Config)
+	config, err := teststep.Configuration(
+		teststep.ConfigurationRequest{
+			Raw: step.Config,
+		},
+	)
+
+	if err != nil {
+		t.Fatalf("Error creating test config: %s", err)
+	}
+
+	err = importWd.SetConfig(ctx, config)
 	if err != nil {
 		t.Fatalf("Error setting test config: %s", err)
 	}

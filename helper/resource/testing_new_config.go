@@ -11,6 +11,7 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
@@ -20,7 +21,19 @@ import (
 func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {
 	t.Helper()
 
-	err := wd.SetConfig(ctx, step.mergedConfig(ctx, c))
+	// TODO: step.mergedConfig() needs to be refactored to a method on teststep.Configure interface
+	// in order to handle ConfigDirectory and ConfigFile.
+	config, err := teststep.Configuration(
+		teststep.ConfigurationRequest{
+			Raw: step.mergedConfig(ctx, c),
+		},
+	)
+
+	if err != nil {
+		return fmt.Errorf("Error creating config: %w", err)
+	}
+
+	err = wd.SetConfig(ctx, config)
 	if err != nil {
 		return fmt.Errorf("Error setting config: %w", err)
 	}
