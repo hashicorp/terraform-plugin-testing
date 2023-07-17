@@ -19,8 +19,21 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfg string, providers *providerFactories) error {
+func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfg teststep.Config, providers *providerFactories) error {
 	t.Helper()
+
+	var config teststep.Config
+
+	config, err := teststep.Configuration(
+		teststep.ConfigurationRequest{
+			Directory: step.ConfigDirectory,
+			Raw:       step.Config,
+		},
+	)
+
+	if err != nil {
+		t.Fatalf("Error creating configuration: %s", err)
+	}
 
 	if step.ResourceName == "" {
 		t.Fatal("ResourceName is required for an import state test")
@@ -28,7 +41,6 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	// get state from check sequence
 	var state *terraform.State
-	var err error
 	err = runProviderCommand(ctx, t, func() error {
 		state, err = getState(ctx, t, wd)
 		if err != nil {
@@ -79,14 +91,12 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
-	// TODO: Refactor to inspect type implementing teststep.Config to determine if configuration
-	// is set.
 	// Create working directory for import tests
-	if step.Config == "" {
+	if !config.HasConfiguration() {
 		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
 
-		step.Config = cfg
-		if step.Config == "" {
+		config = cfg
+		if !config.HasConfiguration() {
 			t.Fatal("Cannot import state with no specified config")
 		}
 	}
@@ -99,16 +109,6 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	} else {
 		importWd = helper.RequireNewWorkingDir(ctx, t, "")
 		defer importWd.Close()
-	}
-
-	config, err := teststep.Configuration(
-		teststep.ConfigurationRequest{
-			Raw: step.Config,
-		},
-	)
-
-	if err != nil {
-		t.Fatalf("Error creating test config: %s", err)
 	}
 
 	err = importWd.SetConfig(ctx, config)

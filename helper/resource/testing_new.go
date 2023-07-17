@@ -135,7 +135,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 	// use this to track last step successfully applied
 	// acts as default for import tests
-	var appliedCfg string
+	var appliedCfg teststep.Config
 	var stepNumber int
 
 	for stepIndex, step := range c.Steps {
@@ -353,7 +353,19 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				}
 			}
 
-			appliedCfg = step.mergedConfig(ctx, c)
+			appliedCfg, err = teststep.Configuration(
+				teststep.ConfigurationRequest{
+					Raw: step.mergedConfig(ctx, c),
+				},
+			)
+
+			if err != nil {
+				logging.HelperResourceError(ctx,
+					"Error creating applied configuration",
+					map[string]interface{}{logging.KeyError: err},
+				)
+				t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), err)
+			}
 
 			logging.HelperResourceDebug(ctx, "Finished TestStep")
 
