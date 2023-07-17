@@ -8,10 +8,15 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
+	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 )
 
 // testStepValidateRequest contains data for the (TestStep).validate() method.
 type testStepValidateRequest struct {
+	// StepConfiguration contains the TestStep configuration derived from
+	// TestStep.Config or TestStep.ConfigDirectory.
+	StepConfiguration teststep.Config
+
 	// StepNumber is the index of the TestStep in the TestCase.Steps.
 	StepNumber int
 
@@ -67,13 +72,13 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 
 	logging.HelperResourceTrace(ctx, "Validating TestStep")
 
-	if s.Config == "" && !s.ImportState && !s.RefreshState {
+	if !req.StepConfiguration.HasConfiguration() && !s.ImportState && !s.RefreshState {
 		err := fmt.Errorf("TestStep missing Config or ImportState or RefreshState")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
 	}
 
-	if s.Config != "" && s.RefreshState {
+	if req.StepConfiguration.HasConfiguration() && s.RefreshState {
 		err := fmt.Errorf("TestStep cannot have Config and RefreshState")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
@@ -128,7 +133,7 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 	}
 
 	if len(s.ConfigPlanChecks.PreApply) > 0 {
-		if s.Config == "" {
+		if !req.StepConfiguration.HasConfiguration() {
 			err := fmt.Errorf("TestStep ConfigPlanChecks.PreApply must only be specified with Config")
 			logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 			return err
@@ -141,13 +146,13 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 		}
 	}
 
-	if len(s.ConfigPlanChecks.PostApplyPreRefresh) > 0 && s.Config == "" {
+	if len(s.ConfigPlanChecks.PostApplyPreRefresh) > 0 && !req.StepConfiguration.HasConfiguration() {
 		err := fmt.Errorf("TestStep ConfigPlanChecks.PostApplyPreRefresh must only be specified with Config")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
 	}
 
-	if len(s.ConfigPlanChecks.PostApplyPostRefresh) > 0 && s.Config == "" {
+	if len(s.ConfigPlanChecks.PostApplyPostRefresh) > 0 && !req.StepConfiguration.HasConfiguration() {
 		err := fmt.Errorf("TestStep ConfigPlanChecks.PostApplyPostRefresh must only be specified with Config")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err

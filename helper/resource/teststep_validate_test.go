@@ -12,6 +12,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+
+	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -82,6 +84,8 @@ func TestTestStepValidate(t *testing.T) {
 
 	tests := map[string]struct {
 		testStep                TestStep
+		testStepConfig          string
+		testStepConfigDirectory string
 		testStepValidateRequest testStepValidateRequest
 		expectedError           error
 	}{
@@ -92,10 +96,17 @@ func TestTestStepValidate(t *testing.T) {
 		},
 		"config-and-refreshstate-both-set": {
 			testStep: TestStep{
-				Config:       "# not empty",
 				RefreshState: true,
 			},
-			expectedError: fmt.Errorf("TestStep cannot have Config and RefreshState"),
+			testStepConfig: "# not empty",
+			expectedError:  fmt.Errorf("TestStep cannot have Config and RefreshState"),
+		},
+		"config-directory-and-refreshstate-both-set": {
+			testStep: TestStep{
+				RefreshState: true,
+			},
+			testStepConfigDirectory: "# not empty",
+			expectedError:           fmt.Errorf("TestStep cannot have Config and RefreshState"),
 		},
 		"refreshstate-first-step": {
 			testStep: TestStep{
@@ -124,7 +135,6 @@ func TestTestStepValidate(t *testing.T) {
 		},
 		"externalproviders-overlapping-providerfactories": {
 			testStep: TestStep{
-				Config: "# not empty",
 				ExternalProviders: map[string]ExternalProvider{
 					"test": {}, // does not need to be real
 				},
@@ -132,16 +142,42 @@ func TestTestStepValidate(t *testing.T) {
 					"test": nil, // does not need to be real
 				},
 			},
+			testStepConfig:          "# not empty",
+			testStepValidateRequest: testStepValidateRequest{},
+			expectedError:           fmt.Errorf("TestStep provider \"test\" set in both ExternalProviders and ProviderFactories"),
+		},
+		"externalproviders-overlapping-providerfactories-config-directory": {
+			testStep: TestStep{
+				ExternalProviders: map[string]ExternalProvider{
+					"test": {}, // does not need to be real
+				},
+				ProviderFactories: map[string]func() (*schema.Provider, error){
+					"test": nil, // does not need to be real
+				},
+			},
+			testStepConfigDirectory: "# not empty",
 			testStepValidateRequest: testStepValidateRequest{},
 			expectedError:           fmt.Errorf("TestStep provider \"test\" set in both ExternalProviders and ProviderFactories"),
 		},
 		"externalproviders-testcase-providers": {
 			testStep: TestStep{
-				Config: "# not empty",
 				ExternalProviders: map[string]ExternalProvider{
 					"test": {}, // does not need to be real
 				},
 			},
+			testStepConfig: "# not empty",
+			testStepValidateRequest: testStepValidateRequest{
+				TestCaseHasProviders: true,
+			},
+			expectedError: fmt.Errorf("Providers must only be specified either at the TestCase or TestStep level"),
+		},
+		"externalproviders-testcase-providers-config-directory": {
+			testStep: TestStep{
+				ExternalProviders: map[string]ExternalProvider{
+					"test": {}, // does not need to be real
+				},
+			},
+			testStepConfigDirectory: "# not empty",
 			testStepValidateRequest: testStepValidateRequest{
 				TestCaseHasProviders: true,
 			},
@@ -158,11 +194,23 @@ func TestTestStepValidate(t *testing.T) {
 		},
 		"protov5providerfactories-testcase-providers": {
 			testStep: TestStep{
-				Config: "# not empty",
 				ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
 					"test": nil, // does not need to be real
 				},
 			},
+			testStepConfig: "# not empty",
+			testStepValidateRequest: testStepValidateRequest{
+				TestCaseHasProviders: true,
+			},
+			expectedError: fmt.Errorf("Providers must only be specified either at the TestCase or TestStep level"),
+		},
+		"protov5providerfactories-testcase-providers-config-directory": {
+			testStep: TestStep{
+				ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
+					"test": nil, // does not need to be real
+				},
+			},
+			testStepConfigDirectory: "# not empty",
 			testStepValidateRequest: testStepValidateRequest{
 				TestCaseHasProviders: true,
 			},
@@ -170,11 +218,23 @@ func TestTestStepValidate(t *testing.T) {
 		},
 		"protov6providerfactories-testcase-providers": {
 			testStep: TestStep{
-				Config: "# not empty",
 				ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 					"test": nil, // does not need to be real
 				},
 			},
+			testStepConfig: "# not empty",
+			testStepValidateRequest: testStepValidateRequest{
+				TestCaseHasProviders: true,
+			},
+			expectedError: fmt.Errorf("Providers must only be specified either at the TestCase or TestStep level"),
+		},
+		"protov6providerfactories-testcase-providers-config-directory": {
+			testStep: TestStep{
+				ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+					"test": nil, // does not need to be real
+				},
+			},
+			testStepConfigDirectory: "# not empty",
 			testStepValidateRequest: testStepValidateRequest{
 				TestCaseHasProviders: true,
 			},
@@ -182,11 +242,23 @@ func TestTestStepValidate(t *testing.T) {
 		},
 		"providerfactories-testcase-providers": {
 			testStep: TestStep{
-				Config: "# not empty",
 				ProviderFactories: map[string]func() (*schema.Provider, error){
 					"test": nil, // does not need to be real
 				},
 			},
+			testStepConfig: "# not empty",
+			testStepValidateRequest: testStepValidateRequest{
+				TestCaseHasProviders: true,
+			},
+			expectedError: fmt.Errorf("Providers must only be specified either at the TestCase or TestStep level"),
+		},
+		"providerfactories-testcase-providers-config-directory": {
+			testStep: TestStep{
+				ProviderFactories: map[string]func() (*schema.Provider, error){
+					"test": nil, // does not need to be real
+				},
+			},
+			testStepConfigDirectory: "# not empty",
 			testStepValidateRequest: testStepValidateRequest{
 				TestCaseHasProviders: true,
 			},
@@ -207,9 +279,20 @@ func TestTestStepValidate(t *testing.T) {
 				ConfigPlanChecks: ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{&planCheckSpy{}},
 				},
-				Config:   "# not empty",
 				PlanOnly: true,
 			},
+			testStepConfig:          "# not empty",
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep ConfigPlanChecks.PreApply cannot be run with PlanOnly"),
+		},
+		"configplanchecks-preapply-not-planonly-config-directory": {
+			testStep: TestStep{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{&planCheckSpy{}},
+				},
+				PlanOnly: true,
+			},
+			testStepConfigDirectory: "# not empty",
 			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
 			expectedError:           errors.New("TestStep ConfigPlanChecks.PreApply cannot be run with PlanOnly"),
 		},
@@ -238,8 +321,18 @@ func TestTestStepValidate(t *testing.T) {
 				RefreshPlanChecks: RefreshPlanChecks{
 					PostRefresh: []plancheck.PlanCheck{&planCheckSpy{}},
 				},
-				Config: "# not empty",
 			},
+			testStepConfig:          "# not empty",
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep RefreshPlanChecks.PostRefresh must only be specified with RefreshState"),
+		},
+		"refreshplanchecks-postrefresh-not-refresh-mode-config-directory": {
+			testStep: TestStep{
+				RefreshPlanChecks: RefreshPlanChecks{
+					PostRefresh: []plancheck.PlanCheck{&planCheckSpy{}},
+				},
+			},
+			testStepConfigDirectory: "# not empty",
 			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
 			expectedError:           errors.New("TestStep RefreshPlanChecks.PostRefresh must only be specified with RefreshState"),
 		},
@@ -251,7 +344,16 @@ func TestTestStepValidate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			err := test.testStep.validate(context.Background(), test.testStepValidateRequest)
+			testStepConfig, err := teststep.Configuration(test.testStepConfig, test.testStepConfigDirectory)
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			testStepValidateRequest := test.testStepValidateRequest
+			testStepValidateRequest.StepConfiguration = testStepConfig
+
+			err = test.testStep.validate(context.Background(), testStepValidateRequest)
 
 			if err != nil {
 				if test.expectedError == nil {

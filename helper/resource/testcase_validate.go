@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
+	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 )
 
 // hasProviders returns true if the TestCase has set any of the
@@ -68,13 +69,20 @@ func (c TestCase) validate(ctx context.Context) error {
 	testCaseHasProviders := c.hasProviders(ctx)
 
 	for stepIndex, step := range c.Steps {
+		stepConfiguration, err := teststep.Configuration(step.Config, step.ConfigDirectory)
+
+		if err != nil {
+			return fmt.Errorf("error creating teststep.Configuration: %s", err)
+		}
+
 		stepNumber := stepIndex + 1 // Use 1-based index for humans
 		stepValidateReq := testStepValidateRequest{
+			StepConfiguration:    stepConfiguration,
 			StepNumber:           stepNumber,
 			TestCaseHasProviders: testCaseHasProviders,
 		}
 
-		err := step.validate(ctx, stepValidateReq)
+		err = step.validate(ctx, stepValidateReq)
 
 		if err != nil {
 			err := fmt.Errorf("TestStep %d/%d validation error: %w", stepNumber, len(c.Steps), err)
