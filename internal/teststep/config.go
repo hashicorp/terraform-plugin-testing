@@ -6,24 +6,40 @@ import (
 )
 
 type Config interface {
+	GetRaw() string
 	HasConfiguration() bool
+	HasRaw() bool
 }
 
 type configuration struct {
-	raw       string
 	directory string
 	file      string
+	raw       string
 }
 
-func Configuration(raw, directory string) (configuration, error) {
-	var populatedConfig []string
+type ConfigurationRequest struct {
+	Directory string
+	Raw       string
+}
 
-	if raw != "" {
-		populatedConfig = append(populatedConfig, fmt.Sprintf("%q", "raw"))
+func Configuration(configRequest ConfigurationRequest) (configuration, error) {
+	var populatedConfig []string
+	var config configuration
+
+	if configRequest.Directory != "" {
+		populatedConfig = append(populatedConfig, fmt.Sprintf("%q", "directory"))
+
+		config = configuration{
+			directory: configRequest.Directory,
+		}
 	}
 
-	if directory != "" {
-		populatedConfig = append(populatedConfig, fmt.Sprintf("%q", "directory"))
+	if configRequest.Raw != "" {
+		populatedConfig = append(populatedConfig, fmt.Sprintf("%q", "raw"))
+
+		config = configuration{
+			raw: configRequest.Raw,
+		}
 	}
 
 	if len(populatedConfig) > 1 {
@@ -33,22 +49,25 @@ func Configuration(raw, directory string) (configuration, error) {
 		)
 	}
 
-	return configuration{
-		raw:       raw,
-		directory: directory,
-	}, nil
+	return config, nil
+}
+
+func (c configuration) GetRaw() string {
+	return c.raw
 }
 
 func (c configuration) HasConfiguration() bool {
-	if c.raw != "" {
-		return true
-	}
-
-	// TODO: do we need to read each file in directory and check that it's not empty.
-	// TODO: do we also need to verify that it's valid TF config
 	if c.directory != "" {
 		return true
 	}
 
+	if c.raw != "" {
+		return true
+	}
+
 	return false
+}
+
+func (c configuration) HasRaw() bool {
+	return c.raw != ""
 }

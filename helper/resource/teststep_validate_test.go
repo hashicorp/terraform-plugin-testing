@@ -344,7 +344,12 @@ func TestTestStepValidate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			testStepConfig, err := teststep.Configuration(test.testStepConfig, test.testStepConfigDirectory)
+			testStepConfig, err := teststep.Configuration(
+				teststep.ConfigurationRequest{
+					Directory: test.testStepConfigDirectory,
+					Raw:       test.testStepConfig,
+				},
+			)
 
 			if err != nil {
 				t.Fatal(err)

@@ -69,7 +69,12 @@ func (c TestCase) validate(ctx context.Context) error {
 	testCaseHasProviders := c.hasProviders(ctx)
 
 	for stepIndex, step := range c.Steps {
-		stepConfiguration, err := teststep.Configuration(step.Config, step.ConfigDirectory)
+		stepConfiguration, err := teststep.Configuration(
+			teststep.ConfigurationRequest{
+				Directory: step.ConfigDirectory,
+				Raw:       step.Config,
+			},
+		)
 
 		if err != nil {
 			return fmt.Errorf("error creating teststep.Configuration: %s", err)
