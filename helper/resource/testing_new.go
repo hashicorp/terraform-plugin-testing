@@ -209,9 +209,11 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				protov6: protov6ProviderFactories(c.ProtoV6ProviderFactories).merge(step.ProtoV6ProviderFactories),
 			}
 
+			testStepProviderConfig := step.providerConfig(ctx, cfg.HasProviderBlock(ctx))
+
 			config, err := teststep.Configuration(
 				teststep.ConfigurationRequest{
-					Raw: step.providerConfig(ctx, step.configHasProviderBlock(ctx)),
+					Raw: testStepProviderConfig,
 				},
 			)
 
@@ -368,20 +370,17 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				}
 			}
 
-			// TODO: Need to handle configuration defined through Directory and File.
-			appliedCfg, err = teststep.Configuration(
-				teststep.ConfigurationRequest{
-					Raw: step.mergedConfig(ctx, c),
-				},
-			)
+			var testCaseProviderConfig string
+			var testStepProviderConfig string
 
-			if err != nil {
-				logging.HelperResourceError(ctx,
-					"Error creating applied configuration",
-					map[string]interface{}{logging.KeyError: err},
-				)
-				t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), err)
+			if c.hasProviders(ctx) {
+				testCaseProviderConfig = c.providerConfig(ctx, cfg.HasProviderBlock(ctx))
+			} else {
+				testStepProviderConfig = step.providerConfig(ctx, cfg.HasProviderBlock(ctx))
 			}
+
+			// TODO: Need to handle configuration defined through Directory and File.
+			appliedCfg = cfg.MergedConfig(ctx, testCaseProviderConfig, testStepProviderConfig)
 
 			logging.HelperResourceDebug(ctx, "Finished TestStep")
 
@@ -434,9 +433,26 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 	state.RootModule().Resources = make(map[string]*terraform.ResourceState)
 	state.RootModule().Resources[c.IDRefreshName] = &terraform.ResourceState{}
 
+	cfg, err := teststep.Configuration(
+		teststep.ConfigurationRequest{
+			Directory: step.ConfigDirectory,
+			Raw:       step.Config,
+		},
+	)
+
+	if err != nil {
+		logging.HelperResourceError(ctx,
+			"Error creating provider configuration for import test config",
+			map[string]interface{}{logging.KeyError: err},
+		)
+		t.Fatalf("Error creating provider configuration for import test config: %s", err)
+	}
+
+	testCaseProviderConfig := c.providerConfig(ctx, cfg.HasProviderBlock(ctx))
+
 	config, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Raw: c.providerConfig(ctx, step.configHasProviderBlock(ctx)),
+			Raw: testCaseProviderConfig,
 		},
 	)
 

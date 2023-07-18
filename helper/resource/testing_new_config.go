@@ -21,13 +21,23 @@ import (
 func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {
 	t.Helper()
 
-	// TODO: step.mergedConfig() needs to be refactored to a method on teststep.Configure interface
-	// in order to handle ConfigDirectory and ConfigFile.
-	config, err := teststep.Configuration(
+	cfg, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Raw: step.mergedConfig(ctx, c),
+			Directory: step.ConfigDirectory,
+			Raw:       step.Config,
 		},
 	)
+
+	var testCaseProviderConfig string
+	var testStepProviderConfig string
+
+	if c.hasProviders(ctx) {
+		testCaseProviderConfig = c.providerConfig(ctx, cfg.HasProviderBlock(ctx))
+	} else {
+		testStepProviderConfig = step.providerConfig(ctx, cfg.HasProviderBlock(ctx))
+	}
+
+	config := cfg.MergedConfig(ctx, testCaseProviderConfig, testStepProviderConfig)
 
 	if err != nil {
 		return fmt.Errorf("Error creating config: %w", err)
