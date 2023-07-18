@@ -379,8 +379,22 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				testStepProviderConfig = step.providerConfig(ctx, cfg.HasProviderBlock(ctx))
 			}
 
-			// TODO: Need to handle configuration defined through Directory and File.
-			appliedCfg = cfg.MergedConfig(ctx, testCaseProviderConfig, testStepProviderConfig)
+			appliedCfg, err = teststep.Configuration(
+				teststep.ConfigurationRequest{
+					Directory:              step.ConfigDirectory,
+					Raw:                    step.Config,
+					TestCaseProviderConfig: testCaseProviderConfig,
+					TestStepProviderConfig: testStepProviderConfig,
+				},
+			)
+
+			if err != nil {
+				logging.HelperResourceError(ctx,
+					"Error creating config",
+					map[string]interface{}{logging.KeyError: err},
+				)
+				t.Fatalf("Error creating config: %s", err)
+			}
 
 			logging.HelperResourceDebug(ctx, "Finished TestStep")
 

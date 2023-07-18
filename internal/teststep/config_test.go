@@ -11,7 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestConfigHasProviderBlock(t *testing.T) {
+func TestConfiguration_HasProviderBlock(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
@@ -119,13 +119,13 @@ resource "test_test" "test" {}
 	}
 }
 
-func TestStepMergedConfig(t *testing.T) {
+func TestConfiguration_GetRaw(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
 		testCaseProviderConfig string
 		testStepProviderConfig string
-		config                 configuration
+		rawConfig              string
 		expected               string
 	}{
 		"testcase-externalproviders-and-protov5providerfactories": {
@@ -142,13 +142,11 @@ terraform {
 provider "externaltest" {}
 
 `,
-			config: configuration{
-				raw: `
+			rawConfig: `
 resource "externaltest_test" "test" {}
 
 resource "localtest_test" "test" {}
 `,
-			},
 			expected: `
 terraform {
  required_providers {
@@ -181,13 +179,11 @@ terraform {
 provider "externaltest" {}
 
 `,
-			config: configuration{
-				raw: `
+			rawConfig: `
 resource "externaltest_test" "test" {}
 
 resource "localtest_test" "test" {}
 `,
-			},
 			expected: `
 terraform {
   required_providers {
@@ -211,11 +207,9 @@ resource "localtest_test" "test" {}
 provider "test" {}
 
 `,
-			config: configuration{
-				raw: `
+			rawConfig: `
 resource "test_test" "test" {}
 `,
-			},
 			expected: `
 provider "test" {}
 
@@ -237,11 +231,9 @@ terraform {
 provider "test" {}
 
 `,
-			config: configuration{
-				raw: `
+			rawConfig: `
 resource "test_test" "test" {}
 `,
-			},
 			expected: `
 terraform {
   required_providers {
@@ -271,11 +263,9 @@ terraform {
 provider "test" {}
 
 `,
-			config: configuration{
-				raw: `
+			rawConfig: `
 resource "test_test" "test" {}
 `,
-			},
 			expected: `
 terraform {
   required_providers {
@@ -304,11 +294,9 @@ terraform {
 provider "test" {}
 
 `,
-			config: configuration{
-				raw: `
+			rawConfig: `
 resource "test_test" "test" {}
 `,
-			},
 			expected: `
 terraform {
   required_providers {
@@ -338,13 +326,11 @@ terraform {
 provider "externaltest" {}
 
 `,
-			config: configuration{
-				raw: `
+			rawConfig: `
 resource "externaltest_test" "test" {}
 
 resource "localtest_test" "test" {}
 `,
-			},
 			expected: `
 terraform {
   required_providers {
@@ -375,13 +361,11 @@ terraform {
 }
 
 `,
-			config: configuration{
-				raw: `
+			rawConfig: `
 provider "test" {}
 
 resource "test_test" "test" {}
 `,
-			},
 			expected: `
 terraform {
   required_providers {
@@ -410,13 +394,11 @@ terraform {
 }
 
 `,
-			config: configuration{
-				raw: `
+			rawConfig: `
 provider test {}
 
 resource "test_test" "test" {}
 `,
-			},
 			expected: `
 terraform {
   required_providers {
@@ -447,8 +429,7 @@ terraform {
 provider "test" {}
 
 `,
-			config: configuration{
-				raw: `
+			rawConfig: `
 terraform {
   required_providers {
     test = {
@@ -460,7 +441,6 @@ terraform {
 
 resource "test_test" "test" {}
 `,
-			},
 			expected: `
 terraform {
   required_providers {
@@ -478,11 +458,9 @@ resource "test_test" "test" {}
 			testStepProviderConfig: `
 provider "test" {}
 `,
-			config: configuration{
-				raw: `
+			rawConfig: `
 resource "test_test" "test" {}
 `,
-			},
 			expected: `
 provider "test" {}
 
@@ -503,11 +481,9 @@ terraform {
 provider "test" {}
 
 `,
-			config: configuration{
-				raw: `
+			rawConfig: `
 resource "test_test" "test" {}
 `,
-			},
 			expected: `
 terraform {
   required_providers {
@@ -537,11 +513,9 @@ terraform {
 provider "test" {}
 
 `,
-			config: configuration{
-				raw: `
+			rawConfig: `
 resource "test_test" "test" {}
 `,
-			},
 			expected: `
 terraform {
   required_providers {
@@ -570,11 +544,9 @@ terraform {
 provider "test" {}
 
 `,
-			config: configuration{
-				raw: `
+			rawConfig: `
 resource "test_test" "test" {}
 `,
-			},
 			expected: `
 terraform {
   required_providers {
@@ -598,7 +570,19 @@ resource "test_test" "test" {}
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := testCase.config.MergedConfig(context.Background(), testCase.testCaseProviderConfig, testCase.testStepProviderConfig).raw
+			cfg, err := Configuration(
+				ConfigurationRequest{
+					Raw:                    testCase.rawConfig,
+					TestCaseProviderConfig: testCase.testCaseProviderConfig,
+					TestStepProviderConfig: testCase.testStepProviderConfig,
+				},
+			)
+
+			if err != nil {
+				t.Errorf("error creating configuration: %s", err)
+			}
+
+			got := cfg.GetRaw(context.Background())
 
 			if diff := cmp.Diff(strings.TrimSpace(got), strings.TrimSpace(testCase.expected)); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)

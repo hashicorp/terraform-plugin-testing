@@ -13,39 +13,42 @@ import (
 var configProviderBlockRegex = regexp.MustCompile(`provider "?[a-zA-Z0-9_-]+"? {`)
 
 type Config interface {
-	GetRaw() string
+	GetRaw(context.Context) string
 	HasConfiguration() bool
 	HasProviderBlock(context.Context) bool
-	MergedConfig(context.Context, string, string) configuration
 }
 
 type configuration struct {
-	directory string
-	raw       string
+	directory              string
+	raw                    string
+	testCaseProviderConfig string
+	testStepProviderConfig string
 }
 
 type ConfigurationRequest struct {
-	Directory string
-	Raw       string
+	Directory              string
+	Raw                    string
+	TestCaseProviderConfig string
+	TestStepProviderConfig string
 }
 
-func Configuration(configRequest ConfigurationRequest) (configuration, error) {
+func Configuration(req ConfigurationRequest) (configuration, error) {
 	var populatedConfig []string
 	var config configuration
 
-	if configRequest.Directory != "" {
+	if req.Directory != "" {
 		populatedConfig = append(populatedConfig, fmt.Sprintf("%q", "directory"))
 
 		config = configuration{
-			directory: configRequest.Directory,
+			directory: req.Directory,
 		}
 	}
 
-	if configRequest.Raw != "" {
+	if req.Raw != "" {
 		populatedConfig = append(populatedConfig, fmt.Sprintf("%q", "raw"))
 
 		config = configuration{
-			raw: configRequest.Raw,
+			raw: req.Raw,
 		}
 	}
 
@@ -56,11 +59,30 @@ func Configuration(configRequest ConfigurationRequest) (configuration, error) {
 		)
 	}
 
+	config.testCaseProviderConfig = req.TestCaseProviderConfig
+	config.testStepProviderConfig = req.TestStepProviderConfig
+
 	return config, nil
 }
 
-func (c configuration) GetRaw() string {
-	return c.raw
+func (c configuration) GetRaw(ctx context.Context) string {
+	var config strings.Builder
+
+	// Prevent issues with existing configurations containing the terraform
+	// configuration block.
+	if c.hasTerraformBlock(ctx) {
+		return c.raw
+	}
+
+	if c.testCaseProviderConfig != "" {
+		config.WriteString(c.testCaseProviderConfig)
+	} else {
+		config.WriteString(c.testStepProviderConfig)
+	}
+
+	config.WriteString(c.raw)
+
+	return config.String()
 }
 
 func (c configuration) HasConfiguration() bool {
@@ -81,39 +103,6 @@ func (c configuration) HasConfiguration() bool {
 // TODO: Need to handle configuration supplied through Directory or File.
 func (c configuration) HasProviderBlock(_ context.Context) bool {
 	return configProviderBlockRegex.MatchString(c.raw)
-}
-
-// MergedConfig prepends any necessary terraform configuration blocks to the
-// TestStep Config.
-//
-// If there are ExternalProviders configurations in either the TestCase or
-// TestStep, the terraform configuration block should be included with the
-// step configuration to prevent errors with providers outside the
-// registry.terraform.io hostname or outside the hashicorp namespace.
-//
-// TODO: Need to handle configuration supplied through Directory or File.
-func (c configuration) MergedConfig(ctx context.Context, testCaseProviderConfig, testStepProviderConfig string) configuration {
-	var config strings.Builder
-
-	// Prevent issues with existing configurations containing the terraform
-	// configuration block.
-	if c.hasTerraformBlock(ctx) {
-		return configuration{
-			raw: c.raw,
-		}
-	}
-
-	if testCaseProviderConfig != "" {
-		config.WriteString(testCaseProviderConfig)
-	} else {
-		config.WriteString(testStepProviderConfig)
-	}
-
-	config.WriteString(c.raw)
-
-	return configuration{
-		raw: config.String(),
-	}
 }
 
 // HasTerraformBlock returns true if the Config has declared a terraform

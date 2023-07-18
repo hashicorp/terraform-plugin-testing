@@ -28,6 +28,10 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		},
 	)
 
+	if err != nil {
+		return fmt.Errorf("Error creating config: %w", err)
+	}
+
 	var testCaseProviderConfig string
 	var testStepProviderConfig string
 
@@ -37,7 +41,14 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		testStepProviderConfig = step.providerConfig(ctx, cfg.HasProviderBlock(ctx))
 	}
 
-	config := cfg.MergedConfig(ctx, testCaseProviderConfig, testStepProviderConfig)
+	config, err := teststep.Configuration(
+		teststep.ConfigurationRequest{
+			Directory:              step.ConfigDirectory,
+			Raw:                    step.Config,
+			TestCaseProviderConfig: testCaseProviderConfig,
+			TestStepProviderConfig: testStepProviderConfig,
+		},
+	)
 
 	if err != nil {
 		return fmt.Errorf("Error creating config: %w", err)

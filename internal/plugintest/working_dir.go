@@ -88,7 +88,7 @@ func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config) error 
 
 	outFilename := filepath.Join(wd.baseDir, ConfigFileName)
 	rmFilename := filepath.Join(wd.baseDir, ConfigFileNameJSON)
-	bCfg := []byte(cfg.GetRaw())
+	bCfg := []byte(cfg.GetRaw(ctx))
 	if json.Valid(bCfg) {
 		outFilename, rmFilename = rmFilename, outFilename
 	}

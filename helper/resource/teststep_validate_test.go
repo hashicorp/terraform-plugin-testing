@@ -92,7 +92,7 @@ func TestTestStepValidate(t *testing.T) {
 		"config-and-importstate-and-refreshstate-missing": {
 			testStep:                TestStep{},
 			testStepValidateRequest: testStepValidateRequest{},
-			expectedError:           fmt.Errorf("TestStep missing Config or ImportState or RefreshState"),
+			expectedError:           fmt.Errorf("TestStep missing Config or ConfigDirectory or ImportState or RefreshState"),
 		},
 		"config-and-refreshstate-both-set": {
 			testStep: TestStep{
