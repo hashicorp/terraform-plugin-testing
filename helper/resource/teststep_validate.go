@@ -73,7 +73,7 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 	logging.HelperResourceTrace(ctx, "Validating TestStep")
 
 	if !req.StepConfiguration.HasConfiguration() && !s.ImportState && !s.RefreshState {
-		err := fmt.Errorf("TestStep missing Config or ImportState or RefreshState")
+		err := fmt.Errorf("TestStep missing Config or ConfigDirectory or ImportState or RefreshState")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
 	}
