@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -88,7 +89,7 @@ func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config) error 
 
 	outFilename := filepath.Join(wd.baseDir, ConfigFileName)
 	rmFilename := filepath.Join(wd.baseDir, ConfigFileNameJSON)
-	bCfg := []byte(cfg.GetRaw(ctx))
+	bCfg := []byte(cfg.Raw(ctx))
 	if json.Valid(bCfg) {
 		outFilename, rmFilename = rmFilename, outFilename
 	}
@@ -101,11 +102,76 @@ func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config) error 
 	}
 	wd.configFilename = outFilename
 
+	if cfg.HasDirectory() {
+		pwd, err := os.Getwd()
+
+		if err != nil {
+			return err
+		}
+
+		configDirectory := filepath.Join(pwd, cfg.Directory(ctx))
+
+		err = copyFiles(configDirectory, wd.baseDir)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Changing configuration invalidates any saved plan.
 	err = wd.ClearPlan(ctx)
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func copyFiles(path string, dstPath string) error {
+	infos, err := os.ReadDir(path)
+	if err != nil {
+		return err
+	}
+
+	for _, info := range infos {
+		srcPath := filepath.Join(path, info.Name())
+		if info.IsDir() {
+			continue
+		} else {
+			err = copyFile(srcPath, dstPath)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+	return nil
+}
+
+func copyFile(path string, dstPath string) error {
+	srcF, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer srcF.Close()
+
+	di, err := os.Stat(dstPath)
+	if err != nil {
+		return err
+	}
+	if di.IsDir() {
+		_, file := filepath.Split(path)
+		dstPath = filepath.Join(dstPath, file)
+	}
+
+	dstF, err := os.Create(dstPath)
+	if err != nil {
+		return err
+	}
+	defer dstF.Close()
+
+	if _, err := io.Copy(dstF, srcF); err != nil {
+		return err
+	}
+
 	return nil
 }
 

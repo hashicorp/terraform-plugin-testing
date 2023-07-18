@@ -13,9 +13,11 @@ import (
 var configProviderBlockRegex = regexp.MustCompile(`provider "?[a-zA-Z0-9_-]+"? {`)
 
 type Config interface {
-	GetRaw(context.Context) string
+	Directory(context.Context) string
 	HasConfiguration() bool
+	HasDirectory() bool
 	HasProviderBlock(context.Context) bool
+	Raw(context.Context) string
 }
 
 type configuration struct {
@@ -65,7 +67,38 @@ func Configuration(req ConfigurationRequest) (configuration, error) {
 	return config, nil
 }
 
-func (c configuration) GetRaw(ctx context.Context) string {
+// Directory returns config directory.
+// TODO: Need to handle testCaseProviderConfig and testStepProviderConfig when
+// copying files from c.directory to working directory for test
+func (c configuration) Directory(ctx context.Context) string {
+	return c.directory
+}
+
+func (c configuration) HasConfiguration() bool {
+	if c.directory != "" {
+		return true
+	}
+
+	if c.raw != "" {
+		return true
+	}
+
+	return false
+}
+
+func (c configuration) HasDirectory() bool {
+	return c.directory != ""
+}
+
+// HasProviderBlock returns true if the Config has declared a provider
+// configuration block, e.g. provider "examplecloud" {...}
+//
+// TODO: Need to handle configuration supplied through Directory or File.
+func (c configuration) HasProviderBlock(_ context.Context) bool {
+	return configProviderBlockRegex.MatchString(c.raw)
+}
+
+func (c configuration) Raw(ctx context.Context) string {
 	var config strings.Builder
 
 	// Prevent issues with existing configurations containing the terraform
@@ -83,26 +116,6 @@ func (c configuration) GetRaw(ctx context.Context) string {
 	config.WriteString(c.raw)
 
 	return config.String()
-}
-
-func (c configuration) HasConfiguration() bool {
-	if c.directory != "" {
-		return true
-	}
-
-	if c.raw != "" {
-		return true
-	}
-
-	return false
-}
-
-// HasProviderBlock returns true if the Config has declared a provider
-// configuration block, e.g. provider "examplecloud" {...}
-//
-// TODO: Need to handle configuration supplied through Directory or File.
-func (c configuration) HasProviderBlock(_ context.Context) bool {
-	return configProviderBlockRegex.MatchString(c.raw)
 }
 
 // HasTerraformBlock returns true if the Config has declared a terraform

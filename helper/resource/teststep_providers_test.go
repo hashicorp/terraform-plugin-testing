@@ -573,6 +573,40 @@ func TestTest_TestStep_Taint(t *testing.T) {
 	}
 }
 
+func TestTest_TestStep_ConfigDirectory(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"random": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return &schema.Provider{
+					ResourcesMap: map[string]*schema.Resource{
+						"random_id": {
+							CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								d.SetId(time.Now().String())
+								return nil
+							},
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							Schema: map[string]*schema.Schema{},
+						},
+					},
+				}, nil
+			},
+		},
+		Steps: []TestStep{
+			{
+				ConfigDirectory: `../fixtures`,
+				Check:           TestCheckResourceAttrSet("random_id.test", "id"),
+			},
+		},
+	})
+}
+
 //nolint:unparam
 func extractResourceAttr(resourceName string, attributeName string, attributeValue *string) TestCheckFunc {
 	return func(s *terraform.State) error {
