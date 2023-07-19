@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -585,8 +586,31 @@ func TestTest_TestCase_ExternalProviders_ConfigDirectory(t *testing.T) {
 		},
 		Steps: []TestStep{
 			{
-				ConfigDirectory: `../fixtures/random_id_byte_length`,
-				Check:           TestCheckResourceAttrSet("random_id.test", "id"),
+				ConfigDirectory: `../fixtures/random_password`,
+				Check:           TestCheckResourceAttrSet("random_password.test", "id"),
+			},
+		},
+	})
+}
+
+// TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist uses Terraform
+// configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
+// random provider password resource. This test confirms that the TestCase ExternalProviders
+// is being used when ConfigDirectory is set.
+func TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		ExternalProviders: map[string]ExternalProvider{
+			"random": {
+				Source:            "registry.terraform.io/hashicorp/random",
+				VersionConstraint: "3.2.0",
+			},
+		},
+		Steps: []TestStep{
+			{
+				ConfigDirectory: `../fixtures/random_password`,
+				ExpectError:     regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
 			},
 		},
 	})
@@ -604,8 +628,31 @@ func TestTest_TestStep_ExternalProviders_ConfigDirectory(t *testing.T) {
 						VersionConstraint: "3.5.1",
 					},
 				},
-				ConfigDirectory: `../fixtures/random_id_byte_length`,
-				Check:           TestCheckResourceAttrSet("random_id.test", "id"),
+				ConfigDirectory: `../fixtures/random_password`,
+				Check:           TestCheckResourceAttrSet("random_password.test", "id"),
+			},
+		},
+	})
+}
+
+// TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist uses Terraform
+// configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
+// random provider password resource. This test confirms that the TestStep ExternalProviders
+// is being used when ConfigDirectory is set.
+func TestTest_TestStep_ExternalProviders_ConfigDirectory_AttributeDoesNotExist(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		Steps: []TestStep{
+			{
+				ExternalProviders: map[string]ExternalProvider{
+					"random": {
+						Source:            "registry.terraform.io/hashicorp/random",
+						VersionConstraint: "3.2.0",
+					},
+				},
+				ConfigDirectory: `../fixtures/random_password`,
+				ExpectError:     regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
 			},
 		},
 	})
