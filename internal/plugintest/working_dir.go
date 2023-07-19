@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
@@ -88,30 +87,34 @@ func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config) error 
 	logging.HelperResourceTrace(ctx, "Setting Terraform configuration", map[string]any{logging.KeyTestTerraformConfiguration: cfg})
 
 	outFilename := filepath.Join(wd.baseDir, ConfigFileName)
-	rmFilename := filepath.Join(wd.baseDir, ConfigFileNameJSON)
-	bCfg := []byte(cfg.Raw(ctx))
-	if json.Valid(bCfg) {
-		outFilename, rmFilename = rmFilename, outFilename
+	var bCfg []byte
+
+	if cfg.HasRaw(ctx) {
+		rmFilename := filepath.Join(wd.baseDir, ConfigFileNameJSON)
+
+		bCfg = []byte(cfg.Raw(ctx))
+
+		if json.Valid(bCfg) {
+			outFilename, rmFilename = rmFilename, outFilename
+		}
+
+		if err := os.Remove(rmFilename); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("unable to remove %q: %w", rmFilename, err)
+		}
 	}
-	if err := os.Remove(rmFilename); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("unable to remove %q: %w", rmFilename, err)
-	}
+
+	// This file has to be written otherwise wd.Init() will return an error.
 	err := os.WriteFile(outFilename, bCfg, 0700)
+
 	if err != nil {
 		return err
 	}
+
 	wd.configFilename = outFilename
 
 	if cfg.HasDirectory() {
-		pwd, err := os.Getwd()
+		err := cfg.WriteDirectory(ctx, wd.baseDir)
 
-		if err != nil {
-			return err
-		}
-
-		configDirectory := filepath.Join(pwd, cfg.Directory(ctx))
-
-		err = copyFiles(configDirectory, wd.baseDir)
 		if err != nil {
 			return err
 		}
@@ -119,56 +122,8 @@ func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config) error 
 
 	// Changing configuration invalidates any saved plan.
 	err = wd.ClearPlan(ctx)
+
 	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func copyFiles(path string, dstPath string) error {
-	infos, err := os.ReadDir(path)
-	if err != nil {
-		return err
-	}
-
-	for _, info := range infos {
-		srcPath := filepath.Join(path, info.Name())
-		if info.IsDir() {
-			continue
-		} else {
-			err = copyFile(srcPath, dstPath)
-			if err != nil {
-				return err
-			}
-		}
-
-	}
-	return nil
-}
-
-func copyFile(path string, dstPath string) error {
-	srcF, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer srcF.Close()
-
-	di, err := os.Stat(dstPath)
-	if err != nil {
-		return err
-	}
-	if di.IsDir() {
-		_, file := filepath.Split(path)
-		dstPath = filepath.Join(dstPath, file)
-	}
-
-	dstF, err := os.Create(dstPath)
-	if err != nil {
-		return err
-	}
-	defer dstF.Close()
-
-	if _, err := io.Copy(dstF, srcF); err != nil {
 		return err
 	}
 

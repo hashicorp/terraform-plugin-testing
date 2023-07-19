@@ -6,6 +6,9 @@ package teststep
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -13,11 +16,12 @@ import (
 var configProviderBlockRegex = regexp.MustCompile(`provider "?[a-zA-Z0-9_-]+"? {`)
 
 type Config interface {
-	Directory(context.Context) string
 	HasConfiguration() bool
 	HasDirectory() bool
 	HasProviderBlock(context.Context) bool
+	HasRaw(context.Context) bool
 	Raw(context.Context) string
+	WriteDirectory(context.Context, string) error
 }
 
 type configuration struct {
@@ -67,13 +71,6 @@ func Configuration(req ConfigurationRequest) (configuration, error) {
 	return config, nil
 }
 
-// Directory returns config directory.
-// TODO: Need to handle testCaseProviderConfig and testStepProviderConfig when
-// copying files from c.directory to working directory for test
-func (c configuration) Directory(ctx context.Context) string {
-	return c.directory
-}
-
 func (c configuration) HasConfiguration() bool {
 	if c.directory != "" {
 		return true
@@ -98,12 +95,25 @@ func (c configuration) HasProviderBlock(_ context.Context) bool {
 	return configProviderBlockRegex.MatchString(c.raw)
 }
 
+func (c configuration) HasRaw(ctx context.Context) bool {
+	return c.raw != ""
+}
+
+// Raw returns a string that assembles the Terraform configuration from
+// the raw field, prefixed by either testCaseProviderConfig or
+// testStepProviderConfig when the raw field itself does not contain a
+// terraform block.
+// TODO: Consider whether Raw and Directory should be dropped in favour
+// of having configuration manage the writing of either raw configuration
+// or directory files, respectively. This would allow for easier
+// management of testCaseProviderConfig and testStepProviderConfig when
+// handling the copying of files from the configuration.directory.
 func (c configuration) Raw(ctx context.Context) string {
 	var config strings.Builder
 
 	// Prevent issues with existing configurations containing the terraform
 	// configuration block.
-	if c.hasTerraformBlock(ctx) {
+	if strings.Contains(c.raw, "terraform {") {
 		return c.raw
 	}
 
@@ -118,10 +128,151 @@ func (c configuration) Raw(ctx context.Context) string {
 	return config.String()
 }
 
-// HasTerraformBlock returns true if the Config has declared a terraform
-// configuration block, e.g. terraform {...}
-//
-// TODO: Need to handle configuration supplied through Directory or File.
-func (c configuration) hasTerraformBlock(_ context.Context) bool {
-	return strings.Contains(c.raw, "terraform {")
+// WriteDirectory copies the contents of c.directory to dest.
+// TODO: Need to handle testCaseProviderConfig and testStepProviderConfig when
+// copying files from c.directory to working directory for test
+func (c configuration) WriteDirectory(ctx context.Context, dest string) error {
+	// Copy all files from c.dir to dest
+	pwd, err := os.Getwd()
+
+	if err != nil {
+		return err
+	}
+
+	configDirectory := filepath.Join(pwd, c.directory)
+
+	err = copyFiles(configDirectory, dest)
+
+	if err != nil {
+		return err
+	}
+
+	// Determine whether any of the files in configDirectory contain terraform block.
+	containsTerraformConfig, err := c.filesContains(configDirectory, `terraform {`)
+
+	if err != nil {
+		return err
+	}
+
+	// Write contents of testCaseProviderConfig or testStepProviderConfig t dest.
+	// TODO: Verify whether there are any naming collisions between the files in
+	// c.directory and the files that are written below.
+	if !containsTerraformConfig {
+		if c.testCaseProviderConfig != "" {
+			path := filepath.Join(dest, "testCaseProviderConfig.tf")
+
+			err := os.WriteFile(path, []byte(c.testCaseProviderConfig), 0700)
+
+			if err != nil {
+				return err
+			}
+		} else {
+			path := filepath.Join(dest, "testStepProviderConfig.tf")
+
+			err := os.WriteFile(path, []byte(c.testStepProviderConfig), 0700)
+
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (c configuration) filesContains(dir, find string) (bool, error) {
+	dirEntries, err := os.ReadDir(dir)
+
+	if err != nil {
+		return false, err
+	}
+
+	for _, dirEntry := range dirEntries {
+		if dirEntry.IsDir() {
+			continue
+		}
+
+		path := filepath.Join(dir, dirEntry.Name())
+
+		contains, err := c.fileContains(path, find)
+
+		if err != nil {
+			return false, err
+		}
+
+		if contains {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func (c configuration) fileContains(path, find string) (bool, error) {
+	f, err := os.ReadFile(path)
+
+	if err != nil {
+		return false, err
+	}
+
+	return strings.Contains(string(f), find), nil
+}
+
+func copyFiles(path string, dstPath string) error {
+	infos, err := os.ReadDir(path)
+
+	if err != nil {
+		return err
+	}
+
+	for _, info := range infos {
+		srcPath := filepath.Join(path, info.Name())
+
+		if info.IsDir() {
+			continue
+		} else {
+			err = copyFile(srcPath, dstPath)
+
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+	return nil
+}
+
+func copyFile(path string, dstPath string) error {
+	srcF, err := os.Open(path)
+
+	if err != nil {
+		return err
+	}
+
+	defer srcF.Close()
+
+	di, err := os.Stat(dstPath)
+
+	if err != nil {
+		return err
+	}
+
+	if di.IsDir() {
+		_, file := filepath.Split(path)
+		dstPath = filepath.Join(dstPath, file)
+	}
+
+	dstF, err := os.Create(dstPath)
+
+	if err != nil {
+		return err
+	}
+
+	defer dstF.Close()
+
+	if _, err := io.Copy(dstF, srcF); err != nil {
+		return err
+	}
+
+	return nil
 }

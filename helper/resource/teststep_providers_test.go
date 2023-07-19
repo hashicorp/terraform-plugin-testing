@@ -573,7 +573,45 @@ func TestTest_TestStep_Taint(t *testing.T) {
 	}
 }
 
-func TestTest_TestStep_ConfigDirectory(t *testing.T) {
+func TestTest_TestCase_ExternalProviders_ConfigDirectory(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		ExternalProviders: map[string]ExternalProvider{
+			"random": {
+				Source:            "registry.terraform.io/hashicorp/random",
+				VersionConstraint: "3.5.1",
+			},
+		},
+		Steps: []TestStep{
+			{
+				ConfigDirectory: `../fixtures/random_id_byte_length`,
+				Check:           TestCheckResourceAttrSet("random_id.test", "id"),
+			},
+		},
+	})
+}
+
+func TestTest_TestStep_ExternalProviders_ConfigDirectory(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		Steps: []TestStep{
+			{
+				ExternalProviders: map[string]ExternalProvider{
+					"random": {
+						Source:            "registry.terraform.io/hashicorp/random",
+						VersionConstraint: "3.5.1",
+					},
+				},
+				ConfigDirectory: `../fixtures/random_id_byte_length`,
+				Check:           TestCheckResourceAttrSet("random_id.test", "id"),
+			},
+		},
+	})
+}
+
+func TestTest_TestStep_ProviderFactories_ConfigDirectory(t *testing.T) {
 	t.Parallel()
 
 	Test(t, TestCase{
@@ -600,7 +638,7 @@ func TestTest_TestStep_ConfigDirectory(t *testing.T) {
 		},
 		Steps: []TestStep{
 			{
-				ConfigDirectory: `../fixtures`,
+				ConfigDirectory: `../fixtures/random_id`,
 				Check:           TestCheckResourceAttrSet("random_id.test", "id"),
 			},
 		},

@@ -213,7 +213,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 			config, err := teststep.Configuration(
 				teststep.ConfigurationRequest{
-					Raw: testStepProviderConfig,
+					Directory:              step.ConfigDirectory,
+					Raw:                    step.Config,
+					TestStepProviderConfig: testStepProviderConfig,
 				},
 			)
 
