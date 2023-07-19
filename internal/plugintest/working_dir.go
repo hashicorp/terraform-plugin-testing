@@ -5,7 +5,6 @@ package plugintest
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,9 +17,8 @@ import (
 )
 
 const (
-	ConfigFileName     = "terraform_plugin_test.tf"
-	ConfigFileNameJSON = ConfigFileName + ".json"
-	PlanFileName       = "tfplan"
+	ConfigFileName = "terraform_plugin_test.tf"
+	PlanFileName   = "tfplan"
 )
 
 // WorkingDir represents a distinct working directory that can be used for
@@ -87,37 +85,21 @@ func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config) error 
 	logging.HelperResourceTrace(ctx, "Setting Terraform configuration", map[string]any{logging.KeyTestTerraformConfiguration: cfg})
 
 	outFilename := filepath.Join(wd.baseDir, ConfigFileName)
-	var bCfg []byte
-
-	if cfg.HasRaw(ctx) {
-		rmFilename := filepath.Join(wd.baseDir, ConfigFileNameJSON)
-
-		bCfg = []byte(cfg.Raw(ctx))
-
-		if json.Valid(bCfg) {
-			outFilename, rmFilename = rmFilename, outFilename
-		}
-
-		if err := os.Remove(rmFilename); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("unable to remove %q: %w", rmFilename, err)
-		}
-	}
 
 	// This file has to be written otherwise wd.Init() will return an error.
-	err := os.WriteFile(outFilename, bCfg, 0700)
+	err := os.WriteFile(outFilename, nil, 0700)
 
 	if err != nil {
 		return err
 	}
 
+	// wd.configFilename must be set otherwise wd.Init() will return an error.
 	wd.configFilename = outFilename
 
-	if cfg.HasDirectory(ctx) {
-		err := cfg.WriteDirectory(ctx, wd.baseDir)
+	err = cfg.Write(ctx, wd.baseDir)
 
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
 	}
 
 	// Changing configuration invalidates any saved plan.

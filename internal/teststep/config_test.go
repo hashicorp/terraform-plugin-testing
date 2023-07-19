@@ -586,7 +586,7 @@ resource "test_test" "test" {}
 				t.Errorf("error creating configuration: %s", err)
 			}
 
-			got := cfg.Raw(context.Background())
+			got := cfg.prepareRaw(context.Background())
 
 			if diff := cmp.Diff(strings.TrimSpace(got), strings.TrimSpace(testCase.expected)); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)

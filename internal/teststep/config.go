@@ -5,6 +5,7 @@ package teststep
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -14,6 +15,8 @@ import (
 )
 
 const (
+	rawConfigFileName              = "terraform_plugin_test.tf"
+	rawConfigFileNameJSON          = rawConfigFileName + ".json"
 	testCaseProviderConfigFileName = "test_case_provider_config.tf"
 	testStepProviderConfigFileName = "test_step_provider_config.tf"
 )
@@ -25,11 +28,8 @@ var (
 
 type Config interface {
 	HasConfiguration() bool
-	HasDirectory(context.Context) bool
 	HasProviderBlock(context.Context) (bool, error)
-	HasRaw(context.Context) bool
-	Raw(context.Context) string
-	WriteDirectory(context.Context, string) error
+	Write(context.Context, string) error
 }
 
 type configuration struct {
@@ -91,17 +91,13 @@ func (c configuration) HasConfiguration() bool {
 	return false
 }
 
-func (c configuration) HasDirectory(_ context.Context) bool {
-	return c.directory != ""
-}
-
 // HasProviderBlock returns true if the Config has declared a provider
 // configuration block, e.g. provider "examplecloud" {...}
 func (c configuration) HasProviderBlock(ctx context.Context) (bool, error) {
 	switch {
-	case c.HasRaw(ctx):
+	case c.hasRaw(ctx):
 		return providerConfigBlockRegex.MatchString(c.raw), nil
-	case c.HasDirectory(ctx):
+	case c.hasDirectory(ctx):
 		pwd, err := os.Getwd()
 
 		if err != nil {
@@ -122,101 +118,19 @@ func (c configuration) HasProviderBlock(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-func (c configuration) HasRaw(_ context.Context) bool {
-	return c.raw != ""
-}
+func (c configuration) Write(ctx context.Context, dest string) error {
+	switch {
+	case c.directory != "":
+		err := c.writeDirectory(ctx, dest)
 
-// Raw returns a string that assembles the Terraform configuration from
-// the raw field, prefixed by either testCaseProviderConfig or
-// testStepProviderConfig when the raw field itself does not contain a
-// terraform block.
-// TODO: Consider whether Raw and Directory should be dropped in favour
-// of having configuration manage the writing of either raw configuration
-// or directory files, respectively. This would allow for easier
-// management of testCaseProviderConfig and testStepProviderConfig when
-// handling the copying of files from the configuration.directory.
-func (c configuration) Raw(ctx context.Context) string {
-	var config strings.Builder
+		if err != nil {
+			return err
+		}
+	case c.raw != "":
+		err := c.writeRaw(ctx, dest)
 
-	// Prevent issues with existing configurations containing the terraform
-	// configuration block.
-	if terraformConfigBlockRegex.MatchString(c.raw) {
-		return c.raw
-	}
-
-	if c.testCaseProviderConfig != "" {
-		config.WriteString(c.testCaseProviderConfig)
-	} else {
-		config.WriteString(c.testStepProviderConfig)
-	}
-
-	config.WriteString(c.raw)
-
-	return config.String()
-}
-
-// WriteDirectory copies the contents of c.directory to dest.
-func (c configuration) WriteDirectory(ctx context.Context, dest string) error {
-	// Copy all files from c.directory to dest
-	pwd, err := os.Getwd()
-
-	if err != nil {
-		return err
-	}
-
-	configDirectory := filepath.Join(pwd, c.directory)
-
-	err = copyFiles(configDirectory, dest)
-
-	if err != nil {
-		return err
-	}
-
-	// Determine whether any of the files in configDirectory contain terraform block.
-	containsTerraformConfig, err := filesContains(configDirectory, terraformConfigBlockRegex)
-
-	if err != nil {
-		return err
-	}
-
-	// Write contents of testCaseProviderConfig or testStepProviderConfig to dest.
-	if !containsTerraformConfig {
-		if c.testCaseProviderConfig != "" {
-			path := filepath.Join(dest, testCaseProviderConfigFileName)
-
-			configFileExists, err := fileExists(configDirectory, testCaseProviderConfigFileName)
-
-			if err != nil {
-				return err
-			}
-
-			if configFileExists {
-				return fmt.Errorf("%s already exists in %s, ", testCaseProviderConfigFileName, configDirectory)
-			}
-
-			err = os.WriteFile(path, []byte(c.testCaseProviderConfig), 0700)
-
-			if err != nil {
-				return err
-			}
-		} else {
-			path := filepath.Join(dest, testStepProviderConfigFileName)
-
-			configFileExists, err := fileExists(configDirectory, testStepProviderConfigFileName)
-
-			if err != nil {
-				return err
-			}
-
-			if configFileExists {
-				return fmt.Errorf("%s already exists in %s, ", testStepProviderConfigFileName, configDirectory)
-			}
-
-			err = os.WriteFile(path, []byte(c.testStepProviderConfig), 0700)
-
-			if err != nil {
-				return err
-			}
+		if err != nil {
+			return err
 		}
 	}
 
@@ -338,4 +252,127 @@ func fileExists(dir, fileName string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (c configuration) hasDirectory(_ context.Context) bool {
+	return c.directory != ""
+}
+
+func (c configuration) hasRaw(_ context.Context) bool {
+	return c.raw != ""
+}
+
+// prepareRaw returns a string that assembles the Terraform configuration from
+// the raw field, prefixed by either testCaseProviderConfig or
+// testStepProviderConfig when the raw field itself does not contain a
+// terraform block.
+func (c configuration) prepareRaw(_ context.Context) string {
+	var config strings.Builder
+
+	// Prevent issues with existing configurations containing the terraform
+	// configuration block.
+	if terraformConfigBlockRegex.MatchString(c.raw) {
+		return c.raw
+	}
+
+	if c.testCaseProviderConfig != "" {
+		config.WriteString(c.testCaseProviderConfig)
+	} else {
+		config.WriteString(c.testStepProviderConfig)
+	}
+
+	config.WriteString(c.raw)
+
+	return config.String()
+}
+
+// writeDirectory copies the contents of c.directory to dest.
+func (c configuration) writeDirectory(_ context.Context, dest string) error {
+	// Copy all files from c.directory to dest
+	pwd, err := os.Getwd()
+
+	if err != nil {
+		return err
+	}
+
+	configDirectory := filepath.Join(pwd, c.directory)
+
+	err = copyFiles(configDirectory, dest)
+
+	if err != nil {
+		return err
+	}
+
+	// Determine whether any of the files in configDirectory contain terraform block.
+	containsTerraformConfig, err := filesContains(configDirectory, terraformConfigBlockRegex)
+
+	if err != nil {
+		return err
+	}
+
+	// Write contents of testCaseProviderConfig or testStepProviderConfig to dest.
+	if !containsTerraformConfig {
+		if c.testCaseProviderConfig != "" {
+			path := filepath.Join(dest, testCaseProviderConfigFileName)
+
+			configFileExists, err := fileExists(configDirectory, testCaseProviderConfigFileName)
+
+			if err != nil {
+				return err
+			}
+
+			if configFileExists {
+				return fmt.Errorf("%s already exists in %s, ", testCaseProviderConfigFileName, configDirectory)
+			}
+
+			err = os.WriteFile(path, []byte(c.testCaseProviderConfig), 0700)
+
+			if err != nil {
+				return err
+			}
+		} else {
+			path := filepath.Join(dest, testStepProviderConfigFileName)
+
+			configFileExists, err := fileExists(configDirectory, testStepProviderConfigFileName)
+
+			if err != nil {
+				return err
+			}
+
+			if configFileExists {
+				return fmt.Errorf("%s already exists in %s, ", testStepProviderConfigFileName, configDirectory)
+			}
+
+			err = os.WriteFile(path, []byte(c.testStepProviderConfig), 0700)
+
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (c configuration) writeRaw(ctx context.Context, dest string) error {
+	outFilename := filepath.Join(dest, rawConfigFileName)
+	rmFilename := filepath.Join(dest, rawConfigFileNameJSON)
+
+	bCfg := []byte(c.prepareRaw(ctx))
+
+	if json.Valid(bCfg) {
+		outFilename, rmFilename = rmFilename, outFilename
+	}
+
+	if err := os.Remove(rmFilename); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("unable to remove %q: %w", rmFilename, err)
+	}
+
+	err := os.WriteFile(outFilename, bCfg, 0700)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
