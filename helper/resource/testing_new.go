@@ -93,6 +93,8 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		wd.Close()
 	}()
 
+	// Return value from c.ProviderConfig() is assigned to Raw as this was previously being
+	// passed to wd.SetConfig() when the second argument accept a configuration string.
 	if c.hasProviders(ctx) {
 		config, err := teststep.Configuration(
 			teststep.ConfigurationRequest{
@@ -209,13 +211,21 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				protov6: protov6ProviderFactories(c.ProtoV6ProviderFactories).merge(step.ProtoV6ProviderFactories),
 			}
 
-			testStepProviderConfig := step.providerConfig(ctx, cfg.HasProviderBlock(ctx))
+			hasProviderBlock, err := cfg.HasProviderBlock(ctx)
 
+			if err != nil {
+				logging.HelperResourceError(ctx,
+					"TestStep error determining whether configuration contains provider block",
+					map[string]interface{}{logging.KeyError: err},
+				)
+				t.Fatalf("TestStep %d/%d error determining whether configuration contains provider block: %s", stepNumber, len(c.Steps), err)
+			}
+
+			// Return value from c.ProviderConfig() is assigned to Raw as this was previously being
+			// passed to wd.SetConfig() when the second argument accept a configuration string.
 			config, err := teststep.Configuration(
 				teststep.ConfigurationRequest{
-					Directory:              step.ConfigDirectory,
-					Raw:                    step.Config,
-					TestStepProviderConfig: testStepProviderConfig,
+					Raw: step.providerConfig(ctx, hasProviderBlock),
 				},
 			)
 
@@ -375,10 +385,20 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			var testCaseProviderConfig string
 			var testStepProviderConfig string
 
+			hasProviderBlock, err := cfg.HasProviderBlock(ctx)
+
+			if err != nil {
+				logging.HelperResourceError(ctx,
+					"Error determining whether configuration contains provider block",
+					map[string]interface{}{logging.KeyError: err},
+				)
+				t.Fatalf("Error determining whether configuration contains provider block: %s", err)
+			}
+
 			if c.hasProviders(ctx) {
-				testCaseProviderConfig = c.providerConfig(ctx, cfg.HasProviderBlock(ctx))
+				testCaseProviderConfig = c.providerConfig(ctx, hasProviderBlock)
 			} else {
-				testStepProviderConfig = step.providerConfig(ctx, cfg.HasProviderBlock(ctx))
+				testStepProviderConfig = step.providerConfig(ctx, hasProviderBlock)
 			}
 
 			appliedCfg, err = teststep.Configuration(
@@ -464,11 +484,21 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 		t.Fatalf("Error creating provider configuration for import test config: %s", err)
 	}
 
-	testCaseProviderConfig := c.providerConfig(ctx, cfg.HasProviderBlock(ctx))
+	hasProviderBlock, err := cfg.HasProviderBlock(ctx)
 
+	if err != nil {
+		logging.HelperResourceError(ctx,
+			"Error determining whether configuration contains provider block for import test config",
+			map[string]interface{}{logging.KeyError: err},
+		)
+		t.Fatalf("Error determining whether configuration contains provider block for import test config: %s", err)
+	}
+
+	// Return value from c.ProviderConfig() is assigned to Raw as this was previously being
+	// passed to wd.SetConfig() when the second argument accept a configuration string.
 	config, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Raw: testCaseProviderConfig,
+			Raw: c.providerConfig(ctx, hasProviderBlock),
 		},
 	)
 

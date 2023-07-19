@@ -110,7 +110,11 @@ resource "test_test" "test" {}
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := testCase.config.HasProviderBlock(context.Background())
+			got, err := testCase.config.HasProviderBlock(context.Background())
+
+			if err != nil {
+				t.Errorf("unexpected error: %s", err)
+			}
 
 			if testCase.expected != got {
 				t.Errorf("expected %t, got %t", testCase.expected, got)

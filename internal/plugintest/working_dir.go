@@ -112,7 +112,7 @@ func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config) error 
 
 	wd.configFilename = outFilename
 
-	if cfg.HasDirectory() {
+	if cfg.HasDirectory(ctx) {
 		err := cfg.WriteDirectory(ctx, wd.baseDir)
 
 		if err != nil {

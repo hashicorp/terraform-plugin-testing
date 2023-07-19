@@ -35,10 +35,20 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	var testCaseProviderConfig string
 	var testStepProviderConfig string
 
+	hasProviderBlock, err := cfg.HasProviderBlock(ctx)
+
+	if err != nil {
+		logging.HelperResourceError(ctx,
+			"Error determining whether configuration contains provider block",
+			map[string]interface{}{logging.KeyError: err},
+		)
+		t.Fatalf("Error determining whether configuration contains provider block: %s", err)
+	}
+
 	if c.hasProviders(ctx) {
-		testCaseProviderConfig = c.providerConfig(ctx, cfg.HasProviderBlock(ctx))
+		testCaseProviderConfig = c.providerConfig(ctx, hasProviderBlock)
 	} else {
-		testStepProviderConfig = step.providerConfig(ctx, cfg.HasProviderBlock(ctx))
+		testStepProviderConfig = step.providerConfig(ctx, hasProviderBlock)
 	}
 
 	config, err := teststep.Configuration(

@@ -13,12 +13,20 @@ import (
 	"strings"
 )
 
-var configProviderBlockRegex = regexp.MustCompile(`provider "?[a-zA-Z0-9_-]+"? {`)
+const (
+	testCaseProviderConfigFileName = "test_case_provider_config.tf"
+	testStepProviderConfigFileName = "test_step_provider_config.tf"
+)
+
+var (
+	providerConfigBlockRegex  = regexp.MustCompile(`provider "?[a-zA-Z0-9_-]+"? {`)
+	terraformConfigBlockRegex = regexp.MustCompile(`terraform {`)
+)
 
 type Config interface {
 	HasConfiguration() bool
-	HasDirectory() bool
-	HasProviderBlock(context.Context) bool
+	HasDirectory(context.Context) bool
+	HasProviderBlock(context.Context) (bool, error)
 	HasRaw(context.Context) bool
 	Raw(context.Context) string
 	WriteDirectory(context.Context, string) error
@@ -83,19 +91,38 @@ func (c configuration) HasConfiguration() bool {
 	return false
 }
 
-func (c configuration) HasDirectory() bool {
+func (c configuration) HasDirectory(_ context.Context) bool {
 	return c.directory != ""
 }
 
 // HasProviderBlock returns true if the Config has declared a provider
 // configuration block, e.g. provider "examplecloud" {...}
-//
-// TODO: Need to handle configuration supplied through Directory or File.
-func (c configuration) HasProviderBlock(_ context.Context) bool {
-	return configProviderBlockRegex.MatchString(c.raw)
+func (c configuration) HasProviderBlock(ctx context.Context) (bool, error) {
+	switch {
+	case c.HasRaw(ctx):
+		return providerConfigBlockRegex.MatchString(c.raw), nil
+	case c.HasDirectory(ctx):
+		pwd, err := os.Getwd()
+
+		if err != nil {
+			return false, err
+		}
+
+		configDirectory := filepath.Join(pwd, c.directory)
+
+		contains, err := filesContains(configDirectory, providerConfigBlockRegex)
+
+		if err != nil {
+			return false, err
+		}
+
+		return contains, nil
+	}
+
+	return false, nil
 }
 
-func (c configuration) HasRaw(ctx context.Context) bool {
+func (c configuration) HasRaw(_ context.Context) bool {
 	return c.raw != ""
 }
 
@@ -113,7 +140,7 @@ func (c configuration) Raw(ctx context.Context) string {
 
 	// Prevent issues with existing configurations containing the terraform
 	// configuration block.
-	if strings.Contains(c.raw, "terraform {") {
+	if terraformConfigBlockRegex.MatchString(c.raw) {
 		return c.raw
 	}
 
@@ -129,10 +156,8 @@ func (c configuration) Raw(ctx context.Context) string {
 }
 
 // WriteDirectory copies the contents of c.directory to dest.
-// TODO: Need to handle testCaseProviderConfig and testStepProviderConfig when
-// copying files from c.directory to working directory for test
 func (c configuration) WriteDirectory(ctx context.Context, dest string) error {
-	// Copy all files from c.dir to dest
+	// Copy all files from c.directory to dest
 	pwd, err := os.Getwd()
 
 	if err != nil {
@@ -148,28 +173,46 @@ func (c configuration) WriteDirectory(ctx context.Context, dest string) error {
 	}
 
 	// Determine whether any of the files in configDirectory contain terraform block.
-	containsTerraformConfig, err := c.filesContains(configDirectory, `terraform {`)
+	containsTerraformConfig, err := filesContains(configDirectory, terraformConfigBlockRegex)
 
 	if err != nil {
 		return err
 	}
 
-	// Write contents of testCaseProviderConfig or testStepProviderConfig t dest.
-	// TODO: Verify whether there are any naming collisions between the files in
-	// c.directory and the files that are written below.
+	// Write contents of testCaseProviderConfig or testStepProviderConfig to dest.
 	if !containsTerraformConfig {
 		if c.testCaseProviderConfig != "" {
-			path := filepath.Join(dest, "testCaseProviderConfig.tf")
+			path := filepath.Join(dest, testCaseProviderConfigFileName)
 
-			err := os.WriteFile(path, []byte(c.testCaseProviderConfig), 0700)
+			configFileExists, err := fileExists(configDirectory, testCaseProviderConfigFileName)
+
+			if err != nil {
+				return err
+			}
+
+			if configFileExists {
+				return fmt.Errorf("%s already exists in %s, ", testCaseProviderConfigFileName, configDirectory)
+			}
+
+			err = os.WriteFile(path, []byte(c.testCaseProviderConfig), 0700)
 
 			if err != nil {
 				return err
 			}
 		} else {
-			path := filepath.Join(dest, "testStepProviderConfig.tf")
+			path := filepath.Join(dest, testStepProviderConfigFileName)
 
-			err := os.WriteFile(path, []byte(c.testStepProviderConfig), 0700)
+			configFileExists, err := fileExists(configDirectory, testStepProviderConfigFileName)
+
+			if err != nil {
+				return err
+			}
+
+			if configFileExists {
+				return fmt.Errorf("%s already exists in %s, ", testStepProviderConfigFileName, configDirectory)
+			}
+
+			err = os.WriteFile(path, []byte(c.testStepProviderConfig), 0700)
 
 			if err != nil {
 				return err
@@ -178,44 +221,6 @@ func (c configuration) WriteDirectory(ctx context.Context, dest string) error {
 	}
 
 	return nil
-}
-
-func (c configuration) filesContains(dir, find string) (bool, error) {
-	dirEntries, err := os.ReadDir(dir)
-
-	if err != nil {
-		return false, err
-	}
-
-	for _, dirEntry := range dirEntries {
-		if dirEntry.IsDir() {
-			continue
-		}
-
-		path := filepath.Join(dir, dirEntry.Name())
-
-		contains, err := c.fileContains(path, find)
-
-		if err != nil {
-			return false, err
-		}
-
-		if contains {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-func (c configuration) fileContains(path, find string) (bool, error) {
-	f, err := os.ReadFile(path)
-
-	if err != nil {
-		return false, err
-	}
-
-	return strings.Contains(string(f), find), nil
 }
 
 func copyFiles(path string, dstPath string) error {
@@ -275,4 +280,62 @@ func copyFile(path string, dstPath string) error {
 	}
 
 	return nil
+}
+
+func filesContains(dir string, find *regexp.Regexp) (bool, error) {
+	dirEntries, err := os.ReadDir(dir)
+
+	if err != nil {
+		return false, err
+	}
+
+	for _, dirEntry := range dirEntries {
+		if dirEntry.IsDir() {
+			continue
+		}
+
+		path := filepath.Join(dir, dirEntry.Name())
+
+		contains, err := fileContains(path, find)
+
+		if err != nil {
+			return false, err
+		}
+
+		if contains {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func fileContains(path string, find *regexp.Regexp) (bool, error) {
+	f, err := os.ReadFile(path)
+
+	if err != nil {
+		return false, err
+	}
+
+	return find.MatchString(string(f)), nil
+}
+
+func fileExists(dir, fileName string) (bool, error) {
+	infos, err := os.ReadDir(dir)
+
+	if err != nil {
+		return false, err
+	}
+
+	for _, info := range infos {
+		if info.IsDir() {
+			continue
+		} else {
+			if fileName == info.Name() {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
 }
