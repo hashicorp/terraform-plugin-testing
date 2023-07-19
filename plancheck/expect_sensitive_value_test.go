@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-// TODO: change to r.Test
 func Test_ExpectSensitiveValue_SensitiveStringAttribute(t *testing.T) {
 	t.Parallel()
 

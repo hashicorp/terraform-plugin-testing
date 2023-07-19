@@ -7,6 +7,8 @@ import (
 )
 
 func Test_Traverse_StringValue(t *testing.T) {
+	t.Parallel()
+
 	path := New("StringValue")
 
 	actual, err := Traverse(createTestObject(), path)
@@ -21,6 +23,8 @@ func Test_Traverse_StringValue(t *testing.T) {
 }
 
 func Test_Traverse_NumberValue(t *testing.T) {
+	t.Parallel()
+
 	path := New("NumberValue")
 
 	actual, err := Traverse(createTestObject(), path)
@@ -35,6 +39,8 @@ func Test_Traverse_NumberValue(t *testing.T) {
 }
 
 func Test_Traverse_BooleanValue(t *testing.T) {
+	t.Parallel()
+
 	path := New("BooleanValue")
 
 	actual, err := Traverse(createTestObject(), path)
@@ -49,6 +55,8 @@ func Test_Traverse_BooleanValue(t *testing.T) {
 }
 
 func Test_Traverse_Array(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		path     Path
 		expected any
@@ -97,6 +105,8 @@ func Test_Traverse_Array(t *testing.T) {
 }
 
 func Test_Traverse_Object(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		path     Path
 		expected any
@@ -153,6 +163,8 @@ func Test_Traverse_Object(t *testing.T) {
 }
 
 func Test_Traverse_ExpectError(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		path          Path
 		expectedError func(err error) bool
