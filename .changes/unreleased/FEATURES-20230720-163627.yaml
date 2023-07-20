@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'plancheck: Added `ExpectUnknownValue` built-in plan check, which asserts that
+  a given attribute has an unknown value'
+time: 2023-07-20T16:36:27.361538-04:00
+custom:
+  Issue: "154"
