@@ -34,7 +34,7 @@ func (e expectSensitiveValue) CheckPlan(ctx context.Context, req CheckPlanReques
 
 		isSensitive, ok := result.(bool)
 		if !ok {
-			resp.Error = fmt.Errorf("path not found: cannot convert final value to bool")
+			resp.Error = fmt.Errorf("invalid path: the path value cannot be asserted as bool")
 			return
 		}
 
