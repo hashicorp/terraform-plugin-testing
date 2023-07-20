@@ -57,6 +57,21 @@ func Test_Traverse_BooleanValue(t *testing.T) {
 	}
 }
 
+func Test_Traverse_NullValue(t *testing.T) {
+	t.Parallel()
+
+	path := New("NullValue")
+
+	actual, err := Traverse(createTestObject(), path)
+	if err != nil {
+		t.Errorf("Error traversing JSON object %s", err)
+	}
+
+	if actual != nil {
+		t.Errorf("Output %v not equal to expected %v", actual, nil)
+	}
+}
+
 func Test_Traverse_Array(t *testing.T) {
 	t.Parallel()
 
@@ -240,6 +255,7 @@ func createTestObject() any {
 		"StringValue": "example",
 		"NumberValue": 0,
 		"BooleanValue": false,
+		"NullValue": null,
 		"Array": [10, 15.2, "example2", null, true, {"NestedStringValue": "example3"}, [true]],
 		"Object":{
 			"StringValue": "example",
