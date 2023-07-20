@@ -1224,6 +1224,19 @@ func TestTest_ConfigDirectory(t *testing.T) {
 	})
 }
 
+func TestTest_ConfigDirectory_MultipleFiles(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		Steps: []TestStep{
+			{
+				ConfigDirectory: `../fixtures/random_password_3.5.1_multiple_files`,
+				Check:           TestCheckResourceAttrSet("random_password.test", "id"),
+			},
+		},
+	})
+}
+
 // TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist uses Terraform
 // configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
 // random provider password resource. This test confirms that the TestCase ExternalProviders
@@ -1241,8 +1254,22 @@ func TestTest_ConfigDirectory_AttributeDoesNotExist(t *testing.T) {
 	})
 }
 
-// Should likely just be external providers that are not allowed with ConfigDirectory as need to be able to specify
-// provider being developed locally - see random for example
+// TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist uses Terraform
+// configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
+// random provider password resource. This test confirms that the TestCase ExternalProviders
+// is being used when ConfigDirectory is set.
+func TestTest_ConfigDirectory_AttributeDoesNotExist_MultipleFiles(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		Steps: []TestStep{
+			{
+				ConfigDirectory: `../fixtures/random_password_3.2.0_multiple_files`,
+				ExpectError:     regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
+			},
+		},
+	})
+}
 
 func TestTest_TestStep_ProviderFactories_ConfigDirectory(t *testing.T) {
 	t.Parallel()
