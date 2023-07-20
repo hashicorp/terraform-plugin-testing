@@ -234,26 +234,6 @@ func fileContains(path string, find *regexp.Regexp) (bool, error) {
 	return find.MatchString(string(f)), nil
 }
 
-func fileExists(dir, fileName string) (bool, error) {
-	infos, err := os.ReadDir(dir)
-
-	if err != nil {
-		return false, err
-	}
-
-	for _, info := range infos {
-		if info.IsDir() {
-			continue
-		} else {
-			if fileName == info.Name() {
-				return true, nil
-			}
-		}
-	}
-
-	return false, nil
-}
-
 func (c configuration) hasDirectory(_ context.Context) bool {
 	return c.directory != ""
 }
@@ -301,54 +281,6 @@ func (c configuration) writeDirectory(_ context.Context, dest string) error {
 
 	if err != nil {
 		return err
-	}
-
-	// Determine whether any of the files in configDirectory contain terraform block.
-	containsTerraformConfig, err := filesContains(configDirectory, terraformConfigBlockRegex)
-
-	if err != nil {
-		return err
-	}
-
-	// Write contents of testCaseProviderConfig or testStepProviderConfig to dest.
-	if !containsTerraformConfig {
-		if c.testCaseProviderConfig != "" {
-			path := filepath.Join(dest, testCaseProviderConfigFileName)
-
-			configFileExists, err := fileExists(configDirectory, testCaseProviderConfigFileName)
-
-			if err != nil {
-				return err
-			}
-
-			if configFileExists {
-				return fmt.Errorf("%s already exists in %s, ", testCaseProviderConfigFileName, configDirectory)
-			}
-
-			err = os.WriteFile(path, []byte(c.testCaseProviderConfig), 0700)
-
-			if err != nil {
-				return err
-			}
-		} else {
-			path := filepath.Join(dest, testStepProviderConfigFileName)
-
-			configFileExists, err := fileExists(configDirectory, testStepProviderConfigFileName)
-
-			if err != nil {
-				return err
-			}
-
-			if configFileExists {
-				return fmt.Errorf("%s already exists in %s, ", testStepProviderConfigFileName, configDirectory)
-			}
-
-			err = os.WriteFile(path, []byte(c.testStepProviderConfig), 0700)
-
-			if err != nil {
-				return err
-			}
-		}
 	}
 
 	return nil

@@ -28,25 +28,47 @@ type testStepValidateRequest struct {
 
 // hasProviders returns true if the TestStep has set any of the
 // ExternalProviders, ProtoV5ProviderFactories, ProtoV6ProviderFactories, or
-// ProviderFactories fields.
-func (s TestStep) hasProviders(_ context.Context) bool {
+// ProviderFactories fields. It will also return true if ConfigDirectory or
+// Config contain terraform configuration which specify a provider block.
+func (s TestStep) hasProviders(ctx context.Context) (bool, error) {
 	if len(s.ExternalProviders) > 0 {
-		return true
+		return true, nil
 	}
 
 	if len(s.ProtoV5ProviderFactories) > 0 {
-		return true
+		return true, nil
 	}
 
 	if len(s.ProtoV6ProviderFactories) > 0 {
-		return true
+		return true, nil
 	}
 
 	if len(s.ProviderFactories) > 0 {
-		return true
+		return true, nil
 	}
 
-	return false
+	cfg, err := teststep.Configuration(
+		teststep.ConfigurationRequest{
+			Directory: s.ConfigDirectory,
+			Raw:       s.Config,
+		},
+	)
+
+	if err != nil {
+		return false, err
+	}
+
+	cfgHasProviders, err := cfg.HasProviderBlock(ctx)
+
+	if err != nil {
+		return false, err
+	}
+
+	if cfgHasProviders {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // validate ensures the TestStep is valid based on the following criteria:
@@ -110,7 +132,12 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 		}
 	}
 
-	hasProviders := s.hasProviders(ctx)
+	hasProviders, err := s.hasProviders(ctx)
+
+	if err != nil {
+		logging.HelperResourceError(ctx, "TestStep error checking for providers", map[string]interface{}{logging.KeyError: err})
+		return err
+	}
 
 	if req.TestCaseHasProviders && hasProviders {
 		err := fmt.Errorf("Providers must only be specified either at the TestCase or TestStep level")

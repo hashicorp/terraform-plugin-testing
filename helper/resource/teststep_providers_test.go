@@ -574,19 +574,13 @@ func TestTest_TestStep_Taint(t *testing.T) {
 	}
 }
 
-func TestTest_TestCase_ExternalProviders_ConfigDirectory(t *testing.T) {
+func TestTest_ConfigDirectory(t *testing.T) {
 	t.Parallel()
 
 	Test(t, TestCase{
-		ExternalProviders: map[string]ExternalProvider{
-			"random": {
-				Source:            "registry.terraform.io/hashicorp/random",
-				VersionConstraint: "3.5.1",
-			},
-		},
 		Steps: []TestStep{
 			{
-				ConfigDirectory: `../fixtures/random_password`,
+				ConfigDirectory: `../fixtures/random_password_3.5.1`,
 				Check:           TestCheckResourceAttrSet("random_password.test", "id"),
 			},
 		},
@@ -597,66 +591,21 @@ func TestTest_TestCase_ExternalProviders_ConfigDirectory(t *testing.T) {
 // configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
 // random provider password resource. This test confirms that the TestCase ExternalProviders
 // is being used when ConfigDirectory is set.
-func TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist(t *testing.T) {
+func TestTest_ConfigDirectory_AttributeDoesNotExist(t *testing.T) {
 	t.Parallel()
 
 	Test(t, TestCase{
-		ExternalProviders: map[string]ExternalProvider{
-			"random": {
-				Source:            "registry.terraform.io/hashicorp/random",
-				VersionConstraint: "3.2.0",
-			},
-		},
 		Steps: []TestStep{
 			{
-				ConfigDirectory: `../fixtures/random_password`,
+				ConfigDirectory: `../fixtures/random_password_3.2.0`,
 				ExpectError:     regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
 			},
 		},
 	})
 }
 
-func TestTest_TestStep_ExternalProviders_ConfigDirectory(t *testing.T) {
-	t.Parallel()
-
-	Test(t, TestCase{
-		Steps: []TestStep{
-			{
-				ExternalProviders: map[string]ExternalProvider{
-					"random": {
-						Source:            "registry.terraform.io/hashicorp/random",
-						VersionConstraint: "3.5.1",
-					},
-				},
-				ConfigDirectory: `../fixtures/random_password`,
-				Check:           TestCheckResourceAttrSet("random_password.test", "id"),
-			},
-		},
-	})
-}
-
-// TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist uses Terraform
-// configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
-// random provider password resource. This test confirms that the TestStep ExternalProviders
-// is being used when ConfigDirectory is set.
-func TestTest_TestStep_ExternalProviders_ConfigDirectory_AttributeDoesNotExist(t *testing.T) {
-	t.Parallel()
-
-	Test(t, TestCase{
-		Steps: []TestStep{
-			{
-				ExternalProviders: map[string]ExternalProvider{
-					"random": {
-						Source:            "registry.terraform.io/hashicorp/random",
-						VersionConstraint: "3.2.0",
-					},
-				},
-				ConfigDirectory: `../fixtures/random_password`,
-				ExpectError:     regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
-			},
-		},
-	})
-}
+// Should likely just be external providers that are not allowed with ConfigDirectory as need to be able to specify
+// provider being developed locally - see random for example
 
 func TestTest_TestStep_ProviderFactories_ConfigDirectory(t *testing.T) {
 	t.Parallel()

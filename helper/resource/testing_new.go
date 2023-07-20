@@ -204,7 +204,17 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			}
 		}
 
-		if step.hasProviders(ctx) {
+		hasProviders, err := step.hasProviders(ctx)
+
+		if err != nil {
+			logging.HelperResourceError(ctx,
+				"TestStep error checking for providers",
+				map[string]interface{}{logging.KeyError: err},
+			)
+			t.Fatalf("TestStep %d/%d error checking for providers: %s", stepNumber, len(c.Steps), err)
+		}
+
+		if hasProviders {
 			providers = &providerFactories{
 				legacy:  sdkProviderFactories(c.ProviderFactories).merge(step.ProviderFactories),
 				protov5: protov5ProviderFactories(c.ProtoV5ProviderFactories).merge(step.ProtoV5ProviderFactories),
@@ -221,11 +231,14 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				t.Fatalf("TestStep %d/%d error determining whether configuration contains provider block: %s", stepNumber, len(c.Steps), err)
 			}
 
+			var config teststep.Config
+
 			// Return value from c.ProviderConfig() is assigned to Raw as this was previously being
 			// passed to wd.SetConfig() when the second argument accept a configuration string.
-			config, err := teststep.Configuration(
+			config, err = teststep.Configuration(
 				teststep.ConfigurationRequest{
-					Raw: step.providerConfig(ctx, hasProviderBlock),
+					Raw:       step.providerConfig(ctx, hasProviderBlock),
+					Directory: step.ConfigDirectory,
 				},
 			)
 

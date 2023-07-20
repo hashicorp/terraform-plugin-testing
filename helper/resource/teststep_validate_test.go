@@ -70,7 +70,11 @@ func TestTestStepHasProviders(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := test.testStep.hasProviders(context.Background())
+			got, err := test.testStep.hasProviders(context.Background())
+
+			if err != nil {
+				t.Errorf("unexpected error: %s", err)
+			}
 
 			if got != test.expected {
 				t.Errorf("expected %t, got %t", test.expected, got)
