@@ -28,6 +28,7 @@ var (
 
 type Config interface {
 	HasConfiguration() bool
+	HasConfigurationFiles() bool
 	HasProviderBlock(context.Context) (bool, error)
 	Write(context.Context, string) error
 }
@@ -89,6 +90,10 @@ func (c configuration) HasConfiguration() bool {
 	}
 
 	return false
+}
+
+func (c configuration) HasConfigurationFiles() bool {
+	return c.directory != ""
 }
 
 // HasProviderBlock returns true if the Config has declared a provider

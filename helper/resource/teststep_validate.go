@@ -20,10 +20,20 @@ type testStepValidateRequest struct {
 	// StepNumber is the index of the TestStep in the TestCase.Steps.
 	StepNumber int
 
+	// TestCaseHasExternalProviders is enabled if the TestCase has
+	// ExternalProviders.
+	TestCaseHasExternalProviders bool
+
 	// TestCaseHasProviders is enabled if the TestCase has set any of
 	// ExternalProviders, ProtoV5ProviderFactories, ProtoV6ProviderFactories,
 	// or ProviderFactories.
 	TestCaseHasProviders bool
+}
+
+// hasExternalProviders returns true if the TestStep has
+// ExternalProviders set.
+func (s TestStep) hasExternalProviders() bool {
+	return len(s.ExternalProviders) > 0
 }
 
 // hasProviders returns true if the TestStep has set any of the
@@ -132,6 +142,18 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 		}
 	}
 
+	if req.TestCaseHasExternalProviders && req.StepConfiguration.HasConfigurationFiles() {
+		err := fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.ConfigDirectory")
+		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
+		return err
+	}
+
+	if s.hasExternalProviders() && req.StepConfiguration.HasConfigurationFiles() {
+		err := fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.ConfigDirectory")
+		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
+		return err
+	}
+
 	hasProviders, err := s.hasProviders(ctx)
 
 	if err != nil {
@@ -145,8 +167,15 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 		return err
 	}
 
-	if !req.TestCaseHasProviders && !hasProviders {
-		err := fmt.Errorf("Providers must be specified at the TestCase level or in all TestStep")
+	cfgHasProviderBlock, err := req.StepConfiguration.HasProviderBlock(ctx)
+
+	if err != nil {
+		logging.HelperResourceError(ctx, "TestStep error checking for if configuration has provider block", map[string]interface{}{logging.KeyError: err})
+		return err
+	}
+
+	if !req.TestCaseHasProviders && !hasProviders && !cfgHasProviderBlock {
+		err := fmt.Errorf("Providers must be specified at the TestCase level, or in all TestStep, or in TestStep.ConfigDirectory")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
 	}

@@ -11,6 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 )
 
+// hasProviders returns true if the TestCase has ExternalProviders set.
+func (c TestCase) hasExternalProviders(_ context.Context) bool {
+	return len(c.ExternalProviders) > 0
+}
+
 // hasProviders returns true if the TestCase has set any of the
 // ExternalProviders, ProtoV5ProviderFactories, ProtoV6ProviderFactories,
 // ProviderFactories, or Providers fields.
@@ -66,6 +71,7 @@ func (c TestCase) validate(ctx context.Context) error {
 		}
 	}
 
+	testCaseHasExternalProviders := c.hasExternalProviders(ctx)
 	testCaseHasProviders := c.hasProviders(ctx)
 
 	for stepIndex, step := range c.Steps {
@@ -82,9 +88,10 @@ func (c TestCase) validate(ctx context.Context) error {
 
 		stepNumber := stepIndex + 1 // Use 1-based index for humans
 		stepValidateReq := testStepValidateRequest{
-			StepConfiguration:    stepConfiguration,
-			StepNumber:           stepNumber,
-			TestCaseHasProviders: testCaseHasProviders,
+			StepConfiguration:            stepConfiguration,
+			StepNumber:                   stepNumber,
+			TestCaseHasExternalProviders: testCaseHasExternalProviders,
+			TestCaseHasProviders:         testCaseHasProviders,
 		}
 
 		err = step.validate(ctx, stepValidateReq)

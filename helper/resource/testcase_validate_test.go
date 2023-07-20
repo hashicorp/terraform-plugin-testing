@@ -14,6 +14,42 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+func TestTestCaseHasExternalProviders(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		testCase TestCase
+		expected bool
+	}{
+		"none": {
+			testCase: TestCase{},
+			expected: false,
+		},
+		"externalproviders": {
+			testCase: TestCase{
+				ExternalProviders: map[string]ExternalProvider{
+					"test": {}, // does not need to be real
+				},
+			},
+			expected: true,
+		},
+	}
+
+	for name, test := range tests {
+		name, test := name, test
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			got := test.testCase.hasExternalProviders(context.Background())
+
+			if got != test.expected {
+				t.Errorf("expected %t, got %t", test.expected, got)
+			}
+		})
+	}
+}
+
 func TestTestCaseHasProviders(t *testing.T) {
 	t.Parallel()
 

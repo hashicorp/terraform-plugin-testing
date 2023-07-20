@@ -19,6 +19,42 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+func TestTestStepHasExternalProviders(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		testStep TestStep
+		expected bool
+	}{
+		"none": {
+			testStep: TestStep{},
+			expected: false,
+		},
+		"externalproviders": {
+			testStep: TestStep{
+				ExternalProviders: map[string]ExternalProvider{
+					"test": {}, // does not need to be real
+				},
+			},
+			expected: true,
+		},
+	}
+
+	for name, test := range tests {
+		name, test := name, test
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			got := test.testStep.hasExternalProviders()
+
+			if got != test.expected {
+				t.Errorf("expected %t, got %t", test.expected, got)
+			}
+		})
+	}
+}
+
 func TestTestStepHasProviders(t *testing.T) {
 	t.Parallel()
 
@@ -163,6 +199,24 @@ func TestTestStepValidate(t *testing.T) {
 			testStepValidateRequest: testStepValidateRequest{},
 			expectedError:           fmt.Errorf("TestStep provider \"test\" set in both ExternalProviders and ProviderFactories"),
 		},
+		"externalproviders-testcase-config-directory": {
+			testStep:                TestStep{},
+			testStepConfigDirectory: "# not empty",
+			testStepValidateRequest: testStepValidateRequest{
+				TestCaseHasExternalProviders: true,
+			},
+			expectedError: fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.ConfigDirectory"),
+		},
+		"externalproviders-teststep-config-directory": {
+			testStep: TestStep{
+				ExternalProviders: map[string]ExternalProvider{
+					"test": {}, // does not need to be real
+				},
+			},
+			testStepConfigDirectory: "# not empty",
+			testStepValidateRequest: testStepValidateRequest{},
+			expectedError:           fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.ConfigDirectory"),
+		},
 		"externalproviders-testcase-providers": {
 			testStep: TestStep{
 				ExternalProviders: map[string]ExternalProvider{
@@ -170,18 +224,6 @@ func TestTestStepValidate(t *testing.T) {
 				},
 			},
 			testStepConfig: "# not empty",
-			testStepValidateRequest: testStepValidateRequest{
-				TestCaseHasProviders: true,
-			},
-			expectedError: fmt.Errorf("Providers must only be specified either at the TestCase or TestStep level"),
-		},
-		"externalproviders-testcase-providers-config-directory": {
-			testStep: TestStep{
-				ExternalProviders: map[string]ExternalProvider{
-					"test": {}, // does not need to be real
-				},
-			},
-			testStepConfigDirectory: "# not empty",
 			testStepValidateRequest: testStepValidateRequest{
 				TestCaseHasProviders: true,
 			},
@@ -296,7 +338,7 @@ func TestTestStepValidate(t *testing.T) {
 				},
 				PlanOnly: true,
 			},
-			testStepConfigDirectory: "# not empty",
+			testStepConfigDirectory: "../fixtures/random_id",
 			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
 			expectedError:           errors.New("TestStep ConfigPlanChecks.PreApply cannot be run with PlanOnly"),
 		},
@@ -336,7 +378,7 @@ func TestTestStepValidate(t *testing.T) {
 					PostRefresh: []plancheck.PlanCheck{&planCheckSpy{}},
 				},
 			},
-			testStepConfigDirectory: "# not empty",
+			testStepConfigDirectory: "../fixtures/random_id",
 			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
 			expectedError:           errors.New("TestStep RefreshPlanChecks.PostRefresh must only be specified with RefreshState"),
 		},
