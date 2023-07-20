@@ -15,10 +15,8 @@ import (
 )
 
 const (
-	rawConfigFileName              = "terraform_plugin_test.tf"
-	rawConfigFileNameJSON          = rawConfigFileName + ".json"
-	testCaseProviderConfigFileName = "test_case_provider_config.tf"
-	testStepProviderConfigFileName = "test_step_provider_config.tf"
+	rawConfigFileName     = "terraform_plugin_test.tf"
+	rawConfigFileNameJSON = rawConfigFileName + ".json"
 )
 
 var (
@@ -30,21 +28,18 @@ type Config interface {
 	HasConfiguration() bool
 	HasConfigurationFiles() bool
 	HasProviderBlock(context.Context) (bool, error)
+	HasTerraformBlock(context.Context) (bool, error)
 	Write(context.Context, string) error
 }
 
 type configuration struct {
-	directory              string
-	raw                    string
-	testCaseProviderConfig string
-	testStepProviderConfig string
+	directory string
+	raw       string
 }
 
 type ConfigurationRequest struct {
-	Directory              string
-	Raw                    string
-	TestCaseProviderConfig string
-	TestStepProviderConfig string
+	Directory string
+	Raw       string
 }
 
 func Configuration(req ConfigurationRequest) (configuration, error) {
@@ -73,9 +68,6 @@ func Configuration(req ConfigurationRequest) (configuration, error) {
 			strings.Join(populatedConfig, " and "),
 		)
 	}
-
-	config.testCaseProviderConfig = req.TestCaseProviderConfig
-	config.testStepProviderConfig = req.TestStepProviderConfig
 
 	return config, nil
 }
@@ -112,6 +104,33 @@ func (c configuration) HasProviderBlock(ctx context.Context) (bool, error) {
 		configDirectory := filepath.Join(pwd, c.directory)
 
 		contains, err := filesContains(configDirectory, providerConfigBlockRegex)
+
+		if err != nil {
+			return false, err
+		}
+
+		return contains, nil
+	}
+
+	return false, nil
+}
+
+// HasTerraformBlock returns true if the Config has declared a terraform
+// configuration block, e.g. terraform {...}
+func (c configuration) HasTerraformBlock(ctx context.Context) (bool, error) {
+	switch {
+	case c.hasRaw(ctx):
+		return terraformConfigBlockRegex.MatchString(c.raw), nil
+	case c.hasDirectory(ctx):
+		pwd, err := os.Getwd()
+
+		if err != nil {
+			return false, err
+		}
+
+		configDirectory := filepath.Join(pwd, c.directory)
+
+		contains, err := filesContains(configDirectory, terraformConfigBlockRegex)
 
 		if err != nil {
 			return false, err
@@ -247,30 +266,6 @@ func (c configuration) hasRaw(_ context.Context) bool {
 	return c.raw != ""
 }
 
-// prepareRaw returns a string that assembles the Terraform configuration from
-// the raw field, prefixed by either testCaseProviderConfig or
-// testStepProviderConfig when the raw field itself does not contain a
-// terraform block.
-func (c configuration) prepareRaw(_ context.Context) string {
-	var config strings.Builder
-
-	// Prevent issues with existing configurations containing the terraform
-	// configuration block.
-	if terraformConfigBlockRegex.MatchString(c.raw) {
-		return c.raw
-	}
-
-	if c.testCaseProviderConfig != "" {
-		config.WriteString(c.testCaseProviderConfig)
-	} else {
-		config.WriteString(c.testStepProviderConfig)
-	}
-
-	config.WriteString(c.raw)
-
-	return config.String()
-}
-
 // writeDirectory copies the contents of c.directory to dest.
 func (c configuration) writeDirectory(_ context.Context, dest string) error {
 	// Copy all files from c.directory to dest
@@ -291,11 +286,11 @@ func (c configuration) writeDirectory(_ context.Context, dest string) error {
 	return nil
 }
 
-func (c configuration) writeRaw(ctx context.Context, dest string) error {
+func (c configuration) writeRaw(_ context.Context, dest string) error {
 	outFilename := filepath.Join(dest, rawConfigFileName)
 	rmFilename := filepath.Join(dest, rawConfigFileNameJSON)
 
-	bCfg := []byte(c.prepareRaw(ctx))
+	bCfg := []byte(c.raw)
 
 	if json.Valid(bCfg) {
 		outFilename, rmFilename = rmFilename, outFilename

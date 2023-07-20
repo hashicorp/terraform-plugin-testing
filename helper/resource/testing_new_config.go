@@ -32,8 +32,15 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("Error creating config: %w", err)
 	}
 
-	var testCaseProviderConfig string
-	var testStepProviderConfig string
+	hasTerraformBlock, err := cfg.HasTerraformBlock(ctx)
+
+	if err != nil {
+		logging.HelperResourceError(ctx,
+			"Error determining whether configuration contains terraform block",
+			map[string]interface{}{logging.KeyError: err},
+		)
+		t.Fatalf("Error determining whether configuration contains terraform block: %s", err)
+	}
 
 	hasProviderBlock, err := cfg.HasProviderBlock(ctx)
 
@@ -45,18 +52,12 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		t.Fatalf("Error determining whether configuration contains provider block: %s", err)
 	}
 
-	if c.hasProviders(ctx) {
-		testCaseProviderConfig = c.providerConfig(ctx, hasProviderBlock)
-	} else {
-		testStepProviderConfig = step.providerConfig(ctx, hasProviderBlock)
-	}
+	mergedConfig := step.mergedConfig(ctx, c, hasTerraformBlock, hasProviderBlock)
 
 	config, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory:              step.ConfigDirectory,
-			Raw:                    step.Config,
-			TestCaseProviderConfig: testCaseProviderConfig,
-			TestStepProviderConfig: testStepProviderConfig,
+			Directory: step.ConfigDirectory,
+			Raw:       mergedConfig,
 		},
 	)
 
