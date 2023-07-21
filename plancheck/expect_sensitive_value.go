@@ -46,7 +46,6 @@ func (e expectSensitiveValue) CheckPlan(ctx context.Context, req CheckPlanReques
 	}
 
 	resp.Error = fmt.Errorf("%s - Resource not found in plan ResourceChanges", e.resourceAddress)
-	return
 }
 
 // ExpectSensitiveValue returns a plan check that asserts that the specified attribute at the given resource has a sensitive value.

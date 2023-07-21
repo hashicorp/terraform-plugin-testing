@@ -46,7 +46,6 @@ func (e expectUnknownValue) CheckPlan(ctx context.Context, req CheckPlanRequest,
 	}
 
 	resp.Error = fmt.Errorf("%s - Resource not found in plan ResourceChanges", e.resourceAddress)
-	return
 }
 
 // ExpectUnknownValue returns a plan check that asserts that the specified attribute at the given resource has an unknown value.

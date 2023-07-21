@@ -25,13 +25,13 @@ import (
 // For example, to represent the first element of a JSON array
 // underneath a "some_array" property of this JSON value:
 //
-//    {
-//      "some_array": [true]
-//    }
+//	   {
+//	     "some_array": [true]
+//	   }
 //
-//  The path code would be represented by:
+//	 The path code would be represented by:
 //
-//	tfjsonpath.New("some_array").AtSliceIndex(0)
+//		tfjsonpath.New("some_array").AtSliceIndex(0)
 //
 // [terraform-json]: (https://pkg.go.dev/github.com/hashicorp/terraform-json)
 type Path struct {
