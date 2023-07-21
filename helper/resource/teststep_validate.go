@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 )
@@ -40,7 +41,7 @@ func (s TestStep) hasExternalProviders() bool {
 // ExternalProviders, ProtoV5ProviderFactories, ProtoV6ProviderFactories, or
 // ProviderFactories fields. It will also return true if ConfigDirectory or
 // Config contain terraform configuration which specify a provider block.
-func (s TestStep) hasProviders(ctx context.Context) (bool, error) {
+func (s TestStep) hasProviders(ctx context.Context, stepIndex int) (bool, error) {
 	if len(s.ExternalProviders) > 0 {
 		return true, nil
 	}
@@ -59,8 +60,13 @@ func (s TestStep) hasProviders(ctx context.Context) (bool, error) {
 
 	cfg, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: s.ConfigDirectory,
-			Raw:       s.Config,
+			Directory: config.ExecuteTestStepConfigFunc(
+				s.ConfigDirectory,
+				config.TestStepConfigRequest{
+					StepNumber: stepIndex + 1,
+				},
+			),
+			Raw: s.Config,
 		},
 	)
 
@@ -154,7 +160,8 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 		return err
 	}
 
-	hasProviders, err := s.hasProviders(ctx)
+	// We need a 0-based step index for consistency
+	hasProviders, err := s.hasProviders(ctx, req.StepNumber-1)
 
 	if err != nil {
 		logging.HelperResourceError(ctx, "TestStep error checking for providers", map[string]interface{}{logging.KeyError: err})

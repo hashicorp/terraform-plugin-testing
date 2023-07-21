@@ -16,6 +16,7 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
@@ -147,8 +148,13 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 		cfg, err := teststep.Configuration(
 			teststep.ConfigurationRequest{
-				Directory: step.ConfigDirectory,
-				Raw:       step.Config,
+				Directory: config.ExecuteTestStepConfigFunc(
+					step.ConfigDirectory,
+					config.TestStepConfigRequest{
+						StepNumber: stepIndex + 1,
+					},
+				),
+				Raw: step.Config,
 			},
 		)
 
@@ -204,7 +210,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			}
 		}
 
-		hasProviders, err := step.hasProviders(ctx)
+		hasProviders, err := step.hasProviders(ctx, stepIndex)
 
 		if err != nil {
 			logging.HelperResourceError(ctx,
@@ -231,14 +237,19 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				t.Fatalf("TestStep %d/%d error determining whether configuration contains provider block: %s", stepNumber, len(c.Steps), err)
 			}
 
-			var config teststep.Config
+			var testStepConfig teststep.Config
 
 			// Return value from c.ProviderConfig() is assigned to Raw as this was previously being
 			// passed to wd.SetConfig() when the second argument accept a configuration string.
-			config, err = teststep.Configuration(
+			testStepConfig, err = teststep.Configuration(
 				teststep.ConfigurationRequest{
-					Raw:       step.providerConfig(ctx, hasProviderBlock),
-					Directory: step.ConfigDirectory,
+					Directory: config.ExecuteTestStepConfigFunc(
+						step.ConfigDirectory,
+						config.TestStepConfigRequest{
+							StepNumber: stepIndex + 1,
+						},
+					),
+					Raw: step.providerConfig(ctx, hasProviderBlock),
 				},
 			)
 
@@ -250,7 +261,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				t.Fatalf("TestStep %d/%d error creating test provider configuration: %s", stepNumber, len(c.Steps), err)
 			}
 
-			err = wd.SetConfig(ctx, config)
+			err = wd.SetConfig(ctx, testStepConfig)
 
 			if err != nil {
 				logging.HelperResourceError(ctx,
@@ -283,7 +294,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.ImportState {
 			logging.HelperResourceTrace(ctx, "TestStep is ImportState mode")
 
-			err := testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, providers)
+			err := testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, providers, stepIndex)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 				if err == nil {
@@ -361,7 +372,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if cfg.HasConfiguration() {
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
-			err := testStepNewConfig(ctx, t, c, wd, step, providers)
+			err := testStepNewConfig(ctx, t, c, wd, step, providers, stepIndex)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 
@@ -419,8 +430,13 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 			appliedCfg, err = teststep.Configuration(
 				teststep.ConfigurationRequest{
-					Directory: step.ConfigDirectory,
-					Raw:       mergedConfig,
+					Directory: config.ExecuteTestStepConfigFunc(
+						step.ConfigDirectory,
+						config.TestStepConfigRequest{
+							StepNumber: stepIndex + 1,
+						},
+					),
+					Raw: mergedConfig,
 				},
 			)
 
@@ -474,7 +490,7 @@ func planIsEmpty(plan *tfjson.Plan) bool {
 	return true
 }
 
-func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, r *terraform.ResourceState, providers *providerFactories) error {
+func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, r *terraform.ResourceState, providers *providerFactories, stepIndex int) error {
 	t.Helper()
 
 	// Build the state. The state is just the resource with an ID. There
@@ -485,8 +501,13 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 	cfg, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: step.ConfigDirectory,
-			Raw:       step.Config,
+			Directory: config.ExecuteTestStepConfigFunc(
+				step.ConfigDirectory,
+				config.TestStepConfigRequest{
+					StepNumber: stepIndex + 1,
+				},
+			),
+			Raw: step.Config,
 		},
 	)
 
@@ -510,7 +531,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 	// Return value from c.ProviderConfig() is assigned to Raw as this was previously being
 	// passed to wd.SetConfig() when the second argument accept a configuration string.
-	config, err := teststep.Configuration(
+	testStepConfig, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
 			Raw: c.providerConfig(ctx, hasProviderBlock),
 		},
@@ -526,16 +547,21 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 	// Temporarily set the config to a minimal provider config for the refresh
 	// test. After the refresh we can reset it.
-	err = wd.SetConfig(ctx, config)
+	err = wd.SetConfig(ctx, testStepConfig)
 	if err != nil {
 		t.Fatalf("Error setting import test config: %s", err)
 	}
 
 	defer func() {
-		config, err := teststep.Configuration(
+		testStepConfigDefer, err := teststep.Configuration(
 			teststep.ConfigurationRequest{
-				Directory: step.ConfigDirectory,
-				Raw:       step.Config,
+				Directory: config.ExecuteTestStepConfigFunc(
+					step.ConfigDirectory,
+					config.TestStepConfigRequest{
+						StepNumber: stepIndex + 1,
+					},
+				),
+				Raw: step.Config,
 			},
 		)
 
@@ -547,7 +573,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 			t.Fatalf("Error creating provider configuration for resetting test config: %s", err)
 		}
 
-		err = wd.SetConfig(ctx, config)
+		err = wd.SetConfig(ctx, testStepConfigDefer)
 
 		if err != nil {
 			t.Fatalf("Error resetting test config: %s", err)

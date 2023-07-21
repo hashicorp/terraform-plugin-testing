@@ -23,6 +23,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
@@ -497,14 +498,22 @@ type TestStep struct {
 	// contains valid JSON.
 	Config string
 
-	// ConfigDir is a relative directory path for the base Terraform
-	// configuration of the test.
+	// ConfigDirectory is a function which accepts *testing.T and returns
+	// a function that accepts config.TestStepProviderConfig and returns
+	// a string representing a directory that contains Terraform
+	// configuration files.
+	//
+	// There are three helper functions that can be used to generate
+	// config.TestStepConfigFunc:
+	//    config.StaticDirectory()
+	//    config.TestNameDirectory()
+	//    config.TestStepDirectory()
 	//
 	// When running Terraform operations for the test, Terraform will
 	// be executed with copies of the files of this directory as its
 	// working directory. If both ConfigDirectory and Config are set
 	// an error will be returned.
-	ConfigDirectory string
+	ConfigDirectory config.TestStepConfigFunc
 
 	// Check is called after the Config is applied. Use this step to
 	// make your own API calls to check the status of things, and to

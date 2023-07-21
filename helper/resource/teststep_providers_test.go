@@ -23,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -1217,7 +1218,7 @@ func TestTest_ConfigDirectory(t *testing.T) {
 	Test(t, TestCase{
 		Steps: []TestStep{
 			{
-				ConfigDirectory: `../fixtures/random_password_3.5.1`,
+				ConfigDirectory: config.StaticDirectory(`../fixtures/random_password_3.5.1`),
 				Check:           TestCheckResourceAttrSet("random_password.test", "id"),
 			},
 		},
@@ -1230,7 +1231,7 @@ func TestTest_ConfigDirectory_MultipleFiles(t *testing.T) {
 	Test(t, TestCase{
 		Steps: []TestStep{
 			{
-				ConfigDirectory: `../fixtures/random_password_3.5.1_multiple_files`,
+				ConfigDirectory: config.StaticDirectory(`../fixtures/random_password_3.5.1_multiple_files`),
 				Check:           TestCheckResourceAttrSet("random_password.test", "id"),
 			},
 		},
@@ -1247,7 +1248,7 @@ func TestTest_ConfigDirectory_AttributeDoesNotExist(t *testing.T) {
 	Test(t, TestCase{
 		Steps: []TestStep{
 			{
-				ConfigDirectory: `../fixtures/random_password_3.2.0`,
+				ConfigDirectory: config.StaticDirectory(`../fixtures/random_password_3.2.0`),
 				ExpectError:     regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
 			},
 		},
@@ -1264,7 +1265,7 @@ func TestTest_ConfigDirectory_AttributeDoesNotExist_MultipleFiles(t *testing.T) 
 	Test(t, TestCase{
 		Steps: []TestStep{
 			{
-				ConfigDirectory: `../fixtures/random_password_3.2.0_multiple_files`,
+				ConfigDirectory: config.StaticDirectory(`../fixtures/random_password_3.2.0_multiple_files`),
 				ExpectError:     regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
 			},
 		},
@@ -1298,7 +1299,7 @@ func TestTest_TestStep_ProviderFactories_ConfigDirectory(t *testing.T) {
 		},
 		Steps: []TestStep{
 			{
-				ConfigDirectory: `../fixtures/random_id`,
+				ConfigDirectory: config.StaticDirectory(`../fixtures/random_id`),
 				Check:           TestCheckResourceAttrSet("random_id.test", "id"),
 			},
 		},

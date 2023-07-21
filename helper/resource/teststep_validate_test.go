@@ -100,13 +100,15 @@ func TestTestStepHasProviders(t *testing.T) {
 		},
 	}
 
+	var stepIndex int
+
 	for name, test := range tests {
 		name, test := name, test
 
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := test.testStep.hasProviders(context.Background())
+			got, err := test.testStep.hasProviders(context.Background(), stepIndex)
 
 			if err != nil {
 				t.Errorf("unexpected error: %s", err)
@@ -116,6 +118,8 @@ func TestTestStepHasProviders(t *testing.T) {
 				t.Errorf("expected %t, got %t", test.expected, got)
 			}
 		})
+
+		stepIndex++
 	}
 }
 

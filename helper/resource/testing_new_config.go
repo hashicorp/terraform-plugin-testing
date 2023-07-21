@@ -11,6 +11,7 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
@@ -18,13 +19,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {
+func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, stepIndex int) error {
 	t.Helper()
 
 	cfg, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: step.ConfigDirectory,
-			Raw:       step.Config,
+			Directory: config.ExecuteTestStepConfigFunc(
+				step.ConfigDirectory,
+				config.TestStepConfigRequest{
+					StepNumber: stepIndex + 1,
+				},
+			),
+			Raw: step.Config,
 		},
 	)
 
@@ -54,10 +60,15 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 	mergedConfig := step.mergedConfig(ctx, c, hasTerraformBlock, hasProviderBlock)
 
-	config, err := teststep.Configuration(
+	testStepConfig, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: step.ConfigDirectory,
-			Raw:       mergedConfig,
+			Directory: config.ExecuteTestStepConfigFunc(
+				step.ConfigDirectory,
+				config.TestStepConfigRequest{
+					StepNumber: stepIndex + 1,
+				},
+			),
+			Raw: mergedConfig,
 		},
 	)
 
@@ -65,7 +76,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("Error creating config: %w", err)
 	}
 
-	err = wd.SetConfig(ctx, config)
+	err = wd.SetConfig(ctx, testStepConfig)
 	if err != nil {
 		return fmt.Errorf("Error setting config: %w", err)
 	}
@@ -313,7 +324,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		// this fails. If refresh isn't read-only, then this will have
 		// caught a different bug.
 		if idRefreshCheck != nil {
-			if err := testIDRefresh(ctx, t, c, wd, step, idRefreshCheck, providers); err != nil {
+			if err := testIDRefresh(ctx, t, c, wd, step, idRefreshCheck, providers, stepIndex); err != nil {
 				return fmt.Errorf(
 					"[ERROR] Test: ID-only test failed: %s", err)
 			}

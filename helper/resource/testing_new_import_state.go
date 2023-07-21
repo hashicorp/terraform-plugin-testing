@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
@@ -19,15 +20,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfg teststep.Config, providers *providerFactories) error {
+func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfg teststep.Config, providers *providerFactories, stepIndex int) error {
 	t.Helper()
 
-	var config teststep.Config
+	var testStepConfig teststep.Config
 
-	config, err := teststep.Configuration(
+	testStepConfig, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: step.ConfigDirectory,
-			Raw:       step.Config,
+			Directory: config.ExecuteTestStepConfigFunc(
+				step.ConfigDirectory,
+				config.TestStepConfigRequest{
+					StepNumber: stepIndex + 1,
+				},
+			),
+			Raw: step.Config,
 		},
 	)
 
@@ -92,11 +98,11 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
 	// Create working directory for import tests
-	if !config.HasConfiguration() {
+	if !testStepConfig.HasConfiguration() {
 		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
 
-		config = cfg
-		if !config.HasConfiguration() {
+		testStepConfig = cfg
+		if !testStepConfig.HasConfiguration() {
 			t.Fatal("Cannot import state with no specified config")
 		}
 	}
@@ -111,7 +117,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		defer importWd.Close()
 	}
 
-	err = importWd.SetConfig(ctx, config)
+	err = importWd.SetConfig(ctx, testStepConfig)
 	if err != nil {
 		t.Fatalf("Error setting test config: %s", err)
 	}

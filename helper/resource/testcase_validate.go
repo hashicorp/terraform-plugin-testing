@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 )
@@ -77,8 +78,12 @@ func (c TestCase) validate(ctx context.Context) error {
 	for stepIndex, step := range c.Steps {
 		stepConfiguration, err := teststep.Configuration(
 			teststep.ConfigurationRequest{
-				Directory: step.ConfigDirectory,
-				Raw:       step.Config,
+				Directory: config.ExecuteTestStepConfigFunc(
+					step.ConfigDirectory,
+					config.TestStepConfigRequest{
+						StepNumber: stepIndex + 1,
+					}),
+				Raw: step.Config,
 			},
 		)
 
