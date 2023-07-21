@@ -244,6 +244,31 @@ func Test_ExpectUnknownValue_ExpectError_KnownValue(t *testing.T) {
 	})
 }
 
+func Test_ExpectUnknownValue_ExpectError_ResourceNotFound(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("test_resource.two", tfjsonpath.New("set_attribute")),
+					},
+				},
+				ExpectError: regexp.MustCompile(`test_resource.two - Resource not found in plan ResourceChanges`),
+			},
+		},
+	})
+}
+
 func testProvider() *schema.Provider {
 	return &schema.Provider{
 		ResourcesMap: map[string]*schema.Resource{

@@ -5,6 +5,7 @@ package plancheck_test
 
 import (
 	"context"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -181,6 +182,31 @@ func Test_ExpectSensitiveValue_SetNestedBlock_SensitiveAttribute(t *testing.T) {
 							tfjsonpath.New("set_nested_block_sensitive_attribute")),
 					},
 				},
+			},
+		},
+	})
+}
+
+func Test_ExpectSensitiveValue_ExpectError_ResourceNotFound(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProviderSensitive(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectSensitiveValue("test_resource.two", tfjsonpath.New("set_attribute")),
+					},
+				},
+				ExpectError: regexp.MustCompile(`test_resource.two - Resource not found in plan ResourceChanges`),
 			},
 		},
 	})

@@ -19,7 +19,6 @@ type expectSensitiveValue struct {
 
 // CheckPlan implements the plan check logic.
 func (e expectSensitiveValue) CheckPlan(ctx context.Context, req CheckPlanRequest, resp *CheckPlanResponse) {
-	var result error
 
 	for _, rc := range req.Plan.ResourceChanges {
 		if e.resourceAddress != rc.Address {
@@ -42,9 +41,12 @@ func (e expectSensitiveValue) CheckPlan(ctx context.Context, req CheckPlanReques
 			resp.Error = fmt.Errorf("attribute at path is not sensitive")
 			return
 		}
+
+		return
 	}
 
-	resp.Error = result
+	resp.Error = fmt.Errorf("%s - Resource not found in plan ResourceChanges", e.resourceAddress)
+	return
 }
 
 // ExpectSensitiveValue returns a plan check that asserts that the specified attribute at the given resource has a sensitive value.
