@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -23,7 +22,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -1210,100 +1208,6 @@ func TestTest_TestStep_Taint(t *testing.T) {
 	if idOne == idTwo {
 		t.Errorf("taint is not causing destroy-create cycle, idOne == idTwo: %s == %s", idOne, idTwo)
 	}
-}
-
-func TestTest_ConfigDirectory(t *testing.T) {
-	t.Parallel()
-
-	Test(t, TestCase{
-		Steps: []TestStep{
-			{
-				ConfigDirectory: config.StaticDirectory(`../fixtures/random_password_3.5.1`),
-				Check:           TestCheckResourceAttrSet("random_password.test", "id"),
-			},
-		},
-	})
-}
-
-func TestTest_ConfigDirectory_MultipleFiles(t *testing.T) {
-	t.Parallel()
-
-	Test(t, TestCase{
-		Steps: []TestStep{
-			{
-				ConfigDirectory: config.StaticDirectory(`../fixtures/random_password_3.5.1_multiple_files`),
-				Check:           TestCheckResourceAttrSet("random_password.test", "id"),
-			},
-		},
-	})
-}
-
-// TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist uses Terraform
-// configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
-// random provider password resource. This test confirms that the TestCase ExternalProviders
-// is being used when ConfigDirectory is set.
-func TestTest_ConfigDirectory_AttributeDoesNotExist(t *testing.T) {
-	t.Parallel()
-
-	Test(t, TestCase{
-		Steps: []TestStep{
-			{
-				ConfigDirectory: config.StaticDirectory(`../fixtures/random_password_3.2.0`),
-				ExpectError:     regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
-			},
-		},
-	})
-}
-
-// TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist uses Terraform
-// configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
-// random provider password resource. This test confirms that the TestCase ExternalProviders
-// is being used when ConfigDirectory is set.
-func TestTest_ConfigDirectory_AttributeDoesNotExist_MultipleFiles(t *testing.T) {
-	t.Parallel()
-
-	Test(t, TestCase{
-		Steps: []TestStep{
-			{
-				ConfigDirectory: config.StaticDirectory(`../fixtures/random_password_3.2.0_multiple_files`),
-				ExpectError:     regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
-			},
-		},
-	})
-}
-
-func TestTest_TestStep_ProviderFactories_ConfigDirectory(t *testing.T) {
-	t.Parallel()
-
-	Test(t, TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"random": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return &schema.Provider{
-					ResourcesMap: map[string]*schema.Resource{
-						"random_id": {
-							CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-								d.SetId(time.Now().String())
-								return nil
-							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
-								return nil
-							},
-							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
-								return nil
-							},
-							Schema: map[string]*schema.Schema{},
-						},
-					},
-				}, nil
-			},
-		},
-		Steps: []TestStep{
-			{
-				ConfigDirectory: config.StaticDirectory(`../fixtures/random_id`),
-				Check:           TestCheckResourceAttrSet("random_id.test", "id"),
-			},
-		},
-	})
 }
 
 //nolint:unparam
