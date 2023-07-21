@@ -23,7 +23,7 @@ Given the tree structure of JSON objects, descriptions of paths and their steps 
 
 ## Building Paths
 
-The `terraform-plugin-testing` module implementation for tfjson paths is in the [`tfjsonpath` package](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfjsonpath), with the [`tfjsonpath.Path` type](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfjsonpath#Path) being the main provider developer interaction point. Call the [`tfjsonpath.Create()` function](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfjsonpath#Create) with an element name at the root of the object to begin a path.
+The `terraform-plugin-testing` module implementation for tfjson paths is in the [`tfjsonpath` package](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfjsonpath), with the [`tfjsonpath.Path` type](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfjsonpath#Path) being the main provider developer interaction point. Call the [`tfjsonpath.New()` function](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfjsonpath#New) with a property name at the root of the object to begin a path.
 
 Given the following JSON object
 
@@ -40,10 +40,10 @@ Given the following JSON object
 }
 ```
 
-The call to `tfjsonpath.Create()` which matches the location of `firstName` string value is:
+The call to `tfjsonpath.New()` which matches the location of `firstName` string value is:
 
 ```go
-tfjsonpath.Create("firstName")
+tfjsonpath.New("firstName")
 ```
 
 Once a `tfjsonpath.Path` is started, it supports a builder pattern, which allows for chaining method calls to construct a full path.
@@ -51,7 +51,7 @@ Once a `tfjsonpath.Path` is started, it supports a builder pattern, which allows
 The path which matches the location of the string value `"222-222-222"` is:
 
 ```go
-tfjsonpath.Create("phoneNumbers").atSliceIndex(1).AtMapKey("Home")
+tfjsonpath.New("phoneNumbers").AtSliceIndex(1).AtMapKey("Home")
 ```
 
 ### Building Attribute Paths
@@ -101,10 +101,10 @@ And the following Terraform JSON object representation of the state:
 }
 ```
 
-The call to `tfjsonpath.Create()` which matches the location of `example_root_attribute` string value is:
+The call to `tfjsonpath.New()` which matches the location of `example_root_attribute` string value is:
 
 ```go
-tfjsonpath.Create("example_root_attribute")
+tfjsonpath.New("example_root_attribute")
 ```
 
 For blocks, the beginning of a path is similarly defined.
@@ -141,10 +141,10 @@ And the following Terraform JSON object representation of the state:
 }
 ```
 
-The call to `tfjsonpath.Create()` which matches the location of `example_root_block` slice value is:
+The call to `tfjsonpath.New()` which matches the location of `example_root_block` slice value is:
 
 ```go
-tfjsonpath.Create("example_root_block")
+tfjsonpath.New("example_root_block")
 ```
 
 ### Building Aggregate Type Attribute Paths
@@ -216,19 +216,19 @@ And the following Terraform JSON object representation of the state:
 The path which matches the string value associated with the map key `example-key` of the `root_map_attribute` attribute is:
 
 ```go
-tfjsonpath.Create("root_map_attribute").AtMapKey("example-key")
+tfjsonpath.New("root_map_attribute").AtMapKey("example-key")
 ```
 
 The path which matches the string value `list-value1` in the `root_list_attribute` attribute is:
 
 ```go
-tfjsonpath.Create("root_list_attribute").AtSliceIndex(0)
+tfjsonpath.New("root_list_attribute").AtSliceIndex(0)
 ```
 
 The path which matches the string value `set-value2` in the `root_set_attribute` attribute is:
 
 ```go
-tfjsonpath.Create("root_set_attribute").AtSliceIndex(1)
+tfjsonpath.New("root_set_attribute").AtSliceIndex(1)
 ```
 
 Note that because Sets are unordered in Terraform, the ordering of Set elements in the Terraform JSON data is not guaranteed to be the same as the ordering in the configuration.
@@ -283,19 +283,19 @@ And the following Terraform JSON object representation of the state:
 The path which matches the slice associated with the `root_list_attribute` attribute is:
 
 ```go
-tfjsonpath.Create("root_list_attribute")
+tfjsonpath.New("root_list_attribute")
 ```
 
 The path which matches the first map in the slice associated with the `root_list_attribute` attribute is:
 
 ```go
-tfjsonpath.Create("root_list_attribute").AtSliceIndex(0)
+tfjsonpath.New("root_list_attribute").AtSliceIndex(0)
 ```
 
 The path which matches the `nested_string_attribute` map key in the first map in the slice associated with `root_list_attribute` attribute is:
 
 ```go
-tfjsonpath.Create("root_list_attribute").AtSliceIndex(0).AtMapKey("nested_string_attribute")
+tfjsonpath.New("root_list_attribute").AtSliceIndex(0).AtMapKey("nested_string_attribute")
 ```
 
 #### Building Map Nested Attributes Paths
@@ -335,19 +335,19 @@ And the following Terraform JSON object representation of the state:
 The path which matches the map associated with the `root_map_attribute` attribute is:
 
 ```go
-tfjsonpath.Create("root_map_attribute")
+tfjsonpath.New("root_map_attribute")
 ```
 
 The path which matches the `"example-key"` object in the map associated with the `root_map_attribute` attribute is:
 
 ```go
-tfjsonpath.Create("root_map_attribute").AtMapKey("example-key")
+tfjsonpath.New("root_map_attribute").AtMapKey("example-key")
 ```
 
 The path which matches the `nested_string_attribute` string value in a `"example-key"` object in the map associated with `root_map_attribute` attribute is:
 
 ```go
-tfjsonpath.Create("root_map_attribute").AtMapKey("example-key").AtMapKey("nested_string_attribute")
+tfjsonpath.New("root_map_attribute").AtMapKey("example-key").AtMapKey("nested_string_attribute")
 ```
 
 #### Building Set Nested Attributes Paths
@@ -387,13 +387,13 @@ And the following Terraform JSON object representation of the state:
 The path which matches the set associated with the `root_set_attribute` attribute is:
 
 ```go
-tfjsonpath.Create("root_set_attribute")
+tfjsonpath.New("root_set_attribute")
 ```
 
 The path which matches the first map in the slice associated with the `root_set_attribute` attribute is:
 
 ```go
-tfjsonpath.Create("root_set_attribute").AtSliceIndex(0)
+tfjsonpath.New("root_set_attribute").AtSliceIndex(0)
 ```
 
 Note that because Sets are unordered in Terraform, the ordering of Set elements in the Terraform JSON data is not guaranteed to be the same as the ordering in the configuration.
@@ -401,7 +401,7 @@ Note that because Sets are unordered in Terraform, the ordering of Set elements 
 The path which matches the `nested_string_attribute` map key in the first map in the slice associated with `root_set_attribute` attribute is:
 
 ```go
-tfjsonpath.Create("root_set_attribute").AtSliceIndex(0).AtMapKey("nested_string_attribute")
+tfjsonpath.New("root_set_attribute").AtSliceIndex(0).AtMapKey("nested_string_attribute")
 ```
 
 #### Building Single Nested Attributes Paths
@@ -437,13 +437,13 @@ And the following Terraform JSON object representation of the state:
 The path which matches the map associated with the `root_grouped_attributes` attribute is:
 
 ```go
-path.Create("root_grouped_attributes")
+tfjsonpath.New("root_grouped_attributes")
 ```
 
 The path which matches the `nested_string_attribute` string value in the map associated with the `root_grouped_attributes` attribute is:
 
 ```go
-path.Create("root_grouped_attributes").AtMapKey("nested_string_attribute")
+tfjsonpath.New("root_grouped_attributes").AtMapKey("nested_string_attribute")
 ```
 
 ### Building Block Paths
@@ -537,31 +537,31 @@ And the following Terraform JSON object representation of the state:
 The path which matches the slice associated with the `root_list_block` block is:
 
 ```go
-path.Create("root_list_block")
+tfjsonpath.New("root_list_block")
 ```
 
 The path which matches the first map in the slice associated with the `root_list_block` block is:
 
 ```go
-path.Create("root_list_block").AtSliceIndex(0)
+tfjsonpath.New("root_list_block").AtSliceIndex(0)
 ```
 
 The path which matches the `block_string_attribute` string value in the first map in the slice associated with `root_list_block` block is:
 
 ```go
-path.Create("root_list_block").AtSliceIndex(0).AtMapKey("block_string_attribute")
+tfjsonpath.New("root_list_block").AtSliceIndex(0).AtMapKey("block_string_attribute")
 ```
 
 The path which matches the `nested_list_block` slice in the first object in the slice associated with `root_list_block` block is:
 
 ```go
-path.Create("root_list_block").AtSliceIndex(0).AtMapKey("nested_list_block")
+tfjsonpath.New("root_list_block").AtSliceIndex(0).AtMapKey("nested_list_block")
 ```
 
 The path which matches the `nested_block_string_attribute` string value in the first map in the slice associated with the `nested_list_block` slice in the first map in the slice associated with `root_list_block` block is:
 
 ```go
-path.Create("root_list_block").AtSliceIndex(0).AtMapKey("nested_list_block").AtSliceIndex(0).AtMapKey("nested_block_string_attribute")
+tfjsonpath.New("root_list_block").AtSliceIndex(0).AtMapKey("nested_list_block").AtSliceIndex(0).AtMapKey("nested_block_string_attribute")
 ```
 
 #### Building Set Block Paths
@@ -616,14 +616,14 @@ And the following Terraform JSON object representation of the state:
 The path which matches the slice associated with the `root_set_block` block is:
 
 ```go
-path.Create("root_set_block")
+tfjsonpath.New("root_set_block")
 ```
 
 
 The path which matches the first map in the slice associated with the `root_set_block` block is:
 
 ```go
-path.Create("root_set_block").AtSliceIndex(0)
+tfjsonpath.New("root_set_block").AtSliceIndex(0)
 ```
 
 Note that because sets are unordered in Terraform, the ordering of set elements in the Terraform JSON data is not guaranteed to be the same as the ordering in the configuration.
@@ -631,7 +631,7 @@ Note that because sets are unordered in Terraform, the ordering of set elements 
 The path which matches the `block_string_attribute` string value in the first map in the slice associated with `root_set_block` block is:
 
 ```go
-path.Create("root_set_block").AtSliceIndex(0).AtMapKey("block_string_attribute")
+tfjsonpath.New("root_set_block").AtSliceIndex(0).AtMapKey("block_string_attribute")
 ````
 
 #### Building Single Block Paths
@@ -673,17 +673,17 @@ tfjsonpath.Create("root_single_block")
 The path which matches the `block_string_attribute` string value in the map associated with `root_single_block` block is:
 
 ```go
-tfjsonpath.Create("root_single_block").AtMapKey("block_string_attribute")
+tfjsonpath.New("root_single_block").AtMapKey("block_string_attribute")
 ```
 
 The path which matches the `nested_single_block` map in the map associated with `root_single_block` block is:
 
 ```go
-tfjsonpath.Create("root_single_block").AtMapKey("nested_single_block")
+tfjsonpath.New("root_single_block").AtMapKey("nested_single_block")
 ```
 
 The path which matches the `nested_block_string_attribute` string value in the map associated with the `nested_single_block` in the map associated with `root_single_block` block is:
 
 ```go
-tfjsonpath.Create("root_single_block").AtMapKey("nested_single_block").AtMapKey("nested_block_string_attribute")
+tfjsonpath.New("root_single_block").AtMapKey("nested_single_block").AtMapKey("nested_block_string_attribute")
 ```

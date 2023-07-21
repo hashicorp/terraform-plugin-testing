@@ -14,7 +14,7 @@ import (
 // The [terraform-json] library serves as the de facto documentation
 // for JSON format of Terraform data.
 //
-// Use the Create() function to create a Path with an initial AtMapKey() step.
+// Use the New() function to create a Path with an initial AtMapKey() step.
 // Path functionality follows a builder pattern, which allows for chaining method
 // calls to construct a full path. The available traversal steps after Path
 // creation are:
@@ -22,10 +22,16 @@ import (
 //   - AtSliceIndex(): Step into a slice at a specific 0-based index
 //   - AtMapKey(): Step into a map at a specific key
 //
-// For example, to represent the first element in a top-level JSON array
-// named "some_array":
+// For example, to represent the first element of a JSON array
+// underneath a "some_array" property of this JSON value:
 //
-//	path.Create("some_array").AtSliceIndex(0)
+//    {
+//      "some_array": [true]
+//    }
+//
+//  The path code would be represented by:
+//
+//	tfjsonpath.New("some_array").AtSliceIndex(0)
 //
 // [terraform-json]: (https://pkg.go.dev/github.com/hashicorp/terraform-json)
 type Path struct {
