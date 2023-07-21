@@ -29,21 +29,21 @@ Given the following JSON object
 
 ```json
 {
-   "firstName": "John",
-   "lastName": "Doe",
+   "first_name": "John",
+   "last_name": "Doe",
    "age": 18,
-   "streetAddress": "123 Terraform Dr.",
-   "phoneNumbers": [
-      { "Mobile": "111-111-1111" },
-      { "Home": "222-222-2222" }
+   "street_address": "123 Terraform Dr.",
+   "phone_numbers": [
+      { "mobile": "111-111-1111" },
+      { "home": "222-222-2222" }
    ]
 }
 ```
 
-The call to `tfjsonpath.New()` which matches the location of `firstName` string value is:
+The call to `tfjsonpath.New()` which matches the location of `first_name` string value is:
 
 ```go
-tfjsonpath.New("firstName")
+tfjsonpath.New("first_name")
 ```
 
 Once a `tfjsonpath.Path` is started, it supports a builder pattern, which allows for chaining method calls to construct a full path.
@@ -51,12 +51,13 @@ Once a `tfjsonpath.Path` is started, it supports a builder pattern, which allows
 The path which matches the location of the string value `"222-222-222"` is:
 
 ```go
-tfjsonpath.New("phoneNumbers").AtSliceIndex(1).AtMapKey("Home")
+tfjsonpath.New("phone_numbers").AtSliceIndex(1).AtMapKey("home")
 ```
 
-### Building Attribute Paths
-
 The most common usage of `tfjsonpath.Path` is to specify an attribute within Terraform JSON data. When used in this way, the root of the JSON object is the same as the root of a schema.
+The follow sections show how to build attribute paths for [primitive attributes](#building-attribute-paths), [aggregate attributes](#building-aggregate-type-attribute-paths), [nested attributes](#building-nested-attribute-paths), and [blocks](#building-block-paths).
+
+### Building Attribute Paths
 
 The following table shows the different [`tfjsonpath.Path` type](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfjsonpath#Path) methods associated with building paths for attribute implementations. Attribute types that cannot be traversed further are shown with N/A (not applicable).
 
@@ -237,12 +238,12 @@ Note that because Sets are unordered in Terraform, the ordering of Set elements 
 
 The following table shows the different [`tfjsonpath.Path` type](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfjsonpath#Path) methods associated with building paths for nested attributes.
 
-| Nested Attribute Type          | Child Path Method |
-|--------------------------------|-------------------|
-| `schema.ListNestedAttribute`   | `AtSliceIndex()`  |
-| `schema.MapNestedAttribute`    | `AtMapKey()`      |
-| `schema.SetNestedAttribute`    | `AtSliceIndex()`  |
-| `schema.SingleNestedAttribute` | `AtMapKey()`      |
+| Nested Attribute Type          | Child Path Method(s)        |
+|--------------------------------|-----------------------------|
+| `schema.ListNestedAttribute`   | `AtSliceIndex().AtMapKey()` |
+| `schema.MapNestedAttribute`    | `AtMapKey().AtMapKey()`     |
+| `schema.SetNestedAttribute`    | `AtSliceIndex().AtMapKey()` |
+| `schema.SingleNestedAttribute` | `AtMapKey()`                |
 
 Nested attributes eventually follow the same path rules as attributes at child paths, which follow the methods shown in the [Building Attribute Paths section](#building-attribute-paths).
 
@@ -450,11 +451,11 @@ tfjsonpath.New("root_grouped_attributes").AtMapKey("nested_string_attribute")
 
 The following table shows the different [`tfjsonpath.Path` type](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfjsonpath#Path) methods associated with building paths for blocks.
 
-| Block Type          | Child Path Method |
-|---------------------|-------------------|
-| `ListNestedBlock`   | `AtSliceIndex()`  |
-| `SetNestedBlock`    | `AtSliceIndex()`  |
-| `SingleNestedBlock` | `AtMapKey()`      |
+| Block Type          | Child Path Method(s)        |
+|---------------------|-----------------------------|
+| `ListNestedBlock`   | `AtSliceIndex().AtMapKey()` |
+| `SetNestedBlock`    | `AtSliceIndex().AtMapKey()` |
+| `SingleNestedBlock` | `AtMapKey()`                |
 
 Blocks can implement nested blocks. Paths can continue to be built using the associated method with each level of the block type.
 
@@ -667,7 +668,7 @@ schema.Schema{
 The path which matches the map associated with the `root_single_block` block is:
 
 ```go
-tfjsonpath.Create("root_single_block")
+tfjsonpath.New("root_single_block")
 ```
 
 The path which matches the `block_string_attribute` string value in the map associated with `root_single_block` block is:
