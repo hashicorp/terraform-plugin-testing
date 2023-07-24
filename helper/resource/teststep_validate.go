@@ -60,8 +60,7 @@ func (s TestStep) hasProviders(ctx context.Context, stepIndex int) (bool, error)
 
 	cfg, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: config.ExecuteTestStepConfigFunc(
-				s.ConfigDirectory,
+			Directory: s.ConfigDirectory.Exec(
 				config.TestStepConfigRequest{
 					StepNumber: stepIndex + 1,
 				},

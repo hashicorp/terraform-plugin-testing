@@ -148,8 +148,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 		cfg, err := teststep.Configuration(
 			teststep.ConfigurationRequest{
-				Directory: config.ExecuteTestStepConfigFunc(
-					step.ConfigDirectory,
+				Directory: step.ConfigDirectory.Exec(
 					config.TestStepConfigRequest{
 						StepNumber: stepIndex + 1,
 					},
@@ -243,12 +242,10 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			// passed to wd.SetConfig() when the second argument accept a configuration string.
 			testStepConfig, err = teststep.Configuration(
 				teststep.ConfigurationRequest{
-					Directory: config.ExecuteTestStepConfigFunc(
-						step.ConfigDirectory,
+					Directory: step.ConfigDirectory.Exec(
 						config.TestStepConfigRequest{
 							StepNumber: stepIndex + 1,
-						},
-					),
+						}),
 					Raw: step.providerConfig(ctx, hasProviderBlock),
 				},
 			)
@@ -430,8 +427,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 			appliedCfg, err = teststep.Configuration(
 				teststep.ConfigurationRequest{
-					Directory: config.ExecuteTestStepConfigFunc(
-						step.ConfigDirectory,
+					Directory: step.ConfigDirectory.Exec(
 						config.TestStepConfigRequest{
 							StepNumber: stepIndex + 1,
 						},
@@ -501,8 +497,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 	cfg, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: config.ExecuteTestStepConfigFunc(
-				step.ConfigDirectory,
+			Directory: step.ConfigDirectory.Exec(
 				config.TestStepConfigRequest{
 					StepNumber: stepIndex + 1,
 				},
@@ -555,8 +550,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 	defer func() {
 		testStepConfigDefer, err := teststep.Configuration(
 			teststep.ConfigurationRequest{
-				Directory: config.ExecuteTestStepConfigFunc(
-					step.ConfigDirectory,
+				Directory: step.ConfigDirectory.Exec(
 					config.TestStepConfigRequest{
 						StepNumber: stepIndex + 1,
 					},

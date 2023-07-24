@@ -24,8 +24,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 	cfg, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: config.ExecuteTestStepConfigFunc(
-				step.ConfigDirectory,
+			Directory: step.ConfigDirectory.Exec(
 				config.TestStepConfigRequest{
 					StepNumber: stepIndex + 1,
 				},
@@ -62,8 +61,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 	testStepConfig, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: config.ExecuteTestStepConfigFunc(
-				step.ConfigDirectory,
+			Directory: step.ConfigDirectory.Exec(
 				config.TestStepConfigRequest{
 					StepNumber: stepIndex + 1,
 				},

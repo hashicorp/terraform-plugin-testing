@@ -94,7 +94,7 @@ func TestTest_ConfigDirectory_TestStepDirectory_MultipleFiles(t *testing.T) {
 	})
 }
 
-// TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist uses Terraform
+// TestTest_ConfigDirectory_StaticDirectory_AttributeDoesNotExist uses Terraform
 // configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
 // random provider password resource. This test confirms that the TestCase ExternalProviders
 // is being used when ConfigDirectory is set.
@@ -111,7 +111,7 @@ func TestTest_ConfigDirectory_StaticDirectory_AttributeDoesNotExist(t *testing.T
 	})
 }
 
-// TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist uses Terraform
+// TestTest_ConfigDirectory_TestNameDirectory_AttributeDoesNotExist uses Terraform
 // configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
 // random provider password resource. This test confirms that the TestCase ExternalProviders
 // is being used when ConfigDirectory is set.
@@ -128,7 +128,7 @@ func TestTest_ConfigDirectory_TestNameDirectory_AttributeDoesNotExist(t *testing
 	})
 }
 
-// TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist uses Terraform
+// TestTest_ConfigDirectory_TestStepDirectory_AttributeDoesNotExist uses Terraform
 // configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
 // random provider password resource. This test confirms that the TestCase ExternalProviders
 // is being used when ConfigDirectory is set.
@@ -145,7 +145,7 @@ func TestTest_ConfigDirectory_TestStepDirectory_AttributeDoesNotExist(t *testing
 	})
 }
 
-// TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist uses Terraform
+// TestTest_ConfigDirectory_StaticDirectory_AttributeDoesNotExist_MultipleFiles uses Terraform
 // configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
 // random provider password resource. This test confirms that the TestCase ExternalProviders
 // is being used when ConfigDirectory is set.
@@ -162,7 +162,7 @@ func TestTest_ConfigDirectory_StaticDirectory_AttributeDoesNotExist_MultipleFile
 	})
 }
 
-// TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist uses Terraform
+// TestTest_ConfigDirectory_TestNameDirectory_AttributeDoesNotExist_MultipleFiles uses Terraform
 // configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
 // random provider password resource. This test confirms that the TestCase ExternalProviders
 // is being used when ConfigDirectory is set.
@@ -179,7 +179,7 @@ func TestTest_ConfigDirectory_TestNameDirectory_AttributeDoesNotExist_MultipleFi
 	})
 }
 
-// TestTest_TestCase_ExternalProviders_ConfigDirectory_AttributeDoesNotExist uses Terraform
+// TestTest_ConfigDirectory_TestStepDirectory_AttributeDoesNotExist_MultipleFiles uses Terraform
 // configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
 // random provider password resource. This test confirms that the TestCase ExternalProviders
 // is being used when ConfigDirectory is set.

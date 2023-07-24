@@ -9,11 +9,19 @@ import (
 	"testing"
 )
 
+type TestStepConfigFunc func(TestStepConfigRequest) string
+
 type TestStepConfigRequest struct {
 	StepNumber int
 }
 
-type TestStepConfigFunc = func(TestStepConfigRequest) string
+func (f TestStepConfigFunc) Exec(req TestStepConfigRequest) string {
+	if f != nil {
+		return f(req)
+	}
+
+	return ""
+}
 
 func StaticDirectory(directory string) func(TestStepConfigRequest) string {
 	return func(_ TestStepConfigRequest) string {
@@ -33,12 +41,4 @@ func TestStepDirectory(t *testing.T) func(TestStepConfigRequest) string {
 	return func(req TestStepConfigRequest) string {
 		return filepath.Join(t.Name(), strconv.Itoa(req.StepNumber))
 	}
-}
-
-func ExecuteTestStepConfigFunc(f TestStepConfigFunc, r TestStepConfigRequest) string {
-	if f != nil {
-		return f(r)
-	}
-
-	return ""
 }

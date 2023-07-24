@@ -27,8 +27,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	testStepConfig, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: config.ExecuteTestStepConfigFunc(
-				step.ConfigDirectory,
+			Directory: step.ConfigDirectory.Exec(
 				config.TestStepConfigRequest{
 					StepNumber: stepIndex + 1,
 				},

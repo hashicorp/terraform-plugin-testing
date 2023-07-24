@@ -78,8 +78,7 @@ func (c TestCase) validate(ctx context.Context) error {
 	for stepIndex, step := range c.Steps {
 		stepConfiguration, err := teststep.Configuration(
 			teststep.ConfigurationRequest{
-				Directory: config.ExecuteTestStepConfigFunc(
-					step.ConfigDirectory,
+				Directory: step.ConfigDirectory.Exec(
 					config.TestStepConfigRequest{
 						StepNumber: stepIndex + 1,
 					}),
