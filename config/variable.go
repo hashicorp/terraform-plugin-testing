@@ -3,15 +3,16 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"math/big"
 	"os"
 	"path/filepath"
+	"reflect"
 
 	"golang.org/x/exp/constraints"
 )
 
-const autoTFVarsJson = "generated.auto.tfvars.json"
+const AutoTFVarsJson = "generated.auto.tfvars.json"
 
 // Variable interface is an alias to json.Marshaler.
 type Variable interface {
@@ -23,7 +24,7 @@ type Variable interface {
 type Variables map[string]Variable
 
 // Write iterates over each element in v and assembles a JSON
-// file which is named autoTFVarsJson and written to dest.
+// file which is named AutoTFVarsJson and written to dest.
 func (v Variables) Write(dest string) error {
 	buf := bytes.NewBuffer(nil)
 
@@ -47,7 +48,7 @@ func (v Variables) Write(dest string) error {
 
 	buf.Write([]byte(`}`))
 
-	outFilename := filepath.Join(dest, autoTFVarsJson)
+	outFilename := filepath.Join(dest, AutoTFVarsJson)
 
 	err := os.WriteFile(outFilename, buf.Bytes(), 0700)
 
@@ -65,8 +66,8 @@ type boolVariable struct {
 }
 
 // MarshalJSON returns the JSON encoding of boolVariable.
-func (t boolVariable) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.value)
+func (v boolVariable) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.value)
 }
 
 // BoolVariable instantiates an instance of boolVariable,
@@ -84,8 +85,12 @@ type listVariable struct {
 }
 
 // MarshalJSON returns the JSON encoding of listVariable.
-func (t listVariable) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.value)
+func (v listVariable) MarshalJSON() ([]byte, error) {
+	if !typesEq(v.value) {
+		return nil, errors.New("lists must contain the same type")
+	}
+
+	return json.Marshal(v.value)
 }
 
 // ListVariable instantiates an instance of listVariable,
@@ -103,8 +108,18 @@ type mapVariable struct {
 }
 
 // MarshalJSON returns the JSON encoding of mapVariable.
-func (t mapVariable) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.value)
+func (v mapVariable) MarshalJSON() ([]byte, error) {
+	var variables []Variable
+
+	for _, variable := range v.value {
+		variables = append(variables, variable)
+	}
+
+	if !typesEq(variables) {
+		return nil, errors.New("maps must contain the same type")
+	}
+
+	return json.Marshal(v.value)
 }
 
 // MapVariable instantiates an instance of mapVariable,
@@ -122,8 +137,20 @@ type objectVariable struct {
 }
 
 // MarshalJSON returns the JSON encoding of objectVariable.
-func (t objectVariable) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.value)
+func (v objectVariable) MarshalJSON() ([]byte, error) {
+	b, err := json.Marshal(v.value)
+
+	if err != nil {
+		innerErr := err
+
+		for errors.Unwrap(innerErr) != nil {
+			innerErr = errors.Unwrap(err)
+		}
+
+		return nil, innerErr
+	}
+
+	return b, nil
 }
 
 // ObjectVariable instantiates an instance of objectVariable,
@@ -137,7 +164,7 @@ func ObjectVariable(value map[string]Variable) objectVariable {
 var _ Variable = numberVariable{}
 
 type number interface {
-	constraints.Float | constraints.Integer | *big.Float
+	constraints.Float | constraints.Integer | string
 }
 
 type numberVariable struct {
@@ -145,18 +172,19 @@ type numberVariable struct {
 }
 
 // MarshalJSON returns the JSON encoding of numberVariable.
-// If the value of numberVariable is *bigFloat then the
-// representation of the value is the smallest number of
-// digits required to uniquely identify the value using the
-// precision of the *bigFloat that was supplied when
-// numberVariable was instantiated.
-func (t numberVariable) MarshalJSON() ([]byte, error) {
-	switch v := t.value.(type) {
-	case *big.Float:
-		return []byte(v.Text('g', -1)), nil
+// NumberVariable allows initialising a number with any floating
+// point or integer type. NumberVariable can be initialised
+// with a string for values that do not fit into a floating point
+// or integer type.
+// TODO: Impose restrictions on what can be held in numberVariable
+// to match restrictions imposed by Terraform.
+func (v numberVariable) MarshalJSON() ([]byte, error) {
+	switch v := v.value.(type) {
+	case string:
+		return []byte(v), nil
 	}
 
-	return json.Marshal(t.value)
+	return json.Marshal(v.value)
 }
 
 // NumberVariable instantiates an instance of numberVariable,
@@ -174,8 +202,33 @@ type setVariable struct {
 }
 
 // MarshalJSON returns the JSON encoding of setVariable.
-func (t setVariable) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.value)
+func (v setVariable) MarshalJSON() ([]byte, error) {
+	for kx, x := range v.value {
+		for ky, y := range v.value {
+			if kx == ky {
+				continue
+			}
+
+			if _, ok := x.(setVariable); !ok {
+				continue
+			}
+
+			if _, ok := y.(setVariable); !ok {
+				continue
+			}
+
+			if reflect.DeepEqual(x, y) {
+				return nil, errors.New("sets must contain unique elements")
+			}
+		}
+
+	}
+
+	if !typesEq(v.value) {
+		return nil, errors.New("sets must contain the same type")
+	}
+
+	return json.Marshal(v.value)
 }
 
 // SetVariable instantiates an instance of setVariable,
@@ -193,8 +246,8 @@ type stringVariable struct {
 }
 
 // MarshalJSON returns the JSON encoding of stringVariable.
-func (t stringVariable) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.value)
+func (v stringVariable) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.value)
 }
 
 // StringVariable instantiates an instance of stringVariable,
@@ -210,8 +263,8 @@ type tupleVariable struct {
 }
 
 // MarshalJSON returns the JSON encoding of tupleVariable.
-func (t tupleVariable) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.value)
+func (v tupleVariable) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.value)
 }
 
 // TupleVariable instantiates an instance of tupleVariable,
@@ -220,4 +273,44 @@ func TupleVariable(value ...Variable) tupleVariable {
 	return tupleVariable{
 		value: value,
 	}
+}
+
+func typesEq(variables []Variable) bool {
+	var t reflect.Type
+
+	for _, variable := range variables {
+		switch x := variable.(type) {
+		case listVariable:
+			if !typesEq(x.value) {
+				return false
+			}
+		case mapVariable:
+			var vars []Variable
+
+			for _, v := range x.value {
+				vars = append(vars, v)
+			}
+
+			if !typesEq(vars) {
+				return false
+			}
+		case setVariable:
+			if !typesEq(x.value) {
+				return false
+			}
+		}
+
+		typeOfVariable := reflect.TypeOf(variable)
+
+		if t == nil {
+			t = typeOfVariable
+			continue
+		}
+
+		if t != typeOfVariable {
+			return false
+		}
+	}
+
+	return true
 }
