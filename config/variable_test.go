@@ -5,6 +5,7 @@ package config_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -351,8 +352,24 @@ func TestVariablesWrite(t *testing.T) {
 				t.Errorf("error reading tfvars file: %s", err)
 			}
 
-			if !bytes.Equal(testCase.expected, b) {
-				t.Errorf("expected %s, got %s", testCase.expected, b)
+			var expectedUnmarshalled map[string]any
+
+			err = json.Unmarshal(testCase.expected, &expectedUnmarshalled)
+
+			if err != nil {
+				t.Errorf("error unmarshalling expected: %s", err)
+			}
+
+			var gotUnmarshalled map[string]any
+
+			err = json.Unmarshal(b, &gotUnmarshalled)
+
+			if err != nil {
+				t.Errorf("error unmarshalling got: %s", err)
+			}
+
+			if diff := cmp.Diff(expectedUnmarshalled, gotUnmarshalled); diff != "" {
+				t.Errorf("expected %s, got %s", expectedUnmarshalled, gotUnmarshalled)
 			}
 		})
 	}
