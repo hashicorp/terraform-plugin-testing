@@ -116,7 +116,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		defer importWd.Close()
 	}
 
-	err = importWd.SetConfig(ctx, testStepConfig)
+	err = importWd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		t.Fatalf("Error setting test config: %s", err)
 	}

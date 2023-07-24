@@ -111,7 +111,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			t.Fatalf("TestCase error creating provider configuration: %s", err)
 		}
 
-		err = wd.SetConfig(ctx, config)
+		err = wd.SetConfig(ctx, config, nil)
 
 		if err != nil {
 			logging.HelperResourceError(ctx,
@@ -258,7 +258,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				t.Fatalf("TestStep %d/%d error creating test provider configuration: %s", stepNumber, len(c.Steps), err)
 			}
 
-			err = wd.SetConfig(ctx, testStepConfig)
+			err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 
 			if err != nil {
 				logging.HelperResourceError(ctx,
@@ -542,7 +542,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 	// Temporarily set the config to a minimal provider config for the refresh
 	// test. After the refresh we can reset it.
-	err = wd.SetConfig(ctx, testStepConfig)
+	err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		t.Fatalf("Error setting import test config: %s", err)
 	}
@@ -567,7 +567,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 			t.Fatalf("Error creating provider configuration for resetting test config: %s", err)
 		}
 
-		err = wd.SetConfig(ctx, testStepConfigDefer)
+		err = wd.SetConfig(ctx, testStepConfigDefer, step.ConfigVariables)
 
 		if err != nil {
 			t.Fatalf("Error resetting test config: %s", err)

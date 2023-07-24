@@ -74,7 +74,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("Error creating config: %w", err)
 	}
 
-	err = wd.SetConfig(ctx, testStepConfig)
+	err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		return fmt.Errorf("Error setting config: %w", err)
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
 
+	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 )
@@ -81,7 +82,7 @@ func (wd *WorkingDir) GetHelper() *Helper {
 // This must be called at least once before any call to Init, Plan, Apply, or
 // Destroy to establish the configuration. Any previously-set configuration is
 // discarded and any saved plan is cleared.
-func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config) error {
+func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config, vars config.Variables) error {
 	logging.HelperResourceTrace(ctx, "Setting Terraform configuration", map[string]any{logging.KeyTestTerraformConfiguration: cfg})
 
 	outFilename := filepath.Join(wd.baseDir, ConfigFileName)
@@ -96,7 +97,15 @@ func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config) error 
 	// wd.configFilename must be set otherwise wd.Init() will return an error.
 	wd.configFilename = outFilename
 
+	// Write configuration
 	err = cfg.Write(ctx, wd.baseDir)
+
+	if err != nil {
+		return err
+	}
+
+	//Write configuration variables
+	err = vars.Write(wd.baseDir)
 
 	if err != nil {
 		return err

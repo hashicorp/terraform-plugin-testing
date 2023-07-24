@@ -515,6 +515,15 @@ type TestStep struct {
 	// an error will be returned.
 	ConfigDirectory config.TestStepConfigFunc
 
+	// ConfigVariables is a map defining variables for use in conjunction
+	// with Terraform configuration. If this map is populated then it
+	// will be used to assemble an *.auto.tfvars.json which will be
+	// written into the working directory. Any variables that are
+	// defined within the Terraform configuration that have a matching
+	// variable definition in *.auto.tfvars.json will have their value
+	// substituted when the acceptance test is executed.
+	ConfigVariables config.Variables
+
 	// Check is called after the Config is applied. Use this step to
 	// make your own API calls to check the status of things, and to
 	// inspect the format of the ResourceState itself.

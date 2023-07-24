@@ -29,6 +29,36 @@ func TestTest_ConfigDirectory_StaticDirectory(t *testing.T) {
 	})
 }
 
+func TestTest_ConfigDirectory_StaticDirectory_Vars(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ConfigDirectory: config.StaticDirectory(`fixtures/random_password_3.5.1_vars`),
+				ConfigVariables: config.Variables{
+					"length":  config.NumberVariable(8),
+					"numeric": config.BoolVariable(false),
+				},
+				Check: resource.TestCheckResourceAttrSet("random_password.test", "id"),
+			},
+		},
+	})
+}
+
+func TestTest_ConfigDirectory_StaticDirectory_VarsMissing(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ConfigDirectory: config.StaticDirectory(`fixtures/random_password_3.5.1_vars`),
+				Check:           resource.TestCheckResourceAttrSet("random_password.test", "id"),
+				ExpectError:     regexp.MustCompile(`.*Error: No value for required variable`)},
+		},
+	})
+}
+
 func TestTest_ConfigDirectory_TestNameDirectory(t *testing.T) {
 	t.Parallel()
 
@@ -37,6 +67,23 @@ func TestTest_ConfigDirectory_TestNameDirectory(t *testing.T) {
 			{
 				ConfigDirectory: config.TestNameDirectory(t),
 				Check:           resource.TestCheckResourceAttrSet("random_password.test", "id"),
+			},
+		},
+	})
+}
+
+func TestTest_ConfigDirectory_TestNameDirectory_Vars(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ConfigDirectory: config.TestNameDirectory(t),
+				ConfigVariables: config.Variables{
+					"length":  config.NumberVariable(8),
+					"numeric": config.BoolVariable(false),
+				},
+				Check: resource.TestCheckResourceAttrSet("random_password.test", "id"),
 			},
 		},
 	})
@@ -55,6 +102,23 @@ func TestTest_ConfigDirectory_TestStepDirectory(t *testing.T) {
 	})
 }
 
+func TestTest_ConfigDirectory_TestStepDirectory_Vars(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ConfigDirectory: config.TestStepDirectory(t),
+				ConfigVariables: config.Variables{
+					"length":  config.NumberVariable(8),
+					"numeric": config.BoolVariable(false),
+				},
+				Check: resource.TestCheckResourceAttrSet("random_password.test", "id"),
+			},
+		},
+	})
+}
+
 func TestTest_ConfigDirectory_StaticDirectory_MultipleFiles(t *testing.T) {
 	t.Parallel()
 
@@ -63,6 +127,23 @@ func TestTest_ConfigDirectory_StaticDirectory_MultipleFiles(t *testing.T) {
 			{
 				ConfigDirectory: config.StaticDirectory(`fixtures/random_password_3.5.1_multiple_files`),
 				Check:           resource.TestCheckResourceAttrSet("random_password.test", "id"),
+			},
+		},
+	})
+}
+
+func TestTest_ConfigDirectory_StaticDirectory_MultipleFiles_Vars(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ConfigDirectory: config.StaticDirectory(`fixtures/random_password_3.5.1_multiple_files_vars`),
+				ConfigVariables: config.Variables{
+					"length":  config.NumberVariable(8),
+					"numeric": config.BoolVariable(false),
+				},
+				Check: resource.TestCheckResourceAttrSet("random_password.test", "id"),
 			},
 		},
 	})
@@ -81,6 +162,23 @@ func TestTest_ConfigDirectory_TestNameDirectory_MultipleFiles(t *testing.T) {
 	})
 }
 
+func TestTest_ConfigDirectory_TestNameDirectory_MultipleFiles_Vars(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ConfigDirectory: config.TestNameDirectory(t),
+				ConfigVariables: config.Variables{
+					"length":  config.NumberVariable(8),
+					"numeric": config.BoolVariable(false),
+				},
+				Check: resource.TestCheckResourceAttrSet("random_password.test", "id"),
+			},
+		},
+	})
+}
+
 func TestTest_ConfigDirectory_TestStepDirectory_MultipleFiles(t *testing.T) {
 	t.Parallel()
 
@@ -89,6 +187,23 @@ func TestTest_ConfigDirectory_TestStepDirectory_MultipleFiles(t *testing.T) {
 			{
 				ConfigDirectory: config.TestStepDirectory(t),
 				Check:           resource.TestCheckResourceAttrSet("random_password.test", "id"),
+			},
+		},
+	})
+}
+
+func TestTest_ConfigDirectory_TestStepDirectory_MultipleFiles_Vars(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ConfigDirectory: config.TestStepDirectory(t),
+				ConfigVariables: config.Variables{
+					"length":  config.NumberVariable(8),
+					"numeric": config.BoolVariable(false),
+				},
+				Check: resource.TestCheckResourceAttrSet("random_password.test", "id"),
 			},
 		},
 	})
@@ -111,6 +226,27 @@ func TestTest_ConfigDirectory_StaticDirectory_AttributeDoesNotExist(t *testing.T
 	})
 }
 
+// TestTest_ConfigDirectory_StaticDirectory_AttributeDoesNotExist_Vars uses Terraform
+// configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
+// random provider password resource. This test confirms that the TestCase ExternalProviders
+// is being used when ConfigDirectory is set.
+func TestTest_ConfigDirectory_StaticDirectory_AttributeDoesNotExist_Vars(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ConfigDirectory: config.StaticDirectory(`fixtures/random_password_3.2.0_vars`),
+				ConfigVariables: config.Variables{
+					"length":  config.NumberVariable(8),
+					"numeric": config.BoolVariable(false),
+				},
+				ExpectError: regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
+			},
+		},
+	})
+}
+
 // TestTest_ConfigDirectory_TestNameDirectory_AttributeDoesNotExist uses Terraform
 // configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
 // random provider password resource. This test confirms that the TestCase ExternalProviders
@@ -123,6 +259,27 @@ func TestTest_ConfigDirectory_TestNameDirectory_AttributeDoesNotExist(t *testing
 			{
 				ConfigDirectory: config.TestNameDirectory(t),
 				ExpectError:     regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
+			},
+		},
+	})
+}
+
+// TestTest_ConfigDirectory_TestNameDirectory_AttributeDoesNotExist_Vars uses Terraform
+// configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
+// random provider password resource. This test confirms that the TestCase ExternalProviders
+// is being used when ConfigDirectory is set.
+func TestTest_ConfigDirectory_TestNameDirectory_AttributeDoesNotExist_Vars(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ConfigDirectory: config.TestNameDirectory(t),
+				ConfigVariables: config.Variables{
+					"length":  config.NumberVariable(8),
+					"numeric": config.BoolVariable(false),
+				},
+				ExpectError: regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
 			},
 		},
 	})
@@ -145,6 +302,27 @@ func TestTest_ConfigDirectory_TestStepDirectory_AttributeDoesNotExist(t *testing
 	})
 }
 
+// TestTest_ConfigDirectory_TestStepDirectory_AttributeDoesNotExist_Vars uses Terraform
+// configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
+// random provider password resource. This test confirms that the TestCase ExternalProviders
+// is being used when ConfigDirectory is set.
+func TestTest_ConfigDirectory_TestStepDirectory_AttributeDoesNotExist_Vars(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ConfigDirectory: config.TestStepDirectory(t),
+				ConfigVariables: config.Variables{
+					"length":  config.NumberVariable(8),
+					"numeric": config.BoolVariable(false),
+				},
+				ExpectError: regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
+			},
+		},
+	})
+}
+
 // TestTest_ConfigDirectory_StaticDirectory_AttributeDoesNotExist_MultipleFiles uses Terraform
 // configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
 // random provider password resource. This test confirms that the TestCase ExternalProviders
@@ -157,6 +335,27 @@ func TestTest_ConfigDirectory_StaticDirectory_AttributeDoesNotExist_MultipleFile
 			{
 				ConfigDirectory: config.StaticDirectory(`fixtures/random_password_3.2.0_multiple_files`),
 				ExpectError:     regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
+			},
+		},
+	})
+}
+
+// TestTest_ConfigDirectory_StaticDirectory_AttributeDoesNotExist_MultipleFiles_Vars uses Terraform
+// configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
+// random provider password resource. This test confirms that the TestCase ExternalProviders
+// is being used when ConfigDirectory is set.
+func TestTest_ConfigDirectory_StaticDirectory_AttributeDoesNotExist_MultipleFiles_Vars(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ConfigDirectory: config.StaticDirectory(`fixtures/random_password_3.2.0_multiple_files_vars`),
+				ConfigVariables: config.Variables{
+					"length":  config.NumberVariable(8),
+					"numeric": config.BoolVariable(false),
+				},
+				ExpectError: regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
 			},
 		},
 	})
@@ -179,6 +378,27 @@ func TestTest_ConfigDirectory_TestNameDirectory_AttributeDoesNotExist_MultipleFi
 	})
 }
 
+// TestTest_ConfigDirectory_TestNameDirectory_AttributeDoesNotExist_MultipleFiles_Vars uses Terraform
+// configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
+// random provider password resource. This test confirms that the TestCase ExternalProviders
+// is being used when ConfigDirectory is set.
+func TestTest_ConfigDirectory_TestNameDirectory_AttributeDoesNotExist_MultipleFiles_Vars(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ConfigDirectory: config.TestNameDirectory(t),
+				ConfigVariables: config.Variables{
+					"length":  config.NumberVariable(8),
+					"numeric": config.BoolVariable(false),
+				},
+				ExpectError: regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
+			},
+		},
+	})
+}
+
 // TestTest_ConfigDirectory_TestStepDirectory_AttributeDoesNotExist_MultipleFiles uses Terraform
 // configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
 // random provider password resource. This test confirms that the TestCase ExternalProviders
@@ -191,6 +411,27 @@ func TestTest_ConfigDirectory_TestStepDirectory_AttributeDoesNotExist_MultipleFi
 			{
 				ConfigDirectory: config.TestStepDirectory(t),
 				ExpectError:     regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
+			},
+		},
+	})
+}
+
+// TestTest_ConfigDirectory_TestStepDirectory_AttributeDoesNotExist_MultipleFiles_Vars uses Terraform
+// configuration specifying a "numeric" attribute that was introduced in v3.3.0 of the
+// random provider password resource. This test confirms that the TestCase ExternalProviders
+// is being used when ConfigDirectory is set.
+func TestTest_ConfigDirectory_TestStepDirectory_AttributeDoesNotExist_MultipleFiles_Vars(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ConfigDirectory: config.TestStepDirectory(t),
+				ConfigVariables: config.Variables{
+					"length":  config.NumberVariable(8),
+					"numeric": config.BoolVariable(false),
+				},
+				ExpectError: regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
 			},
 		},
 	})
