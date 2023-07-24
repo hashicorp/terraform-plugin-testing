@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'plancheck: Added `ExpectSensitiveValue` built-in plan check, which asserts
-  that a given attribute has a sensitive value'
-time: 2023-07-20T16:38:28.94511-04:00
-custom:
-  Issue: "154"

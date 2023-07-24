@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'tfjsonpath: Introduced new `tfjsonpath` package which contains methods that
-  allow traversal of Terraform JSON data'
-time: 2023-07-20T16:34:47.373683-04:00
-custom:
-  Issue: "154"
