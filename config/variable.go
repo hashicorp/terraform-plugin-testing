@@ -4,7 +4,6 @@
 package config
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -26,37 +25,25 @@ type Variable interface {
 // to types implementing Variable interface.
 type Variables map[string]Variable
 
-// Write iterates over each element in v and assembles a JSON
-// file which is named AutoTFVarsJson and written to dest.
+// Write outputs all the variables as JSON and writes them
+// to autoTFVarsJson in dest.
 func (v Variables) Write(dest string) error {
-	buf := bytes.NewBuffer(nil)
-
-	buf.Write([]byte(`{`))
-
-	for k, val := range v {
-		j, err := val.MarshalJSON()
-
-		if err != nil {
-			return err
-		}
-
-		buf.Write([]byte(fmt.Sprintf("%q: ", k)))
-		buf.Write(j)
-		buf.Write([]byte(","))
+	if len(v) == 0 {
+		return nil
 	}
 
-	b := bytes.TrimRight(buf.Bytes(), ",")
+	b, err := json.Marshal(v)
 
-	buf = bytes.NewBuffer(b)
-
-	buf.Write([]byte(`}`))
+	if err != nil {
+		return fmt.Errorf("cannot marshal variables: %s", err)
+	}
 
 	outFilename := filepath.Join(dest, autoTFVarsJson)
 
-	err := os.WriteFile(outFilename, buf.Bytes(), 0600)
+	err = os.WriteFile(outFilename, b, 0600)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot write variables file: %s", err)
 	}
 
 	return nil
