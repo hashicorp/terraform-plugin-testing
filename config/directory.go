@@ -6,7 +6,6 @@ package config
 import (
 	"path/filepath"
 	"strconv"
-	"testing"
 )
 
 // TestStepConfigFunc is the callback type used with acceptance tests to
@@ -18,6 +17,7 @@ type TestStepConfigFunc func(TestStepConfigRequest) string
 // implementing TestStepConfigFunc.
 type TestStepConfigRequest struct {
 	StepNumber int
+	TestName   string
 }
 
 // Exec executes TestStepConfigFunc if it is not nil, otherwise an
@@ -44,15 +44,15 @@ func StaticDirectory(directory string) func(TestStepConfigRequest) string {
 //
 // For example, given test code:
 //
-//    func TestExampleCloudThing_basic(t *testing.T) {
-//        resource.Test(t, resource.TestCase{
-//            Steps: []resource.TestStep{
-//                {
-//                    ConfigDirectory: config.TestNameDirectory(),
-//                },
-//            },
-//        })
-//    }
+//	func TestExampleCloudThing_basic(t *testing.T) {
+//	    resource.Test(t, resource.TestCase{
+//	        Steps: []resource.TestStep{
+//	            {
+//	                ConfigDirectory: config.TestNameDirectory(),
+//	            },
+//	        },
+//	    })
+//	}
 //
 // The testing configurations will be expected in the
 // testdata/TestExampleCloudThing_basic/ directory.
@@ -67,8 +67,8 @@ func TestNameDirectory() func(TestStepConfigRequest) string {
 // a convention of naming directories containing Terraform
 // configuration files with the test step number and nesting of
 // these files within a directory with the same name as the test.
-func TestStepDirectory(t *testing.T) func(TestStepConfigRequest) string { //nolint:paralleltest //Not a test
+func TestStepDirectory() func(TestStepConfigRequest) string { //nolint:paralleltest //Not a test
 	return func(req TestStepConfigRequest) string {
-		return filepath.Join(t.Name(), strconv.Itoa(req.StepNumber))
+		return filepath.Join("testdata", req.TestName, strconv.Itoa(req.StepNumber))
 	}
 }
