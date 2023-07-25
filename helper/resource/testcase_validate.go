@@ -80,12 +80,15 @@ func (c TestCase) validate(ctx context.Context, t testing.T) error {
 	for stepIndex, step := range c.Steps {
 		stepConfiguration, err := teststep.Configuration(
 			teststep.ConfigurationRequest{
-				Directory: step.ConfigDirectory.Exec(
-					config.TestStepConfigRequest{
-						StepNumber: stepIndex + 1,
-						TestName:   t.Name(),
-					}),
-				Raw: step.Config,
+				Directory: teststep.Pointer(
+					step.ConfigDirectory.Exec(
+						config.TestStepConfigRequest{
+							StepNumber: stepIndex + 1,
+							TestName:   t.Name(),
+						},
+					),
+				),
+				Raw: teststep.Pointer(step.Config),
 			},
 		)
 

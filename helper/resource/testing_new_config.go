@@ -24,13 +24,15 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 	cfg, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: step.ConfigDirectory.Exec(
-				config.TestStepConfigRequest{
-					StepNumber: stepIndex + 1,
-					TestName:   t.Name(),
-				},
+			Directory: teststep.Pointer(
+				step.ConfigDirectory.Exec(
+					config.TestStepConfigRequest{
+						StepNumber: stepIndex + 1,
+						TestName:   t.Name(),
+					},
+				),
 			),
-			Raw: step.Config,
+			Raw: teststep.Pointer(step.Config),
 		},
 	)
 
@@ -62,13 +64,15 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 	testStepConfig, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: step.ConfigDirectory.Exec(
-				config.TestStepConfigRequest{
-					StepNumber: stepIndex + 1,
-					TestName:   t.Name(),
-				},
+			Directory: teststep.Pointer(
+				step.ConfigDirectory.Exec(
+					config.TestStepConfigRequest{
+						StepNumber: stepIndex + 1,
+						TestName:   t.Name(),
+					},
+				),
 			),
-			Raw: mergedConfig,
+			Raw: teststep.Pointer(mergedConfig),
 		},
 	)
 

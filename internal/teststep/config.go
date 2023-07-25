@@ -38,27 +38,27 @@ type configuration struct {
 }
 
 type ConfigurationRequest struct {
-	Directory string
-	Raw       string
+	Directory *string
+	Raw       *string
 }
 
 func Configuration(req ConfigurationRequest) (configuration, error) {
 	var populatedConfig []string
 	var config configuration
 
-	if req.Directory != "" {
+	if req.Directory != nil && *req.Directory != "" {
 		populatedConfig = append(populatedConfig, fmt.Sprintf("%q", "directory"))
 
 		config = configuration{
-			directory: req.Directory,
+			directory: *req.Directory,
 		}
 	}
 
-	if req.Raw != "" {
+	if req.Raw != nil && *req.Raw != "" {
 		populatedConfig = append(populatedConfig, fmt.Sprintf("%q", "raw"))
 
 		config = configuration{
-			raw: req.Raw,
+			raw: *req.Raw,
 		}
 	}
 
@@ -307,4 +307,8 @@ func (c configuration) writeRaw(_ context.Context, dest string) error {
 	}
 
 	return nil
+}
+
+func Pointer[T any](in T) *T {
+	return &in
 }

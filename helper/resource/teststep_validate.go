@@ -63,13 +63,15 @@ func (s TestStep) hasProviders(ctx context.Context, stepIndex int, testName stri
 
 	cfg, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: s.ConfigDirectory.Exec(
-				config.TestStepConfigRequest{
-					StepNumber: stepIndex + 1,
-					TestName:   testName,
-				},
+			Directory: teststep.Pointer(
+				s.ConfigDirectory.Exec(
+					config.TestStepConfigRequest{
+						StepNumber: stepIndex + 1,
+						TestName:   testName,
+					},
+				),
 			),
-			Raw: s.Config,
+			Raw: teststep.Pointer(s.Config),
 		},
 	)
 

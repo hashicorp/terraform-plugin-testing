@@ -396,8 +396,8 @@ func TestTestStepValidate(t *testing.T) {
 
 			testStepConfig, err := teststep.Configuration(
 				teststep.ConfigurationRequest{
-					Directory: test.testStepConfigDirectory,
-					Raw:       test.testStepConfig,
+					Directory: teststep.Pointer(test.testStepConfigDirectory),
+					Raw:       teststep.Pointer(test.testStepConfig),
 				},
 			)
 

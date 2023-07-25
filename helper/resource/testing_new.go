@@ -99,7 +99,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	if c.hasProviders(ctx) {
 		config, err := teststep.Configuration(
 			teststep.ConfigurationRequest{
-				Raw: c.providerConfig(ctx, false),
+				Raw: teststep.Pointer(c.providerConfig(ctx, false)),
 			},
 		)
 
@@ -148,13 +148,15 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 		cfg, err := teststep.Configuration(
 			teststep.ConfigurationRequest{
-				Directory: step.ConfigDirectory.Exec(
-					config.TestStepConfigRequest{
-						StepNumber: stepIndex + 1,
-						TestName:   t.Name(),
-					},
+				Directory: teststep.Pointer(
+					step.ConfigDirectory.Exec(
+						config.TestStepConfigRequest{
+							StepNumber: stepIndex + 1,
+							TestName:   t.Name(),
+						},
+					),
 				),
-				Raw: step.Config,
+				Raw: teststep.Pointer(step.Config),
 			},
 		)
 
@@ -243,12 +245,15 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			// passed to wd.SetConfig() when the second argument accept a configuration string.
 			testStepConfig, err = teststep.Configuration(
 				teststep.ConfigurationRequest{
-					Directory: step.ConfigDirectory.Exec(
-						config.TestStepConfigRequest{
-							StepNumber: stepIndex + 1,
-							TestName:   t.Name(),
-						}),
-					Raw: step.providerConfig(ctx, hasProviderBlock),
+					Directory: teststep.Pointer(
+						step.ConfigDirectory.Exec(
+							config.TestStepConfigRequest{
+								StepNumber: stepIndex + 1,
+								TestName:   t.Name(),
+							},
+						),
+					),
+					Raw: teststep.Pointer(step.providerConfig(ctx, hasProviderBlock)),
 				},
 			)
 
@@ -429,13 +434,15 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 			appliedCfg, err = teststep.Configuration(
 				teststep.ConfigurationRequest{
-					Directory: step.ConfigDirectory.Exec(
-						config.TestStepConfigRequest{
-							StepNumber: stepIndex + 1,
-							TestName:   t.Name(),
-						},
+					Directory: teststep.Pointer(
+						step.ConfigDirectory.Exec(
+							config.TestStepConfigRequest{
+								StepNumber: stepIndex + 1,
+								TestName:   t.Name(),
+							},
+						),
 					),
-					Raw: mergedConfig,
+					Raw: teststep.Pointer(mergedConfig),
 				},
 			)
 
@@ -500,13 +507,15 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 	cfg, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: step.ConfigDirectory.Exec(
-				config.TestStepConfigRequest{
-					StepNumber: stepIndex + 1,
-					TestName:   t.Name(),
-				},
+			Directory: teststep.Pointer(
+				step.ConfigDirectory.Exec(
+					config.TestStepConfigRequest{
+						StepNumber: stepIndex + 1,
+						TestName:   t.Name(),
+					},
+				),
 			),
-			Raw: step.Config,
+			Raw: teststep.Pointer(step.Config),
 		},
 	)
 
@@ -532,7 +541,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 	// passed to wd.SetConfig() when the second argument accept a configuration string.
 	testStepConfig, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Raw: c.providerConfig(ctx, hasProviderBlock),
+			Raw: teststep.Pointer(c.providerConfig(ctx, hasProviderBlock)),
 		},
 	)
 
@@ -554,13 +563,15 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 	defer func() {
 		testStepConfigDefer, err := teststep.Configuration(
 			teststep.ConfigurationRequest{
-				Directory: step.ConfigDirectory.Exec(
-					config.TestStepConfigRequest{
-						StepNumber: stepIndex + 1,
-						TestName:   t.Name(),
-					},
+				Directory: teststep.Pointer(
+					step.ConfigDirectory.Exec(
+						config.TestStepConfigRequest{
+							StepNumber: stepIndex + 1,
+							TestName:   t.Name(),
+						},
+					),
 				),
-				Raw: step.Config,
+				Raw: teststep.Pointer(step.Config),
 			},
 		)
 

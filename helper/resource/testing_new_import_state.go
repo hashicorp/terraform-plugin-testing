@@ -27,13 +27,15 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	testStepConfig, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
-			Directory: step.ConfigDirectory.Exec(
-				config.TestStepConfigRequest{
-					StepNumber: stepIndex + 1,
-					TestName:   t.Name(),
-				},
+			Directory: teststep.Pointer(
+				step.ConfigDirectory.Exec(
+					config.TestStepConfigRequest{
+						StepNumber: stepIndex + 1,
+						TestName:   t.Name(),
+					},
+				),
 			),
-			Raw: step.Config,
+			Raw: teststep.Pointer(step.Config),
 		},
 	)
 
