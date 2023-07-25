@@ -35,8 +35,8 @@ before the final `destroy` command is executed. For example, this can be used wi
 to test resources that are time-consuming or expensive to destroy and re-create for each test.
 
 Usage:
-- should not be present in the same `TestStep` as `Config: "not empty"`, `ImportState` or `RefreshState`.
-- should not be present in the first `TestStep` similar to `RefreshState`.
+- Should not be present in the same `TestStep` as `Config: "not empty"`, `ImportState` or `RefreshState`.
+- Should not be present in the first `TestStep` similar to `RefreshState`.
 
 
 An acceptance test's mode is implicitly determined by the fields provided in the
