@@ -68,6 +68,44 @@ func BoolVariable(value bool) boolVariable {
 	}
 }
 
+var _ Variable = floatVariable{}
+
+type floatVariable struct {
+	value any
+}
+
+// MarshalJSON returns the JSON encoding of floatVariable.
+func (v floatVariable) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.value)
+}
+
+// FloatVariable instantiates an instance of floatVariable,
+// which implements Variable.
+func FloatVariable[T constraints.Float](value T) floatVariable {
+	return floatVariable{
+		value: value,
+	}
+}
+
+var _ Variable = integerVariable{}
+
+type integerVariable struct {
+	value any
+}
+
+// MarshalJSON returns the JSON encoding of integerVariable.
+func (v integerVariable) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.value)
+}
+
+// IntegerVariable instantiates an instance of integerVariable,
+// which implements Variable.
+func IntegerVariable[T constraints.Integer](value T) integerVariable {
+	return integerVariable{
+		value: value,
+	}
+}
+
 var _ Variable = listVariable{}
 
 type listVariable struct {
@@ -151,40 +189,6 @@ func (v objectVariable) MarshalJSON() ([]byte, error) {
 // which implements Variable.
 func ObjectVariable(value map[string]Variable) objectVariable {
 	return objectVariable{
-		value: value,
-	}
-}
-
-var _ Variable = numberVariable{}
-
-type number interface {
-	constraints.Float | constraints.Integer | string
-}
-
-type numberVariable struct {
-	value any
-}
-
-// MarshalJSON returns the JSON encoding of numberVariable.
-// NumberVariable allows initialising a number with any floating
-// point or integer type. NumberVariable can be initialised
-// with a string for values that do not fit into a floating point
-// or integer type.
-// TODO: Impose restrictions on what can be held in numberVariable
-// to match restrictions imposed by Terraform.
-func (v numberVariable) MarshalJSON() ([]byte, error) {
-	switch v := v.value.(type) {
-	case string:
-		return []byte(v), nil
-	}
-
-	return json.Marshal(v.value)
-}
-
-// NumberVariable instantiates an instance of numberVariable,
-// which implements Variable.
-func NumberVariable[T number](value T) numberVariable {
-	return numberVariable{
 		value: value,
 	}
 }

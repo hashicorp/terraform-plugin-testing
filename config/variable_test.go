@@ -27,6 +27,14 @@ func TestMarshalJSON(t *testing.T) {
 			variable: config.BoolVariable(true),
 			expected: []byte(`true`),
 		},
+		"float": {
+			variable: config.FloatVariable(1.2),
+			expected: []byte(`1.2`),
+		},
+		"integer": {
+			variable: config.IntegerVariable(12),
+			expected: []byte(`12`),
+		},
 		"list_bool": {
 			variable: config.ListVariable(
 				config.BoolVariable(false),
@@ -185,18 +193,6 @@ func TestMarshalJSON(t *testing.T) {
 			),
 			expectedError: "maps must contain the same type",
 		},
-		"number_float": {
-			variable: config.NumberVariable(1.2),
-			expected: []byte(`1.2`),
-		},
-		"number_int": {
-			variable: config.NumberVariable(12),
-			expected: []byte(`12`),
-		},
-		"number_big_float": {
-			variable: config.NumberVariable("1.2000000000000000000000000000000000000000000000000001"),
-			expected: []byte(`1.2000000000000000000000000000000000000000000000000001`),
-		},
 		"set_bool": {
 			variable: config.SetVariable(
 				config.BoolVariable(false),
@@ -269,7 +265,7 @@ func TestMarshalJSON(t *testing.T) {
 		"tuple": {
 			variable: config.TupleVariable(
 				config.BoolVariable(true),
-				config.NumberVariable(1.2),
+				config.FloatVariable(1.2),
 				config.StringVariable("str"),
 			),
 			expected: []byte(`[true,1.2,"str"]`),

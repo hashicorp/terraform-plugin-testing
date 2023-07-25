@@ -2268,7 +2268,7 @@ func TestTest_ConfigDirectory_StaticDirectory_Vars(t *testing.T) {
 			{
 				ConfigDirectory: config.StaticDirectory(`testdata/fixtures/random_password_3.5.1_vars`),
 				ConfigVariables: config.Variables{
-					"length":  config.NumberVariable(8),
+					"length":  config.IntegerVariable(8),
 					"numeric": config.BoolVariable(false),
 				},
 				Check: TestCheckResourceAttrSet("random_password.test", "id"),
@@ -2311,7 +2311,7 @@ func TestTest_ConfigDirectory_TestNameDirectory_Vars(t *testing.T) {
 			{
 				ConfigDirectory: config.TestNameDirectory(),
 				ConfigVariables: config.Variables{
-					"length":  config.NumberVariable(8),
+					"length":  config.IntegerVariable(8),
 					"numeric": config.BoolVariable(false),
 				},
 				Check: TestCheckResourceAttrSet("random_password.test", "id"),
@@ -2341,7 +2341,7 @@ func TestTest_ConfigDirectory_TestStepDirectory_Vars(t *testing.T) {
 			{
 				ConfigDirectory: config.TestStepDirectory(),
 				ConfigVariables: config.Variables{
-					"length":  config.NumberVariable(8),
+					"length":  config.IntegerVariable(8),
 					"numeric": config.BoolVariable(false),
 				},
 				Check: TestCheckResourceAttrSet("random_password.test", "id"),
@@ -2371,7 +2371,7 @@ func TestTest_ConfigDirectory_StaticDirectory_MultipleFiles_Vars(t *testing.T) {
 			{
 				ConfigDirectory: config.StaticDirectory(`testdata/fixtures/random_password_3.5.1_multiple_files_vars`),
 				ConfigVariables: config.Variables{
-					"length":  config.NumberVariable(8),
+					"length":  config.IntegerVariable(8),
 					"numeric": config.BoolVariable(false),
 				},
 				Check: TestCheckResourceAttrSet("random_password.test", "id"),
@@ -2401,7 +2401,7 @@ func TestTest_ConfigDirectory_TestNameDirectory_MultipleFiles_Vars(t *testing.T)
 			{
 				ConfigDirectory: config.TestNameDirectory(),
 				ConfigVariables: config.Variables{
-					"length":  config.NumberVariable(8),
+					"length":  config.IntegerVariable(8),
 					"numeric": config.BoolVariable(false),
 				},
 				Check: TestCheckResourceAttrSet("random_password.test", "id"),
@@ -2431,7 +2431,7 @@ func TestTest_ConfigDirectory_TestStepDirectory_MultipleFiles_Vars(t *testing.T)
 			{
 				ConfigDirectory: config.TestStepDirectory(),
 				ConfigVariables: config.Variables{
-					"length":  config.NumberVariable(8),
+					"length":  config.IntegerVariable(8),
 					"numeric": config.BoolVariable(false),
 				},
 				Check: TestCheckResourceAttrSet("random_password.test", "id"),
@@ -2469,7 +2469,7 @@ func TestTest_ConfigDirectory_StaticDirectory_AttributeDoesNotExist_Vars(t *test
 			{
 				ConfigDirectory: config.StaticDirectory(`testdata/fixtures/random_password_3.2.0_vars`),
 				ConfigVariables: config.Variables{
-					"length":  config.NumberVariable(8),
+					"length":  config.IntegerVariable(8),
 					"numeric": config.BoolVariable(false),
 				},
 				ExpectError: regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
@@ -2507,7 +2507,7 @@ func TestTest_ConfigDirectory_TestNameDirectory_AttributeDoesNotExist_Vars(t *te
 			{
 				ConfigDirectory: config.TestNameDirectory(),
 				ConfigVariables: config.Variables{
-					"length":  config.NumberVariable(8),
+					"length":  config.IntegerVariable(8),
 					"numeric": config.BoolVariable(false),
 				},
 				ExpectError: regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
@@ -2545,7 +2545,7 @@ func TestTest_ConfigDirectory_TestStepDirectory_AttributeDoesNotExist_Vars(t *te
 			{
 				ConfigDirectory: config.TestStepDirectory(),
 				ConfigVariables: config.Variables{
-					"length":  config.NumberVariable(8),
+					"length":  config.IntegerVariable(8),
 					"numeric": config.BoolVariable(false),
 				},
 				ExpectError: regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
@@ -2583,7 +2583,7 @@ func TestTest_ConfigDirectory_StaticDirectory_AttributeDoesNotExist_MultipleFile
 			{
 				ConfigDirectory: config.StaticDirectory(`testdata/fixtures/random_password_3.2.0_multiple_files_vars`),
 				ConfigVariables: config.Variables{
-					"length":  config.NumberVariable(8),
+					"length":  config.IntegerVariable(8),
 					"numeric": config.BoolVariable(false),
 				},
 				ExpectError: regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
@@ -2621,7 +2621,7 @@ func TestTest_ConfigDirectory_TestNameDirectory_AttributeDoesNotExist_MultipleFi
 			{
 				ConfigDirectory: config.TestNameDirectory(),
 				ConfigVariables: config.Variables{
-					"length":  config.NumberVariable(8),
+					"length":  config.IntegerVariable(8),
 					"numeric": config.BoolVariable(false),
 				},
 				ExpectError: regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
@@ -2659,7 +2659,7 @@ func TestTest_ConfigDirectory_TestStepDirectory_AttributeDoesNotExist_MultipleFi
 			{
 				ConfigDirectory: config.TestStepDirectory(),
 				ConfigVariables: config.Variables{
-					"length":  config.NumberVariable(8),
+					"length":  config.IntegerVariable(8),
 					"numeric": config.BoolVariable(false),
 				},
 				ExpectError: regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
