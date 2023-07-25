@@ -189,7 +189,7 @@ func TestTestCaseValidate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			err := test.testCase.validate(context.Background())
+			err := test.testCase.validate(context.Background(), t)
 
 			if err != nil {
 				if test.expectedError == nil {

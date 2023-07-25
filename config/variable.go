@@ -51,7 +51,7 @@ func (v Variables) Write(dest string) error {
 
 	buf.Write([]byte(`}`))
 
-	outFilename := filepath.Join(dest, AutoTFVarsJson)
+	outFilename := filepath.Join(dest, autoTFVarsJson)
 
 	err := os.WriteFile(outFilename, buf.Bytes(), 0600)
 

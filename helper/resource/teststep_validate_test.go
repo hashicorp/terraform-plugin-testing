@@ -108,7 +108,7 @@ func TestTestStepHasProviders(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := test.testStep.hasProviders(context.Background(), stepIndex)
+			got, err := test.testStep.hasProviders(context.Background(), stepIndex, "TestTestStepHasProviders")
 
 			if err != nil {
 				t.Errorf("unexpected error: %s", err)
@@ -342,7 +342,7 @@ func TestTestStepValidate(t *testing.T) {
 				},
 				PlanOnly: true,
 			},
-			testStepConfigDirectory: "../../config_directory_test/fixtures/random_id",
+			testStepConfigDirectory: "testdata/fixtures/random_id",
 			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
 			expectedError:           errors.New("TestStep ConfigPlanChecks.PreApply cannot be run with PlanOnly"),
 		},
@@ -382,7 +382,7 @@ func TestTestStepValidate(t *testing.T) {
 					PostRefresh: []plancheck.PlanCheck{&planCheckSpy{}},
 				},
 			},
-			testStepConfigDirectory: "../../config_directory_test/fixtures/random_id",
+			testStepConfigDirectory: "testdata/fixtures/random_id",
 			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
 			expectedError:           errors.New("TestStep RefreshPlanChecks.PostRefresh must only be specified with RefreshState"),
 		},

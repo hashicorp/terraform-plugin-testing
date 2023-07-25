@@ -803,7 +803,7 @@ func Test(t testing.T, c TestCase) {
 	ctx := context.Background()
 	ctx = logging.InitTestContext(ctx, t)
 
-	err := c.validate(ctx)
+	err := c.validate(ctx, t)
 
 	if err != nil {
 		logging.HelperResourceError(ctx,

@@ -151,6 +151,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				Directory: step.ConfigDirectory.Exec(
 					config.TestStepConfigRequest{
 						StepNumber: stepIndex + 1,
+						TestName:   t.Name(),
 					},
 				),
 				Raw: step.Config,
@@ -209,7 +210,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			}
 		}
 
-		hasProviders, err := step.hasProviders(ctx, stepIndex)
+		hasProviders, err := step.hasProviders(ctx, stepIndex, t.Name())
 
 		if err != nil {
 			logging.HelperResourceError(ctx,
@@ -245,6 +246,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					Directory: step.ConfigDirectory.Exec(
 						config.TestStepConfigRequest{
 							StepNumber: stepIndex + 1,
+							TestName:   t.Name(),
 						}),
 					Raw: step.providerConfig(ctx, hasProviderBlock),
 				},
@@ -430,6 +432,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					Directory: step.ConfigDirectory.Exec(
 						config.TestStepConfigRequest{
 							StepNumber: stepIndex + 1,
+							TestName:   t.Name(),
 						},
 					),
 					Raw: mergedConfig,
@@ -500,6 +503,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 			Directory: step.ConfigDirectory.Exec(
 				config.TestStepConfigRequest{
 					StepNumber: stepIndex + 1,
+					TestName:   t.Name(),
 				},
 			),
 			Raw: step.Config,
@@ -553,6 +557,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 				Directory: step.ConfigDirectory.Exec(
 					config.TestStepConfigRequest{
 						StepNumber: stepIndex + 1,
+						TestName:   t.Name(),
 					},
 				),
 				Raw: step.Config,

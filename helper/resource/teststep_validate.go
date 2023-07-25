@@ -29,6 +29,9 @@ type testStepValidateRequest struct {
 	// ExternalProviders, ProtoV5ProviderFactories, ProtoV6ProviderFactories,
 	// or ProviderFactories.
 	TestCaseHasProviders bool
+
+	// TestName is the name of the test.
+	TestName string
 }
 
 // hasExternalProviders returns true if the TestStep has
@@ -41,7 +44,7 @@ func (s TestStep) hasExternalProviders() bool {
 // ExternalProviders, ProtoV5ProviderFactories, ProtoV6ProviderFactories, or
 // ProviderFactories fields. It will also return true if ConfigDirectory or
 // Config contain terraform configuration which specify a provider block.
-func (s TestStep) hasProviders(ctx context.Context, stepIndex int) (bool, error) {
+func (s TestStep) hasProviders(ctx context.Context, stepIndex int, testName string) (bool, error) {
 	if len(s.ExternalProviders) > 0 {
 		return true, nil
 	}
@@ -63,6 +66,7 @@ func (s TestStep) hasProviders(ctx context.Context, stepIndex int) (bool, error)
 			Directory: s.ConfigDirectory.Exec(
 				config.TestStepConfigRequest{
 					StepNumber: stepIndex + 1,
+					TestName:   testName,
 				},
 			),
 			Raw: s.Config,
@@ -160,7 +164,7 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 	}
 
 	// We need a 0-based step index for consistency
-	hasProviders, err := s.hasProviders(ctx, req.StepNumber-1)
+	hasProviders, err := s.hasProviders(ctx, req.StepNumber-1, req.TestName)
 
 	if err != nil {
 		logging.HelperResourceError(ctx, "TestStep error checking for providers", map[string]interface{}{logging.KeyError: err})

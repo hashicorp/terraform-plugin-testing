@@ -22,15 +22,19 @@ func TestTestStepConfigFunc_Exec(t *testing.T) {
 			expected:           "name_of_directory",
 		},
 		"test_name_directory": {
-			testStepConfigFunc: config.TestNameDirectory(t),
-			expected:           "TestTestStepConfigFunc_Exec",
+			testStepConfigFunc: config.TestNameDirectory(),
+			testStepConfigRequest: config.TestStepConfigRequest{
+				TestName: "TestTestStepConfigFunc_Exec",
+			},
+			expected: "testdata/TestTestStepConfigFunc_Exec",
 		},
 		"test_step_directory": {
-			testStepConfigFunc: config.TestStepDirectory(t),
+			testStepConfigFunc: config.TestStepDirectory(),
 			testStepConfigRequest: config.TestStepConfigRequest{
 				StepNumber: 1,
+				TestName:   "TestTestStepConfigFunc_Exec",
 			},
-			expected: "TestTestStepConfigFunc_Exec/1",
+			expected: "testdata/TestTestStepConfigFunc_Exec/1",
 		},
 	}
 

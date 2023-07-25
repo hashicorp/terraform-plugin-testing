@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mitchellh/go-testing-interface"
+
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
@@ -49,7 +51,7 @@ func (c TestCase) hasProviders(_ context.Context) bool {
 //   - No overlapping ExternalProviders and Providers entries
 //   - No overlapping ExternalProviders and ProviderFactories entries
 //   - TestStep validations performed by the (TestStep).validate() method.
-func (c TestCase) validate(ctx context.Context) error {
+func (c TestCase) validate(ctx context.Context, t testing.T) error {
 	logging.HelperResourceTrace(ctx, "Validating TestCase")
 
 	if len(c.Steps) == 0 {
@@ -81,6 +83,7 @@ func (c TestCase) validate(ctx context.Context) error {
 				Directory: step.ConfigDirectory.Exec(
 					config.TestStepConfigRequest{
 						StepNumber: stepIndex + 1,
+						TestName:   t.Name(),
 					}),
 				Raw: step.Config,
 			},
@@ -96,6 +99,7 @@ func (c TestCase) validate(ctx context.Context) error {
 			StepNumber:                   stepNumber,
 			TestCaseHasExternalProviders: testCaseHasExternalProviders,
 			TestCaseHasProviders:         testCaseHasProviders,
+			TestName:                     t.Name(),
 		}
 
 		err = step.validate(ctx, stepValidateReq)

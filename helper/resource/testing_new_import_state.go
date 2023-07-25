@@ -30,6 +30,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			Directory: step.ConfigDirectory.Exec(
 				config.TestStepConfigRequest{
 					StepNumber: stepIndex + 1,
+					TestName:   t.Name(),
 				},
 			),
 			Raw: step.Config,

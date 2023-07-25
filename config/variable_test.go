@@ -346,7 +346,7 @@ func TestVariablesWrite(t *testing.T) {
 				}
 			}
 
-			b, err := os.ReadFile(filepath.Join(tempDir, config.AutoTFVarsJson))
+			b, err := os.ReadFile(filepath.Join(tempDir, "terraform-plugin-testing.auto.tfvars.json"))
 
 			if err != nil {
 				t.Errorf("error reading tfvars file: %s", err)

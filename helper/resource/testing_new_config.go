@@ -27,6 +27,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			Directory: step.ConfigDirectory.Exec(
 				config.TestStepConfigRequest{
 					StepNumber: stepIndex + 1,
+					TestName:   t.Name(),
 				},
 			),
 			Raw: step.Config,
@@ -64,6 +65,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			Directory: step.ConfigDirectory.Exec(
 				config.TestStepConfigRequest{
 					StepNumber: stepIndex + 1,
+					TestName:   t.Name(),
 				},
 			),
 			Raw: mergedConfig,
