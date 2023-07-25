@@ -30,10 +30,9 @@ infrastructure, using the same logic as would be used when running
 `terraform refresh`.
 
 _RemoveState_ mode is used for testing resources that should not be deleted
-at the end of the `TestCase`. It allows to clean up state from particular resources
-that should not be automatically destroyed. For example, you want to write test
-for existing resource: you import it, do some test steps and at the end of all steps
-you need to keep, preventing automatic destroying.
+at the end of the `TestCase`; providing a mechanism to remove said resources from state
+before the final `destroy` command is executed. For example, this can be used with `Import`,
+to test resources that are time-consuming or expensive to destroy and re-create for each test.
 
 Usage:
 - should not be present in the same `TestStep` as `Config: "not empty"`, `ImportState` or `RefreshState`.
