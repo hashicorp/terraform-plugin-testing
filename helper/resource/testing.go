@@ -503,11 +503,12 @@ type TestStep struct {
 	// a string representing a directory that contains Terraform
 	// configuration files.
 	//
-	// There are three helper functions that can be used to generate
-	// config.TestStepConfigFunc:
-	//    config.StaticDirectory()
-	//    config.TestNameDirectory()
-	//    config.TestStepDirectory()
+	// There are helper functions in the [config] package that can be used,
+	// such as:
+	//
+	//  - [config.StaticDirectory]
+	//  - [config.TestNameDirectory]
+	//  - [config.TestStepDirectory]
 	//
 	// When running Terraform operations for the test, Terraform will
 	// be executed with copies of the files of this directory as its

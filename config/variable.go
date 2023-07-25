@@ -15,7 +15,7 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-const AutoTFVarsJson = "generated.auto.tfvars.json"
+const autoTFVarsJson = "terraform-plugin-testing.auto.tfvars.json"
 
 // Variable interface is an alias to json.Marshaler.
 type Variable interface {
@@ -53,7 +53,7 @@ func (v Variables) Write(dest string) error {
 
 	outFilename := filepath.Join(dest, AutoTFVarsJson)
 
-	err := os.WriteFile(outFilename, buf.Bytes(), 0700)
+	err := os.WriteFile(outFilename, buf.Bytes(), 0600)
 
 	if err != nil {
 		return err
@@ -207,10 +207,8 @@ type setVariable struct {
 // MarshalJSON returns the JSON encoding of setVariable.
 func (v setVariable) MarshalJSON() ([]byte, error) {
 	for kx, x := range v.value {
-		for ky, y := range v.value {
-			if kx == ky {
-				continue
-			}
+		for ky := kx + 1; ky < len(v.value); ky++ {
+			y := v.value[ky]
 
 			if _, ok := x.(setVariable); !ok {
 				continue
@@ -224,7 +222,6 @@ func (v setVariable) MarshalJSON() ([]byte, error) {
 				return nil, errors.New("sets must contain unique elements")
 			}
 		}
-
 	}
 
 	if !typesEq(v.value) {

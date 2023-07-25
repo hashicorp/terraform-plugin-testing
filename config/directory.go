@@ -41,9 +41,24 @@ func StaticDirectory(directory string) func(TestStepConfigRequest) string {
 // TestNameDirectory returns the name of the test when TestStepConfigFunc
 // is executed. This facilitates a convention of naming directories
 // containing Terraform configuration files with the name of the test.
-func TestNameDirectory(t *testing.T) func(TestStepConfigRequest) string { //nolint:paralleltest //Not a test
-	return func(_ TestStepConfigRequest) string {
-		return t.Name()
+//
+// For example, given test code:
+//
+//    func TestExampleCloudThing_basic(t *testing.T) {
+//        resource.Test(t, resource.TestCase{
+//            Steps: []resource.TestStep{
+//                {
+//                    ConfigDirectory: config.TestNameDirectory(),
+//                },
+//            },
+//        })
+//    }
+//
+// The testing configurations will be expected in the
+// testdata/TestExampleCloudThing_basic/ directory.
+func TestNameDirectory() func(TestStepConfigRequest) string {
+	return func(req TestStepConfigRequest) string {
+		return filepath.Join("testdata", req.TestName)
 	}
 }
 
