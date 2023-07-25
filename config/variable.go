@@ -133,6 +133,10 @@ func (v objectVariable) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		innerErr := err
 
+		// Unwrap is used here to expose the initial error, for example
+		// "maps must contain the same type" whilst removing any errors
+		// related to the implementation (i.e., the usage of
+		// encoding/json in this instance.
 		for errors.Unwrap(innerErr) != nil {
 			innerErr = errors.Unwrap(err)
 		}
