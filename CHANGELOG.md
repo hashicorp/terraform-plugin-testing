@@ -1,3 +1,11 @@
+## 1.4.0 (July 24, 2023)
+
+FEATURES:
+
+* tfjsonpath: Introduced new `tfjsonpath` package which contains methods that allow traversal of Terraform JSON data ([#154](https://github.com/hashicorp/terraform-plugin-testing/issues/154))
+* plancheck: Added `ExpectUnknownValue` built-in plan check, which asserts that a given attribute has an unknown value ([#154](https://github.com/hashicorp/terraform-plugin-testing/issues/154))
+* plancheck: Added `ExpectSensitiveValue` built-in plan check, which asserts that a given attribute has a sensitive value ([#154](https://github.com/hashicorp/terraform-plugin-testing/issues/154))
+
 ## 1.3.0 (June 13, 2023)
 
 FEATURES:
