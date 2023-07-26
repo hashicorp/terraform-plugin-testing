@@ -200,7 +200,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			}
 		}
 
-		if cfg.HasConfiguration() && !step.Destroy && len(step.Taint) > 0 {
+		if cfg != nil && !step.Destroy && len(step.Taint) > 0 {
 			err := testStepTaint(ctx, step, wd)
 
 			if err != nil {
@@ -229,14 +229,18 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				protov6: protov6ProviderFactories(c.ProtoV6ProviderFactories).merge(step.ProtoV6ProviderFactories),
 			}
 
-			hasProviderBlock, err := cfg.HasProviderBlock(ctx)
+			var hasProviderBlock bool
 
-			if err != nil {
-				logging.HelperResourceError(ctx,
-					"TestStep error determining whether configuration contains provider block",
-					map[string]interface{}{logging.KeyError: err},
-				)
-				t.Fatalf("TestStep %d/%d error determining whether configuration contains provider block: %s", stepNumber, len(c.Steps), err)
+			if cfg != nil {
+				hasProviderBlock, err = cfg.HasProviderBlock(ctx)
+
+				if err != nil {
+					logging.HelperResourceError(ctx,
+						"TestStep error determining whether configuration contains provider block",
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("TestStep %d/%d error determining whether configuration contains provider block: %s", stepNumber, len(c.Steps), err)
+				}
 			}
 
 			var testStepConfig teststep.Config
@@ -373,7 +377,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			continue
 		}
 
-		if cfg.HasConfiguration() {
+		if cfg != nil {
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
 			err := testStepNewConfig(ctx, t, c, wd, step, providers, stepIndex)
@@ -410,24 +414,29 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				}
 			}
 
-			hasTerraformBlock, err := cfg.HasTerraformBlock(ctx)
+			var hasTerraformBlock bool
+			var hasProviderBlock bool
 
-			if err != nil {
-				logging.HelperResourceError(ctx,
-					"Error determining whether configuration contains terraform block",
-					map[string]interface{}{logging.KeyError: err},
-				)
-				t.Fatalf("Error determining whether configuration contains terraform block: %s", err)
-			}
+			if cfg != nil {
+				hasTerraformBlock, err = cfg.HasTerraformBlock(ctx)
 
-			hasProviderBlock, err := cfg.HasProviderBlock(ctx)
+				if err != nil {
+					logging.HelperResourceError(ctx,
+						"Error determining whether configuration contains terraform block",
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("Error determining whether configuration contains terraform block: %s", err)
+				}
 
-			if err != nil {
-				logging.HelperResourceError(ctx,
-					"Error determining whether configuration contains provider block",
-					map[string]interface{}{logging.KeyError: err},
-				)
-				t.Fatalf("Error determining whether configuration contains provider block: %s", err)
+				hasProviderBlock, err = cfg.HasProviderBlock(ctx)
+
+				if err != nil {
+					logging.HelperResourceError(ctx,
+						"Error determining whether configuration contains provider block",
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("Error determining whether configuration contains provider block: %s", err)
+				}
 			}
 
 			mergedConfig := step.mergedConfig(ctx, c, hasTerraformBlock, hasProviderBlock)
@@ -527,14 +536,18 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 		t.Fatalf("Error creating provider configuration for import test config: %s", err)
 	}
 
-	hasProviderBlock, err := cfg.HasProviderBlock(ctx)
+	var hasProviderBlock bool
 
-	if err != nil {
-		logging.HelperResourceError(ctx,
-			"Error determining whether configuration contains provider block for import test config",
-			map[string]interface{}{logging.KeyError: err},
-		)
-		t.Fatalf("Error determining whether configuration contains provider block for import test config: %s", err)
+	if cfg != nil {
+		hasProviderBlock, err = cfg.HasProviderBlock(ctx)
+
+		if err != nil {
+			logging.HelperResourceError(ctx,
+				"Error determining whether configuration contains provider block for import test config",
+				map[string]interface{}{logging.KeyError: err},
+			)
+			t.Fatalf("Error determining whether configuration contains provider block for import test config: %s", err)
+		}
 	}
 
 	// Return value from c.ProviderConfig() is assigned to Raw as this was previously being

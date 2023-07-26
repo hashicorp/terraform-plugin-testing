@@ -98,10 +98,12 @@ func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config, vars c
 	wd.configFilename = outFilename
 
 	// Write configuration
-	err = cfg.Write(ctx, wd.baseDir)
+	if cfg != nil {
+		err = cfg.Write(ctx, wd.baseDir)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	//Write configuration variables

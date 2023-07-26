@@ -5,9 +5,7 @@ package teststep
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -25,16 +23,10 @@ var (
 )
 
 type Config interface {
-	HasConfiguration() bool
 	HasConfigurationFiles() bool
 	HasProviderBlock(context.Context) (bool, error)
 	HasTerraformBlock(context.Context) (bool, error)
 	Write(context.Context, string) error
-}
-
-type configuration struct {
-	directory string
-	raw       string
 }
 
 type ConfigurationRequest struct {
@@ -50,107 +42,20 @@ func (c ConfigurationRequest) Validate() error {
 	return nil
 }
 
-func Configuration(req ConfigurationRequest) (configuration, error) {
-	var config configuration
-
-	if req.Directory != nil {
-		config.directory = *req.Directory
+func Configuration(req ConfigurationRequest) (Config, error) {
+	if req.Directory != nil && *req.Directory != "" {
+		return configurationDirectory{
+			directory: *req.Directory,
+		}, nil
 	}
 
-	if req.Raw != nil {
-		config.raw = *req.Raw
+	if req.Raw != nil && *req.Raw != "" {
+		return configurationString{
+			raw: *req.Raw,
+		}, nil
 	}
 
-	return config, nil
-}
-
-func (c configuration) HasConfiguration() bool {
-	if c.directory != "" {
-		return true
-	}
-
-	if c.raw != "" {
-		return true
-	}
-
-	return false
-}
-
-func (c configuration) HasConfigurationFiles() bool {
-	return c.directory != ""
-}
-
-// HasProviderBlock returns true if the Config has declared a provider
-// configuration block, e.g. provider "examplecloud" {...}
-func (c configuration) HasProviderBlock(ctx context.Context) (bool, error) {
-	switch {
-	case c.hasRaw(ctx):
-		return providerConfigBlockRegex.MatchString(c.raw), nil
-	case c.hasDirectory(ctx):
-		pwd, err := os.Getwd()
-
-		if err != nil {
-			return false, err
-		}
-
-		configDirectory := filepath.Join(pwd, c.directory)
-
-		contains, err := filesContains(configDirectory, providerConfigBlockRegex)
-
-		if err != nil {
-			return false, err
-		}
-
-		return contains, nil
-	}
-
-	return false, nil
-}
-
-// HasTerraformBlock returns true if the Config has declared a terraform
-// configuration block, e.g. terraform {...}
-func (c configuration) HasTerraformBlock(ctx context.Context) (bool, error) {
-	switch {
-	case c.hasRaw(ctx):
-		return terraformConfigBlockRegex.MatchString(c.raw), nil
-	case c.hasDirectory(ctx):
-		pwd, err := os.Getwd()
-
-		if err != nil {
-			return false, err
-		}
-
-		configDirectory := filepath.Join(pwd, c.directory)
-
-		contains, err := filesContains(configDirectory, terraformConfigBlockRegex)
-
-		if err != nil {
-			return false, err
-		}
-
-		return contains, nil
-	}
-
-	return false, nil
-}
-
-func (c configuration) Write(ctx context.Context, dest string) error {
-	switch {
-	case c.directory != "":
-		err := c.writeDirectory(ctx, dest)
-
-		if err != nil {
-			return err
-		}
-	case c.raw != "":
-		err := c.writeRaw(ctx, dest)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return nil, nil
 }
 
 func copyFiles(path string, dstPath string) error {
@@ -248,57 +153,6 @@ func fileContains(path string, find *regexp.Regexp) (bool, error) {
 	}
 
 	return find.MatchString(string(f)), nil
-}
-
-func (c configuration) hasDirectory(_ context.Context) bool {
-	return c.directory != ""
-}
-
-func (c configuration) hasRaw(_ context.Context) bool {
-	return c.raw != ""
-}
-
-// writeDirectory copies the contents of c.directory to dest.
-func (c configuration) writeDirectory(_ context.Context, dest string) error {
-	// Copy all files from c.directory to dest
-	pwd, err := os.Getwd()
-
-	if err != nil {
-		return err
-	}
-
-	configDirectory := filepath.Join(pwd, c.directory)
-
-	err = copyFiles(configDirectory, dest)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c configuration) writeRaw(_ context.Context, dest string) error {
-	outFilename := filepath.Join(dest, rawConfigFileName)
-	rmFilename := filepath.Join(dest, rawConfigFileNameJSON)
-
-	bCfg := []byte(c.raw)
-
-	if json.Valid(bCfg) {
-		outFilename, rmFilename = rmFilename, outFilename
-	}
-
-	if err := os.Remove(rmFilename); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("unable to remove %q: %w", rmFilename, err)
-	}
-
-	err := os.WriteFile(outFilename, bCfg, 0700)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func Pointer[T any](in T) *T {

@@ -23,8 +23,6 @@ import (
 func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfg teststep.Config, providers *providerFactories, stepIndex int) error {
 	t.Helper()
 
-	var testStepConfig teststep.Config
-
 	testStepConfig, err := teststep.Configuration(
 		teststep.ConfigurationRequest{
 			Directory: teststep.Pointer(
@@ -100,11 +98,11 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
 	// Create working directory for import tests
-	if !testStepConfig.HasConfiguration() {
+	if testStepConfig == nil {
 		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
 
 		testStepConfig = cfg
-		if !testStepConfig.HasConfiguration() {
+		if testStepConfig == nil {
 			t.Fatal("Cannot import state with no specified config")
 		}
 	}

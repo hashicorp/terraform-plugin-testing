@@ -40,24 +40,29 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("Error creating config: %w", err)
 	}
 
-	hasTerraformBlock, err := cfg.HasTerraformBlock(ctx)
+	var hasTerraformBlock bool
+	var hasProviderBlock bool
 
-	if err != nil {
-		logging.HelperResourceError(ctx,
-			"Error determining whether configuration contains terraform block",
-			map[string]interface{}{logging.KeyError: err},
-		)
-		t.Fatalf("Error determining whether configuration contains terraform block: %s", err)
-	}
+	if cfg != nil {
+		hasTerraformBlock, err = cfg.HasTerraformBlock(ctx)
 
-	hasProviderBlock, err := cfg.HasProviderBlock(ctx)
+		if err != nil {
+			logging.HelperResourceError(ctx,
+				"Error determining whether configuration contains terraform block",
+				map[string]interface{}{logging.KeyError: err},
+			)
+			t.Fatalf("Error determining whether configuration contains terraform block: %s", err)
+		}
 
-	if err != nil {
-		logging.HelperResourceError(ctx,
-			"Error determining whether configuration contains provider block",
-			map[string]interface{}{logging.KeyError: err},
-		)
-		t.Fatalf("Error determining whether configuration contains provider block: %s", err)
+		hasProviderBlock, err = cfg.HasProviderBlock(ctx)
+
+		if err != nil {
+			logging.HelperResourceError(ctx,
+				"Error determining whether configuration contains provider block",
+				map[string]interface{}{logging.KeyError: err},
+			)
+			t.Fatalf("Error determining whether configuration contains provider block: %s", err)
+		}
 	}
 
 	mergedConfig := step.mergedConfig(ctx, c, hasTerraformBlock, hasProviderBlock)
