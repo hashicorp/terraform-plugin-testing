@@ -6,12 +6,12 @@ package teststep
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 )
 
 const (
@@ -42,31 +42,23 @@ type ConfigurationRequest struct {
 	Raw       *string
 }
 
+func (c ConfigurationRequest) Validate() error {
+	if c.Directory != nil && c.Raw != nil && *c.Directory != "" && *c.Raw != "" {
+		return errors.New(`both "directory" and "raw" are populated, only one configuration option is allowed`)
+	}
+
+	return nil
+}
+
 func Configuration(req ConfigurationRequest) (configuration, error) {
-	var populatedConfig []string
 	var config configuration
 
-	if req.Directory != nil && *req.Directory != "" {
-		populatedConfig = append(populatedConfig, fmt.Sprintf("%q", "directory"))
-
-		config = configuration{
-			directory: *req.Directory,
-		}
+	if req.Directory != nil {
+		config.directory = *req.Directory
 	}
 
-	if req.Raw != nil && *req.Raw != "" {
-		populatedConfig = append(populatedConfig, fmt.Sprintf("%q", "raw"))
-
-		config = configuration{
-			raw: *req.Raw,
-		}
-	}
-
-	if len(populatedConfig) > 1 {
-		return configuration{}, fmt.Errorf(
-			"both %s are populated, only one configuration option is allowed",
-			strings.Join(populatedConfig, " and "),
-		)
+	if req.Raw != nil {
+		config.raw = *req.Raw
 	}
 
 	return config, nil
