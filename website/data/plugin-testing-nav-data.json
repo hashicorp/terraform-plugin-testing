@@ -1,7 +1,15 @@
 [
-  { "heading": "Testing" },
-  { "title": "Overview", "path": "" },
-  { "title": "Migrating from SDK", "path": "migrating" },
+  {
+    "heading": "Testing"
+  },
+  {
+    "title": "Overview",
+    "path": ""
+  },
+  {
+    "title": "Migrating from SDK",
+    "path": "migrating"
+  },
   {
     "title": "Acceptance Testing",
     "routes": [
@@ -28,6 +36,10 @@
       {
         "title": "Sweepers",
         "path": "acceptance-tests/sweepers"
+      },
+      {
+        "title": "Terraform JSON Paths",
+        "path": "acceptance-tests/tfjson-paths"
       }
     ]
   },
