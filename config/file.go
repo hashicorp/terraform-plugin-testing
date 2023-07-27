@@ -8,8 +8,7 @@ import (
 	"strconv"
 )
 
-// StaticFile is a helper function that returns the supplied
-// file when TestStepConfigFunc is executed.
+// StaticFile returns the supplied file.
 func StaticFile(file string) func(TestStepConfigRequest) string {
 	return func(_ TestStepConfigRequest) string {
 		return file
@@ -17,7 +16,7 @@ func StaticFile(file string) func(TestStepConfigRequest) string {
 }
 
 // TestNameFile returns the name of the test suffixed with the supplied
-// file name when TestStepConfigFunc is executed (e.g., "testdata/TestExampleCloudThing_basic/test.tf.
+// file and prefixed with "testdata".
 //
 // For example, given test code:
 //
@@ -39,8 +38,23 @@ func TestNameFile(file string) func(TestStepConfigRequest) string {
 	}
 }
 
-// TestStepFile returns the name of the test suffixed
-// with the test step number and the supplied file name.
+// TestStepFile returns the name of the test suffixed with the test
+// step number and the supplied file, and prefixed with "testdata".
+//
+// For example, given test code:
+//
+//	func TestExampleCloudThing_basic(t *testing.T) {
+//	    resource.Test(t, resource.TestCase{
+//	        Steps: []resource.TestStep{
+//	            {
+//	                ConfigFile: config.TestStepFile("test.tf"),
+//	            },
+//	        },
+//	    })
+//	}
+//
+// The testing configuration will be expected in the
+// testdata/TestExampleCloudThing_basic/1/test.tf file.
 func TestStepFile(file string) func(TestStepConfigRequest) string { //nolint:paralleltest //Not a test
 	return func(req TestStepConfigRequest) string {
 		return filepath.Join("testdata", req.TestName, strconv.Itoa(req.StepNumber), file)

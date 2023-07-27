@@ -509,9 +509,9 @@ type TestStep struct {
 	// There are helper functions in the [config] package that can be used,
 	// such as:
 	//
-	//  - [config.StaticDirectory]
-	//  - [config.TestNameDirectory]
-	//  - [config.TestStepDirectory]
+	//   - [config.StaticDirectory]
+	//   - [config.TestNameDirectory]
+	//   - [config.TestStepDirectory]
 	//
 	// When running Terraform operations for the test, Terraform will
 	// be executed with copies of the files of this directory as its
@@ -526,9 +526,9 @@ type TestStep struct {
 	// There are helper functions in the [config] package that can be used,
 	// such as:
 	//
-	//  - [config.StaticFile]
-	//  - [config.TestNameFile]
-	//  - [config.TestStepFile]
+	//   - [config.StaticFile]
+	//   - [config.TestNameFile]
+	//   - [config.TestStepFile]
 	//
 	// When running Terraform operations for the test, Terraform will
 	// be executed with a copy of the file as its working directory.

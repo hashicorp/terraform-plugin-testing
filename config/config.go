@@ -4,12 +4,24 @@
 package config
 
 // TestStepConfigFunc is the callback type used with acceptance tests to
-// specify a string which identifies a directory containing Terraform
-// configuration files, or a file that contains Terraform configuration.
+// specify a string which either identifies a directory containing
+// Terraform configuration files, or a file that contains Terraform
+// configuration.
 type TestStepConfigFunc func(TestStepConfigRequest) string
 
 // TestStepConfigRequest defines the request supplied to types
-// implementing TestStepConfigFunc.
+// implementing TestStepConfigFunc. StepNumber is used in the
+// predefined helper functions:
+//
+//   - [config.TestStepDirectory]
+//   - [config.TestStepFile].
+//
+// TestName is used in the predefined helper functions:
+//
+//   - [config.TestNameDirectory]
+//   - [config.TestStepDirectory]
+//   - [config.TestNameFile]
+//   - [config.TestStepFile]
 type TestStepConfigRequest struct {
 	StepNumber int
 	TestName   string

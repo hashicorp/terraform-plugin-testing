@@ -22,11 +22,11 @@ type Variable interface {
 }
 
 // Variables is a type holding a key-value map of variable names
-// to types implementing Variable interface.
+// to types implementing the Variable interface.
 type Variables map[string]Variable
 
-// Write outputs all the variables as JSON and writes them
-// to autoTFVarsJson in dest.
+// Write creates a file in the destination supplied
+// containing JSON encoded Variables.
 func (v Variables) Write(dest string) error {
 	if len(v) == 0 {
 		return nil
@@ -51,6 +51,7 @@ func (v Variables) Write(dest string) error {
 
 var _ Variable = boolVariable{}
 
+// boolVariable supports JSON encoding of a bool.
 type boolVariable struct {
 	value bool
 }
@@ -60,8 +61,7 @@ func (v boolVariable) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-// BoolVariable instantiates an instance of boolVariable,
-// which implements Variable.
+// BoolVariable returns boolVariable which implements Variable.
 func BoolVariable(value bool) boolVariable {
 	return boolVariable{
 		value: value,
@@ -70,6 +70,7 @@ func BoolVariable(value bool) boolVariable {
 
 var _ Variable = floatVariable{}
 
+// floatVariable supports JSON encoding of any floating-point type.
 type floatVariable struct {
 	value any
 }
@@ -79,8 +80,7 @@ func (v floatVariable) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-// FloatVariable instantiates an instance of floatVariable,
-// which implements Variable.
+// FloatVariable returns floatVariable which implements Variable.
 func FloatVariable[T constraints.Float](value T) floatVariable {
 	return floatVariable{
 		value: value,
@@ -89,6 +89,7 @@ func FloatVariable[T constraints.Float](value T) floatVariable {
 
 var _ Variable = integerVariable{}
 
+// integerVariable supports JSON encoding of any integer type.
 type integerVariable struct {
 	value any
 }
@@ -98,8 +99,7 @@ func (v integerVariable) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-// IntegerVariable instantiates an instance of integerVariable,
-// which implements Variable.
+// IntegerVariable returns integerVariable which implements Variable.
 func IntegerVariable[T constraints.Integer](value T) integerVariable {
 	return integerVariable{
 		value: value,
@@ -108,11 +108,14 @@ func IntegerVariable[T constraints.Integer](value T) integerVariable {
 
 var _ Variable = listVariable{}
 
+// listVariable supports JSON encoding of slice of Variable.
 type listVariable struct {
 	value []Variable
 }
 
 // MarshalJSON returns the JSON encoding of listVariable.
+// Every Variable within a listVariable must be the same
+// underlying type.
 func (v listVariable) MarshalJSON() ([]byte, error) {
 	if !typesEq(v.value) {
 		return nil, errors.New("lists must contain the same type")
@@ -121,8 +124,7 @@ func (v listVariable) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-// ListVariable instantiates an instance of listVariable,
-// which implements Variable.
+// ListVariable returns listVariable which implements Variable.
 func ListVariable(value ...Variable) listVariable {
 	return listVariable{
 		value: value,
@@ -131,11 +133,15 @@ func ListVariable(value ...Variable) listVariable {
 
 var _ Variable = mapVariable{}
 
+// mapVariable supports JSON encoding of a key-value map of
+// string to Variable.
 type mapVariable struct {
 	value map[string]Variable
 }
 
 // MarshalJSON returns the JSON encoding of mapVariable.
+// Every Variable in a mapVariable must be the same
+// underlying type.
 func (v mapVariable) MarshalJSON() ([]byte, error) {
 	var variables []Variable
 
@@ -150,8 +156,7 @@ func (v mapVariable) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-// MapVariable instantiates an instance of mapVariable,
-// which implements Variable.
+// MapVariable returns mapVariable which implements Variable.
 func MapVariable(value map[string]Variable) mapVariable {
 	return mapVariable{
 		value: value,
@@ -160,6 +165,9 @@ func MapVariable(value map[string]Variable) mapVariable {
 
 var _ Variable = objectVariable{}
 
+// objectVariable supports JSON encoding of a key-value
+// map of string to Variable in which each Variable
+// can be a different underlying type.
 type objectVariable struct {
 	value map[string]Variable
 }
@@ -185,8 +193,7 @@ func (v objectVariable) MarshalJSON() ([]byte, error) {
 	return b, nil
 }
 
-// ObjectVariable instantiates an instance of objectVariable,
-// which implements Variable.
+// ObjectVariable returns objectVariable which implements Variable.
 func ObjectVariable(value map[string]Variable) objectVariable {
 	return objectVariable{
 		value: value,
@@ -195,11 +202,14 @@ func ObjectVariable(value map[string]Variable) objectVariable {
 
 var _ Variable = setVariable{}
 
+// setVariable supports JSON encoding of a slice of Variable.
 type setVariable struct {
 	value []Variable
 }
 
 // MarshalJSON returns the JSON encoding of setVariable.
+// Every Variable in a setVariable must be the same
+// underlying type.
 func (v setVariable) MarshalJSON() ([]byte, error) {
 	for kx, x := range v.value {
 		for ky := kx + 1; ky < len(v.value); ky++ {
@@ -226,8 +236,7 @@ func (v setVariable) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-// SetVariable instantiates an instance of setVariable,
-// which implements Variable.
+// SetVariable returns setVariable which implements Variable.
 func SetVariable(value ...Variable) setVariable {
 	return setVariable{
 		value: value,
@@ -236,6 +245,7 @@ func SetVariable(value ...Variable) setVariable {
 
 var _ Variable = stringVariable{}
 
+// stringVariable supports JSON encoding of a string.
 type stringVariable struct {
 	value string
 }
@@ -245,14 +255,18 @@ func (v stringVariable) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-// StringVariable instantiates an instance of stringVariable,
-// which implements Variable.
+// StringVariable returns stringVariable which implements Variable.
 func StringVariable(value string) stringVariable {
 	return stringVariable{
 		value: value,
 	}
 }
 
+var _ Variable = tupleVariable{}
+
+// tupleVariable supports JSON encoding of a slice of Variable
+// in which each element in the slice can be a different
+// underlying type.
 type tupleVariable struct {
 	value []Variable
 }
@@ -262,14 +276,15 @@ func (v tupleVariable) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-// TupleVariable instantiates an instance of tupleVariable,
-// which implements Variable.
+// TupleVariable returns tupleVariable which implements Variable.
 func TupleVariable(value ...Variable) tupleVariable {
 	return tupleVariable{
 		value: value,
 	}
 }
 
+// typesEq verifies that every element in the supplied slice of Variable
+// is the same underlying type.
 func typesEq(variables []Variable) bool {
 	var t reflect.Type
 
