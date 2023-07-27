@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 
+	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 
@@ -130,27 +131,35 @@ func TestTestStepValidate(t *testing.T) {
 		testStep                TestStep
 		testStepConfig          string
 		testStepConfigDirectory string
+		testStepConfigFile      string
 		testStepValidateRequest testStepValidateRequest
 		expectedError           error
 	}{
 		"config-and-importstate-and-refreshstate-missing": {
 			testStep:                TestStep{},
 			testStepValidateRequest: testStepValidateRequest{},
-			expectedError:           fmt.Errorf("TestStep missing Config or ConfigDirectory or ImportState or RefreshState"),
+			expectedError:           fmt.Errorf("TestStep missing Config or ConfigDirectory or ConfigFile or ImportState or RefreshState"),
 		},
 		"config-and-refreshstate-both-set": {
 			testStep: TestStep{
 				RefreshState: true,
 			},
 			testStepConfig: "# not empty",
-			expectedError:  fmt.Errorf("TestStep cannot have Config and RefreshState"),
+			expectedError:  fmt.Errorf("TestStep cannot have Config or ConfigDirectory or ConfigFile and RefreshState"),
 		},
 		"config-directory-and-refreshstate-both-set": {
 			testStep: TestStep{
 				RefreshState: true,
 			},
 			testStepConfigDirectory: "# not empty",
-			expectedError:           fmt.Errorf("TestStep cannot have Config and RefreshState"),
+			expectedError:           fmt.Errorf("TestStep cannot have Config or ConfigDirectory or ConfigFile and RefreshState"),
+		},
+		"config-file-and-refreshstate-both-set": {
+			testStep: TestStep{
+				RefreshState: true,
+			},
+			testStepConfigFile: "# not empty",
+			expectedError:      fmt.Errorf("TestStep cannot have Config or ConfigDirectory or ConfigFile and RefreshState"),
 		},
 		"refreshstate-first-step": {
 			testStep: TestStep{
@@ -203,13 +212,34 @@ func TestTestStepValidate(t *testing.T) {
 			testStepValidateRequest: testStepValidateRequest{},
 			expectedError:           fmt.Errorf("TestStep provider \"test\" set in both ExternalProviders and ProviderFactories"),
 		},
+		"externalproviders-overlapping-providerfactories-config-file": {
+			testStep: TestStep{
+				ExternalProviders: map[string]ExternalProvider{
+					"test": {}, // does not need to be real
+				},
+				ProviderFactories: map[string]func() (*schema.Provider, error){
+					"test": nil, // does not need to be real
+				},
+			},
+			testStepConfigFile:      "# not empty",
+			testStepValidateRequest: testStepValidateRequest{},
+			expectedError:           fmt.Errorf("TestStep provider \"test\" set in both ExternalProviders and ProviderFactories"),
+		},
 		"externalproviders-testcase-config-directory": {
 			testStep:                TestStep{},
 			testStepConfigDirectory: "# not empty",
 			testStepValidateRequest: testStepValidateRequest{
 				TestCaseHasExternalProviders: true,
 			},
-			expectedError: fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.ConfigDirectory"),
+			expectedError: fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.Config"),
+		},
+		"externalproviders-testcase-config-file": {
+			testStep:           TestStep{},
+			testStepConfigFile: "# not empty",
+			testStepValidateRequest: testStepValidateRequest{
+				TestCaseHasExternalProviders: true,
+			},
+			expectedError: fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.Config"),
 		},
 		"externalproviders-teststep-config-directory": {
 			testStep: TestStep{
@@ -219,7 +249,17 @@ func TestTestStepValidate(t *testing.T) {
 			},
 			testStepConfigDirectory: "# not empty",
 			testStepValidateRequest: testStepValidateRequest{},
-			expectedError:           fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.ConfigDirectory"),
+			expectedError:           fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.Config"),
+		},
+		"externalproviders-teststep-config-file": {
+			testStep: TestStep{
+				ExternalProviders: map[string]ExternalProvider{
+					"test": {}, // does not need to be real
+				},
+			},
+			testStepConfigFile:      "# not empty",
+			testStepValidateRequest: testStepValidateRequest{},
+			expectedError:           fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.Config"),
 		},
 		"externalproviders-testcase-providers": {
 			testStep: TestStep{
@@ -266,6 +306,18 @@ func TestTestStepValidate(t *testing.T) {
 			},
 			expectedError: fmt.Errorf("Providers must only be specified either at the TestCase or TestStep level"),
 		},
+		"protov5providerfactories-testcase-providers-config-file": {
+			testStep: TestStep{
+				ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
+					"test": nil, // does not need to be real
+				},
+			},
+			testStepConfigFile: "# not empty",
+			testStepValidateRequest: testStepValidateRequest{
+				TestCaseHasProviders: true,
+			},
+			expectedError: fmt.Errorf("Providers must only be specified either at the TestCase or TestStep level"),
+		},
 		"protov6providerfactories-testcase-providers": {
 			testStep: TestStep{
 				ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
@@ -290,6 +342,18 @@ func TestTestStepValidate(t *testing.T) {
 			},
 			expectedError: fmt.Errorf("Providers must only be specified either at the TestCase or TestStep level"),
 		},
+		"protov6providerfactories-testcase-providers-config-file": {
+			testStep: TestStep{
+				ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+					"test": nil, // does not need to be real
+				},
+			},
+			testStepConfigFile: "# not empty",
+			testStepValidateRequest: testStepValidateRequest{
+				TestCaseHasProviders: true,
+			},
+			expectedError: fmt.Errorf("Providers must only be specified either at the TestCase or TestStep level"),
+		},
 		"providerfactories-testcase-providers": {
 			testStep: TestStep{
 				ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -309,6 +373,18 @@ func TestTestStepValidate(t *testing.T) {
 				},
 			},
 			testStepConfigDirectory: "# not empty",
+			testStepValidateRequest: testStepValidateRequest{
+				TestCaseHasProviders: true,
+			},
+			expectedError: fmt.Errorf("Providers must only be specified either at the TestCase or TestStep level"),
+		},
+		"providerfactories-testcase-providers-config-file": {
+			testStep: TestStep{
+				ProviderFactories: map[string]func() (*schema.Provider, error){
+					"test": nil, // does not need to be real
+				},
+			},
+			testStepConfigFile: "# not empty",
 			testStepValidateRequest: testStepValidateRequest{
 				TestCaseHasProviders: true,
 			},
@@ -343,6 +419,17 @@ func TestTestStepValidate(t *testing.T) {
 				PlanOnly: true,
 			},
 			testStepConfigDirectory: "testdata/fixtures/random_id",
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep ConfigPlanChecks.PreApply cannot be run with PlanOnly"),
+		},
+		"configplanchecks-preapply-not-planonly-config-file": {
+			testStep: TestStep{
+				ConfigPlanChecks: ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{&planCheckSpy{}},
+				},
+				PlanOnly: true,
+			},
+			testStepConfigFile:      "testdata/fixtures/random_id/random.tf",
 			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
 			expectedError:           errors.New("TestStep ConfigPlanChecks.PreApply cannot be run with PlanOnly"),
 		},
@@ -386,6 +473,16 @@ func TestTestStepValidate(t *testing.T) {
 			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
 			expectedError:           errors.New("TestStep RefreshPlanChecks.PostRefresh must only be specified with RefreshState"),
 		},
+		"refreshplanchecks-postrefresh-not-refresh-mode-config-file": {
+			testStep: TestStep{
+				RefreshPlanChecks: RefreshPlanChecks{
+					PostRefresh: []plancheck.PlanCheck{&planCheckSpy{}},
+				},
+			},
+			testStepConfigFile:      "testdata/fixtures/random_id/random.tf",
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep RefreshPlanChecks.PostRefresh must only be specified with RefreshState"),
+		},
 	}
 
 	for name, test := range tests {
@@ -394,12 +491,14 @@ func TestTestStepValidate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			testStepConfig, err := teststep.Configuration(
-				teststep.ConfigurationRequest{
-					Directory: teststep.Pointer(test.testStepConfigDirectory),
-					Raw:       teststep.Pointer(test.testStepConfig),
-				},
-			)
+			configRequest := teststep.PrepareConfigurationRequest{
+				Directory:             func(config.TestStepConfigRequest) string { return test.testStepConfigDirectory },
+				File:                  func(config.TestStepConfigRequest) string { return test.testStepConfigFile },
+				Raw:                   test.testStepConfig,
+				TestStepConfigRequest: config.TestStepConfigRequest{},
+			}.Exec()
+
+			testStepConfig, err := teststep.Configuration(configRequest)
 
 			if err != nil {
 				t.Fatal(err)

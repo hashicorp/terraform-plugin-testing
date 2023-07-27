@@ -146,19 +146,17 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			copyWorkingDir(ctx, t, stepNumber, wd)
 		}
 
-		cfg, err := teststep.Configuration(
-			teststep.ConfigurationRequest{
-				Directory: teststep.Pointer(
-					step.ConfigDirectory.Exec(
-						config.TestStepConfigRequest{
-							StepNumber: stepIndex + 1,
-							TestName:   t.Name(),
-						},
-					),
-				),
-				Raw: teststep.Pointer(step.Config),
+		configRequest := teststep.PrepareConfigurationRequest{
+			Directory: step.ConfigDirectory,
+			File:      step.ConfigFile,
+			Raw:       step.Config,
+			TestStepConfigRequest: config.TestStepConfigRequest{
+				StepNumber: stepIndex + 1,
+				TestName:   t.Name(),
 			},
-		)
+		}.Exec()
+
+		cfg, err := teststep.Configuration(configRequest)
 
 		if err != nil {
 			logging.HelperResourceError(ctx,
@@ -245,21 +243,20 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 			var testStepConfig teststep.Config
 
-			// Return value from c.ProviderConfig() is assigned to Raw as this was previously being
-			// passed to wd.SetConfig() when the second argument accept a configuration string.
-			testStepConfig, err = teststep.Configuration(
-				teststep.ConfigurationRequest{
-					Directory: teststep.Pointer(
-						step.ConfigDirectory.Exec(
-							config.TestStepConfigRequest{
-								StepNumber: stepIndex + 1,
-								TestName:   t.Name(),
-							},
-						),
-					),
-					Raw: teststep.Pointer(step.providerConfig(ctx, hasProviderBlock)),
+			// Return value from step.providerConfig() is assigned to Raw as this was previously being
+			// passed to wd.SetConfig() directly when the second argument to wd.SetConfig() accepted a
+			// configuration string.
+			confRequest := teststep.PrepareConfigurationRequest{
+				Directory: step.ConfigDirectory,
+				File:      step.ConfigFile,
+				Raw:       step.providerConfig(ctx, hasProviderBlock),
+				TestStepConfigRequest: config.TestStepConfigRequest{
+					StepNumber: stepIndex + 1,
+					TestName:   t.Name(),
 				},
-			)
+			}.Exec()
+
+			testStepConfig, err = teststep.Configuration(confRequest)
 
 			if err != nil {
 				logging.HelperResourceError(ctx,
@@ -441,19 +438,17 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 			mergedConfig := step.mergedConfig(ctx, c, hasTerraformBlock, hasProviderBlock)
 
-			appliedCfg, err = teststep.Configuration(
-				teststep.ConfigurationRequest{
-					Directory: teststep.Pointer(
-						step.ConfigDirectory.Exec(
-							config.TestStepConfigRequest{
-								StepNumber: stepIndex + 1,
-								TestName:   t.Name(),
-							},
-						),
-					),
-					Raw: teststep.Pointer(mergedConfig),
+			confRequest := teststep.PrepareConfigurationRequest{
+				Directory: step.ConfigDirectory,
+				File:      step.ConfigFile,
+				Raw:       mergedConfig,
+				TestStepConfigRequest: config.TestStepConfigRequest{
+					StepNumber: stepIndex + 1,
+					TestName:   t.Name(),
 				},
-			)
+			}.Exec()
+
+			appliedCfg, err = teststep.Configuration(confRequest)
 
 			if err != nil {
 				logging.HelperResourceError(ctx,
@@ -514,19 +509,17 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 	state.RootModule().Resources = make(map[string]*terraform.ResourceState)
 	state.RootModule().Resources[c.IDRefreshName] = &terraform.ResourceState{}
 
-	cfg, err := teststep.Configuration(
-		teststep.ConfigurationRequest{
-			Directory: teststep.Pointer(
-				step.ConfigDirectory.Exec(
-					config.TestStepConfigRequest{
-						StepNumber: stepIndex + 1,
-						TestName:   t.Name(),
-					},
-				),
-			),
-			Raw: teststep.Pointer(step.Config),
+	configRequest := teststep.PrepareConfigurationRequest{
+		Directory: step.ConfigDirectory,
+		File:      step.ConfigFile,
+		Raw:       step.Config,
+		TestStepConfigRequest: config.TestStepConfigRequest{
+			StepNumber: stepIndex + 1,
+			TestName:   t.Name(),
 		},
-	)
+	}.Exec()
+
+	cfg, err := teststep.Configuration(configRequest)
 
 	if err != nil {
 		logging.HelperResourceError(ctx,
@@ -574,19 +567,17 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 	}
 
 	defer func() {
-		testStepConfigDefer, err := teststep.Configuration(
-			teststep.ConfigurationRequest{
-				Directory: teststep.Pointer(
-					step.ConfigDirectory.Exec(
-						config.TestStepConfigRequest{
-							StepNumber: stepIndex + 1,
-							TestName:   t.Name(),
-						},
-					),
-				),
-				Raw: teststep.Pointer(step.Config),
+		confRequest := teststep.PrepareConfigurationRequest{
+			Directory: step.ConfigDirectory,
+			File:      step.ConfigFile,
+			Raw:       step.providerConfig(ctx, hasProviderBlock),
+			TestStepConfigRequest: config.TestStepConfigRequest{
+				StepNumber: stepIndex + 1,
+				TestName:   t.Name(),
 			},
-		)
+		}.Exec()
+
+		testStepConfigDefer, err := teststep.Configuration(confRequest)
 
 		if err != nil {
 			logging.HelperResourceError(ctx,

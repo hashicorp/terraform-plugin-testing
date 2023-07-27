@@ -23,19 +23,17 @@ import (
 func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfg teststep.Config, providers *providerFactories, stepIndex int) error {
 	t.Helper()
 
-	testStepConfig, err := teststep.Configuration(
-		teststep.ConfigurationRequest{
-			Directory: teststep.Pointer(
-				step.ConfigDirectory.Exec(
-					config.TestStepConfigRequest{
-						StepNumber: stepIndex + 1,
-						TestName:   t.Name(),
-					},
-				),
-			),
-			Raw: teststep.Pointer(step.Config),
+	configRequest := teststep.PrepareConfigurationRequest{
+		Directory: step.ConfigDirectory,
+		File:      step.ConfigFile,
+		Raw:       step.Config,
+		TestStepConfigRequest: config.TestStepConfigRequest{
+			StepNumber: stepIndex + 1,
+			TestName:   t.Name(),
 		},
-	)
+	}.Exec()
+
+	testStepConfig, err := teststep.Configuration(configRequest)
 
 	if err != nil {
 		t.Fatalf("Error creating configuration: %s", err)

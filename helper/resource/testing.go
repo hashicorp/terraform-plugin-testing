@@ -496,11 +496,14 @@ type TestStep struct {
 	//
 	// JSON Configuration Syntax can be used and is assumed whenever Config
 	// contains valid JSON.
+	//
+	// Only one of Config, ConfigDirectory or ConfigFile can be set
+	// otherwise an error will be returned.
 	Config string
 
-	// ConfigDirectory is a function which accepts *testing.T and returns
-	// a function that accepts config.TestStepProviderConfig and returns
-	// a string representing a directory that contains Terraform
+	// ConfigDirectory is a function which returns a function that
+	// accepts config.TestStepProviderConfig and returns a string
+	// representing a directory that contains Terraform
 	// configuration files.
 	//
 	// There are helper functions in the [config] package that can be used,
@@ -512,9 +515,26 @@ type TestStep struct {
 	//
 	// When running Terraform operations for the test, Terraform will
 	// be executed with copies of the files of this directory as its
-	// working directory. If both ConfigDirectory and Config are set
-	// an error will be returned.
+	// working directory. Only one of Config, ConfigDirectory or
+	// ConfigFile can be set otherwise an error will be returned.
 	ConfigDirectory config.TestStepConfigFunc
+
+	// ConfigFile is a function which returns a function that
+	// accepts config.TestStepProviderConfig and returns a string
+	// representing a file that contains Terraform configuration.
+	//
+	// There are helper functions in the [config] package that can be used,
+	// such as:
+	//
+	//  - [config.StaticFile]
+	//  - [config.TestNameFile]
+	//  - [config.TestStepFile]
+	//
+	// When running Terraform operations for the test, Terraform will
+	// be executed with a copy of the file as its working directory.
+	// Only one of Config, ConfigDirectory or ConfigFile can be set
+	// otherwise an error will be returned.
+	ConfigFile config.TestStepConfigFunc
 
 	// ConfigVariables is a map defining variables for use in conjunction
 	// with Terraform configuration. If this map is populated then it

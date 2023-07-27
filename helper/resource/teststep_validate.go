@@ -61,19 +61,17 @@ func (s TestStep) hasProviders(ctx context.Context, stepIndex int, testName stri
 		return true, nil
 	}
 
-	cfg, err := teststep.Configuration(
-		teststep.ConfigurationRequest{
-			Directory: teststep.Pointer(
-				s.ConfigDirectory.Exec(
-					config.TestStepConfigRequest{
-						StepNumber: stepIndex + 1,
-						TestName:   testName,
-					},
-				),
-			),
-			Raw: teststep.Pointer(s.Config),
+	configRequest := teststep.PrepareConfigurationRequest{
+		Directory: s.ConfigDirectory,
+		File:      s.ConfigFile,
+		Raw:       s.Config,
+		TestStepConfigRequest: config.TestStepConfigRequest{
+			StepNumber: stepIndex + 1,
+			TestName:   testName,
 		},
-	)
+	}.Exec()
+
+	cfg, err := teststep.Configuration(configRequest)
 
 	if err != nil {
 		return false, err
@@ -120,13 +118,13 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 	logging.HelperResourceTrace(ctx, "Validating TestStep")
 
 	if req.StepConfiguration == nil && !s.ImportState && !s.RefreshState {
-		err := fmt.Errorf("TestStep missing Config or ConfigDirectory or ImportState or RefreshState")
+		err := fmt.Errorf("TestStep missing Config or ConfigDirectory or ConfigFile or ImportState or RefreshState")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
 	}
 
 	if req.StepConfiguration != nil && s.RefreshState {
-		err := fmt.Errorf("TestStep cannot have Config and RefreshState")
+		err := fmt.Errorf("TestStep cannot have Config or ConfigDirectory or ConfigFile and RefreshState")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
 	}
@@ -158,13 +156,13 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 	}
 
 	if req.TestCaseHasExternalProviders && req.StepConfiguration != nil && req.StepConfiguration.HasConfigurationFiles() {
-		err := fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.ConfigDirectory")
+		err := fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.Config")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
 	}
 
 	if s.hasExternalProviders() && req.StepConfiguration != nil && req.StepConfiguration.HasConfigurationFiles() {
-		err := fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.ConfigDirectory")
+		err := fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.Config")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
 	}
@@ -195,7 +193,7 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 	}
 
 	if !req.TestCaseHasProviders && !hasProviders && !cfgHasProviderBlock {
-		err := fmt.Errorf("Providers must be specified at the TestCase level, or in all TestStep, or in TestStep.ConfigDirectory")
+		err := fmt.Errorf("Providers must be specified at the TestCase level, or in all TestStep, or in TestStep.ConfigDirectory or TestStep.ConfigFile")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
 	}
@@ -210,7 +208,7 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 
 	if len(s.ConfigPlanChecks.PreApply) > 0 {
 		if req.StepConfiguration == nil {
-			err := fmt.Errorf("TestStep ConfigPlanChecks.PreApply must only be specified with Config")
+			err := fmt.Errorf("TestStep ConfigPlanChecks.PreApply must only be specified with Config, ConfigDirectory or ConfigFile")
 			logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 			return err
 		}
@@ -223,13 +221,13 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 	}
 
 	if len(s.ConfigPlanChecks.PostApplyPreRefresh) > 0 && req.StepConfiguration == nil {
-		err := fmt.Errorf("TestStep ConfigPlanChecks.PostApplyPreRefresh must only be specified with Config")
+		err := fmt.Errorf("TestStep ConfigPlanChecks.PostApplyPreRefresh must only be specified with Config, ConfigDirectory or ConfigFile")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
 	}
 
 	if len(s.ConfigPlanChecks.PostApplyPostRefresh) > 0 && req.StepConfiguration == nil {
-		err := fmt.Errorf("TestStep ConfigPlanChecks.PostApplyPostRefresh must only be specified with Config")
+		err := fmt.Errorf("TestStep ConfigPlanChecks.PostApplyPostRefresh must only be specified with Config, ConfigDirectory or ConfigFile")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
 	}

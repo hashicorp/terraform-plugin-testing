@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 )
 
+var _ Config = configurationDirectory{}
+
 type configurationDirectory struct {
 	directory string
 }

@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 )
 
+var _ Config = configurationString{}
+
 type configurationString struct {
 	raw string
 }

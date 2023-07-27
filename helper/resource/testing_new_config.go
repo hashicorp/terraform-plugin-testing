@@ -22,19 +22,17 @@ import (
 func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, stepIndex int) error {
 	t.Helper()
 
-	cfg, err := teststep.Configuration(
-		teststep.ConfigurationRequest{
-			Directory: teststep.Pointer(
-				step.ConfigDirectory.Exec(
-					config.TestStepConfigRequest{
-						StepNumber: stepIndex + 1,
-						TestName:   t.Name(),
-					},
-				),
-			),
-			Raw: teststep.Pointer(step.Config),
+	configRequest := teststep.PrepareConfigurationRequest{
+		Directory: step.ConfigDirectory,
+		File:      step.ConfigFile,
+		Raw:       step.Config,
+		TestStepConfigRequest: config.TestStepConfigRequest{
+			StepNumber: stepIndex + 1,
+			TestName:   t.Name(),
 		},
-	)
+	}.Exec()
+
+	cfg, err := teststep.Configuration(configRequest)
 
 	if err != nil {
 		return fmt.Errorf("Error creating config: %w", err)
@@ -67,19 +65,17 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 	mergedConfig := step.mergedConfig(ctx, c, hasTerraformBlock, hasProviderBlock)
 
-	testStepConfig, err := teststep.Configuration(
-		teststep.ConfigurationRequest{
-			Directory: teststep.Pointer(
-				step.ConfigDirectory.Exec(
-					config.TestStepConfigRequest{
-						StepNumber: stepIndex + 1,
-						TestName:   t.Name(),
-					},
-				),
-			),
-			Raw: teststep.Pointer(mergedConfig),
+	confRequest := teststep.PrepareConfigurationRequest{
+		Directory: step.ConfigDirectory,
+		File:      step.ConfigFile,
+		Raw:       mergedConfig,
+		TestStepConfigRequest: config.TestStepConfigRequest{
+			StepNumber: stepIndex + 1,
+			TestName:   t.Name(),
 		},
-	)
+	}.Exec()
+
+	testStepConfig, err := teststep.Configuration(confRequest)
 
 	if err != nil {
 		return fmt.Errorf("Error creating config: %w", err)

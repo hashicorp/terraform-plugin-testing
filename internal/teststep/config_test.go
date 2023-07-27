@@ -21,17 +21,37 @@ func TestConfigurationRequest_Validate(t *testing.T) {
 				Directory: Pointer("directory"),
 			},
 		},
+		"file": {
+			configRequest: ConfigurationRequest{
+				Raw: Pointer("file"),
+			},
+		},
 		"raw": {
 			configRequest: ConfigurationRequest{
 				Raw: Pointer("raw"),
 			},
+		},
+		"directory-file": {
+			configRequest: ConfigurationRequest{
+				Directory: Pointer("directory"),
+				File:      Pointer("file"),
+			},
+			expectedError: `directory and file are populated, only one of "directory", "file", or "raw"  is allowed`,
 		},
 		"directory-raw": {
 			configRequest: ConfigurationRequest{
 				Directory: Pointer("directory"),
 				Raw:       Pointer("raw"),
 			},
-			expectedError: `both "directory" and "raw" are populated, only one configuration option is allowed`,
+			expectedError: `directory and raw are populated, only one of "directory", "file", or "raw"  is allowed`,
+		},
+		"directory-file-raw": {
+			configRequest: ConfigurationRequest{
+				Directory: Pointer("directory"),
+				File:      Pointer("file"),
+				Raw:       Pointer("raw"),
+			},
+			expectedError: `directory, file and raw are populated, only one of "directory", "file", or "raw"  is allowed`,
 		},
 	}
 
