@@ -88,11 +88,7 @@ func (c TestCase) validate(ctx context.Context, t testing.T) error {
 			},
 		}.Exec()
 
-		stepConfiguration, err := teststep.Configuration(configRequest)
-
-		if err != nil {
-			return fmt.Errorf("error creating teststep.Configuration: %s", err)
-		}
+		stepConfiguration := teststep.Configuration(configRequest)
 
 		stepNumber := stepIndex + 1 // Use 1-based index for humans
 		stepValidateReq := testStepValidateRequest{
@@ -103,7 +99,7 @@ func (c TestCase) validate(ctx context.Context, t testing.T) error {
 			TestName:                     t.Name(),
 		}
 
-		err = step.validate(ctx, stepValidateReq)
+		err := step.validate(ctx, stepValidateReq)
 
 		if err != nil {
 			err := fmt.Errorf("TestStep %d/%d validation error: %w", stepNumber, len(c.Steps), err)

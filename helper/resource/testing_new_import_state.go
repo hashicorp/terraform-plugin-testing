@@ -33,11 +33,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		},
 	}.Exec()
 
-	testStepConfig, err := teststep.Configuration(configRequest)
-
-	if err != nil {
-		t.Fatalf("Error creating configuration: %s", err)
-	}
+	testStepConfig := teststep.Configuration(configRequest)
 
 	if step.ResourceName == "" {
 		t.Fatal("ResourceName is required for an import state test")
@@ -45,6 +41,8 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	// get state from check sequence
 	var state *terraform.State
+	var err error
+
 	err = runProviderCommand(ctx, t, func() error {
 		state, err = getState(ctx, t, wd)
 		if err != nil {

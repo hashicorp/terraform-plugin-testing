@@ -71,15 +71,13 @@ func (s TestStep) hasProviders(ctx context.Context, stepIndex int, testName stri
 		},
 	}.Exec()
 
-	cfg, err := teststep.Configuration(configRequest)
-
-	if err != nil {
-		return false, err
-	}
+	cfg := teststep.Configuration(configRequest)
 
 	var cfgHasProviders bool
 
 	if cfg != nil {
+		var err error
+
 		cfgHasProviders, err = cfg.HasProviderBlock(ctx)
 
 		if err != nil {

@@ -498,16 +498,12 @@ func TestTestStepValidate(t *testing.T) {
 				TestStepConfigRequest: config.TestStepConfigRequest{},
 			}.Exec()
 
-			testStepConfig, err := teststep.Configuration(configRequest)
-
-			if err != nil {
-				t.Fatal(err)
-			}
+			testStepConfig := teststep.Configuration(configRequest)
 
 			testStepValidateRequest := test.testStepValidateRequest
 			testStepValidateRequest.StepConfiguration = testStepConfig
 
-			err = test.testStep.validate(context.Background(), testStepValidateRequest)
+			err := test.testStep.validate(context.Background(), testStepValidateRequest)
 
 			if err != nil {
 				if test.expectedError == nil {

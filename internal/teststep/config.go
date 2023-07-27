@@ -25,6 +25,12 @@ var (
 	terraformConfigBlockRegex = regexp.MustCompile(`terraform {`)
 )
 
+// Config defines an interface implemented by all types
+// that represent Terraform configuration:
+//
+//   - [config.configurationDirectory]
+//   - [config.configurationFile]
+//   - [config.configurationString]
 type Config interface {
 	HasConfigurationFiles() bool
 	HasProviderBlock(context.Context) (bool, error)
@@ -32,6 +38,9 @@ type Config interface {
 	Write(context.Context, string) error
 }
 
+// PrepareConfigurationRequest is used to simplify the generation of
+// a ConfigurationRequest which is required when calling the
+// Configuration func.
 type PrepareConfigurationRequest struct {
 	Directory             config.TestStepConfigFunc
 	File                  config.TestStepConfigFunc
@@ -39,6 +48,8 @@ type PrepareConfigurationRequest struct {
 	TestStepConfigRequest config.TestStepConfigRequest
 }
 
+// Exec returns a Configuration request which is required when
+// calling the Configuration func.
 func (p PrepareConfigurationRequest) Exec() ConfigurationRequest {
 	directory := Pointer(p.Directory.Exec(p.TestStepConfigRequest))
 	file := Pointer(p.File.Exec(p.TestStepConfigRequest))
@@ -51,12 +62,15 @@ func (p PrepareConfigurationRequest) Exec() ConfigurationRequest {
 	}
 }
 
+// ConfigurationRequest is used by the Configuration func to determine
+// the underlying type to instantiate.
 type ConfigurationRequest struct {
 	Directory *string
 	File      *string
 	Raw       *string
 }
 
+// Validate ensures that only one of Directory, File or Raw are non-empty.
 func (c ConfigurationRequest) Validate() error {
 	var configSet []string
 
@@ -87,28 +101,34 @@ func (c ConfigurationRequest) Validate() error {
 	return nil
 }
 
-func Configuration(req ConfigurationRequest) (Config, error) {
+// Configuration uses the supplied ConfigurationRequest to determine
+// which of the types that implement Config to instantiate. If none
+// of the fields in ConfigurationRequest are populated nil is returned.
+func Configuration(req ConfigurationRequest) Config {
 	if req.Directory != nil && *req.Directory != "" {
 		return configurationDirectory{
 			directory: *req.Directory,
-		}, nil
+		}
 	}
 
 	if req.File != nil && *req.File != "" {
 		return configurationFile{
 			file: *req.File,
-		}, nil
+		}
 	}
 
 	if req.Raw != nil && *req.Raw != "" {
 		return configurationString{
 			raw: *req.Raw,
-		}, nil
+		}
 	}
 
-	return nil, nil
+	return nil
 }
 
+// copyFiles accepts a path to a directory and a destination. Only
+// files in the path directory are copied, any nested directories
+// are ignored.
 func copyFiles(path string, dstPath string) error {
 	infos, err := os.ReadDir(path)
 
@@ -133,6 +153,8 @@ func copyFiles(path string, dstPath string) error {
 	return nil
 }
 
+// copyFile accepts a path to a file and a destination,
+// copying the file from path to destination.
 func copyFile(path string, dstPath string) error {
 	srcF, err := os.Open(path)
 
@@ -168,6 +190,10 @@ func copyFile(path string, dstPath string) error {
 	return nil
 }
 
+// filesContains accepts a string representing a directory and a
+// regular expression. For each file that is found within the
+// directory fileContains func is called. Any nested directories
+// within the directory specified by dir are ignored.
 func filesContains(dir string, find *regexp.Regexp) (bool, error) {
 	dirEntries, err := os.ReadDir(dir)
 
@@ -196,6 +222,9 @@ func filesContains(dir string, find *regexp.Regexp) (bool, error) {
 	return false, nil
 }
 
+// fileContains accepts a path and a regular expression. The
+// file is read and the supplied regular expression is used
+// to determine whether the file contains the specified string.
 func fileContains(path string, find *regexp.Regexp) (bool, error) {
 	f, err := os.ReadFile(path)
 
@@ -206,6 +235,7 @@ func fileContains(path string, find *regexp.Regexp) (bool, error) {
 	return find.MatchString(string(f)), nil
 }
 
+// Pointer returns a pointer to any type.
 func Pointer[T any](in T) *T {
 	return &in
 }

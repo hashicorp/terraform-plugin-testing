@@ -32,16 +32,14 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		},
 	}.Exec()
 
-	cfg, err := teststep.Configuration(configRequest)
-
-	if err != nil {
-		return fmt.Errorf("Error creating config: %w", err)
-	}
+	cfg := teststep.Configuration(configRequest)
 
 	var hasTerraformBlock bool
 	var hasProviderBlock bool
 
 	if cfg != nil {
+		var err error
+
 		hasTerraformBlock, err = cfg.HasTerraformBlock(ctx)
 
 		if err != nil {
@@ -75,13 +73,9 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		},
 	}.Exec()
 
-	testStepConfig, err := teststep.Configuration(confRequest)
+	testStepConfig := teststep.Configuration(confRequest)
 
-	if err != nil {
-		return fmt.Errorf("Error creating config: %w", err)
-	}
-
-	err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
+	err := wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		return fmt.Errorf("Error setting config: %w", err)
 	}

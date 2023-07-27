@@ -97,21 +97,13 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	// Return value from c.ProviderConfig() is assigned to Raw as this was previously being
 	// passed to wd.SetConfig() when the second argument accept a configuration string.
 	if c.hasProviders(ctx) {
-		config, err := teststep.Configuration(
+		config := teststep.Configuration(
 			teststep.ConfigurationRequest{
 				Raw: teststep.Pointer(c.providerConfig(ctx, false)),
 			},
 		)
 
-		if err != nil {
-			logging.HelperResourceError(ctx,
-				"TestCase error creating provider configuration",
-				map[string]interface{}{logging.KeyError: err},
-			)
-			t.Fatalf("TestCase error creating provider configuration: %s", err)
-		}
-
-		err = wd.SetConfig(ctx, config, nil)
+		err := wd.SetConfig(ctx, config, nil)
 
 		if err != nil {
 			logging.HelperResourceError(ctx,
@@ -156,15 +148,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			},
 		}.Exec()
 
-		cfg, err := teststep.Configuration(configRequest)
-
-		if err != nil {
-			logging.HelperResourceError(ctx,
-				"Error creating config",
-				map[string]interface{}{logging.KeyError: err},
-			)
-			t.Fatalf("Error creating config: %s", err)
-		}
+		cfg := teststep.Configuration(configRequest)
 
 		stepNumber = stepIndex + 1 // 1-based indexing for humans
 		ctx = logging.TestStepNumberContext(ctx, stepNumber)
@@ -256,15 +240,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				},
 			}.Exec()
 
-			testStepConfig, err = teststep.Configuration(confRequest)
-
-			if err != nil {
-				logging.HelperResourceError(ctx,
-					"TestStep error creating provider configuration",
-					map[string]interface{}{logging.KeyError: err},
-				)
-				t.Fatalf("TestStep %d/%d error creating test provider configuration: %s", stepNumber, len(c.Steps), err)
-			}
+			testStepConfig = teststep.Configuration(confRequest)
 
 			err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 
@@ -448,15 +424,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				},
 			}.Exec()
 
-			appliedCfg, err = teststep.Configuration(confRequest)
-
-			if err != nil {
-				logging.HelperResourceError(ctx,
-					"Error creating config",
-					map[string]interface{}{logging.KeyError: err},
-				)
-				t.Fatalf("Error creating config: %s", err)
-			}
+			appliedCfg = teststep.Configuration(confRequest)
 
 			logging.HelperResourceDebug(ctx, "Finished TestStep")
 
@@ -519,19 +487,13 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 		},
 	}.Exec()
 
-	cfg, err := teststep.Configuration(configRequest)
-
-	if err != nil {
-		logging.HelperResourceError(ctx,
-			"Error creating provider configuration for import test config",
-			map[string]interface{}{logging.KeyError: err},
-		)
-		t.Fatalf("Error creating provider configuration for import test config: %s", err)
-	}
+	cfg := teststep.Configuration(configRequest)
 
 	var hasProviderBlock bool
 
 	if cfg != nil {
+		var err error
+
 		hasProviderBlock, err = cfg.HasProviderBlock(ctx)
 
 		if err != nil {
@@ -545,23 +507,15 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 	// Return value from c.ProviderConfig() is assigned to Raw as this was previously being
 	// passed to wd.SetConfig() when the second argument accept a configuration string.
-	testStepConfig, err := teststep.Configuration(
+	testStepConfig := teststep.Configuration(
 		teststep.ConfigurationRequest{
 			Raw: teststep.Pointer(c.providerConfig(ctx, hasProviderBlock)),
 		},
 	)
 
-	if err != nil {
-		logging.HelperResourceError(ctx,
-			"Error creating provider configuration for import test config",
-			map[string]interface{}{logging.KeyError: err},
-		)
-		t.Fatalf("Error creating provider configuration for import test config: %s", err)
-	}
-
 	// Temporarily set the config to a minimal provider config for the refresh
 	// test. After the refresh we can reset it.
-	err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
+	err := wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		t.Fatalf("Error setting import test config: %s", err)
 	}
@@ -577,15 +531,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 			},
 		}.Exec()
 
-		testStepConfigDefer, err := teststep.Configuration(confRequest)
-
-		if err != nil {
-			logging.HelperResourceError(ctx,
-				"Error creating provider configuration for resetting test config",
-				map[string]interface{}{logging.KeyError: err},
-			)
-			t.Fatalf("Error creating provider configuration for resetting test config: %s", err)
-		}
+		testStepConfigDefer := teststep.Configuration(confRequest)
 
 		err = wd.SetConfig(ctx, testStepConfigDefer, step.ConfigVariables)
 
