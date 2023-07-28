@@ -15,6 +15,9 @@ type configurationDirectory struct {
 	directory string
 }
 
+// HasConfigurationFiles is used during validation to ensure that
+// ExternalProviders are not declared at the TestCase or TestStep
+// level when using TestStep.ConfigDirectory.
 func (c configurationDirectory) HasConfigurationFiles() bool {
 	return true
 }
@@ -22,13 +25,17 @@ func (c configurationDirectory) HasConfigurationFiles() bool {
 // HasProviderBlock returns true if the Config has declared a provider
 // configuration block, e.g. provider "examplecloud" {...}
 func (c configurationDirectory) HasProviderBlock(ctx context.Context) (bool, error) {
-	pwd, err := os.Getwd()
+	configDirectory := c.directory
 
-	if err != nil {
-		return false, err
+	if !filepath.IsAbs(configDirectory) {
+		pwd, err := os.Getwd()
+
+		if err != nil {
+			return false, err
+		}
+
+		configDirectory = filepath.Join(pwd, configDirectory)
 	}
-
-	configDirectory := filepath.Join(pwd, c.directory)
 
 	contains, err := filesContains(configDirectory, providerConfigBlockRegex)
 
@@ -42,13 +49,17 @@ func (c configurationDirectory) HasProviderBlock(ctx context.Context) (bool, err
 // HasTerraformBlock returns true if the Config has declared a terraform
 // configuration block, e.g. terraform {...}
 func (c configurationDirectory) HasTerraformBlock(ctx context.Context) (bool, error) {
-	pwd, err := os.Getwd()
+	configDirectory := c.directory
 
-	if err != nil {
-		return false, err
+	if !filepath.IsAbs(configDirectory) {
+		pwd, err := os.Getwd()
+
+		if err != nil {
+			return false, err
+		}
+
+		configDirectory = filepath.Join(pwd, configDirectory)
 	}
-
-	configDirectory := filepath.Join(pwd, c.directory)
 
 	contains, err := filesContains(configDirectory, terraformConfigBlockRegex)
 
@@ -59,17 +70,21 @@ func (c configurationDirectory) HasTerraformBlock(ctx context.Context) (bool, er
 	return contains, nil
 }
 
+// Write copies all files from directory to destination.
 func (c configurationDirectory) Write(ctx context.Context, dest string) error {
-	// Copy all files from c.directory to dest
-	pwd, err := os.Getwd()
+	configDirectory := c.directory
 
-	if err != nil {
-		return err
+	if !filepath.IsAbs(configDirectory) {
+		pwd, err := os.Getwd()
+
+		if err != nil {
+			return err
+		}
+
+		configDirectory = filepath.Join(pwd, configDirectory)
 	}
 
-	configDirectory := filepath.Join(pwd, c.directory)
-
-	err = copyFiles(configDirectory, dest)
+	err := copyFiles(configDirectory, dest)
 
 	if err != nil {
 		return err

@@ -17,6 +17,9 @@ type configurationString struct {
 	raw string
 }
 
+// HasConfigurationFiles is used during validation to allow declaration
+// of ExternalProviders at the TestCase or TestStep level when using
+// TestStep.Config.
 func (c configurationString) HasConfigurationFiles() bool {
 	return false
 }
@@ -33,6 +36,7 @@ func (c configurationString) HasTerraformBlock(ctx context.Context) (bool, error
 	return terraformConfigBlockRegex.MatchString(c.raw), nil
 }
 
+// Write creates a file and writes c.raw into it.
 func (c configurationString) Write(ctx context.Context, dest string) error {
 	outFilename := filepath.Join(dest, rawConfigFileName)
 	rmFilename := filepath.Join(dest, rawConfigFileNameJSON)
