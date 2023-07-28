@@ -118,3 +118,82 @@ resource "test_test" "test" {}
 		})
 	}
 }
+
+func TestConfiguration_HasTerraformBlock(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		configRaw configurationString
+		expected  bool
+	}{
+		"no-config": {
+			expected: false,
+		},
+		"terraform-meta-attribute": {
+			configRaw: configurationString{
+				raw: `
+resource "test_test" "test" {
+  terraform = test.test
+}
+`,
+			},
+			expected: false,
+		},
+		"terraform-object-attribute": {
+			configRaw: configurationString{
+				raw: `
+resource "test_test" "test" {
+  test = {
+    terraform = {
+      test = true
+    }
+  }
+}
+`,
+			},
+			expected: false,
+		},
+		"terraform-string-attribute": {
+			configRaw: configurationString{
+				raw: `
+resource "test_test" "test" {
+  test = {
+    terraform = "test"
+  }
+}
+`,
+			},
+			expected: false,
+		},
+		"terraform-block": {
+			configRaw: configurationString{
+				raw: `
+terraform {
+  test = true
+}
+
+resource "test_test" "test" {}
+`,
+			},
+			expected: true,
+		},
+	}
+
+	for name, testCase := range testCases {
+		name, testCase := name, testCase
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := testCase.configRaw.HasTerraformBlock(context.Background())
+
+			if err != nil {
+				t.Errorf("unexpected error: %s", err)
+			}
+
+			if testCase.expected != got {
+				t.Errorf("expected %t, got %t", testCase.expected, got)
+			}
+		})
+	}
+}
