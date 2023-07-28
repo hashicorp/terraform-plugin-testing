@@ -1,0 +1,7 @@
+kind: FEATURES
+body: 'config: Added `TestStepDirectory` function which returns a path to a directory
+  with the same name as the currently executing test suffixed with the `TestStep`
+  number. Use with `TestStep.ConfigDirectory`'
+time: 2023-07-28T15:12:58.061032+01:00
+custom:
+  Issue: "153"

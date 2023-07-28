@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'resource: Added `TestStep.ConfigFile` to allow specifying a file containing
+  Terraform configuration for use during acceptance tests'
+time: 2023-07-28T15:28:22.204411+01:00
+custom:
+  Issue: "153"

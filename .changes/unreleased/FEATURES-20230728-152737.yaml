@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'resource: Added `TestStep.ConfigDirectory` to allow specifying a directory
+  containing Terraform configuration for use during acceptance tests'
+time: 2023-07-28T15:27:37.944964+01:00
+custom:
+  Issue: "153"

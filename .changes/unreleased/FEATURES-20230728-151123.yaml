@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'config: Added `StaticDirectory` function which returns a path to a directory.
+  Use with `TestStep.ConfigDirectory`'
+time: 2023-07-28T15:11:23.20617+01:00
+custom:
+  Issue: "153"

@@ -1,0 +1,5 @@
+kind: FEATURES
+body: 'config: Added `Variables` type for use with `TestStep.ConfigVariables`'
+time: 2023-07-28T15:20:50.182001+01:00
+custom:
+  Issue: "153"
