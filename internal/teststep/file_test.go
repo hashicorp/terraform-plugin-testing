@@ -7,16 +7,26 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"regexp"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestConfigurationFile_HasProviderBlock(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		configFile configurationFile
-		expected   bool
+		configFile    configurationFile
+		expected      bool
+		expectedError *regexp.Regexp
 	}{
+		"not-file": {
+			configFile: configurationFile{
+				file: "testdata/empty_file/not_a_real_file.tf",
+			},
+			expectedError: regexp.MustCompile(`.*no such file or directory`),
+		},
 		"no-config": {
 			configFile: configurationFile{
 				file: "testdata/empty_file/main.tf",
@@ -75,12 +85,22 @@ func TestConfigurationFile_HasProviderBlock(t *testing.T) {
 
 			got, err := testCase.configFile.HasProviderBlock(context.Background())
 
-			if err != nil {
-				t.Errorf("unexpected error: %s", err)
+			if testCase.expectedError == nil && err != nil {
+				t.Errorf("unexpected error %s", err)
 			}
 
-			if testCase.expected != got {
-				t.Errorf("expected %t, got %t", testCase.expected, got)
+			if testCase.expectedError != nil && err == nil {
+				t.Errorf("expected error but got none")
+			}
+
+			if testCase.expectedError != nil && err != nil {
+				if !testCase.expectedError.MatchString(err.Error()) {
+					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
+				}
+			}
+
+			if diff := cmp.Diff(testCase.expected, got); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
 			}
 		})
 	}
@@ -90,9 +110,16 @@ func TestConfigurationFile_HasProviderBlock_AbsolutePath(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		configFile configurationFile
-		expected   bool
+		configFile    configurationFile
+		expected      bool
+		expectedError *regexp.Regexp
 	}{
+		"not-file": {
+			configFile: configurationFile{
+				file: "testdata/empty_file/not_a_real_file.tf",
+			},
+			expectedError: regexp.MustCompile(`.*no such file or directory`),
+		},
 		"no-config": {
 			configFile: configurationFile{
 				file: "testdata/empty_file/main.tf",
@@ -159,12 +186,22 @@ func TestConfigurationFile_HasProviderBlock_AbsolutePath(t *testing.T) {
 
 			got, err := testCase.configFile.HasProviderBlock(context.Background())
 
-			if err != nil {
-				t.Errorf("unexpected error: %s", err)
+			if testCase.expectedError == nil && err != nil {
+				t.Errorf("unexpected error %s", err)
 			}
 
-			if testCase.expected != got {
-				t.Errorf("expected %t, got %t", testCase.expected, got)
+			if testCase.expectedError != nil && err == nil {
+				t.Errorf("expected error but got none")
+			}
+
+			if testCase.expectedError != nil && err != nil {
+				if !testCase.expectedError.MatchString(err.Error()) {
+					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
+				}
+			}
+
+			if diff := cmp.Diff(testCase.expected, got); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
 			}
 		})
 	}
@@ -174,9 +211,16 @@ func TestConfigurationFile_HasTerraformBlock(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		configFile configurationFile
-		expected   bool
+		configFile    configurationFile
+		expected      bool
+		expectedError *regexp.Regexp
 	}{
+		"not-file": {
+			configFile: configurationFile{
+				file: "testdata/empty_file/not_a_real_file.tf",
+			},
+			expectedError: regexp.MustCompile(`.*no such file or directory`),
+		},
 		"no-config": {
 			configFile: configurationFile{
 				file: "testdata/empty_file/main.tf",
@@ -217,12 +261,22 @@ func TestConfigurationFile_HasTerraformBlock(t *testing.T) {
 
 			got, err := testCase.configFile.HasTerraformBlock(context.Background())
 
-			if err != nil {
-				t.Errorf("unexpected error: %s", err)
+			if testCase.expectedError == nil && err != nil {
+				t.Errorf("unexpected error %s", err)
 			}
 
-			if testCase.expected != got {
-				t.Errorf("expected %t, got %t", testCase.expected, got)
+			if testCase.expectedError != nil && err == nil {
+				t.Errorf("expected error but got none")
+			}
+
+			if testCase.expectedError != nil && err != nil {
+				if !testCase.expectedError.MatchString(err.Error()) {
+					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
+				}
+			}
+
+			if diff := cmp.Diff(testCase.expected, got); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
 			}
 		})
 	}
@@ -232,9 +286,16 @@ func TestConfigurationFile_HasTerraformBlock_AbsolutePath(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		configFile configurationFile
-		expected   bool
+		configFile    configurationFile
+		expected      bool
+		expectedError *regexp.Regexp
 	}{
+		"not-file": {
+			configFile: configurationFile{
+				file: "testdata/empty_file/not_a_real_file.tf",
+			},
+			expectedError: regexp.MustCompile(`.*no such file or directory`),
+		},
 		"no-config": {
 			configFile: configurationFile{
 				file: "testdata/empty_file/main.tf",
@@ -283,12 +344,160 @@ func TestConfigurationFile_HasTerraformBlock_AbsolutePath(t *testing.T) {
 
 			got, err := testCase.configFile.HasTerraformBlock(context.Background())
 
-			if err != nil {
-				t.Errorf("unexpected error: %s", err)
+			if testCase.expectedError == nil && err != nil {
+				t.Errorf("unexpected error %s", err)
 			}
 
-			if testCase.expected != got {
-				t.Errorf("expected %t, got %t", testCase.expected, got)
+			if testCase.expectedError != nil && err == nil {
+				t.Errorf("expected error but got none")
+			}
+
+			if testCase.expectedError != nil && err != nil {
+				if !testCase.expectedError.MatchString(err.Error()) {
+					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
+				}
+			}
+
+			if diff := cmp.Diff(testCase.expected, got); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
+			}
+		})
+	}
+}
+
+func TestConfigurationFile_Write(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		configFile    configurationFile
+		expectedError *regexp.Regexp
+	}{
+		"not-file": {
+			configFile: configurationFile{
+				file: "testdata/empty_file/not_a_real_file.tf",
+			},
+			expectedError: regexp.MustCompile(`.*no such file or directory`),
+		},
+		"file": {
+			configFile: configurationFile{
+				"testdata/random/random.tf",
+			},
+		},
+	}
+
+	for name, testCase := range testCases {
+		name, testCase := name, testCase
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			tempDir := t.TempDir()
+
+			err := testCase.configFile.Write(context.Background(), tempDir)
+
+			if testCase.expectedError == nil && err != nil {
+				t.Errorf("unexpected error %s", err)
+			}
+
+			if testCase.expectedError != nil && err == nil {
+				t.Errorf("expected error but got none")
+			}
+
+			if testCase.expectedError != nil && err != nil {
+				if !testCase.expectedError.MatchString(err.Error()) {
+					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
+				}
+			}
+
+			if err == nil {
+				fileInfo, err := os.Lstat(testCase.configFile.file)
+
+				if err != nil {
+					t.Errorf("error getting dir entry info: %s", err)
+				}
+
+				tempFileInfo, err := os.Lstat(filepath.Join(tempDir, filepath.Base(testCase.configFile.file)))
+
+				if err != nil {
+					t.Errorf("error getting temp dir entry info: %s", err)
+				}
+
+				if diff := cmp.Diff(tempFileInfo, fileInfo, fileInfoComparer); diff != "" {
+					t.Errorf("unexpected difference: %s", diff)
+				}
+			}
+		})
+	}
+}
+
+func TestConfigurationFile_Write_AbsolutePath(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		configFile    configurationFile
+		expectedError *regexp.Regexp
+	}{
+		"not-file": {
+			configFile: configurationFile{
+				file: "testdata/empty_file/not_a_real_file.tf",
+			},
+			expectedError: regexp.MustCompile(`.*no such file or directory`),
+		},
+		"file": {
+			configFile: configurationFile{
+				"testdata/random/random.tf",
+			},
+		},
+	}
+
+	for name, testCase := range testCases {
+		name, testCase := name, testCase
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			tempDir := t.TempDir()
+
+			pwd, err := os.Getwd()
+
+			if err != nil {
+				t.Errorf("error getting wd: %s", err)
+			}
+
+			testCase.configFile.file = filepath.Join(pwd, testCase.configFile.file)
+
+			err = testCase.configFile.Write(context.Background(), tempDir)
+
+			if testCase.expectedError == nil && err != nil {
+				t.Errorf("unexpected error %s", err)
+			}
+
+			if testCase.expectedError != nil && err == nil {
+				t.Errorf("expected error but got none")
+			}
+
+			if testCase.expectedError != nil && err != nil {
+				if !testCase.expectedError.MatchString(err.Error()) {
+					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
+				}
+			}
+
+			if err == nil {
+				fileInfo, err := os.Lstat(testCase.configFile.file)
+
+				if err != nil {
+					t.Errorf("error getting dir entry info: %s", err)
+				}
+
+				tempFileInfo, err := os.Lstat(filepath.Join(tempDir, filepath.Base(testCase.configFile.file)))
+
+				if err != nil {
+					t.Errorf("error getting temp dir entry info: %s", err)
+				}
+
+				if diff := cmp.Diff(tempFileInfo, fileInfo, fileInfoComparer); diff != "" {
+					t.Errorf("unexpected difference: %s", diff)
+				}
 			}
 		})
 	}

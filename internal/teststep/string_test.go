@@ -5,7 +5,11 @@ package teststep
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestConfiguration_HasProviderBlock(t *testing.T) {
@@ -112,8 +116,8 @@ resource "test_test" "test" {}
 				t.Errorf("unexpected error: %s", err)
 			}
 
-			if testCase.expected != got {
-				t.Errorf("expected %t, got %t", testCase.expected, got)
+			if diff := cmp.Diff(testCase.expected, got); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
 			}
 		})
 	}
@@ -191,9 +195,58 @@ resource "test_test" "test" {}
 				t.Errorf("unexpected error: %s", err)
 			}
 
-			if testCase.expected != got {
-				t.Errorf("expected %t, got %t", testCase.expected, got)
+			if diff := cmp.Diff(testCase.expected, got); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
 			}
+		})
+	}
+}
+
+func TestConfigurationString_Write(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		configRaw configurationString
+	}{
+		"raw": {
+			configRaw: configurationString{
+				`
+provider "test" {
+ test = true
+}
+
+resource "test_test" "test" {}
+`,
+			},
+		},
+	}
+
+	for name, testCase := range testCases {
+		name, testCase := name, testCase
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			tempDir := t.TempDir()
+
+			err := testCase.configRaw.Write(context.Background(), tempDir)
+
+			if err != nil {
+				t.Errorf("unexpected error: %s", err)
+			}
+
+			expectedBytes := []byte(testCase.configRaw.raw)
+
+			gotBytes, err := os.ReadFile(filepath.Join(tempDir, rawConfigFileName))
+
+			if err != nil {
+				t.Errorf("error reading file: %s", err)
+			}
+
+			if diff := cmp.Diff(gotBytes, expectedBytes); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
+			}
+
 		})
 	}
 }
