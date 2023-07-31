@@ -10,8 +10,8 @@ package config
 type TestStepConfigFunc func(TestStepConfigRequest) string
 
 // TestStepConfigRequest defines the request supplied to types
-// implementing TestStepConfigFunc. StepNumber is used in the
-// predefined helper functions:
+// implementing TestStepConfigFunc. StepNumber is one-based
+// and is used in the predefined helper functions:
 //
 //   - [config.TestStepDirectory]
 //   - [config.TestStepFile].
