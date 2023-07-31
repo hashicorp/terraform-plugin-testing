@@ -136,10 +136,6 @@ func CopyDir(src, dest, baseDirName string) error {
 			if err = CopyDir(srcFilepath, destFilepath, baseDirName); err != nil {
 				return fmt.Errorf("unable to copy directory: %w", err)
 			}
-		} else if fi.Mode() == fs.ModeSymlink {
-			if err = CopyDir(srcFilepath, destFilepath, baseDirName); err != nil {
-				return fmt.Errorf("unable to copy directory: %w", err)
-			}
 		} else {
 			if err = CopyFile(srcFilepath, destFilepath); err != nil {
 				return fmt.Errorf("unable to copy file: %w", err)
