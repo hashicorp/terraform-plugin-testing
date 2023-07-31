@@ -24,6 +24,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
@@ -2328,6 +2329,25 @@ func TestTest_ConfigDirectory_TestStepDirectory(t *testing.T) {
 			{
 				ConfigDirectory: config.TestStepDirectory(),
 				Check:           TestCheckResourceAttrSet("random_password.test", "id"),
+			},
+		},
+	})
+}
+
+// TestTest_ConfigDirectory_TestStepDirectory_StepNotHardcoded uses a multistep test
+// to prove that the test step number is not hardcoded
+func TestTest_ConfigDirectory_TestStepDirectory_StepNotHardcoded(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		Steps: []TestStep{
+			{
+				ConfigDirectory: config.TestStepDirectory(),
+				Check:           TestCheckResourceAttrPtr("random_password.test", "length", teststep.Pointer("8")),
+			},
+			{
+				ConfigDirectory: config.TestStepDirectory(),
+				Check:           TestCheckResourceAttrPtr("random_password.test", "length", teststep.Pointer("9")),
 			},
 		},
 	})
