@@ -19,7 +19,12 @@ _Lifecycle (config)_, _Import_ and _Refresh_.
 
 _Lifecycle (config)_ mode is the most common mode, and is used for testing plugins by
 providing one or more configuration files with the same logic as would be used
-when running `terraform apply`.
+when running `terraform apply`. Configuration is supplied by specifying
+[TestStep.Config](/terraform/plugin/testing/acceptance-tests/configuration#teststep-config),
+[TestStep.ConfigDirectory](/terraform/plugin/testing/acceptance-tests/configuration#teststep-configdirectory), or
+[TestStep.ConfigFile](/terraform/plugin/testing/acceptance-tests/configuration#teststep-configfile).
+Variables for use with configuration are defined by specifying
+[TestStep.ConfigVariables](/terraform/plugin/testing/acceptance-tests/configuration#teststep-configvariables).
 
 _Import_ mode is used for testing resource functionality to import existing
 infrastructure into a Terraform statefile, using the same logic as would be used

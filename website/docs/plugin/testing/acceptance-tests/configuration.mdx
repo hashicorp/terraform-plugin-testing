@@ -9,9 +9,9 @@ description: >-
 
 The configuration used during the execution of an acceptance test can be specified at the [TestStep](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/helper/resource#TestStep) level by populating one of the following mutually exclusive fields:
 
-* [TestStep.Config](/terraform/plugin/testing/acceptance-tests/configuration#teststep-config)
-* [TestStep.ConfigDirectory](/terraform/plugin/testing/acceptance-tests/configuration#teststep-configdirectory)
-* [TestStep.ConfigFile](/terraform/plugin/testing/acceptance-tests/configuration#teststep-configfile)
+* [TestStep.Config](#teststep-config)
+* [TestStep.ConfigDirectory](#teststep-configdirectory)
+* [TestStep.ConfigFile](#teststep-configfile)
 
 Terraform configuration can be used in conjunction with Terraform variables defined via [TestStep.ConfigVariables](/terraform/plugin/testing/acceptance-tests/configuration#teststep-configvariables).
 
@@ -53,7 +53,7 @@ There are helper methods available for generating a [TestStepConfigFunc](https:/
 * [TestNameDirectory()](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/config#TestNameDirectory)
 * [TestStepDirectory()](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/config#TestStepDirectory)
 
-~> **Note**: `ExternalProviders` cannot be specified when using ConfigDirectory.
+~> **Note**: `TestStep.ExternalProviders` cannot be specified when using ConfigDirectory. It is expected that [required_providers](/terraform/language/providers/requirements#requiring-providers) are defined within the configuration files.
 
 Custom functions can be written and used in the `TestStep.ConfigDirectory` field as long as the function is a [TestStepConfigFunc](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/config#TestStepConfigFunc) type.
 
@@ -136,7 +136,7 @@ There are helper methods available for generating a [TestStepConfigFunc](https:/
 * [TestNameFile(file string)](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/config#TestNameFile)
 * [TestStepFile(file string)](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/config#TestStepFile)
 
-~> **Note**: `ExternalProviders` cannot be specified when using `ConfigFile`.
+~> **Note**: `TestStep.ExternalProviders` cannot be specified when using `ConfigFile`. It is expected that [required_providers](/terraform/language/providers/requirements#requiring-providers) are defined within the configuration file.
 
 Custom functions can be written and used in the `TestStep.ConfigFile` field as long as the function is a [TestStepConfigFunc](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/config#TestStepConfigFunc) type.
 
