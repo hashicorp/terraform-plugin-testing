@@ -83,12 +83,39 @@ func (wd *WorkingDir) GetHelper() *Helper {
 // Destroy to establish the configuration. Any previously-set configuration is
 // discarded and any saved plan is cleared.
 func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config, vars config.Variables) error {
+	// Remove old config and variables files first
+	d, err := os.Open(wd.baseDir)
+
+	if err != nil {
+		return err
+	}
+
+	defer d.Close()
+
+	fi, err := d.Readdir(-1)
+
+	if err != nil {
+		return err
+	}
+
+	for _, file := range fi {
+		if file.Mode().IsRegular() {
+			if filepath.Ext(file.Name()) == ".tf" || filepath.Ext(file.Name()) == ".json" {
+				err = os.Remove(filepath.Join(d.Name(), file.Name()))
+
+				if err != nil && !os.IsNotExist(err) {
+					return err
+				}
+			}
+		}
+	}
+
 	logging.HelperResourceTrace(ctx, "Setting Terraform configuration", map[string]any{logging.KeyTestTerraformConfiguration: cfg})
 
 	outFilename := filepath.Join(wd.baseDir, ConfigFileName)
 
 	// This file has to be written otherwise wd.Init() will return an error.
-	err := os.WriteFile(outFilename, nil, 0700)
+	err = os.WriteFile(outFilename, nil, 0700)
 
 	if err != nil {
 		return err

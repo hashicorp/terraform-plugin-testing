@@ -9,11 +9,3 @@ terraform {
     }
   }
 }
-
-provider "random" {}
-
-resource "random_password" "test" {
-  length = 8
-
-  numeric = false
-}

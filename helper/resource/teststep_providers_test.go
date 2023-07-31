@@ -2335,7 +2335,9 @@ func TestTest_ConfigDirectory_TestStepDirectory(t *testing.T) {
 }
 
 // TestTest_ConfigDirectory_TestStepDirectory_StepNotHardcoded uses a multistep test
-// to prove that the test step number is not hardcoded
+// to prove that the test step number is not hardcoded and to show that the
+// configuration files that are copied from the test step directory in test step 1
+// are removed prior to running test step 2.
 func TestTest_ConfigDirectory_TestStepDirectory_StepNotHardcoded(t *testing.T) {
 	t.Parallel()
 
@@ -2343,7 +2345,7 @@ func TestTest_ConfigDirectory_TestStepDirectory_StepNotHardcoded(t *testing.T) {
 		Steps: []TestStep{
 			{
 				ConfigDirectory: config.TestStepDirectory(),
-				Check:           TestCheckResourceAttrPtr("random_password.test", "length", teststep.Pointer("8")),
+				ExpectError:     regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
 			},
 			{
 				ConfigDirectory: config.TestStepDirectory(),
@@ -2443,6 +2445,27 @@ func TestTest_ConfigDirectory_TestStepDirectory_MultipleFiles(t *testing.T) {
 	})
 }
 
+// TestTest_ConfigDirectory_TestStepDirectory_MultipleFiles_StepNotHardcoded uses a
+// multistep test to prove that the test step number is not hardcoded, and to show
+// that the configuration files that are copied from the test step directory in test
+// step 1 are removed prior to running test step 2.
+func TestTest_ConfigDirectory_TestStepDirectory_MultipleFiles_StepNotHardcoded(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		Steps: []TestStep{
+			{
+				ConfigDirectory: config.TestStepDirectory(),
+				ExpectError:     regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
+			},
+			{
+				ConfigDirectory: config.TestStepDirectory(),
+				Check:           TestCheckResourceAttrPtr("random_password.test", "length", teststep.Pointer("9")),
+			},
+		},
+	})
+}
+
 func TestTest_ConfigDirectory_TestStepDirectory_MultipleFiles_Vars(t *testing.T) {
 	t.Parallel()
 
@@ -2455,6 +2478,35 @@ func TestTest_ConfigDirectory_TestStepDirectory_MultipleFiles_Vars(t *testing.T)
 					"numeric": config.BoolVariable(false),
 				},
 				Check: TestCheckResourceAttrSet("random_password.test", "id"),
+			},
+		},
+	})
+}
+
+// TestTest_ConfigDirectory_TestStepDirectory_MultipleFiles_Vars_StepNotHardcoded uses a
+// multistep test to prove that the test step number is not hardcoded, and to show
+// that the configuration files that are copied from the test step directory in test
+// step 1 are removed prior to running test step 2.
+func TestTest_ConfigDirectory_TestStepDirectory_MultipleFiles_Vars_StepNotHardcoded(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		Steps: []TestStep{
+			{
+				ConfigDirectory: config.TestStepDirectory(),
+				ConfigVariables: config.Variables{
+					"length":  config.IntegerVariable(8),
+					"numeric": config.BoolVariable(false),
+				},
+				ExpectError: regexp.MustCompile(`.*An argument named "numeric" is not expected here.`),
+			},
+			{
+				ConfigDirectory: config.TestStepDirectory(),
+				ConfigVariables: config.Variables{
+					"length":  config.IntegerVariable(9),
+					"numeric": config.BoolVariable(false),
+				},
+				Check: TestCheckResourceAttrPtr("random_password.test", "length", teststep.Pointer("9")),
 			},
 		},
 	})
