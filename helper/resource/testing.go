@@ -604,10 +604,24 @@ type TestStep struct {
 	// IDs returned by the Import.  Note that this checks for strict equality
 	// and does not respect DiffSuppressFunc or CustomizeDiff.
 	//
+	// By default, the prior resource state and import resource state are
+	// matched by the "id" attribute. If the "id" attribute is not implemented
+	// or another attribute more uniquely identifies the resource, set the
+	// ImportStateVerifyIdentifierAttribute field to adjust the attribute for
+	// matching.
+	//
+	// If certain attributes cannot be correctly imported, set the
+	// ImportStateVerifyIgnore field.
+	ImportStateVerify bool
+
+	// ImportStateVerifyIdentifierAttribute is the resource attribute for
+	// matching the prior resource state and import resource state during import
+	// verification. By default, the "id" attribute is used.
+	ImportStateVerifyIdentifierAttribute string
+
 	// ImportStateVerifyIgnore is a list of prefixes of fields that should
 	// not be verified to be equal. These can be set to ephemeral fields or
 	// fields that can't be refreshed and don't matter.
-	ImportStateVerify       bool
 	ImportStateVerifyIgnore []string
 
 	// ImportStatePersist, if true, will update the persisted state with the

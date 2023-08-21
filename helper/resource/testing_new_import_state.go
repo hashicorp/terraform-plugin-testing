@@ -182,12 +182,33 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			}
 		}
 
+		identifierAttribute := step.ImportStateVerifyIdentifierAttribute
+
+		if identifierAttribute == "" {
+			identifierAttribute = "id"
+		}
+
 		for _, r := range newResources {
+			rIdentifier, ok := r.Primary.Attributes[identifierAttribute]
+
+			if !ok {
+				t.Fatalf("ImportStateVerify: New resource missing identifier attribute %q, ensure attribute value is properly set or use ImportStateVerifyIdentifierAttribute to choose different attribute", identifierAttribute)
+			}
+
 			// Find the existing resource
 			var oldR *terraform.ResourceState
 			for _, r2 := range oldResources {
+				if r2.Primary == nil || r2.Type != r.Type || r2.Provider != r.Provider {
+					continue
+				}
 
-				if r2.Primary != nil && r2.Primary.ID == r.Primary.ID && r2.Type == r.Type && r2.Provider == r.Provider {
+				r2Identifier, ok := r2.Primary.Attributes[identifierAttribute]
+
+				if !ok {
+					t.Fatalf("ImportStateVerify: Old resource missing identifier attribute %q, ensure attribute value is properly set or use ImportStateVerifyIdentifierAttribute to choose different attribute", identifierAttribute)
+				}
+
+				if r2Identifier == rIdentifier {
 					oldR = r2
 					break
 				}
@@ -195,7 +216,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			if oldR == nil || oldR.Primary == nil {
 				t.Fatalf(
 					"Failed state verification, resource with ID %s not found",
-					r.Primary.ID)
+					rIdentifier)
 			}
 
 			// don't add empty flatmapped containers, so we can more easily

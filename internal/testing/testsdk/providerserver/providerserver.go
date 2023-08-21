@@ -286,6 +286,13 @@ func (s ProviderServer) ImportResourceState(ctx context.Context, req *tfprotov6.
 	}
 
 	if importResp.State.IsNull() {
+		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+			Severity: tfprotov6.DiagnosticSeverityError,
+			Summary:  "Resource Missing Import Support",
+			Detail: "After import, the managed resource returned an empty state with no diagnostics. " +
+				"Implement import or raise an error diagnostic.",
+		})
+
 		return resp, nil
 	}
 
