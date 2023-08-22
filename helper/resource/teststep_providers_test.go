@@ -17,12 +17,16 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
@@ -1142,6 +1146,53 @@ func TestTest_TestStep_ExternalProvidersAndProviderFactories_NonHashiCorpNamespa
 	})
 }
 
+func TestTest_TestStep_ExternalProviders_To_ProtoV6ProviderFactories(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		Steps: []TestStep{
+			{
+				Config: `resource "null_resource" "test" {}`,
+				ExternalProviders: map[string]ExternalProvider{
+					"null": {
+						Source:            "registry.terraform.io/hashicorp/null",
+						VersionConstraint: "3.1.1",
+					},
+				},
+			},
+			{
+				Config: `resource "null_resource" "test" {}`,
+				ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+					"null": providerserver.NewProviderServer(testprovider.Provider{
+						Resources: map[string]testprovider.Resource{
+							"null_resource": {
+								SchemaResponse: &resource.SchemaResponse{
+									Schema: &tfprotov6.Schema{
+										Block: &tfprotov6.SchemaBlock{
+											Attributes: []*tfprotov6.SchemaAttribute{
+												{
+													Name:     "id",
+													Type:     tftypes.String,
+													Computed: true,
+												},
+												{
+													Name:     "triggers",
+													Type:     tftypes.Map{ElementType: tftypes.String},
+													Optional: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					}),
+				},
+			},
+		},
+	})
+}
+
 func TestTest_TestStep_ExternalProviders_To_ProviderFactories(t *testing.T) {
 	t.Parallel()
 
@@ -1403,6 +1454,66 @@ func TestTest_TestStep_ProtoV6ProviderFactories_Error(t *testing.T) {
 				},
 			},
 		})
+	})
+}
+
+func TestTest_TestStep_ProtoV6ProviderFactories_To_ExternalProviders(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		Steps: []TestStep{
+			{
+				Config: `resource "null_resource" "test" {}`,
+				ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+					"null": providerserver.NewProviderServer(testprovider.Provider{
+						Resources: map[string]testprovider.Resource{
+							"null_resource": {
+								CreateResponse: &resource.CreateResponse{
+									NewState: tftypes.NewValue(
+										tftypes.Object{
+											AttributeTypes: map[string]tftypes.Type{
+												"id":       tftypes.String,
+												"triggers": tftypes.Map{ElementType: tftypes.String},
+											},
+										},
+										map[string]tftypes.Value{
+											"id":       tftypes.NewValue(tftypes.String, "test"),
+											"triggers": tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+										},
+									),
+								},
+								SchemaResponse: &resource.SchemaResponse{
+									Schema: &tfprotov6.Schema{
+										Block: &tfprotov6.SchemaBlock{
+											Attributes: []*tfprotov6.SchemaAttribute{
+												{
+													Name:     "id",
+													Type:     tftypes.String,
+													Computed: true,
+												},
+												{
+													Name:     "triggers",
+													Type:     tftypes.Map{ElementType: tftypes.String},
+													Optional: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					}),
+				},
+			},
+			{
+				Config: `resource "null_resource" "test" {}`,
+				ExternalProviders: map[string]ExternalProvider{
+					"null": {
+						Source: "registry.terraform.io/hashicorp/null",
+					},
+				},
+			},
+		},
 	})
 }
 
