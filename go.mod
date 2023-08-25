@@ -16,7 +16,7 @@ require (
 	github.com/hashicorp/terraform-json v0.17.1
 	github.com/hashicorp/terraform-plugin-go v0.18.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.27.0
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.28.0
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/mitchellh/go-testing-interface v1.14.1
 	github.com/mitchellh/reflectwalk v1.0.2
