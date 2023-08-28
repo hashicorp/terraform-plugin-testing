@@ -1,0 +1,7 @@
+kind: ENHANCEMENTS
+body: 'helper/resource: Added `TestStep` type `ImportStateVerifyIdentifierAttribute`
+  field, which can override the default `id` attribute used for matching prior
+  resource state with imported resource state'
+time: 2023-08-20T19:53:00.488517-04:00
+custom:
+  Issue: "84"
