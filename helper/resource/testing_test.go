@@ -867,7 +867,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 	}{
 		"attribute not found": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -887,7 +886,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"bool attribute match": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -908,7 +906,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"bool attribute mismatch": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -930,7 +927,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"float attribute match": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -951,7 +947,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"float attribute mismatch": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -973,7 +968,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"integer attribute match": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -994,7 +988,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"integer attribute mismatch": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1016,7 +1009,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"list attribute directly": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1039,7 +1031,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"list attribute element count match": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1061,7 +1052,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"list attribute element count mismatch": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1084,7 +1074,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"list attribute element count match 0 when empty": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1106,7 +1095,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		// Special case with .# and value 0
 		"list attribute element count match 0 when missing": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1125,7 +1113,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"list attribute element value match": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1147,7 +1134,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"list attribute element value mismatch": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1170,7 +1156,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"map attribute directly": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1193,7 +1178,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"map attribute element count match": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1215,7 +1199,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"map attribute element count mismatch": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1238,7 +1221,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"map attribute element count match 0 when empty": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1260,7 +1242,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		// Special case with .% and value 0
 		"map attribute element count match 0 when missing": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1279,7 +1260,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"map attribute element value match": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1301,7 +1281,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"map attribute element value mismatch": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1324,7 +1303,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"set attribute indexing error": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1347,7 +1325,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"string attribute match": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1368,7 +1345,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 		},
 		"string attribute mismatch": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1426,7 +1402,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 	}{
 		"attribute not found": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1446,7 +1421,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"bool attribute match": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1467,7 +1441,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"bool attribute mismatch": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1489,7 +1462,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"list attribute directly": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1512,7 +1484,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"list attribute element count match": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1534,7 +1505,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"list attribute element count mismatch": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1557,7 +1527,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"list attribute element count match 0 when empty": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1578,7 +1547,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"list attribute element value match": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1600,7 +1568,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"list attribute element value mismatch": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1623,7 +1590,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"map attribute directly": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1646,7 +1612,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"map attribute element count match": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1668,7 +1633,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"map attribute element count mismatch": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1691,7 +1655,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"map attribute element count match 0 when empty": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1712,7 +1675,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"map attribute element value match": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1734,7 +1696,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"map attribute element value mismatch": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1757,7 +1718,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"set attribute indexing error": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1780,7 +1740,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"string attribute match": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1801,7 +1760,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 		},
 		"string attribute mismatch": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1863,7 +1821,6 @@ func TestTestCheckNoResourceAttr(t *testing.T) {
 	}{
 		"attribute not found": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1881,7 +1838,6 @@ func TestTestCheckNoResourceAttr(t *testing.T) {
 		},
 		"attribute found": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1902,7 +1858,6 @@ func TestTestCheckNoResourceAttr(t *testing.T) {
 		},
 		"list attribute directly": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1925,7 +1880,6 @@ func TestTestCheckNoResourceAttr(t *testing.T) {
 		// Special case with .# and value 0
 		"list attribute element count match 0 when empty": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1945,7 +1899,6 @@ func TestTestCheckNoResourceAttr(t *testing.T) {
 		},
 		"list attribute element count mismatch 0 when non-empty": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1967,7 +1920,6 @@ func TestTestCheckNoResourceAttr(t *testing.T) {
 		},
 		"map attribute directly": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -1990,7 +1942,6 @@ func TestTestCheckNoResourceAttr(t *testing.T) {
 		// Special case with .% and value 0
 		"map attribute element count match 0 when empty": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -2010,7 +1961,6 @@ func TestTestCheckNoResourceAttr(t *testing.T) {
 		},
 		"map attribute element count mismatch 0 when non-empty": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -2032,7 +1982,6 @@ func TestTestCheckNoResourceAttr(t *testing.T) {
 		},
 		"set attribute indexing error": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -2385,7 +2334,6 @@ func TestTestCheckResourceAttrSet(t *testing.T) {
 	}{
 		"attribute not found": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -2404,7 +2352,6 @@ func TestTestCheckResourceAttrSet(t *testing.T) {
 		},
 		"attribute found": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -2424,7 +2371,6 @@ func TestTestCheckResourceAttrSet(t *testing.T) {
 		},
 		"list attribute directly": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -2446,7 +2392,6 @@ func TestTestCheckResourceAttrSet(t *testing.T) {
 		},
 		"map attribute directly": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},
@@ -2468,7 +2413,6 @@ func TestTestCheckResourceAttrSet(t *testing.T) {
 		},
 		"set attribute indexing error": {
 			state: &terraform.State{
-				IsBinaryDrivenTest: true, // Always true now
 				Modules: []*terraform.ModuleState{
 					{
 						Path: []string{"root"},

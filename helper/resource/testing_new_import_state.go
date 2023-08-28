@@ -147,7 +147,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 				continue
 			}
 
-			is := r.Primary.DeepCopy()
+			is := r.Primary.DeepCopy() //nolint:staticcheck // legacy usage
 			is.Ephemeral.Type = r.Type // otherwise the check function cannot see the type
 			states = append(states, is)
 		}

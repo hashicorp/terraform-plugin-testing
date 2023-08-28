@@ -21,7 +21,7 @@ type shimmedState struct {
 }
 
 func shimStateFromJson(jsonState *tfjson.State) (*terraform.State, error) {
-	state := terraform.NewState()
+	state := terraform.NewState() //nolint:staticcheck // legacy usage
 	state.TFVersion = jsonState.TerraformVersion
 
 	if jsonState.Values == nil {
@@ -124,7 +124,7 @@ func (ss *shimmedState) shimStateModule(sm *tfjson.StateModule) error {
 		}
 	}
 
-	mod := ss.state.AddModule(path)
+	mod := ss.state.AddModule(path) //nolint:staticcheck // legacy usage
 	for _, res := range sm.Resources {
 		resourceState, err := shimResourceState(res)
 		if err != nil {

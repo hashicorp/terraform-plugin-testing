@@ -112,7 +112,6 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		if step.Check != nil {
 			logging.HelperResourceTrace(ctx, "Using TestStep Check")
 
-			state.IsBinaryDrivenTest = true
 			if step.Destroy {
 				if err := step.Check(stateBeforeApplication); err != nil {
 					return fmt.Errorf("Check failed: %w", err)
@@ -244,6 +243,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			return err
 		}
 
+		//nolint:staticcheck // legacy usage
 		if state.Empty() {
 			return nil
 		}
