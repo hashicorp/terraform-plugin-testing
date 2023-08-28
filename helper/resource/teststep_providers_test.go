@@ -1320,41 +1320,86 @@ func TestTest_TestStep_Taint(t *testing.T) {
 
 	var idOne, idTwo string
 
-	Test(t, TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"random": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return &schema.Provider{
-					ResourcesMap: map[string]*schema.Resource{
-						"random_id": {
-							CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-								d.SetId(time.Now().String())
-								return nil
-							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
-								return nil
-							},
-							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
-								return nil
-							},
-							Schema: map[string]*schema.Schema{},
-						},
-					},
-				}, nil
-			},
-		},
+	UnitTest(t, TestCase{
 		Steps: []TestStep{
 			{
-				Config: `resource "random_id" "test" {}`,
+				Config: `resource "test_resource" "test" {}`,
 				Check: ComposeAggregateTestCheckFunc(
-					extractResourceAttr("random_id.test", "id", &idOne),
+					extractResourceAttr("test_resource.test", "id", &idOne),
 				),
+				ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+					"test": providerserver.NewProviderServer(testprovider.Provider{
+						Resources: map[string]testprovider.Resource{
+							"test_resource": {
+								CreateResponse: &resource.CreateResponse{
+									NewState: tftypes.NewValue(
+										tftypes.Object{
+											AttributeTypes: map[string]tftypes.Type{
+												"id": tftypes.String,
+											},
+										},
+										map[string]tftypes.Value{
+											"id": tftypes.NewValue(tftypes.String, "test-value1"),
+										},
+									),
+								},
+								SchemaResponse: &resource.SchemaResponse{
+									Schema: &tfprotov6.Schema{
+										Block: &tfprotov6.SchemaBlock{
+											Attributes: []*tfprotov6.SchemaAttribute{
+												{
+													Name:     "id",
+													Type:     tftypes.String,
+													Computed: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					}),
+				},
 			},
 			{
-				Taint:  []string{"random_id.test"},
-				Config: `resource "random_id" "test" {}`,
+				Taint:  []string{"test_resource.test"},
+				Config: `resource "test_resource" "test" {}`,
 				Check: ComposeAggregateTestCheckFunc(
-					extractResourceAttr("random_id.test", "id", &idTwo),
+					extractResourceAttr("test_resource.test", "id", &idTwo),
 				),
+				ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+					"test": providerserver.NewProviderServer(testprovider.Provider{
+						Resources: map[string]testprovider.Resource{
+							"test_resource": {
+								CreateResponse: &resource.CreateResponse{
+									NewState: tftypes.NewValue(
+										tftypes.Object{
+											AttributeTypes: map[string]tftypes.Type{
+												"id": tftypes.String,
+											},
+										},
+										map[string]tftypes.Value{
+											"id": tftypes.NewValue(tftypes.String, "test-value2"),
+										},
+									),
+								},
+								SchemaResponse: &resource.SchemaResponse{
+									Schema: &tfprotov6.Schema{
+										Block: &tfprotov6.SchemaBlock{
+											Attributes: []*tfprotov6.SchemaAttribute{
+												{
+													Name:     "id",
+													Type:     tftypes.String,
+													Computed: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					}),
+				},
 			},
 		},
 	})
@@ -1388,7 +1433,7 @@ func extractResourceAttr(resourceName string, attributeName string, attributeVal
 func TestTest_TestStep_ProtoV5ProviderFactories(t *testing.T) {
 	t.Parallel()
 
-	Test(&mockT{}, TestCase{
+	UnitTest(&mockT{}, TestCase{
 		Steps: []TestStep{
 			{
 				Config: "# not empty",
@@ -1406,7 +1451,7 @@ func TestTest_TestStep_ProtoV5ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
 	plugintest.TestExpectTFatal(t, func() {
-		Test(&mockT{}, TestCase{
+		UnitTest(&mockT{}, TestCase{
 			Steps: []TestStep{
 				{
 					Config: "# not empty",
@@ -1424,7 +1469,7 @@ func TestTest_TestStep_ProtoV5ProviderFactories_Error(t *testing.T) {
 func TestTest_TestStep_ProtoV6ProviderFactories(t *testing.T) {
 	t.Parallel()
 
-	Test(&mockT{}, TestCase{
+	UnitTest(&mockT{}, TestCase{
 		Steps: []TestStep{
 			{
 				Config: "# not empty",
@@ -1442,7 +1487,7 @@ func TestTest_TestStep_ProtoV6ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
 	plugintest.TestExpectTFatal(t, func() {
-		Test(&mockT{}, TestCase{
+		UnitTest(&mockT{}, TestCase{
 			Steps: []TestStep{
 				{
 					Config: "# not empty",
@@ -1520,7 +1565,7 @@ func TestTest_TestStep_ProtoV6ProviderFactories_To_ExternalProviders(t *testing.
 func TestTest_TestStep_ProviderFactories(t *testing.T) {
 	t.Parallel()
 
-	Test(&mockT{}, TestCase{
+	UnitTest(&mockT{}, TestCase{
 		Steps: []TestStep{
 			{
 				Config: "# not empty",
@@ -1538,7 +1583,7 @@ func TestTest_TestStep_ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
 	plugintest.TestExpectTFatal(t, func() {
-		Test(&mockT{}, TestCase{
+		UnitTest(&mockT{}, TestCase{
 			Steps: []TestStep{
 				{
 					Config: "# not empty",

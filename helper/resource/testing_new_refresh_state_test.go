@@ -8,6 +8,11 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
@@ -16,17 +21,43 @@ func Test_RefreshPlanChecks_PostRefresh_Called(t *testing.T) {
 
 	spy1 := &planCheckSpy{}
 	spy2 := &planCheckSpy{}
-	Test(t, TestCase{
-		ExternalProviders: map[string]ExternalProvider{
-			"random": {
-				Source: "registry.terraform.io/hashicorp/random",
-			},
+	UnitTest(t, TestCase{
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"test_resource": {
+						CreateResponse: &resource.CreateResponse{
+							NewState: tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id": tftypes.String,
+									},
+								},
+								map[string]tftypes.Value{
+									"id": tftypes.NewValue(tftypes.String, "test"),
+								},
+							),
+						},
+						SchemaResponse: &resource.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "id",
+											Type:     tftypes.String,
+											Computed: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}),
 		},
 		Steps: []TestStep{
 			{
-				Config: `resource "random_string" "one" {
-					length = 16
-				}`,
+				Config: `resource "test_resource" "test" {}`,
 			},
 			{
 				RefreshState: true,
@@ -59,17 +90,43 @@ func Test_RefreshPlanChecks_PostRefresh_Errors(t *testing.T) {
 	spy3 := &planCheckSpy{
 		err: errors.New("spy3 check failed"),
 	}
-	Test(t, TestCase{
-		ExternalProviders: map[string]ExternalProvider{
-			"random": {
-				Source: "registry.terraform.io/hashicorp/random",
-			},
+	UnitTest(t, TestCase{
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"test_resource": {
+						CreateResponse: &resource.CreateResponse{
+							NewState: tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id": tftypes.String,
+									},
+								},
+								map[string]tftypes.Value{
+									"id": tftypes.NewValue(tftypes.String, "test"),
+								},
+							),
+						},
+						SchemaResponse: &resource.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "id",
+											Type:     tftypes.String,
+											Computed: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}),
 		},
 		Steps: []TestStep{
 			{
-				Config: `resource "random_string" "one" {
-					length = 16
-				}`,
+				Config: `resource "test_resource" "test" {}`,
 			},
 			{
 				RefreshState: true,
