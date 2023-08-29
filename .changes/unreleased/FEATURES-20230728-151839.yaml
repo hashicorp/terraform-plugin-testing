@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'config: Added `TestStepConfigFunc` type for use with `TestStep.ConfigDirectory`
-  and `TestStep.ConfigFile`'
-time: 2023-07-28T15:18:39.111292+01:00
-custom:
-  Issue: "153"

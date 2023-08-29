@@ -1,7 +1,0 @@
-kind: FEATURES
-body: 'config: Added `BoolVariable`, `FloatVariable`, `IntegerVariable`, `ListVariable`,
-  `MapVariable`, `ObjectVariable`, `SetVariable`, `StringVariable` and `TupleVariable`
-  functions for generating types for use in `TestStep.ConfigVariables`'
-time: 2023-07-28T15:24:21.678437+01:00
-custom:
-  Issue: "153"

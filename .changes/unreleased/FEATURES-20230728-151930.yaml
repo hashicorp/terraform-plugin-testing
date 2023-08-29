@@ -1,5 +1,0 @@
-kind: FEATURES
-body: 'config: Added `TestStepConfigRequest` type for use with `TestStepConfigFunc`'
-time: 2023-07-28T15:19:30.060788+01:00
-custom:
-  Issue: "153"

@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'config: Added `TestNameFile` function which returns a path to a file with the
-  same name as the currently executing test. Use with `TestStep.ConfigFile`'
-time: 2023-07-28T15:15:13.088758+01:00
-custom:
-  Issue: "153"
