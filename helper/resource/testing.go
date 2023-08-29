@@ -1548,7 +1548,7 @@ func testCheckResourceAttrPair(isFirst *terraform.InstanceState, nameFirst strin
 // TestCheckOutput checks an output in the Terraform configuration
 func TestCheckOutput(name, value string) TestCheckFunc {
 	return func(s *terraform.State) error {
-		ms := s.RootModule() //nolint:staticcheck // legacy usage
+		ms := s.RootModule()
 		rs, ok := ms.Outputs[name]
 		if !ok {
 			return fmt.Errorf("Not found: %s", name)
@@ -1568,7 +1568,7 @@ func TestCheckOutput(name, value string) TestCheckFunc {
 
 func TestMatchOutput(name string, r *regexp.Regexp) TestCheckFunc {
 	return func(s *terraform.State) error {
-		ms := s.RootModule() //nolint:staticcheck // legacy usage
+		ms := s.RootModule()
 		rs, ok := ms.Outputs[name]
 		if !ok {
 			return fmt.Errorf("Not found: %s", name)
