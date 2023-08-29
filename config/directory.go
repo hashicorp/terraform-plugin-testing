@@ -56,7 +56,7 @@ func TestNameDirectory() func(TestStepConfigRequest) string {
 // The testing configurations will be expected in the
 // testdata/TestExampleCloudThing_basic/1 directory as
 // TestStepConfigRequest.StepNumber is one-based.
-func TestStepDirectory() func(TestStepConfigRequest) string { //nolint:paralleltest //Not a test
+func TestStepDirectory() func(TestStepConfigRequest) string {
 	return func(req TestStepConfigRequest) string {
 		return filepath.Join("testdata", req.TestName, strconv.Itoa(req.StepNumber))
 	}
