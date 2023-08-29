@@ -356,7 +356,7 @@ func getState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir) (*ter
 }
 
 func stateIsEmpty(state *terraform.State) bool {
-	return state.Empty() || !state.HasResources()
+	return state.Empty() || !state.HasResources() //nolint:staticcheck // legacy usage
 }
 
 func planIsEmpty(plan *tfjson.Plan) bool {
@@ -375,7 +375,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 	// Build the state. The state is just the resource with an ID. There
 	// are no attributes. We only set what is needed to perform a refresh.
-	state := terraform.NewState()
+	state := terraform.NewState() //nolint:staticcheck // legacy usage
 	state.RootModule().Resources = make(map[string]*terraform.ResourceState)
 	state.RootModule().Resources[c.IDRefreshName] = &terraform.ResourceState{}
 

@@ -1610,7 +1610,7 @@ func modulePrimaryInstanceState(ms *terraform.ModuleState, name string) (*terraf
 // modulePathPrimaryInstanceState returns the primary instance state for the
 // given resource name in a given module path.
 func modulePathPrimaryInstanceState(s *terraform.State, mp addrs.ModuleInstance, name string) (*terraform.InstanceState, error) {
-	ms := s.ModuleByPath(mp)
+	ms := s.ModuleByPath(mp) //nolint:staticcheck // legacy usage
 	if ms == nil {
 		return nil, fmt.Errorf("No module found at: %s", mp)
 	}
@@ -1621,7 +1621,7 @@ func modulePathPrimaryInstanceState(s *terraform.State, mp addrs.ModuleInstance,
 // primaryInstanceState returns the primary instance state for the given
 // resource name in the root module.
 func primaryInstanceState(s *terraform.State, name string) (*terraform.InstanceState, error) {
-	ms := s.RootModule()
+	ms := s.RootModule() //nolint:staticcheck // legacy usage
 	return modulePrimaryInstanceState(ms, name)
 }
 
@@ -1640,7 +1640,7 @@ func indexesIntoTypeSet(key string) bool {
 func checkIfIndexesIntoTypeSet(key string, f TestCheckFunc) TestCheckFunc {
 	return func(s *terraform.State) error {
 		err := f(s)
-		if err != nil && s.IsBinaryDrivenTest && indexesIntoTypeSet(key) {
+		if err != nil && indexesIntoTypeSet(key) {
 			return fmt.Errorf("Error in test check: %s\nTest check address %q likely indexes into TypeSet\nThis is currently not possible in the SDK", err, key)
 		}
 		return err
@@ -1650,7 +1650,7 @@ func checkIfIndexesIntoTypeSet(key string, f TestCheckFunc) TestCheckFunc {
 func checkIfIndexesIntoTypeSetPair(keyFirst, keySecond string, f TestCheckFunc) TestCheckFunc {
 	return func(s *terraform.State) error {
 		err := f(s)
-		if err != nil && s.IsBinaryDrivenTest && (indexesIntoTypeSet(keyFirst) || indexesIntoTypeSet(keySecond)) {
+		if err != nil && (indexesIntoTypeSet(keyFirst) || indexesIntoTypeSet(keySecond)) {
 			return fmt.Errorf("Error in test check: %s\nTest check address %q or %q likely indexes into TypeSet\nThis is currently not possible in the SDK", err, keyFirst, keySecond)
 		}
 		return err
