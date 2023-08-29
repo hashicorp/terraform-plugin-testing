@@ -138,19 +138,20 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			copyWorkingDir(ctx, t, stepNumber, wd)
 		}
 
+		stepNumber = stepIndex + 1 // 1-based indexing for humans
+
 		configRequest := teststep.PrepareConfigurationRequest{
 			Directory: step.ConfigDirectory,
 			File:      step.ConfigFile,
 			Raw:       step.Config,
 			TestStepConfigRequest: config.TestStepConfigRequest{
-				StepNumber: stepIndex + 1,
+				StepNumber: stepNumber,
 				TestName:   t.Name(),
 			},
 		}.Exec()
 
 		cfg := teststep.Configuration(configRequest)
 
-		stepNumber = stepIndex + 1 // 1-based indexing for humans
 		ctx = logging.TestStepNumberContext(ctx, stepNumber)
 
 		logging.HelperResourceDebug(ctx, "Starting TestStep")

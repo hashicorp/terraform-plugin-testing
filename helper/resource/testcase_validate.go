@@ -78,19 +78,20 @@ func (c TestCase) validate(ctx context.Context, t testing.T) error {
 	testCaseHasProviders := c.hasProviders(ctx)
 
 	for stepIndex, step := range c.Steps {
+		stepNumber := stepIndex + 1 // Use 1-based index for humans
+
 		configRequest := teststep.PrepareConfigurationRequest{
 			Directory: step.ConfigDirectory,
 			File:      step.ConfigFile,
 			Raw:       step.Config,
 			TestStepConfigRequest: config.TestStepConfigRequest{
-				StepNumber: stepIndex + 1,
+				StepNumber: stepNumber,
 				TestName:   t.Name(),
 			},
 		}.Exec()
 
 		stepConfiguration := teststep.Configuration(configRequest)
 
-		stepNumber := stepIndex + 1 // Use 1-based index for humans
 		stepValidateReq := testStepValidateRequest{
 			StepConfiguration:            stepConfiguration,
 			StepNumber:                   stepNumber,
