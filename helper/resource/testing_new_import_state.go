@@ -12,14 +12,28 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-plugin-testing/config"
+	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfg string, providers *providerFactories) error {
+func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfg teststep.Config, providers *providerFactories, stepIndex int) error {
 	t.Helper()
+
+	configRequest := teststep.PrepareConfigurationRequest{
+		Directory: step.ConfigDirectory,
+		File:      step.ConfigFile,
+		Raw:       step.Config,
+		TestStepConfigRequest: config.TestStepConfigRequest{
+			StepNumber: stepIndex + 1,
+			TestName:   t.Name(),
+		},
+	}.Exec()
+
+	testStepConfig := teststep.Configuration(configRequest)
 
 	if step.ResourceName == "" {
 		t.Fatal("ResourceName is required for an import state test")
@@ -28,6 +42,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	// get state from check sequence
 	var state *terraform.State
 	var err error
+
 	err = runProviderCommand(ctx, t, func() error {
 		state, err = getState(ctx, t, wd)
 		if err != nil {
@@ -79,11 +94,11 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
 	// Create working directory for import tests
-	if step.Config == "" {
+	if testStepConfig == nil {
 		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
 
-		step.Config = cfg
-		if step.Config == "" {
+		testStepConfig = cfg
+		if testStepConfig == nil {
 			t.Fatal("Cannot import state with no specified config")
 		}
 	}
@@ -98,7 +113,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		defer importWd.Close()
 	}
 
-	err = importWd.SetConfig(ctx, step.Config)
+	err = importWd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		t.Fatalf("Error setting test config: %s", err)
 	}

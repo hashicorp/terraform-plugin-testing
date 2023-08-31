@@ -23,6 +23,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
@@ -490,11 +491,59 @@ type TestStep struct {
 
 	// Config a string of the configuration to give to Terraform. If this
 	// is set, then the TestCase will execute this step with the same logic
-	// as a `terraform apply`.
+	// as a `terraform apply`. If both Config and ConfigDirectory are set
+	// an error will be returned.
 	//
 	// JSON Configuration Syntax can be used and is assumed whenever Config
 	// contains valid JSON.
+	//
+	// Only one of Config, ConfigDirectory or ConfigFile can be set
+	// otherwise an error will be returned.
 	Config string
+
+	// ConfigDirectory is a function which returns a function that
+	// accepts config.TestStepProviderConfig and returns a string
+	// representing a directory that contains Terraform
+	// configuration files.
+	//
+	// There are helper functions in the [config] package that can be used,
+	// such as:
+	//
+	//   - [config.StaticDirectory]
+	//   - [config.TestNameDirectory]
+	//   - [config.TestStepDirectory]
+	//
+	// When running Terraform operations for the test, Terraform will
+	// be executed with copies of the files of this directory as its
+	// working directory. Only one of Config, ConfigDirectory or
+	// ConfigFile can be set otherwise an error will be returned.
+	ConfigDirectory config.TestStepConfigFunc
+
+	// ConfigFile is a function which returns a function that
+	// accepts config.TestStepProviderConfig and returns a string
+	// representing a file that contains Terraform configuration.
+	//
+	// There are helper functions in the [config] package that can be used,
+	// such as:
+	//
+	//   - [config.StaticFile]
+	//   - [config.TestNameFile]
+	//   - [config.TestStepFile]
+	//
+	// When running Terraform operations for the test, Terraform will
+	// be executed with a copy of the file as its working directory.
+	// Only one of Config, ConfigDirectory or ConfigFile can be set
+	// otherwise an error will be returned.
+	ConfigFile config.TestStepConfigFunc
+
+	// ConfigVariables is a map defining variables for use in conjunction
+	// with Terraform configuration. If this map is populated then it
+	// will be used to assemble an *.auto.tfvars.json which will be
+	// written into the working directory. Any variables that are
+	// defined within the Terraform configuration that have a matching
+	// variable definition in *.auto.tfvars.json will have their value
+	// substituted when the acceptance test is executed.
+	ConfigVariables config.Variables
 
 	// Check is called after the Config is applied. Use this step to
 	// make your own API calls to check the status of things, and to
@@ -788,7 +837,7 @@ func Test(t testing.T, c TestCase) {
 	ctx := context.Background()
 	ctx = logging.InitTestContext(ctx, t)
 
-	err := c.validate(ctx)
+	err := c.validate(ctx, t)
 
 	if err != nil {
 		logging.HelperResourceError(ctx,

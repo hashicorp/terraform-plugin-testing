@@ -40,6 +40,10 @@
       {
         "title": "Terraform JSON Paths",
         "path": "acceptance-tests/tfjson-paths"
+      },
+      {
+        "title": "Terraform Configuration",
+        "path": "acceptance-tests/configuration"
       }
     ]
   },
