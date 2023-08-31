@@ -1,3 +1,9 @@
+## 1.5.1 (August 31, 2023)
+
+BUG FIXES:
+
+* helper/resource: Fix regression by allowing providers to be defined both at the `TestCase` level, and within `TestStep.Config` ([#177](https://github.com/hashicorp/terraform-plugin-testing/issues/177))
+
 ## 1.5.0 (August 31, 2023)
 
 FEATURES:
