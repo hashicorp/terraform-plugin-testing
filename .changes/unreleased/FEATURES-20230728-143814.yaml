@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'config: Introduced new `config` package which contains interfaces and helper
-  functions for working with native Terraform configuration and variables'
-time: 2023-07-28T14:38:14.006499+01:00
-custom:
-  Issue: "153"

@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'helper/resource: Added `TestStep.ConfigVariables` to allow specifying Terraform variables
-  for use with Terraform configuration during acceptance tests'
-time: 2023-07-28T15:29:17.02183+01:00
-custom:
-  Issue: "153"

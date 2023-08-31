@@ -1,3 +1,17 @@
+## 1.5.0 (August 31, 2023)
+
+FEATURES:
+
+* config: Introduced new `config` package which contains interfaces and helper functions for working with native Terraform configuration and variables ([#153](https://github.com/hashicorp/terraform-plugin-testing/issues/153))
+* helper/resource: Added `TestStep.ConfigDirectory` to allow specifying a directory containing Terraform configuration for use during acceptance tests ([#153](https://github.com/hashicorp/terraform-plugin-testing/issues/153))
+* helper/resource: Added `TestStep.ConfigFile` to allow specifying a file containing Terraform configuration for use during acceptance tests ([#153](https://github.com/hashicorp/terraform-plugin-testing/issues/153))
+* helper/resource: Added `TestStep.ConfigVariables` to allow specifying Terraform variables for use with Terraform configuration during acceptance tests ([#153](https://github.com/hashicorp/terraform-plugin-testing/issues/153))
+* helper/resource: Removed data resource and managed resource `id` attribute requirement ([#84](https://github.com/hashicorp/terraform-plugin-testing/issues/84))
+
+ENHANCEMENTS:
+
+* helper/resource: Added `TestStep` type `ImportStateVerifyIdentifierAttribute` field, which can override the default `id` attribute used for matching prior resource state with imported resource state ([#84](https://github.com/hashicorp/terraform-plugin-testing/issues/84))
+
 ## 1.4.0 (July 24, 2023)
 
 FEATURES:
