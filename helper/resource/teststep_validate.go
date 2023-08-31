@@ -64,7 +64,6 @@ func (s TestStep) hasProviders(ctx context.Context, stepIndex int, testName stri
 	configRequest := teststep.PrepareConfigurationRequest{
 		Directory: s.ConfigDirectory,
 		File:      s.ConfigFile,
-		Raw:       s.Config,
 		TestStepConfigRequest: config.TestStepConfigRequest{
 			StepNumber: stepIndex + 1,
 			TestName:   testName,

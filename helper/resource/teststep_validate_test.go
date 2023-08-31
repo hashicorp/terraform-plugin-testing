@@ -282,6 +282,19 @@ func TestTestStepValidate(t *testing.T) {
 			},
 			expectedError: fmt.Errorf("TestStep ImportState must be specified with ImportStateId, ImportStateIdFunc, or ResourceName"),
 		},
+		// This test has been added to verify that providers can be defined
+		// both within the TestStep.Config and at the TestCase level.
+		// The regression was reported in
+		// https://github.com/hashicorp/terraform-plugin-testing/issues/176
+		"config-providers-testcase-providers": {
+			testStep: TestStep{
+				Config: "provider abc {",
+			},
+			testStepConfig: "# not empty",
+			testStepValidateRequest: testStepValidateRequest{
+				TestCaseHasProviders: true,
+			},
+		},
 		"protov5providerfactories-testcase-providers": {
 			testStep: TestStep{
 				ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
