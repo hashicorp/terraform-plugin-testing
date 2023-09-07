@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/datasource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/provider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
@@ -55,6 +56,10 @@ func NewProviderServerWithError(p provider.Provider, err error) func() (tfprotov
 //   - ReadResource: req.CurrentState -> resp.NewState
 type ProviderServer struct {
 	Provider provider.Provider
+}
+
+func (s ProviderServer) GetMetadata(ctx context.Context, request *tfprotov6.GetMetadataRequest) (*tfprotov6.GetMetadataResponse, error) {
+	return &tfprotov6.GetMetadataResponse{}, nil
 }
 
 func (s ProviderServer) ApplyResourceChange(ctx context.Context, req *tfprotov6.ApplyResourceChangeRequest) (*tfprotov6.ApplyResourceChangeResponse, error) {
