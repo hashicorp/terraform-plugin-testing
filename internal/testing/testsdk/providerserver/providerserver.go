@@ -59,7 +59,26 @@ type ProviderServer struct {
 }
 
 func (s ProviderServer) GetMetadata(ctx context.Context, request *tfprotov6.GetMetadataRequest) (*tfprotov6.GetMetadataResponse, error) {
-	return &tfprotov6.GetMetadataResponse{}, nil
+	resp := &tfprotov6.GetMetadataResponse{
+		ServerCapabilities: &tfprotov6.ServerCapabilities{
+			GetProviderSchemaOptional: true,
+			PlanDestroy:               true,
+		},
+	}
+
+	for typeName := range s.Provider.DataSourcesMap() {
+		resp.DataSources = append(resp.DataSources, tfprotov6.DataSourceMetadata{
+			TypeName: typeName,
+		})
+	}
+
+	for typeName := range s.Provider.ResourcesMap() {
+		resp.Resources = append(resp.Resources, tfprotov6.ResourceMetadata{
+			TypeName: typeName,
+		})
+	}
+
+	return resp, nil
 }
 
 func (s ProviderServer) ApplyResourceChange(ctx context.Context, req *tfprotov6.ApplyResourceChangeRequest) (*tfprotov6.ApplyResourceChangeResponse, error) {
