@@ -108,7 +108,7 @@ func AddTestSweepers(name string, s *Sweeper) {
 // Sweeper flags added to the "go test" command:
 //
 //	-sweep: Comma-separated list of locations/regions to run available sweepers.
-//	-sweep-allow-failues: Enable to allow other sweepers to run after failures.
+//	-sweep-allow-failures: Enable to allow other sweepers to run after failures.
 //	-sweep-run: Comma-separated list of resource type sweepers to run. Defaults
 //	        to all sweepers.
 //
