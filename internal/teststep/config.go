@@ -137,14 +137,9 @@ type ConfigString string
 // present.
 func (c ConfigString) AddTerraformBlock() string {
 	if !c.IsJSON() && !c.HasTerraformBlock() {
-		if strings.HasPrefix(string(c), "\n") {
-			return fmt.Sprintf(`terraform {}
-%s`, c)
-		} else {
-			return fmt.Sprintf(`terraform {}
+		str := strings.TrimLeft(string(c), "\n")
 
-%s`, c)
-		}
+		return fmt.Sprintf("terraform {}\n\n%s", str)
 	}
 
 	return string(c)

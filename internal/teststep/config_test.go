@@ -275,3 +275,62 @@ func TestConfiguration(t *testing.T) {
 		})
 	}
 }
+
+func TestConfigString_AddTerraformBlock(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		configString ConfigString
+		expected     string
+	}{
+		"json": {
+			configString: `{"resource":{}}`,
+			expected:     `{"resource":{}}`,
+		},
+		"terraform-block-present": {
+			configString: `terraform {}
+
+resource {}`,
+			expected: `terraform {}
+
+resource {}`,
+		},
+		"terraform-block-absent-newline-absent": {
+			configString: `resource {}`,
+			expected: `terraform {}
+
+resource {}`,
+		},
+		"terraform-block-absent-newline-present": {
+			configString: `
+resource {}`,
+			expected: `terraform {}
+
+resource {}`,
+		},
+		"terraform-block-absent-multiple-newlines-present": {
+			configString: `
+
+
+
+resource {}`,
+			expected: `terraform {}
+
+resource {}`,
+		},
+	}
+
+	for name, testCase := range testCases {
+		name, testCase := name, testCase
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			got := testCase.configString.AddTerraformBlock()
+
+			if diff := cmp.Diff(testCase.expected, got); diff != "" {
+				t.Errorf("expected %+v, got %+v", testCase.expected, got)
+			}
+		})
+	}
+}
