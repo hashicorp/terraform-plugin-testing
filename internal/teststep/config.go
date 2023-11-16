@@ -5,7 +5,6 @@ package teststep
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -125,42 +124,6 @@ func Configuration(req ConfigurationRequest) Config {
 	}
 
 	return nil
-}
-
-// ConfigString is used to hold string representations of
-// Terraform configuration.
-type ConfigString string
-
-// AddTerraformBlock inspects ConfigString, and prefixes
-// with an empty terraform block providing the configuration
-// string is not JSON, and a Terraform block is not already
-// present.
-func (c ConfigString) AddTerraformBlock() string {
-	if !c.IsJSON() && !c.HasTerraformBlock() {
-		if strings.HasPrefix(string(c), "\n") {
-			return fmt.Sprintf(`terraform {}
-%s`, c)
-		} else {
-			return fmt.Sprintf(`terraform {}
-
-%s`, c)
-		}
-	}
-
-	return string(c)
-}
-
-// IsJSON returns a bool indicating whether
-// ConfigString is JSON.
-func (c ConfigString) IsJSON() bool {
-	var js json.RawMessage
-	return json.Unmarshal([]byte(c), &js) == nil
-}
-
-// HasTerraformBlock returns a bool indicating whether
-// ConfigString contains a Terraform block.
-func (c ConfigString) HasTerraformBlock() bool {
-	return terraformConfigBlockRegex.MatchString(string(c))
 }
 
 // copyFiles accepts a path to a directory and a destination. Only

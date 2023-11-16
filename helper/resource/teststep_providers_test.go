@@ -164,8 +164,7 @@ resource "localtest_test" "test" {}
 resource "test_test" "test" {}
 `,
 			},
-			expected: `terraform {}
-
+			expected: `
 provider "test" {}
 
 resource "test_test" "test" {}
@@ -268,8 +267,7 @@ resource "test_test" "test" {}
 resource "test_test" "test" {}
 `,
 			},
-			expected: `terraform {}
-
+			expected: `
 resource "test_test" "test" {}
 `,
 		},
@@ -284,8 +282,7 @@ resource "test_test" "test" {}
 resource "test_test" "test" {}
 `,
 			},
-			expected: `terraform {}
-
+			expected: `
 resource "test_test" "test" {}
 `,
 		},
@@ -300,8 +297,7 @@ resource "test_test" "test" {}
 resource "test_test" "test" {}
 `,
 			},
-			expected: `terraform {}
-
+			expected: `
 resource "test_test" "test" {}
 `,
 		},
@@ -526,8 +522,6 @@ resource "test_test" "test" {}
 `,
 			},
 			expected: `
-terraform {}
-
 provider "test" {}
 
 resource "test_test" "test" {}
@@ -627,8 +621,6 @@ resource "test_test" "test" {}
 `,
 			},
 			expected: `
-terraform {}
-
 resource "test_test" "test" {}
 `,
 		},
@@ -643,8 +635,6 @@ resource "test_test" "test" {}
 `,
 			},
 			expected: `
-terraform {}
-
 resource "test_test" "test" {}
 `,
 		},
@@ -659,8 +649,6 @@ resource "test_test" "test" {}
 `,
 			},
 			expected: `
-terraform {}
-
 resource "test_test" "test" {}
 `,
 		},

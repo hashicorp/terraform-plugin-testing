@@ -7,8 +7,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-
-	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 )
 
 // mergedConfig prepends any necessary terraform configuration blocks to the
@@ -42,9 +40,7 @@ func (s TestStep) mergedConfig(ctx context.Context, testCase TestCase, configHas
 
 	config.WriteString(s.Config)
 
-	cfgString := teststep.ConfigString(config.String())
-
-	return cfgString.AddTerraformBlock()
+	return config.String()
 }
 
 // providerConfig takes the list of providers in a TestStep and returns a
