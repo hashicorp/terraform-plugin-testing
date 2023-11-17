@@ -58,9 +58,6 @@ func (e expectUnknownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRe
 
 		return
 	}
-
-	return
-
 }
 
 // ExpectUnknownOutputValue returns a plan check that asserts that the specified attribute at the given resource has an unknown value.

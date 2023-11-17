@@ -48,13 +48,16 @@ func New[T int | string](firstStep T) Path {
 				SliceStep(t),
 			},
 		}
-	default:
+	case string:
 		return Path{
 			steps: []step{
-				MapStep(t.(string)),
+				MapStep(t),
 			},
 		}
 	}
+
+	// Unreachable code
+	return Path{}
 }
 
 // AtSliceIndex returns a copied Path with a new SliceStep at the end.
