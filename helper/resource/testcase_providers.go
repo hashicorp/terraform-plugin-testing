@@ -21,6 +21,10 @@ func (c TestCase) providerConfig(_ context.Context, skipProviderBlock bool) stri
 	//      it does have a special purpose that wasn't being unit tested prior.
 	for name := range c.Providers {
 		providerBlocks.WriteString(fmt.Sprintf("provider %q {}\n", name))
+
+		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
+
+		requiredProviderBlocks.WriteString("    }\n")
 	}
 
 	for name, externalProvider := range c.ExternalProviders {
@@ -41,6 +45,36 @@ func (c TestCase) providerConfig(_ context.Context, skipProviderBlock bool) stri
 		if externalProvider.VersionConstraint != "" {
 			requiredProviderBlocks.WriteString(fmt.Sprintf("      version = %q\n", externalProvider.VersionConstraint))
 		}
+
+		requiredProviderBlocks.WriteString("    }\n")
+	}
+
+	for name, _ := range c.ProviderFactories {
+		if !skipProviderBlock {
+			providerBlocks.WriteString(fmt.Sprintf("provider %q {}\n", name))
+		}
+
+		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
+
+		requiredProviderBlocks.WriteString("    }\n")
+	}
+
+	for name, _ := range c.ProtoV5ProviderFactories {
+		if !skipProviderBlock {
+			providerBlocks.WriteString(fmt.Sprintf("provider %q {}\n", name))
+		}
+
+		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
+
+		requiredProviderBlocks.WriteString("    }\n")
+	}
+
+	for name, _ := range c.ProtoV6ProviderFactories {
+		if !skipProviderBlock {
+			providerBlocks.WriteString(fmt.Sprintf("provider %q {}\n", name))
+		}
+
+		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
 
 		requiredProviderBlocks.WriteString("    }\n")
 	}

@@ -45,10 +45,13 @@ terraform {
       source = "registry.terraform.io/hashicorp/externaltest"
       version = "1.2.3"
     }
+    localtest = {
+    }
   }
 }
 
 provider "externaltest" {}
+provider "localtest" {}
 `,
 		},
 		"externalproviders-and-protov6providerfactories": {
@@ -70,10 +73,13 @@ terraform {
       source = "registry.terraform.io/hashicorp/externaltest"
       version = "1.2.3"
     }
+    localtest = {
+    }
   }
 }
 
 provider "externaltest" {}
+provider "localtest" {}
 `,
 		},
 		"externalproviders-and-providerfactories": {
@@ -95,10 +101,13 @@ terraform {
       source = "registry.terraform.io/hashicorp/externaltest"
       version = "1.2.3"
     }
+    localtest = {
+    }
   }
 }
 
 provider "externaltest" {}
+provider "localtest" {}
 `,
 		},
 		"externalproviders-missing-source-and-versionconstraint": {
@@ -198,7 +207,15 @@ provider "test" {}
 					"test": nil,
 				},
 			},
-			expected: ``,
+			expected: `
+terraform {
+  required_providers {
+    test = {
+    }
+  }
+}
+
+provider "test" {}`,
 		},
 		"protov6providerfactories": {
 			testCase: TestCase{
@@ -206,7 +223,15 @@ provider "test" {}
 					"test": nil,
 				},
 			},
-			expected: ``,
+			expected: `
+terraform {
+  required_providers {
+    test = {
+    }
+  }
+}
+
+provider "test" {}`,
 		},
 		"providerfactories": {
 			testCase: TestCase{
@@ -214,7 +239,14 @@ provider "test" {}
 					"test": nil,
 				},
 			},
-			expected: ``,
+			expected: `terraform {
+  required_providers {
+    test = {
+    }
+  }
+}
+
+provider "test" {}`,
 		},
 		"providers": {
 			testCase: TestCase{
@@ -222,7 +254,15 @@ provider "test" {}
 					"test": {},
 				},
 			},
-			expected: `provider "test" {}`,
+			expected: `
+terraform {
+  required_providers {
+    test = {
+    }
+  }
+}
+
+provider "test" {}`,
 		},
 	}
 
