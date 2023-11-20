@@ -398,7 +398,7 @@ func Test_ExpectUnknownOutputValue_ExpectError_KnownValue(t *testing.T) {
 	})
 }
 
-func Test_ExpectUnknownOutputValue_ExpectError_ResourceNotFound(t *testing.T) {
+func Test_ExpectUnknownOutputValue_ExpectError_OutputNotFound(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
