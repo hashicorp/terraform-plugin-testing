@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'plancheck: Added `ExpectUnknownOutputValue` built-in plan check, which asserts
+  that a given output value is unknown'
+time: 2023-11-20T14:33:10.627902Z
+custom:
+  Issue: "220"
