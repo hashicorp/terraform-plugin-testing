@@ -21,13 +21,15 @@ A **plan check** is a test assertion that inspects the plan file at a specific p
 
 The `terraform-plugin-testing` module provides a package [`plancheck`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck) with built-in plan checks for common use-cases:
 
-| Check                                                                                                                                                   | Description                                                                  |
-|---------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
-| [`plancheck.ExpectEmptyPlan()`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectEmptyPlan)                             | Asserts the entire plan has no operations for apply.                         |
-| [`plancheck.ExpectNonEmptyPlan()`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectNonEmptyPlan)                       | Asserts the entire plan contains at least one operation for apply.           |
-| [`plancheck.ExpectResourceAction(address, operation)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectResourceAction) | Asserts the given resource has the specified operation for apply.            |
-| [`plancheck.ExpectUnknownValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownValue)          | Asserts the specified attribute at the given resource has an unknown value.  |
-| [`plancheck.ExpectSensitiveValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectSensitiveValue)      | Asserts the specified attribute at the given resource has a sensitive value. |
+| Check                                                                                                                                                      | Description                                                                  |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
+| [`plancheck.ExpectEmptyPlan()`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectEmptyPlan)                                | Asserts the entire plan has no operations for apply.                         |
+| [`plancheck.ExpectNonEmptyPlan()`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectNonEmptyPlan)                          | Asserts the entire plan contains at least one operation for apply.           |
+| [`plancheck.ExpectNullOutputValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectNullOutputValue)       | Asserts the specified output value has a null value.                         |
+| [`plancheck.ExpectResourceAction(address, operation)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectResourceAction)    | Asserts the given resource has the specified operation for apply.            |
+| [`plancheck.ExpectUnknownOutputValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownOutputValue) | Asserts the specified output value has an unknown value.                     |
+| [`plancheck.ExpectUnknownValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownValue)             | Asserts the specified attribute at the given resource has an unknown value.  |
+| [`plancheck.ExpectSensitiveValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectSensitiveValue)         | Asserts the specified attribute at the given resource has a sensitive value. |
 
 ### Examples using `plancheck.ExpectResourceAction`
 
@@ -157,6 +159,79 @@ func Test_Time_UpdateInPlace_and_NoOp(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("time_offset.one", plancheck.ResourceActionUpdate),
 						plancheck.ExpectResourceAction("time_offset.two", plancheck.ResourceActionNoop),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### Examples using `plancheck.ExpectUnknownOutputValue`
+
+One of the built-in plan checks, [`plancheck.ExpectUnknownOutputValue`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownOutputValue), determines whether an output value is unknown, for example, prior to the `terraform apply` phase.
+
+The following uses the [time_offset](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/offset) resource from the [time provider](https://registry.terraform.io/providers/hashicorp/time/latest), to illustrate usage of the [`plancheck.ExpectUnknownOutputValue`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownOutputValue), and verifies that `day` is unknown.
+
+```go
+func Test_Time_Unknown(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source: "registry.terraform.io/hashicorp/time",
+			},
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "time_offset" "one" {
+                    offset_days = 1
+                  }
+
+				  output day {
+                    value = time_offset.one.day
+				  }`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
+							OutputAddress: "day",
+						}),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+It is possible to assign collections or objects to output values. Output value plan checks allow for this by accepting an `OutputAddress` and, optionally, an `AttributePath` in [OutputValueParams](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#OutputValueParams). For example:
+
+```go
+func Test_Time_Unknown(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source: "registry.terraform.io/hashicorp/time",
+			},
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "time_offset" "one" {
+                    offset_days = 1
+                  }
+
+				  output time_offset_one {
+                    value = time_offset.one
+				  }`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
+							OutputAddress: "time_offset_one",
+							AttributePath: tfjsonpath.New("day"),
+						}),
 					},
 				},
 			},
