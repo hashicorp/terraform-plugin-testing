@@ -104,7 +104,7 @@ func Traverse(object any, attrPath Path) (any, error) {
 			}
 
 		case SliceStep:
-			steps = append(steps, string(s))
+			steps = append(steps, fmt.Sprint(s))
 
 			sliceObj, ok := result.([]any)
 

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package plancheck
 
 import "github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
