@@ -16,7 +16,7 @@ var _ PlanCheck = expectUnknownOutputValue{}
 
 type expectUnknownOutputValue struct {
 	outputAddress string
-	attributePath tfjsonpath.Path
+	valuePath     tfjsonpath.Path
 }
 
 // CheckPlan implements the plan check logic.
@@ -37,7 +37,7 @@ func (e expectUnknownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRe
 		return
 	}
 
-	result, err := tfjsonpath.Traverse(change.AfterUnknown, e.attributePath)
+	result, err := tfjsonpath.Traverse(change.AfterUnknown, e.valuePath)
 
 	if err != nil {
 		resp.Error = err
@@ -60,7 +60,7 @@ func (e expectUnknownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRe
 	}
 }
 
-// ExpectUnknownOutputValue returns a plan check that asserts that the specified attribute at the given resource has an unknown value.
+// ExpectUnknownOutputValue returns a plan check that asserts that the specified output has an unknown value.
 //
 // Due to implementation differences between the terraform-plugin-sdk and the terraform-plugin-framework, representation of unknown
 // values may differ. For example, terraform-plugin-sdk based providers may have less precise representations of unknown values, such
@@ -68,43 +68,6 @@ func (e expectUnknownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRe
 func ExpectUnknownOutputValue(params OutputValueParams) PlanCheck {
 	return expectUnknownOutputValue{
 		outputAddress: params.OutputAddress,
-		attributePath: params.AttributePath,
+		valuePath:     params.ValuePath,
 	}
-}
-
-// OutputValueParams is used during the creation of a plan check for output values, and specifies
-// the address and optional attribute path for an output value.
-//
-// For example, if an output has been specified to point at a specific value:
-//
-//	resource "time_static" "one" {}
-//
-//	output "string_attribute" {
-//	    value = time_static.one.rfc3339
-//	}
-//
-// Then the value can be addressed directly and does not require an attributePath:
-//
-//	plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-//	    OutputAddress: "string_attribute",
-//	}),
-//
-// However, if an output has been specified to point at an object or a collection.
-// For example:
-//
-//	resource "time_static" "one" {}
-//
-//	output "string_attribute" {
-//	    value = time_static.one
-//	}
-//
-// Then the value cannot be addressed directly and requires an attributePath:
-//
-//	plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-//	    OutputAddress: "string_attribute",
-//	    AttributePath: tfjsonpath.New("rfc3339"),
-//	}),
-type OutputValueParams struct {
-	OutputAddress string
-	AttributePath tfjsonpath.Path
 }

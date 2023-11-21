@@ -415,7 +415,7 @@ func Test_ExpectUnknownOutputValue_MapAttribute_PartiallyNullConfig_ExpectError(
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNullOutputValue(plancheck.OutputValueParams{
 							OutputAddress: "map_attribute",
-							AttributePath: tfjsonpath.New("key2"),
+							ValuePath:     tfjsonpath.New("key2"),
 						}),
 					},
 				},
@@ -548,7 +548,7 @@ func Test_ExpectNullOutputValue_SetNestedBlock_NullConfig_ExpectErrorNotNull(t *
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectNullOutputValue(plancheck.OutputValueParams{
 							OutputAddress: "set_nested_block",
-							AttributePath: tfjsonpath.New(0).AtMapKey("set_nested_block_attribute"),
+							ValuePath:     tfjsonpath.New(0).AtMapKey("set_nested_block_attribute"),
 						}),
 					},
 				},

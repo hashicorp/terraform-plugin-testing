@@ -35,7 +35,7 @@ func Test_ExpectUnknownOutputValue_StringAttribute(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
 							OutputAddress: "string_attribute",
-							AttributePath: tfjsonpath.New("rfc3339"),
+							ValuePath:     tfjsonpath.New("rfc3339"),
 						}),
 					},
 				},
@@ -193,7 +193,7 @@ func Test_ExpectUnknownOutputValue_ListNestedBlock_Object(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
 							OutputAddress: "object",
-							AttributePath: tfjsonpath.New("list_nested_block").AtSliceIndex(0).AtMapKey("list_nested_block_attribute"),
+							ValuePath:     tfjsonpath.New("list_nested_block").AtSliceIndex(0).AtMapKey("list_nested_block_attribute"),
 						}),
 					},
 				},
@@ -234,7 +234,7 @@ func Test_ExpectUnknownOutputValue_ListNestedBlock_ObjectBlock(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
 							OutputAddress: "object_block",
-							AttributePath: tfjsonpath.New(0).AtMapKey("list_nested_block_attribute"),
+							ValuePath:     tfjsonpath.New(0).AtMapKey("list_nested_block_attribute"),
 						}),
 					},
 				},
@@ -275,7 +275,7 @@ func Test_ExpectUnknownOutputValue_ListNestedBlock_ObjectBlockIndex(t *testing.T
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
 							OutputAddress: "object_block_index",
-							AttributePath: tfjsonpath.New("list_nested_block_attribute"),
+							ValuePath:     tfjsonpath.New("list_nested_block_attribute"),
 						}),
 					},
 				},
@@ -356,7 +356,7 @@ func Test_ExpectUnknownOutputValue_SetNestedBlock_Object(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
 							OutputAddress: "object",
-							AttributePath: tfjsonpath.New("set_nested_block").AtSliceIndex(0).AtMapKey("set_nested_block_attribute"),
+							ValuePath:     tfjsonpath.New("set_nested_block").AtSliceIndex(0).AtMapKey("set_nested_block_attribute"),
 						}),
 					},
 				},

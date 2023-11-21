@@ -31,7 +31,24 @@
       },
       {
         "title": "Plan Checks",
-        "path": "acceptance-tests/plan-checks"
+        "routes": [
+          {
+            "title": "Overview",
+            "path": "acceptance-tests/plan-checks"
+          },
+          {
+            "title": "Resource Plan Checks",
+            "path": "acceptance-tests/plan-checks/resource"
+          },
+          {
+            "title": "Output Plan Checks",
+            "path": "acceptance-tests/plan-checks/output"
+          },
+          {
+            "title": "Custom Plan Checks",
+            "path": "acceptance-tests/plan-checks/custom"
+          }
+        ]
       },
       {
         "title": "Sweepers",

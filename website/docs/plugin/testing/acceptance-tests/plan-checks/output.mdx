@@ -1,0 +1,136 @@
+---
+page_title: 'Plugin Development - Acceptance Testing: Plan Checks'
+description: >-
+  Plan Checks are test assertions that can inspect a plan at different phases in a TestStep. The testing module
+  provides built-in Output Value Plan Checks for common use-cases.
+---
+
+# Output Plan Checks
+
+The `terraform-plugin-testing` module provides a package [`plancheck`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck) with built-in output value plan checks for common use-cases:
+
+| Check                                                                                                                                                      | Description                                        |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------|
+| [`plancheck.ExpectNullOutputValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectNullOutputValue)       | Asserts the specified output has a null value.     |
+| [`plancheck.ExpectUnknownOutputValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownOutputValue) | Asserts the specified output has an unknown value. |
+
+## `plancheck.OutputValueParams`
+
+OutputValueParams is supplied during instantiation of an output value plan check, and specifies the address, and optional value path for an output value.
+
+```go
+type OutputValueParams struct {
+	OutputAddress string
+	ValuePath     tfjsonpath.Path
+}
+```
+
+For example, if an output has been defined to point at a specific value:
+
+```terraform
+resource "time_static" "one" {}
+
+output "string_attribute" {
+  value = time_static.one.rfc3339
+}
+```
+
+Then the value can be addressed directly, and does not require a valuePath:
+
+```go
+plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
+    OutputAddress: "string_attribute",
+}),
+```
+
+However, if an output has been specified to point at an object or a collection. For example:
+
+```terraform
+resource "time_static" "one" {}
+
+output "string_attribute" {
+    value = time_static.one
+}
+```
+
+Then a specific value, for instance `rfc3339`, cannot be addressed directly, and requires a valuePath:
+
+```go
+plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
+    OutputAddress: "string_attribute",
+	ValuePath: tfjsonpath.New("rfc3339"),
+}),
+```
+
+## Examples using `plancheck.ExpectUnknownOutputValue`
+
+One of the built-in plan checks, [`plancheck.ExpectUnknownOutputValue`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownOutputValue), determines whether an output value is unknown, for example, prior to the `terraform apply` phase.
+
+The following uses the [time_offset](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/offset) resource from the [time provider](https://registry.terraform.io/providers/hashicorp/time/latest), to illustrate usage of the [`plancheck.ExpectUnknownOutputValue`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownOutputValue), and verifies that `day` is unknown.
+
+```go
+func Test_Time_Unknown(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source: "registry.terraform.io/hashicorp/time",
+			},
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "time_offset" "one" {
+                    offset_days = 1
+                  }
+
+				  output day {
+                    value = time_offset.one.day
+				  }`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
+							OutputAddress: "day",
+						}),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+It is possible to assign collections or objects to output values. Output value plan checks allow for this by accepting an `OutputAddress` and, optionally, an `AttributePath` in [OutputValueParams](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#OutputValueParams). For example:
+
+```go
+func Test_Time_Unknown(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source: "registry.terraform.io/hashicorp/time",
+			},
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "time_offset" "one" {
+                    offset_days = 1
+                  }
+
+				  output time_offset_one {
+                    value = time_offset.one
+				  }`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
+							OutputAddress: "time_offset_one",
+							AttributePath: tfjsonpath.New("day"),
+						}),
+					},
+				},
+			},
+		},
+	})
+}
+```

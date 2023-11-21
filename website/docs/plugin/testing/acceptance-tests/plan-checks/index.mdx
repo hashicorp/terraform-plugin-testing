@@ -1,0 +1,22 @@
+---
+page_title: 'Plugin Development - Acceptance Testing: Plan Checks'
+description: >-
+  Plan Checks are test assertions that can inspect a plan at different phases in a TestStep. The testing module
+  provides built-in Plan Checks for common use-cases, but custom Plan Checks can also be implemented.
+---
+
+# Plan Checks
+
+During the **Lifecycle (config)** and **Refresh** [modes](/terraform/plugin/testing/acceptance-tests/teststep#test-modes) of a `TestStep`, the testing framework will run `terraform plan` before and after certain operations. For example, the **Lifecycle (config)** mode will run a plan before the `terraform apply` phase, as well as a plan before and after the `terraform refresh` phase.
+
+These `terraform plan` operations results in a [plan file](/terraform/cli/commands/plan#out-filename) and can be represented by this [JSON format](/terraform/internals/json-format#plan-representation).
+
+A **plan check** is a test assertion that inspects the plan file at a specific phase during the current testing mode. Multiple plan checks can be run at each defined phase, all assertion errors returned are aggregated, reported as a test failure, and all test cleanup logic is executed.
+
+- Available plan phases for **Lifecycle (config)** mode are defined in the [`TestStep.ConfigPlanChecks`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/helper/resource#TestStep) struct
+- Available plan phases for **Refresh** mode are defined in the [`TestStep.RefreshPlanChecks`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/helper/resource#TestStep) struct
+- **Import** mode currently does not run any plan operations, and therefore does not support plan checks.
+
+There are built-in [resource plan checks](/terraform/plugin/testing/acceptance-tests/plan-checks/resource), and [output plan checks](/terraform/plugin/testing/acceptance-tests/plan-checks/output).
+
+It is also possible to create [custom plan checks](/terraform/plugin/testing/acceptance-tests/custom).
