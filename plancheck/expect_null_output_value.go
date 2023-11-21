@@ -60,11 +60,11 @@ func (e expectNullOutputValue) CheckPlan(ctx context.Context, req CheckPlanReque
 	}
 }
 
-// ExpectNullOutputValue returns a plan check that asserts that the specified attribute at the given resource has an unknown value.
+// ExpectNullOutputValue returns a plan check that asserts that the specified attribute at the given resource has a null value.
 //
-// Due to implementation differences between the terraform-plugin-sdk and the terraform-plugin-framework, representation of unknown
-// values may differ. For example, terraform-plugin-sdk based providers may have less precise representations of unknown values, such
-// as marking whole maps as unknown rather than individual element values.
+// Due to implementation differences between the terraform-plugin-sdk and the terraform-plugin-framework, representation of null
+// values may differ. For example, terraform-plugin-sdk based providers may have less precise representations of null values, such
+// as marking whole maps as null rather than individual element values.
 func ExpectNullOutputValue(params OutputValueParams) PlanCheck {
 	return expectNullOutputValue{
 		outputAddress: params.OutputAddress,
