@@ -11,7 +11,6 @@ import (
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func Test_ExpectUnknownOutputValue_StringAttribute(t *testing.T) {
@@ -28,15 +27,12 @@ func Test_ExpectUnknownOutputValue_StringAttribute(t *testing.T) {
 				Config: `resource "time_static" "one" {}
 
 				output "string_attribute" {
-					value = time_static.one
+					value = time_static.one.rfc3339
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-							OutputAddress: "string_attribute",
-							ValuePath:     tfjsonpath.New("rfc3339"),
-						}),
+						plancheck.ExpectUnknownOutputValue("string_attribute"),
 					},
 				},
 			},
@@ -72,9 +68,7 @@ func Test_ExpectUnknownOutputValue_ListAttribute(t *testing.T) {
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-							OutputAddress: "list_attribute",
-						}),
+						plancheck.ExpectUnknownOutputValue("list_attribute"),
 					},
 				},
 			},
@@ -110,9 +104,7 @@ func Test_ExpectUnknownOutputValue_SetAttribute(t *testing.T) {
 					`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-							OutputAddress: "set_attribute",
-						}),
+						plancheck.ExpectUnknownOutputValue("set_attribute"),
 					},
 				},
 			},
@@ -151,9 +143,7 @@ func Test_ExpectUnknownOutputValue_MapAttribute(t *testing.T) {
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-							OutputAddress: "map_attribute",
-						}),
+						plancheck.ExpectUnknownOutputValue("map_attribute"),
 					},
 				},
 			},
@@ -161,7 +151,7 @@ func Test_ExpectUnknownOutputValue_MapAttribute(t *testing.T) {
 	})
 }
 
-func Test_ExpectUnknownOutputValue_ListNestedBlock_Object(t *testing.T) {
+func Test_ExpectUnknownOutputValue_ListNestedBlock(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -185,179 +175,13 @@ func Test_ExpectUnknownOutputValue_ListNestedBlock_Object(t *testing.T) {
 					}
 				}
 
-				output "object" {
-					value = test_resource.two
-				}
-				`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-							OutputAddress: "object",
-							ValuePath:     tfjsonpath.New("list_nested_block").AtSliceIndex(0).AtMapKey("list_nested_block_attribute"),
-						}),
-					},
-				},
-			},
-		},
-	})
-}
-
-func Test_ExpectUnknownOutputValue_ListNestedBlock_ObjectBlock(t *testing.T) {
-	t.Parallel()
-
-	r.Test(t, r.TestCase{
-		ExternalProviders: map[string]r.ExternalProvider{
-			"time": {
-				Source: "registry.terraform.io/hashicorp/time",
-			},
-		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `resource "time_static" "one" {}
-
-				resource "test_resource" "two" {
-					list_nested_block {
-						list_nested_block_attribute = time_static.one.rfc3339
-					}
-				}
-
-				output "object_block" {
-					value = test_resource.two.list_nested_block
-				}
-				`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-							OutputAddress: "object_block",
-							ValuePath:     tfjsonpath.New(0).AtMapKey("list_nested_block_attribute"),
-						}),
-					},
-				},
-			},
-		},
-	})
-}
-
-func Test_ExpectUnknownOutputValue_ListNestedBlock_ObjectBlockIndex(t *testing.T) {
-	t.Parallel()
-
-	r.Test(t, r.TestCase{
-		ExternalProviders: map[string]r.ExternalProvider{
-			"time": {
-				Source: "registry.terraform.io/hashicorp/time",
-			},
-		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `resource "time_static" "one" {}
-
-				resource "test_resource" "two" {
-					list_nested_block {
-						list_nested_block_attribute = time_static.one.rfc3339
-					}
-				}
-
-				output "object_block_index" {
-					value = test_resource.two.list_nested_block.0
-				}
-				`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-							OutputAddress: "object_block_index",
-							ValuePath:     tfjsonpath.New("list_nested_block_attribute"),
-						}),
-					},
-				},
-			},
-		},
-	})
-}
-
-func Test_ExpectUnknownOutputValue_ListNestedBlock_ObjectBlockIndexAttribute(t *testing.T) {
-	t.Parallel()
-
-	r.Test(t, r.TestCase{
-		ExternalProviders: map[string]r.ExternalProvider{
-			"time": {
-				Source: "registry.terraform.io/hashicorp/time",
-			},
-		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `resource "time_static" "one" {}
-
-				resource "test_resource" "two" {
-					list_nested_block {
-						list_nested_block_attribute = time_static.one.rfc3339
-					}
-				}
-
-				output "object_block_index_attribute" {
+				output "list_nested_block_attribute" {
 					value = test_resource.two.list_nested_block.0.list_nested_block_attribute
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-							OutputAddress: "object_block_index_attribute",
-						}),
-					},
-				},
-			},
-		},
-	})
-}
-
-func Test_ExpectUnknownOutputValue_SetNestedBlock_Object(t *testing.T) {
-	t.Parallel()
-
-	r.Test(t, r.TestCase{
-		ExternalProviders: map[string]r.ExternalProvider{
-			"time": {
-				Source: "registry.terraform.io/hashicorp/time",
-			},
-		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `resource "time_static" "one" {}
-
-				resource "test_resource" "two" {
-					set_nested_block {
-						set_nested_block_attribute = time_static.one.rfc3339
-					}
-				}
-
-				output "object" {
-					value = test_resource.two
-				}
-				`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-							OutputAddress: "object",
-							ValuePath:     tfjsonpath.New("set_nested_block").AtSliceIndex(0).AtMapKey("set_nested_block_attribute"),
-						}),
+						plancheck.ExpectUnknownOutputValue("list_nested_block_attribute"),
 					},
 				},
 			},
@@ -387,9 +211,7 @@ func Test_ExpectUnknownOutputValue_ExpectError_KnownValue(t *testing.T) {
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-							OutputAddress: "set_attribute",
-						}),
+						plancheck.ExpectUnknownOutputValue("set_attribute"),
 					},
 				},
 				ExpectError: regexp.MustCompile(`attribute at path is known`),
@@ -418,9 +240,7 @@ func Test_ExpectUnknownOutputValue_ExpectError_OutputNotFound(t *testing.T) {
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-							OutputAddress: "output_two",
-						}),
+						plancheck.ExpectUnknownOutputValue("output_two"),
 					},
 				},
 				ExpectError: regexp.MustCompile(`output_two - Output not found in plan OutputChanges`),

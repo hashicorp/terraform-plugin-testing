@@ -12,14 +12,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-var _ PlanCheck = expectUnknownOutputValue{}
+var _ PlanCheck = expectUnknownOutputValueAtPath{}
 
-type expectUnknownOutputValue struct {
+type expectUnknownOutputValueAtPath struct {
 	outputAddress string
+	valuePath     tfjsonpath.Path
 }
 
 // CheckPlan implements the plan check logic.
-func (e expectUnknownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequest, resp *CheckPlanResponse) {
+func (e expectUnknownOutputValueAtPath) CheckPlan(ctx context.Context, req CheckPlanRequest, resp *CheckPlanResponse) {
 	var change *tfjson.Change
 
 	for address, oc := range req.Plan.OutputChanges {
@@ -36,7 +37,7 @@ func (e expectUnknownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRe
 		return
 	}
 
-	result, err := tfjsonpath.Traverse(change.AfterUnknown, tfjsonpath.Path{})
+	result, err := tfjsonpath.Traverse(change.AfterUnknown, e.valuePath)
 
 	if err != nil {
 		resp.Error = err
@@ -59,13 +60,14 @@ func (e expectUnknownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRe
 	}
 }
 
-// ExpectUnknownOutputValue returns a plan check that asserts that the specified output has an unknown value.
+// ExpectUnknownOutputValueAtPath returns a plan check that asserts that the specified output has an unknown value.
 //
 // Due to implementation differences between the terraform-plugin-sdk and the terraform-plugin-framework, representation of unknown
 // values may differ. For example, terraform-plugin-sdk based providers may have less precise representations of unknown values, such
 // as marking whole maps as unknown rather than individual element values.
-func ExpectUnknownOutputValue(outputAddress string) PlanCheck {
-	return expectUnknownOutputValue{
+func ExpectUnknownOutputValueAtPath(outputAddress string, valuePath tfjsonpath.Path) PlanCheck {
+	return expectUnknownOutputValueAtPath{
 		outputAddress: outputAddress,
+		valuePath:     valuePath,
 	}
 }

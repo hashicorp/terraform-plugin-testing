@@ -11,9 +11,10 @@ import (
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-func Test_ExpectNullOutputValue_StringAttribute_EmptyConfig(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_StringAttribute_EmptyConfig(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -27,13 +28,13 @@ func Test_ExpectNullOutputValue_StringAttribute_EmptyConfig(t *testing.T) {
 				Config: `resource "test_resource" "test" {
 				}
 
-				output "string_attribute" {
-					value = test_resource.test.string_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("string_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("string_attribute")),
 					},
 				},
 			},
@@ -41,7 +42,7 @@ func Test_ExpectNullOutputValue_StringAttribute_EmptyConfig(t *testing.T) {
 	})
 }
 
-func Test_ExpectNullOutputValue_StringAttribute_NullConfig(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_StringAttribute_NullConfig(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -56,13 +57,13 @@ func Test_ExpectNullOutputValue_StringAttribute_NullConfig(t *testing.T) {
 					string_attribute = null
 				}
 
-				output "string_attribute" {
-					value = test_resource.test.string_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("string_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("string_attribute")),
 					},
 				},
 			},
@@ -70,7 +71,7 @@ func Test_ExpectNullOutputValue_StringAttribute_NullConfig(t *testing.T) {
 	})
 }
 
-func Test_ExpectNullOutputValue_StringAttribute_ExpectErrorNotNull(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_StringAttribute_ExpectErrorNotNull(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -85,13 +86,13 @@ func Test_ExpectNullOutputValue_StringAttribute_ExpectErrorNotNull(t *testing.T)
 					string_attribute = "str"
 				}
 
-				output "string_attribute" {
-					value = test_resource.test.string_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("string_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("string_attribute")),
 					},
 				},
 				ExpectError: regexp.MustCompile(`attribute at path is not null`),
@@ -100,7 +101,7 @@ func Test_ExpectNullOutputValue_StringAttribute_ExpectErrorNotNull(t *testing.T)
 	})
 }
 
-func Test_ExpectNullOutputValue_ListAttribute_EmptyConfig(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_ListAttribute_EmptyConfig(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -114,13 +115,13 @@ func Test_ExpectNullOutputValue_ListAttribute_EmptyConfig(t *testing.T) {
 				Config: `resource "test_resource" "test" {
 				}
 
-				output "list_attribute" {
-					value = test_resource.test.list_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("list_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("list_attribute")),
 					},
 				},
 			},
@@ -128,7 +129,7 @@ func Test_ExpectNullOutputValue_ListAttribute_EmptyConfig(t *testing.T) {
 	})
 }
 
-func Test_ExpectNullOutputValue_ListAttribute_NullConfig(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_ListAttribute_NullConfig(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -143,13 +144,13 @@ func Test_ExpectNullOutputValue_ListAttribute_NullConfig(t *testing.T) {
 					list_attribute = null
 				}
 
-				output "list_attribute" {
-					value = test_resource.test.list_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("list_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("list_attribute")),
 					},
 				},
 			},
@@ -157,7 +158,7 @@ func Test_ExpectNullOutputValue_ListAttribute_NullConfig(t *testing.T) {
 	})
 }
 
-func Test_ExpectNullOutputValue_ListAttribute_ExpectErrorNotNull(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_ListAttribute_ExpectErrorNotNull(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -172,13 +173,13 @@ func Test_ExpectNullOutputValue_ListAttribute_ExpectErrorNotNull(t *testing.T) {
 					list_attribute = ["one", "two"]
 				}
 
-				output "list_attribute" {
-					value = test_resource.test.list_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("list_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("list_attribute")),
 					},
 				},
 				ExpectError: regexp.MustCompile(`attribute at path is not null`),
@@ -187,7 +188,7 @@ func Test_ExpectNullOutputValue_ListAttribute_ExpectErrorNotNull(t *testing.T) {
 	})
 }
 
-func Test_ExpectNullOutputValue_SetAttribute_EmptyConfig(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_SetAttribute_EmptyConfig(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -201,13 +202,13 @@ func Test_ExpectNullOutputValue_SetAttribute_EmptyConfig(t *testing.T) {
 				Config: `resource "test_resource" "test" {
 				}
 
-				output "set_attribute" {
-					value = test_resource.test.set_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("set_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("set_attribute")),
 					},
 				},
 			},
@@ -215,7 +216,7 @@ func Test_ExpectNullOutputValue_SetAttribute_EmptyConfig(t *testing.T) {
 	})
 }
 
-func Test_ExpectNullOutputValue_SetAttribute_NullConfig(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_SetAttribute_NullConfig(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -230,13 +231,13 @@ func Test_ExpectNullOutputValue_SetAttribute_NullConfig(t *testing.T) {
 					set_attribute = null
 				}
 
-				output "set_attribute" {
-					value = test_resource.test.set_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("set_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("set_attribute")),
 					},
 				},
 			},
@@ -244,7 +245,7 @@ func Test_ExpectNullOutputValue_SetAttribute_NullConfig(t *testing.T) {
 	})
 }
 
-func Test_ExpectNullOutputValue_SetAttribute_ExpectErrorNotNull(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_SetAttribute_ExpectErrorNotNull(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -259,13 +260,13 @@ func Test_ExpectNullOutputValue_SetAttribute_ExpectErrorNotNull(t *testing.T) {
 					set_attribute = ["one", "two"]
 				}
 
-				output "set_attribute" {
-					value = test_resource.test.set_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("set_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("set_attribute")),
 					},
 				},
 				ExpectError: regexp.MustCompile(`attribute at path is not null`),
@@ -274,7 +275,7 @@ func Test_ExpectNullOutputValue_SetAttribute_ExpectErrorNotNull(t *testing.T) {
 	})
 }
 
-func Test_ExpectNullOutputValue_MapAttribute_EmptyConfig(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_MapAttribute_EmptyConfig(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -288,13 +289,13 @@ func Test_ExpectNullOutputValue_MapAttribute_EmptyConfig(t *testing.T) {
 				Config: `resource "test_resource" "test" {
 				}
 
-				output "map_attribute" {
-					value = test_resource.test.map_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("map_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("map_attribute")),
 					},
 				},
 			},
@@ -302,7 +303,7 @@ func Test_ExpectNullOutputValue_MapAttribute_EmptyConfig(t *testing.T) {
 	})
 }
 
-func Test_ExpectNullOutputValue_MapAttribute_NullConfig(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_MapAttribute_NullConfig(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -317,13 +318,13 @@ func Test_ExpectNullOutputValue_MapAttribute_NullConfig(t *testing.T) {
 					map_attribute = null
 				}
 
-				output "map_attribute" {
-					value = test_resource.test.map_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("map_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("map_attribute")),
 					},
 				},
 			},
@@ -331,7 +332,7 @@ func Test_ExpectNullOutputValue_MapAttribute_NullConfig(t *testing.T) {
 	})
 }
 
-func Test_ExpectNullOutputValue_MapAttribute_ExpectErrorNotNull(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_MapAttribute_ExpectErrorNotNull(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -349,13 +350,13 @@ func Test_ExpectNullOutputValue_MapAttribute_ExpectErrorNotNull(t *testing.T) {
 					}
 				}
 
-				output "map_attribute" {
-					value = test_resource.test.map_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("map_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("map_attribute")),
 					},
 				},
 				ExpectError: regexp.MustCompile(`attribute at path is not null`),
@@ -364,7 +365,7 @@ func Test_ExpectNullOutputValue_MapAttribute_ExpectErrorNotNull(t *testing.T) {
 	})
 }
 
-func Test_ExpectNullOutputValue_MapAttribute_PartiallyNullConfig_ExpectError(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_MapAttribute_PartiallyNullConfig_ExpectError(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -382,22 +383,22 @@ func Test_ExpectNullOutputValue_MapAttribute_PartiallyNullConfig_ExpectError(t *
 					}
 				}
 
-				output "map_attribute" {
-					value = test_resource.test.map_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("key2"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("map_attribute").AtMapKey("key2")),
 					},
 				},
-				ExpectError: regexp.MustCompile(`key2 - Output not found in plan OutputChanges`),
+				ExpectError: regexp.MustCompile(`path not found: specified key key2 not found in map at map_attribute.key2`),
 			},
 		},
 	})
 }
 
-func Test_ExpectNullOutputValue_ListNestedBlock_EmptyConfig(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_ListNestedBlock_EmptyConfig(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -412,13 +413,13 @@ func Test_ExpectNullOutputValue_ListNestedBlock_EmptyConfig(t *testing.T) {
 					list_nested_block {}
 				}
 
-				output "list_nested_block_attribute" {
-					value = test_resource.test.list_nested_block.0.list_nested_block_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("list_nested_block_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("list_nested_block").AtSliceIndex(0).AtMapKey("list_nested_block_attribute")),
 					},
 				},
 			},
@@ -426,7 +427,7 @@ func Test_ExpectNullOutputValue_ListNestedBlock_EmptyConfig(t *testing.T) {
 	})
 }
 
-func Test_ExpectNullOutputValue_ListNestedBlock_NullConfig(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_ListNestedBlock_NullConfig(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -443,13 +444,13 @@ func Test_ExpectNullOutputValue_ListNestedBlock_NullConfig(t *testing.T) {
 					}
 				}
 
-				output "list_nested_block_attribute" {
-					value = test_resource.test.list_nested_block.0.list_nested_block_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("list_nested_block_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("list_nested_block").AtSliceIndex(0).AtMapKey("list_nested_block_attribute")),
 					},
 				},
 			},
@@ -457,7 +458,7 @@ func Test_ExpectNullOutputValue_ListNestedBlock_NullConfig(t *testing.T) {
 	})
 }
 
-func Test_ExpectNullOutputValue_ListNestedBlock_ExpectErrorNotNull(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_ListNestedBlock_ExpectErrorNotNull(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -474,13 +475,13 @@ func Test_ExpectNullOutputValue_ListNestedBlock_ExpectErrorNotNull(t *testing.T)
 					}
 				}
 
-				output "list_nested_block_attribute" {
-					value = test_resource.test.list_nested_block.0.list_nested_block_attribute
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("list_nested_block_attribute"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("list_nested_block").AtSliceIndex(0).AtMapKey("list_nested_block_attribute")),
 					},
 				},
 				ExpectError: regexp.MustCompile(`attribute at path is not null`),
@@ -489,7 +490,7 @@ func Test_ExpectNullOutputValue_ListNestedBlock_ExpectErrorNotNull(t *testing.T)
 	})
 }
 
-func Test_ExpectNullOutputValue_SetNestedBlock_NullConfig_ExpectErrorNotNull(t *testing.T) {
+func Test_ExpectNullOutputValueAtPath_SetNestedBlock_NullConfig_ExpectErrorNotNull(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -506,13 +507,13 @@ func Test_ExpectNullOutputValue_SetNestedBlock_NullConfig_ExpectErrorNotNull(t *
 					}
 				}
 
-				output "set_nested_block" {
-					value = test_resource.test.set_nested_block
+				output "resource" {
+					value = test_resource.test
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNullOutputValue("set_nested_block"),
+						plancheck.ExpectNullOutputValueAtPath("resource", tfjsonpath.New("set_nested_block")),
 					},
 				},
 				ExpectError: regexp.MustCompile(`attribute at path is not null`),

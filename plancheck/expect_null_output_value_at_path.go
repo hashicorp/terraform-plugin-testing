@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package plancheck
 
 import (
@@ -12,14 +9,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-var _ PlanCheck = expectNullOutputValue{}
+var _ PlanCheck = expectNullOutputValueAtPath{}
 
-type expectNullOutputValue struct {
+type expectNullOutputValueAtPath struct {
 	outputAddress string
+	valuePath     tfjsonpath.Path
 }
 
 // CheckPlan implements the plan check logic.
-func (e expectNullOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequest, resp *CheckPlanResponse) {
+func (e expectNullOutputValueAtPath) CheckPlan(ctx context.Context, req CheckPlanRequest, resp *CheckPlanResponse) {
 	var change *tfjson.Change
 
 	for address, oc := range req.Plan.OutputChanges {
@@ -41,9 +39,9 @@ func (e expectNullOutputValue) CheckPlan(ctx context.Context, req CheckPlanReque
 
 	switch {
 	case change.Actions.Create():
-		result, err = tfjsonpath.Traverse(change.After, tfjsonpath.Path{})
+		result, err = tfjsonpath.Traverse(change.After, e.valuePath)
 	default:
-		result, err = tfjsonpath.Traverse(change.Before, tfjsonpath.Path{})
+		result, err = tfjsonpath.Traverse(change.Before, e.valuePath)
 	}
 
 	if err != nil {
@@ -59,13 +57,14 @@ func (e expectNullOutputValue) CheckPlan(ctx context.Context, req CheckPlanReque
 	}
 }
 
-// ExpectNullOutputValue returns a plan check that asserts that the specified output has a null value.
+// ExpectNullOutputValueAtPath returns a plan check that asserts that the specified output has a null value.
 //
 // Due to implementation differences between the terraform-plugin-sdk and the terraform-plugin-framework, representation of null
 // values may differ. For example, terraform-plugin-sdk based providers may have less precise representations of null values, such
 // as marking whole maps as null rather than individual element values.
-func ExpectNullOutputValue(outputAddress string) PlanCheck {
-	return expectNullOutputValue{
+func ExpectNullOutputValueAtPath(outputAddress string, valuePath tfjsonpath.Path) PlanCheck {
+	return expectNullOutputValueAtPath{
 		outputAddress: outputAddress,
+		valuePath:     valuePath,
 	}
 }
