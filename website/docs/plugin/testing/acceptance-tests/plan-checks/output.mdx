@@ -11,58 +11,12 @@ The `terraform-plugin-testing` module provides a package [`plancheck`](https://p
 
 | Check                                                                                                                                                      | Description                                        |
 |------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------|
-| [`plancheck.ExpectNullOutputValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectNullOutputValue)       | Asserts the specified output has a null value.     |
-| [`plancheck.ExpectUnknownOutputValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownOutputValue) | Asserts the specified output has an unknown value. |
+| [`plancheck.ExpectNullOutputValue(address)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectNullOutputValue)       | Asserts the output at the specified address has a null value.     |
+| [`plancheck.ExpectNullOutputValueAtPath(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectNullOutputValueAtPath)       | Asserts the output at the specified address, and path has a null value.     |
+| [`plancheck.ExpectUnknownOutputValue(address)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownOutputValue) | Asserts the output at the specified address has an unknown value. |
+| [`plancheck.ExpectUnknownOutputValueAtPath(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownOutputValueAtPath) | Asserts the output at the specified address, and path has an unknown value. |
 
-## `plancheck.OutputValueParams`
-
-OutputValueParams is supplied during instantiation of an output value plan check, and specifies the address, and optional value path for an output value.
-
-```go
-type OutputValueParams struct {
-	OutputAddress string
-	ValuePath     tfjsonpath.Path
-}
-```
-
-For example, if an output has been defined to point at a specific value:
-
-```terraform
-resource "time_static" "one" {}
-
-output "string_attribute" {
-  value = time_static.one.rfc3339
-}
-```
-
-Then the value can be addressed directly, and does not require a valuePath:
-
-```go
-plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-    OutputAddress: "string_attribute",
-}),
-```
-
-However, if an output has been specified to point at an object or a collection. For example:
-
-```terraform
-resource "time_static" "one" {}
-
-output "string_attribute" {
-    value = time_static.one
-}
-```
-
-Then a specific value, for instance `rfc3339`, cannot be addressed directly, and requires a valuePath:
-
-```go
-plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-    OutputAddress: "string_attribute",
-	ValuePath: tfjsonpath.New("rfc3339"),
-}),
-```
-
-## Examples using `plancheck.ExpectUnknownOutputValue`
+## Example using `plancheck.ExpectUnknownOutputValue`
 
 One of the built-in plan checks, [`plancheck.ExpectUnknownOutputValue`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownOutputValue), determines whether an output value is unknown, for example, prior to the `terraform apply` phase.
 
@@ -89,9 +43,7 @@ func Test_Time_Unknown(t *testing.T) {
 				  }`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-							OutputAddress: "day",
-						}),
+						plancheck.ExpectUnknownOutputValue("day"),
 					},
 				},
 			},
@@ -100,7 +52,9 @@ func Test_Time_Unknown(t *testing.T) {
 }
 ```
 
-It is possible to assign collections or objects to output values. Output value plan checks allow for this by accepting an `OutputAddress` and, optionally, an `AttributePath` in [OutputValueParams](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#OutputValueParams). For example:
+## Example using `plancheck.ExpectUnknownOutputValueAtPath`
+
+Output values can contain objects or collections as well as primitive (e.g., string) values. Output value plan checks provide two forms for the plan checks, for example `ExpectUnknownOutputValue()`, and `ExpectUnknownOutputValueAtPath()`. The `Expect<...>OutputValueAtPath()` form is used to access a value contained within an object or collection, as illustrated in the following example.
 
 ```go
 func Test_Time_Unknown(t *testing.T) {
@@ -123,10 +77,7 @@ func Test_Time_Unknown(t *testing.T) {
 				  }`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValue(plancheck.OutputValueParams{
-							OutputAddress: "time_offset_one",
-							AttributePath: tfjsonpath.New("day"),
-						}),
+						plancheck.ExpectUnknownOutputValueAtPath("time_offset_one", tfjsonpath.New("day")),
 					},
 				},
 			},
