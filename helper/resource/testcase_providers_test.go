@@ -264,7 +264,7 @@ func TestTest_TestCase_ExternalProviders_NonHashiCorpNamespace(t *testing.T) {
 
 	Test(t, TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version0_13_0), // ExternalProvider.Source
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ExternalProvider.Source is protocol version 6
 		},
 		ExternalProviders: map[string]ExternalProvider{
 			// This can be set to any provider outside the hashicorp namespace.
@@ -288,7 +288,7 @@ func TestTest_TestCase_ExternalProvidersAndProviderFactories_NonHashiCorpNamespa
 
 	Test(t, TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version0_13_0), // ExternalProvider.Source
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ExternalProvider.Source is protocol version 6
 		},
 		ExternalProviders: map[string]ExternalProvider{
 			// This can be set to any provider outside the hashicorp namespace.

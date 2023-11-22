@@ -978,7 +978,7 @@ func TestTest_TestStep_ExternalProviders_NonHashiCorpNamespace(t *testing.T) {
 
 	Test(t, TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version0_13_0), // ExternalProvider.Source
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ExternalProvider.Source is protocol version 6
 		},
 		Steps: []TestStep{
 			{
@@ -1002,7 +1002,7 @@ func TestTest_TestStep_ExternalProvidersAndProviderFactories_NonHashiCorpNamespa
 
 	Test(t, TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version0_13_0), // ExternalProvider.Source
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ExternalProvider.Source is protocol version 6
 		},
 		Steps: []TestStep{
 			{
