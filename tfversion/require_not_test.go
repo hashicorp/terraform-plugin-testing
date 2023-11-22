@@ -17,6 +17,7 @@ import (
 )
 
 func Test_RequireNot(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.4.3")
 
 	r.UnitTest(t, r.TestCase{
@@ -37,6 +38,7 @@ func Test_RequireNot(t *testing.T) { //nolint:paralleltest
 }
 
 func Test_RequireNot_Error(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
 	plugintest.TestExpectTFatal(t, func() {

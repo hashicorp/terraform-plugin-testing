@@ -16,6 +16,7 @@ import (
 )
 
 func Test_Any_RunTest(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
 	r.UnitTest(t, r.TestCase{
@@ -42,6 +43,7 @@ func Test_Any_RunTest(t *testing.T) { //nolint:paralleltest
 }
 
 func Test_Any_SkipTest(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
 	r.UnitTest(t, r.TestCase{
@@ -68,6 +70,7 @@ func Test_Any_SkipTest(t *testing.T) { //nolint:paralleltest
 }
 
 func Test_Any_Error(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
 	plugintest.TestExpectTFatal(t, func() {

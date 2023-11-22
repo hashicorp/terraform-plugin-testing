@@ -17,6 +17,7 @@ import (
 )
 
 func Test_RequireBetween(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.2.0")
 
 	r.UnitTest(t, r.TestCase{
@@ -54,6 +55,7 @@ func Test_RequireBetween(t *testing.T) { //nolint:paralleltest
 }
 
 func Test_RequireBetween_Error_BelowMin(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
 	plugintest.TestExpectTFatal(t, func() {

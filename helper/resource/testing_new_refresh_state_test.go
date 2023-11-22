@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 func Test_RefreshPlanChecks_PostRefresh_Called(t *testing.T) {
@@ -22,6 +23,9 @@ func Test_RefreshPlanChecks_PostRefresh_Called(t *testing.T) {
 	spy1 := &planCheckSpy{}
 	spy2 := &planCheckSpy{}
 	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{
 				Resources: map[string]testprovider.Resource{
@@ -91,6 +95,9 @@ func Test_RefreshPlanChecks_PostRefresh_Errors(t *testing.T) {
 		err: errors.New("spy3 check failed"),
 	}
 	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{
 				Resources: map[string]testprovider.Resource{
