@@ -11,24 +11,69 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
-func Test_ExpectNonEmptyPlan(t *testing.T) {
+func Test_ExpectNonEmptyPlan_OutputChanges_None(t *testing.T) {
 	t.Parallel()
 
-	r.Test(t, r.TestCase{
+	r.UnitTest(t, r.TestCase{
 		ExternalProviders: map[string]r.ExternalProvider{
-			"random": {
-				Source: "registry.terraform.io/hashicorp/random",
-			},
+			"terraform": {Source: "terraform.io/builtin/terraform"},
 		},
 		Steps: []r.TestStep{
 			{
-				Config: `resource "random_string" "one" {
-					length = 16
+				Config: `output "test" { value = "original" }`,
+			},
+			{
+				Config: `output "test" { value = "new" }`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func Test_ExpectNonEmptyPlan_OutputChanges_Error(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ExternalProviders: map[string]r.ExternalProvider{
+			"terraform": {Source: "terraform.io/builtin/terraform"},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `output "test" { value = "original" }`,
+			},
+			{
+				Config: `output "test" { value = "original" }`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ExpectError: regexp.MustCompile(`expected a non-empty plan, but got an empty plan`),
+			},
+		},
+	})
+}
+
+func Test_ExpectNonEmptyPlan_ResourceChanges_None(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ExternalProviders: map[string]r.ExternalProvider{
+			"terraform": {Source: "terraform.io/builtin/terraform"},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "terraform_data" "one" {
+					triggers_replace = ["original"]
 				}`,
 			},
 			{
-				Config: `resource "random_string" "one" {
-					length = 12
+				Config: `resource "terraform_data" "one" {
+					triggers_replace = ["new"]
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
@@ -40,24 +85,22 @@ func Test_ExpectNonEmptyPlan(t *testing.T) {
 	})
 }
 
-func Test_ExpectNonEmptyPlan_Error(t *testing.T) {
+func Test_ExpectNonEmptyPlan_ResourceChanges_Error(t *testing.T) {
 	t.Parallel()
 
-	r.Test(t, r.TestCase{
+	r.UnitTest(t, r.TestCase{
 		ExternalProviders: map[string]r.ExternalProvider{
-			"random": {
-				Source: "registry.terraform.io/hashicorp/random",
-			},
+			"terraform": {Source: "terraform.io/builtin/terraform"},
 		},
 		Steps: []r.TestStep{
 			{
-				Config: `resource "random_string" "one" {
-					length = 16
+				Config: `resource "terraform_data" "one" {
+					triggers_replace = ["original"]
 				}`,
 			},
 			{
-				Config: `resource "random_string" "one" {
-					length = 16
+				Config: `resource "terraform_data" "one" {
+					triggers_replace = ["original"]
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{

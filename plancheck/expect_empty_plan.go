@@ -17,6 +17,12 @@ type expectEmptyPlan struct{}
 func (e expectEmptyPlan) CheckPlan(ctx context.Context, req CheckPlanRequest, resp *CheckPlanResponse) {
 	var result []error
 
+	for output, change := range req.Plan.OutputChanges {
+		if !change.Actions.NoOp() {
+			result = append(result, fmt.Errorf("expected empty plan, but output %q has planned action(s): %v", output, change.Actions))
+		}
+	}
+
 	for _, rc := range req.Plan.ResourceChanges {
 		if !rc.Change.Actions.NoOp() {
 			result = append(result, fmt.Errorf("expected empty plan, but %s has planned action(s): %v", rc.Address, rc.Change.Actions))
@@ -26,8 +32,8 @@ func (e expectEmptyPlan) CheckPlan(ctx context.Context, req CheckPlanRequest, re
 	resp.Error = errors.Join(result...)
 }
 
-// ExpectEmptyPlan returns a plan check that asserts that there are no resource changes in the plan.
-// All resource changes found will be aggregated and returned in a plan check error.
+// ExpectEmptyPlan returns a plan check that asserts that there are no output or resource changes in the plan.
+// All output and resource changes found will be aggregated and returned in a plan check error.
 func ExpectEmptyPlan() PlanCheck {
 	return expectEmptyPlan{}
 }

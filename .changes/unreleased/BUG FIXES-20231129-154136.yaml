@@ -1,0 +1,6 @@
+kind: BUG FIXES
+body: 'plancheck: Ensured `ExpectEmptyPlan` and `ExpectNonEmptyPlan` account for output
+  changes'
+time: 2023-11-29T15:41:36.391182-05:00
+custom:
+  Issue: "222"
