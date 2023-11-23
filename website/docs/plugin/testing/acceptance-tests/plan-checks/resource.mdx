@@ -11,8 +11,6 @@ The `terraform-plugin-testing` module provides a package [`plancheck`](https://p
 
 | Check                                                                                                                                                      | Description                                                                  |
 |------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
-| [`plancheck.ExpectEmptyPlan()`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectEmptyPlan)                                | Asserts the entire plan has no operations for apply.                         |
-| [`plancheck.ExpectNonEmptyPlan()`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectNonEmptyPlan)                          | Asserts the entire plan contains at least one operation for apply.           |
 | [`plancheck.ExpectResourceAction(address, operation)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectResourceAction)    | Asserts the given resource has the specified operation for apply.            |
 | [`plancheck.ExpectUnknownValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownValue)             | Asserts the specified attribute at the given resource has an unknown value.  |
 | [`plancheck.ExpectSensitiveValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectSensitiveValue)         | Asserts the specified attribute at the given resource has a sensitive value. |

@@ -18,16 +18,18 @@ func Test_ExpectUnknownOutputValue_StringAttribute(t *testing.T) {
 
 	r.Test(t, r.TestCase{
 		ExternalProviders: map[string]r.ExternalProvider{
-			"time": {
-				Source: "registry.terraform.io/hashicorp/time",
+			"data": {
+				Source: "terraform.io/builtin/terraform",
 			},
 		},
 		Steps: []r.TestStep{
 			{
-				Config: `resource "time_static" "one" {}
+				Config: `resource "terraform_data" "one" {
+					input = "string"
+				}
 
 				output "string_attribute" {
-					value = time_static.one.rfc3339
+					value = terraform_data.one.output
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
@@ -45,8 +47,8 @@ func Test_ExpectUnknownOutputValue_ListAttribute(t *testing.T) {
 
 	r.Test(t, r.TestCase{
 		ExternalProviders: map[string]r.ExternalProvider{
-			"time": {
-				Source: "registry.terraform.io/hashicorp/time",
+			"data": {
+				Source: "terraform.io/builtin/terraform",
 			},
 		},
 		ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -56,10 +58,12 @@ func Test_ExpectUnknownOutputValue_ListAttribute(t *testing.T) {
 		},
 		Steps: []r.TestStep{
 			{
-				Config: `resource "time_static" "one" {}
+				Config: `resource "terraform_data" "one" {
+					input = "string"
+				}
 
 				resource "test_resource" "two" {
-					list_attribute = ["value1", time_static.one.rfc3339]
+					list_attribute = ["value1", terraform_data.one.output]
 				}
 
 				output "list_attribute" {
@@ -81,8 +85,8 @@ func Test_ExpectUnknownOutputValue_SetAttribute(t *testing.T) {
 
 	r.Test(t, r.TestCase{
 		ExternalProviders: map[string]r.ExternalProvider{
-			"time": {
-				Source: "registry.terraform.io/hashicorp/time",
+			"data": {
+				Source: "terraform.io/builtin/terraform",
 			},
 		},
 		ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -92,10 +96,12 @@ func Test_ExpectUnknownOutputValue_SetAttribute(t *testing.T) {
 		},
 		Steps: []r.TestStep{
 			{
-				Config: `resource "time_static" "one" {}
+				Config: `resource "terraform_data" "one" {
+						input = "string"
+					}
 
 					resource "test_resource" "two" {
-						set_attribute = ["value1", time_static.one.rfc3339]
+						set_attribute = ["value1", terraform_data.one.output]
 					}
 
 					output "set_attribute" {
@@ -117,8 +123,8 @@ func Test_ExpectUnknownOutputValue_MapAttribute(t *testing.T) {
 
 	r.Test(t, r.TestCase{
 		ExternalProviders: map[string]r.ExternalProvider{
-			"time": {
-				Source: "registry.terraform.io/hashicorp/time",
+			"data": {
+				Source: "terraform.io/builtin/terraform",
 			},
 		},
 		ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -128,12 +134,14 @@ func Test_ExpectUnknownOutputValue_MapAttribute(t *testing.T) {
 		},
 		Steps: []r.TestStep{
 			{
-				Config: `resource "time_static" "one" {}
+				Config: `resource "terraform_data" "one" {
+					input = "string"
+				}
 
 				resource "test_resource" "two" {
 					map_attribute = {
 						key1 = "value1",
-						key2 = time_static.one.rfc3339
+						key2 = terraform_data.one.output
 					}
 				}
 
@@ -156,8 +164,8 @@ func Test_ExpectUnknownOutputValue_ListNestedBlock(t *testing.T) {
 
 	r.Test(t, r.TestCase{
 		ExternalProviders: map[string]r.ExternalProvider{
-			"time": {
-				Source: "registry.terraform.io/hashicorp/time",
+			"data": {
+				Source: "terraform.io/builtin/terraform",
 			},
 		},
 		ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -167,11 +175,13 @@ func Test_ExpectUnknownOutputValue_ListNestedBlock(t *testing.T) {
 		},
 		Steps: []r.TestStep{
 			{
-				Config: `resource "time_static" "one" {}
+				Config: `resource "terraform_data" "one" {
+					input = "string"
+				}
 
 				resource "test_resource" "two" {
 					list_nested_block {
-						list_nested_block_attribute = time_static.one.rfc3339
+						list_nested_block_attribute = terraform_data.one.output
 					}
 				}
 
