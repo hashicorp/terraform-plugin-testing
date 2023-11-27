@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 // Reference: https://github.com/hashicorp/terraform-plugin-testing/issues/84
@@ -19,6 +20,9 @@ func TestTestStep_ImportStateVerifyIdentifierAttribute(t *testing.T) {
 	t.Parallel()
 
 	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
 		Steps: []TestStep{
 			{
 				Check: ComposeAggregateTestCheckFunc(
@@ -109,6 +113,9 @@ func TestTestStep_ImportStateVerifyIdentifierAttribute_Error(t *testing.T) {
 
 	plugintest.TestExpectTFatal(t, func() {
 		Test(&mockT{}, TestCase{
+			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+				tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+			},
 			Steps: []TestStep{
 				{
 					Check: ComposeAggregateTestCheckFunc(

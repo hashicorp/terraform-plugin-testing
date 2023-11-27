@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/datasource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 // Reference: https://github.com/hashicorp/terraform-plugin-testing/issues/84
@@ -19,6 +20,9 @@ func TestTestCase_NoDataSourceIdRequirement(t *testing.T) {
 	t.Parallel()
 
 	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
 		Steps: []TestStep{
 			{
 				Check: ComposeAggregateTestCheckFunc(
@@ -69,6 +73,9 @@ func TestTestCase_NoResourceIdRequirement(t *testing.T) {
 	t.Parallel()
 
 	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
 		Steps: []TestStep{
 			{
 				Check: ComposeAggregateTestCheckFunc(

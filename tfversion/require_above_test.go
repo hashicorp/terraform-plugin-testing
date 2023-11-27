@@ -17,6 +17,7 @@ import (
 )
 
 func Test_RequireAbove(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
 	r.UnitTest(t, r.TestCase{
@@ -41,6 +42,7 @@ func Test_RequireAbove(t *testing.T) { //nolint:paralleltest
 }
 
 func Test_RequireAbove_Error(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.0.7")
 
 	plugintest.TestExpectTFatal(t, func() {
