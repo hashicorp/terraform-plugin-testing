@@ -16,6 +16,7 @@ import (
 )
 
 func Test_SkipBetween_SkipTest(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.2.0")
 
 	r.UnitTest(t, r.TestCase{
@@ -53,6 +54,7 @@ func Test_SkipBetween_SkipTest(t *testing.T) { //nolint:paralleltest
 }
 
 func Test_SkipBetween_RunTest_AboveMax(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.3.0")
 
 	r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
@@ -73,6 +75,7 @@ func Test_SkipBetween_RunTest_AboveMax(t *testing.T) { //nolint:paralleltest
 }
 
 func Test_SkipBetween_RunTest_EqToMin(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.2.0")
 
 	r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
