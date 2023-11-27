@@ -50,30 +50,18 @@ func (c TestCase) providerConfig(_ context.Context, skipProviderBlock bool) stri
 	}
 
 	for name, _ := range c.ProviderFactories {
-		if !skipProviderBlock {
-			providerBlocks.WriteString(fmt.Sprintf("provider %q {}\n", name))
-		}
-
 		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
 
 		requiredProviderBlocks.WriteString("    }\n")
 	}
 
 	for name, _ := range c.ProtoV5ProviderFactories {
-		if !skipProviderBlock {
-			providerBlocks.WriteString(fmt.Sprintf("provider %q {}\n", name))
-		}
-
 		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
 
 		requiredProviderBlocks.WriteString("    }\n")
 	}
 
 	for name, _ := range c.ProtoV6ProviderFactories {
-		if !skipProviderBlock {
-			providerBlocks.WriteString(fmt.Sprintf("provider %q {}\n", name))
-		}
-
 		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
 
 		requiredProviderBlocks.WriteString("    }\n")
