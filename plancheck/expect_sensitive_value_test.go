@@ -14,12 +14,16 @@ import (
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 func Test_ExpectSensitiveValue_SensitiveStringAttribute(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // Change.AfterSensitive
+		},
 		ProviderFactories: map[string]func() (*schema.Provider, error){
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProviderSensitive(), nil
@@ -47,6 +51,9 @@ func Test_ExpectSensitiveValue_SensitiveListAttribute(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // Change.AfterSensitive
+		},
 		ProviderFactories: map[string]func() (*schema.Provider, error){
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProviderSensitive(), nil
@@ -74,6 +81,9 @@ func Test_ExpectSensitiveValue_SensitiveSetAttribute(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // Change.AfterSensitive
+		},
 		ProviderFactories: map[string]func() (*schema.Provider, error){
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProviderSensitive(), nil
@@ -101,6 +111,9 @@ func Test_ExpectSensitiveValue_SensitiveMapAttribute(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // Change.AfterSensitive
+		},
 		ProviderFactories: map[string]func() (*schema.Provider, error){
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProviderSensitive(), nil
@@ -130,6 +143,9 @@ func Test_ExpectSensitiveValue_ListNestedBlock_SensitiveAttribute(t *testing.T) 
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // Change.AfterSensitive
+		},
 		ProviderFactories: map[string]func() (*schema.Provider, error){
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProviderSensitive(), nil
@@ -161,6 +177,9 @@ func Test_ExpectSensitiveValue_SetNestedBlock_SensitiveAttribute(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // Change.AfterSensitive
+		},
 		ProviderFactories: map[string]func() (*schema.Provider, error){
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProviderSensitive(), nil
@@ -191,6 +210,9 @@ func Test_ExpectSensitiveValue_ExpectError_ResourceNotFound(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // Change.AfterSensitive
+		},
 		ProviderFactories: map[string]func() (*schema.Provider, error){
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProviderSensitive(), nil

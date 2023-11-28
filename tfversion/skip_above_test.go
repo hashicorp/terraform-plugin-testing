@@ -14,6 +14,7 @@ import (
 )
 
 func Test_SkipAbove_SkipTest(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.3.0")
 
 	r.UnitTest(t, r.TestCase{
@@ -39,6 +40,7 @@ func Test_SkipAbove_SkipTest(t *testing.T) { //nolint:paralleltest
 }
 
 func Test_SkipAbove_RunTest(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.2.9")
 
 	r.UnitTest(t, r.TestCase{

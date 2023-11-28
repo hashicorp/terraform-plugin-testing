@@ -30,6 +30,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 func TestStepMergedConfig(t *testing.T) {
@@ -1084,6 +1085,9 @@ func TestTest_TestStep_ExternalProviders_NonHashiCorpNamespace(t *testing.T) {
 	t.Parallel()
 
 	Test(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ExternalProvider.Source is protocol version 6
+		},
 		Steps: []TestStep{
 			{
 				ExternalProviders: map[string]ExternalProvider{
@@ -1105,6 +1109,9 @@ func TestTest_TestStep_ExternalProvidersAndProviderFactories_NonHashiCorpNamespa
 	t.Parallel()
 
 	Test(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ExternalProvider.Source is protocol version 6
+		},
 		Steps: []TestStep{
 			{
 				ExternalProviders: map[string]ExternalProvider{
@@ -1157,6 +1164,9 @@ func TestTest_TestStep_ExternalProviders_To_ProtoV6ProviderFactories(t *testing.
 	t.Parallel()
 
 	Test(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
 		Steps: []TestStep{
 			{
 				Config: `resource "null_resource" "test" {}`,
@@ -1328,6 +1338,9 @@ func TestTest_TestStep_Taint(t *testing.T) {
 	var idOne, idTwo string
 
 	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
 		Steps: []TestStep{
 			{
 				Config: `resource "test_resource" "test" {}`,
@@ -1509,6 +1522,9 @@ func TestTest_TestStep_ProtoV6ProviderFactories_To_ExternalProviders(t *testing.
 	t.Parallel()
 
 	Test(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
 		Steps: []TestStep{
 			{
 				Config: `resource "null_resource" "test" {}`,

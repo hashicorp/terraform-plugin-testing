@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 func TestTestCaseProviderConfig(t *testing.T) {
@@ -272,6 +273,9 @@ func TestTest_TestCase_ExternalProviders_NonHashiCorpNamespace(t *testing.T) {
 	t.Parallel()
 
 	Test(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ExternalProvider.Source is protocol version 6
+		},
 		ExternalProviders: map[string]ExternalProvider{
 			// This can be set to any provider outside the hashicorp namespace.
 			// bflad/scaffoldingtest happens to be a published version of
@@ -293,6 +297,9 @@ func TestTest_TestCase_ExternalProvidersAndProviderFactories_NonHashiCorpNamespa
 	t.Parallel()
 
 	Test(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ExternalProvider.Source is protocol version 6
+		},
 		ExternalProviders: map[string]ExternalProvider{
 			// This can be set to any provider outside the hashicorp namespace.
 			// bflad/scaffoldingtest happens to be a published version of
@@ -346,6 +353,9 @@ func TestTest_TestCase_ExternalProviders_Error(t *testing.T) {
 
 	plugintest.TestExpectTFatal(t, func() {
 		Test(&mockT{}, TestCase{
+			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+				tfversion.SkipBelow(tfversion.Version0_13_0), // ExternalProvider.Source
+			},
 			ExternalProviders: map[string]ExternalProvider{
 				"testnonexistent": {
 					Source: "registry.terraform.io/hashicorp/testnonexistent",
