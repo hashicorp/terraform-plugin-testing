@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'plancheck: Added `ExpectNullOutputValueAtPath` built-in plan check, which asserts
+  that a given output value at a specified address, and path is null'
+time: 2023-11-22T08:45:52.856267Z
+custom:
+  Issue: "220"
