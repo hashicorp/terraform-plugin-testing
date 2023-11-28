@@ -72,15 +72,15 @@ func (s TestStep) providerConfig(_ context.Context, skipProviderBlock bool) stri
 		requiredProviderBlocks.WriteString("    }\n")
 	}
 
-	for name, _ := range s.ProviderFactories {
+	for name := range s.ProviderFactories {
 		requiredProviderBlocks.WriteString(addTerraformBlockSource(name, s.Config))
 	}
 
-	for name, _ := range s.ProtoV5ProviderFactories {
+	for name := range s.ProtoV5ProviderFactories {
 		requiredProviderBlocks.WriteString(addTerraformBlockSource(name, s.Config))
 	}
 
-	for name, _ := range s.ProtoV6ProviderFactories {
+	for name := range s.ProtoV6ProviderFactories {
 		requiredProviderBlocks.WriteString(addTerraformBlockSource(name, s.Config))
 	}
 
@@ -106,14 +106,12 @@ func (s TestStep) providerConfigTestCase(_ context.Context, skipProviderBlock bo
 
 	providerNames := make(map[string]struct{}, len(testCase.Providers))
 
-	for name, _ := range testCase.Providers {
+	for name := range testCase.Providers {
 		providerNames[name] = struct{}{}
 	}
 
-	for name, _ := range testCase.ProviderFactories {
-		if _, ok := providerNames[name]; ok {
-			delete(providerNames, name)
-		}
+	for name := range testCase.ProviderFactories {
+		delete(providerNames, name)
 	}
 
 	// [BF] The Providers field handling predates the logic being moved to this
@@ -150,7 +148,7 @@ func (s TestStep) providerConfigTestCase(_ context.Context, skipProviderBlock bo
 		requiredProviderBlocks.WriteString("    }\n")
 	}
 
-	for name, _ := range testCase.ProviderFactories {
+	for name := range testCase.ProviderFactories {
 		providerFactoryBlocks := addTerraformBlockSource(name, s.Config)
 
 		if len(providerFactoryBlocks) > 0 {
@@ -158,7 +156,7 @@ func (s TestStep) providerConfigTestCase(_ context.Context, skipProviderBlock bo
 		}
 	}
 
-	for name, _ := range testCase.ProtoV5ProviderFactories {
+	for name := range testCase.ProtoV5ProviderFactories {
 		protov5ProviderFactoryBlocks := addTerraformBlockSource(name, s.Config)
 
 		if len(protov5ProviderFactoryBlocks) > 0 {
@@ -166,7 +164,7 @@ func (s TestStep) providerConfigTestCase(_ context.Context, skipProviderBlock bo
 		}
 	}
 
-	for name, _ := range testCase.ProtoV6ProviderFactories {
+	for name := range testCase.ProtoV6ProviderFactories {
 		protov6ProviderFactoryBlocks := addTerraformBlockSource(name, s.Config)
 
 		if len(protov6ProviderFactoryBlocks) > 0 {
