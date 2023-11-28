@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'plancheck: Added `ExpectNullOutputValue` built-in plan check, which asserts
+  that a given output value at a specified address is null'
+time: 2023-11-22T08:45:01.330523Z
+custom:
+  Issue: "220"
