@@ -1,0 +1,6 @@
+kind: ENHANCEMENTS
+body: 'helper/resource: Automatically add `required_providers` configuration to `TestStep.Config`
+  configuration when using Terraform 1.6.* and above'
+time: 2023-11-28T14:39:01.395417Z
+custom:
+  Issue: "216"
