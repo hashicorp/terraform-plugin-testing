@@ -12,6 +12,8 @@ import (
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
@@ -20,9 +22,7 @@ func Test_All_RunTest(t *testing.T) { //nolint:paralleltest
 
 	r.UnitTest(t, r.TestCase{
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
-				return nil, nil
-			},
+			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.Any(

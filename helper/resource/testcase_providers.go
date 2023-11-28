@@ -49,24 +49,6 @@ func (c TestCase) providerConfig(_ context.Context, skipProviderBlock bool) stri
 		requiredProviderBlocks.WriteString("    }\n")
 	}
 
-	for name, _ := range c.ProviderFactories {
-		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
-
-		requiredProviderBlocks.WriteString("    }\n")
-	}
-
-	for name, _ := range c.ProtoV5ProviderFactories {
-		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
-
-		requiredProviderBlocks.WriteString("    }\n")
-	}
-
-	for name, _ := range c.ProtoV6ProviderFactories {
-		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
-
-		requiredProviderBlocks.WriteString("    }\n")
-	}
-
 	if requiredProviderBlocks.Len() > 0 {
 		return fmt.Sprintf(`
 terraform {

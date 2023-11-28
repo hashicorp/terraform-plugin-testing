@@ -16,6 +16,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 )
 
 func TestTestCaseProviderConfig(t *testing.T) {
@@ -45,13 +47,10 @@ terraform {
       source = "registry.terraform.io/hashicorp/externaltest"
       version = "1.2.3"
     }
-    localtest = {
-    }
   }
 }
 
 provider "externaltest" {}
-provider "localtest" {}
 `,
 		},
 		"externalproviders-and-protov6providerfactories": {
@@ -73,13 +72,10 @@ terraform {
       source = "registry.terraform.io/hashicorp/externaltest"
       version = "1.2.3"
     }
-    localtest = {
-    }
   }
 }
 
 provider "externaltest" {}
-provider "localtest" {}
 `,
 		},
 		"externalproviders-and-providerfactories": {
@@ -101,13 +97,10 @@ terraform {
       source = "registry.terraform.io/hashicorp/externaltest"
       version = "1.2.3"
     }
-    localtest = {
-    }
   }
 }
 
 provider "externaltest" {}
-provider "localtest" {}
 `,
 		},
 		"externalproviders-missing-source-and-versionconstraint": {
@@ -207,15 +200,7 @@ provider "test" {}
 					"test": nil,
 				},
 			},
-			expected: `
-terraform {
-  required_providers {
-    test = {
-    }
-  }
-}
-
-provider "test" {}`,
+			expected: ``,
 		},
 		"protov6providerfactories": {
 			testCase: TestCase{
@@ -223,15 +208,7 @@ provider "test" {}`,
 					"test": nil,
 				},
 			},
-			expected: `
-terraform {
-  required_providers {
-    test = {
-    }
-  }
-}
-
-provider "test" {}`,
+			expected: ``,
 		},
 		"providerfactories": {
 			testCase: TestCase{
@@ -239,14 +216,7 @@ provider "test" {}`,
 					"test": nil,
 				},
 			},
-			expected: `terraform {
-  required_providers {
-    test = {
-    }
-  }
-}
-
-provider "test" {}`,
+			expected: ``,
 		},
 		"providers": {
 			testCase: TestCase{
@@ -395,9 +365,7 @@ func TestTest_TestCase_ProtoV5ProviderFactories(t *testing.T) {
 
 	Test(&mockT{}, TestCase{
 		ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
-			"test": func() (tfprotov5.ProviderServer, error) { //nolint:unparam // required signature
-				return nil, nil
-			},
+			"test": providerserver.NewProtov5ProviderServer(testprovider.Protov5Provider{}),
 		},
 		Steps: []TestStep{
 			{
@@ -431,9 +399,7 @@ func TestTest_TestCase_ProtoV6ProviderFactories(t *testing.T) {
 
 	Test(&mockT{}, TestCase{
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
-				return nil, nil
-			},
+			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},
 		Steps: []TestStep{
 			{
@@ -468,7 +434,7 @@ func TestTest_TestCase_ProviderFactories(t *testing.T) {
 	Test(&mockT{}, TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return nil, nil
+				return &schema.Provider{}, nil
 			},
 		},
 		Steps: []TestStep{

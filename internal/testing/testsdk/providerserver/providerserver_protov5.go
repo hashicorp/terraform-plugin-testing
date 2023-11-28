@@ -1,0 +1,104 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
+package providerserver
+
+import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/provider"
+)
+
+var _ tfprotov5.ProviderServer = Protov5ProviderServer{}
+
+// NewProtov5ProviderServer returns a protocol version 5 provider server which only
+// implements GetProviderSchema, for consumption with ProtoV5ProviderFactories.
+func NewProtov5ProviderServer(p provider.Protov5Provider) func() (tfprotov5.ProviderServer, error) {
+	return NewProtov5ProviderServerWithError(p, nil)
+}
+
+// NewProtov5ProviderServerWithError returns a protocol version 5 provider server,
+// and an associated error for consumption with ProtoV5ProviderFactories.
+func NewProtov5ProviderServerWithError(p provider.Protov5Provider, err error) func() (tfprotov5.ProviderServer, error) {
+	providerServer := Protov5ProviderServer{
+		Provider: p,
+	}
+
+	return func() (tfprotov5.ProviderServer, error) {
+		return providerServer, err
+	}
+}
+
+// Protov5ProviderServer is a version 5 provider server that only implements GetProviderSchema.
+type Protov5ProviderServer struct {
+	Provider provider.Protov5Provider
+}
+
+func (s Protov5ProviderServer) GetMetadata(ctx context.Context, request *tfprotov5.GetMetadataRequest) (*tfprotov5.GetMetadataResponse, error) {
+	return &tfprotov5.GetMetadataResponse{}, nil
+}
+
+func (s Protov5ProviderServer) ApplyResourceChange(ctx context.Context, req *tfprotov5.ApplyResourceChangeRequest) (*tfprotov5.ApplyResourceChangeResponse, error) {
+	return &tfprotov5.ApplyResourceChangeResponse{}, nil
+}
+
+func (s Protov5ProviderServer) ConfigureProvider(ctx context.Context, req *tfprotov5.ConfigureProviderRequest) (*tfprotov5.ConfigureProviderResponse, error) {
+	return &tfprotov5.ConfigureProviderResponse{}, nil
+}
+
+func (s Protov5ProviderServer) GetProviderSchema(ctx context.Context, req *tfprotov5.GetProviderSchemaRequest) (*tfprotov5.GetProviderSchemaResponse, error) {
+	providerReq := provider.Protov5SchemaRequest{}
+	providerResp := &provider.Protov5SchemaResponse{}
+
+	s.Provider.Schema(ctx, providerReq, providerResp)
+
+	resp := &tfprotov5.GetProviderSchemaResponse{
+		DataSourceSchemas: map[string]*tfprotov5.Schema{},
+		Diagnostics:       providerResp.Diagnostics,
+		Provider:          providerResp.Schema,
+		ResourceSchemas:   map[string]*tfprotov5.Schema{},
+		ServerCapabilities: &tfprotov5.ServerCapabilities{
+			PlanDestroy: true,
+		},
+	}
+
+	return resp, nil
+}
+
+func (s Protov5ProviderServer) ImportResourceState(ctx context.Context, req *tfprotov5.ImportResourceStateRequest) (*tfprotov5.ImportResourceStateResponse, error) {
+	return &tfprotov5.ImportResourceStateResponse{}, nil
+}
+
+func (s Protov5ProviderServer) PlanResourceChange(ctx context.Context, req *tfprotov5.PlanResourceChangeRequest) (*tfprotov5.PlanResourceChangeResponse, error) {
+	return &tfprotov5.PlanResourceChangeResponse{}, nil
+}
+
+func (s Protov5ProviderServer) PrepareProviderConfig(ctx context.Context, request *tfprotov5.PrepareProviderConfigRequest) (*tfprotov5.PrepareProviderConfigResponse, error) {
+	return &tfprotov5.PrepareProviderConfigResponse{}, nil
+}
+
+func (s Protov5ProviderServer) ReadDataSource(ctx context.Context, req *tfprotov5.ReadDataSourceRequest) (*tfprotov5.ReadDataSourceResponse, error) {
+	return &tfprotov5.ReadDataSourceResponse{}, nil
+}
+
+func (s Protov5ProviderServer) ReadResource(ctx context.Context, req *tfprotov5.ReadResourceRequest) (*tfprotov5.ReadResourceResponse, error) {
+	return &tfprotov5.ReadResourceResponse{}, nil
+}
+
+func (s Protov5ProviderServer) StopProvider(ctx context.Context, req *tfprotov5.StopProviderRequest) (*tfprotov5.StopProviderResponse, error) {
+	return &tfprotov5.StopProviderResponse{}, nil
+}
+
+func (s Protov5ProviderServer) UpgradeResourceState(ctx context.Context, req *tfprotov5.UpgradeResourceStateRequest) (*tfprotov5.UpgradeResourceStateResponse, error) {
+	return &tfprotov5.UpgradeResourceStateResponse{}, nil
+}
+
+func (s Protov5ProviderServer) ValidateDataSourceConfig(ctx context.Context, request *tfprotov5.ValidateDataSourceConfigRequest) (*tfprotov5.ValidateDataSourceConfigResponse, error) {
+	return &tfprotov5.ValidateDataSourceConfigResponse{}, nil
+}
+
+func (s Protov5ProviderServer) ValidateResourceTypeConfig(ctx context.Context, request *tfprotov5.ValidateResourceTypeConfigRequest) (*tfprotov5.ValidateResourceTypeConfigResponse, error) {
+	return &tfprotov5.ValidateResourceTypeConfigResponse{}, nil
+}

@@ -5,6 +5,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -33,7 +34,7 @@ func (s TestStep) mergedConfig(ctx context.Context, testCase TestCase, configHas
 	}
 
 	if testCase.hasProviders(ctx) {
-		config.WriteString(testCase.providerConfig(ctx, configHasProviderBlock))
+		config.WriteString(s.providerConfigTestCase(ctx, configHasProviderBlock, testCase))
 	} else {
 		config.WriteString(s.providerConfig(ctx, configHasProviderBlock))
 	}
@@ -72,21 +73,15 @@ func (s TestStep) providerConfig(_ context.Context, skipProviderBlock bool) stri
 	}
 
 	for name, _ := range s.ProviderFactories {
-		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
-
-		requiredProviderBlocks.WriteString("    }\n")
+		requiredProviderBlocks.WriteString(addTerraformBlockSource(name, s.Config))
 	}
 
 	for name, _ := range s.ProtoV5ProviderFactories {
-		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
-
-		requiredProviderBlocks.WriteString("    }\n")
+		requiredProviderBlocks.WriteString(addTerraformBlockSource(name, s.Config))
 	}
 
 	for name, _ := range s.ProtoV6ProviderFactories {
-		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
-
-		requiredProviderBlocks.WriteString("    }\n")
+		requiredProviderBlocks.WriteString(addTerraformBlockSource(name, s.Config))
 	}
 
 	if requiredProviderBlocks.Len() > 0 {
@@ -100,6 +95,113 @@ terraform {
 %[2]s
 `, strings.TrimSuffix(requiredProviderBlocks.String(), "\n"), providerBlocks.String())
 	}
+
+	providerBlocksStr := providerBlocks.String()
+
+	return providerBlocksStr
+}
+
+func (s TestStep) providerConfigTestCase(_ context.Context, skipProviderBlock bool, testCase TestCase) string {
+	var providerBlocks, requiredProviderBlocks strings.Builder
+
+	providerNames := make(map[string]struct{}, len(testCase.Providers))
+
+	for name, _ := range testCase.Providers {
+		providerNames[name] = struct{}{}
+	}
+
+	for name, _ := range testCase.ProviderFactories {
+		if _, ok := providerNames[name]; ok {
+			delete(providerNames, name)
+		}
+	}
+
+	// [BF] The Providers field handling predates the logic being moved to this
+	//      method. It's not entirely clear to me at this time why this field
+	//      is being used and not the others, but leaving it here just in case
+	//      it does have a special purpose that wasn't being unit tested prior.
+	for name := range providerNames {
+		providerBlocks.WriteString(fmt.Sprintf("provider %q {}\n", name))
+
+		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
+
+		requiredProviderBlocks.WriteString("    }\n")
+	}
+
+	for name, externalProvider := range testCase.ExternalProviders {
+		if !skipProviderBlock {
+			providerBlocks.WriteString(fmt.Sprintf("provider %q {}\n", name))
+		}
+
+		if externalProvider.Source == "" && externalProvider.VersionConstraint == "" {
+			continue
+		}
+
+		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
+
+		if externalProvider.Source != "" {
+			requiredProviderBlocks.WriteString(fmt.Sprintf("      source = %q\n", externalProvider.Source))
+		}
+
+		if externalProvider.VersionConstraint != "" {
+			requiredProviderBlocks.WriteString(fmt.Sprintf("      version = %q\n", externalProvider.VersionConstraint))
+		}
+
+		requiredProviderBlocks.WriteString("    }\n")
+	}
+
+	for name, _ := range testCase.ProviderFactories {
+		providerFactoryBlocks := addTerraformBlockSource(name, s.Config)
+
+		if len(providerFactoryBlocks) > 0 {
+			requiredProviderBlocks.WriteString(providerFactoryBlocks)
+		}
+	}
+
+	for name, _ := range testCase.ProtoV5ProviderFactories {
+		protov5ProviderFactoryBlocks := addTerraformBlockSource(name, s.Config)
+
+		if len(protov5ProviderFactoryBlocks) > 0 {
+			requiredProviderBlocks.WriteString(protov5ProviderFactoryBlocks)
+		}
+	}
+
+	for name, _ := range testCase.ProtoV6ProviderFactories {
+		protov6ProviderFactoryBlocks := addTerraformBlockSource(name, s.Config)
+
+		if len(protov6ProviderFactoryBlocks) > 0 {
+			requiredProviderBlocks.WriteString(addTerraformBlockSource(name, s.Config))
+		}
+	}
+
+	if requiredProviderBlocks.Len() > 0 {
+		return fmt.Sprintf(`
+terraform {
+  required_providers {
+%[1]s
+  }
+}
+
+%[2]s
+`, strings.TrimSuffix(requiredProviderBlocks.String(), "\n"), providerBlocks.String())
+	}
+
+	return providerBlocks.String()
+}
+
+func addTerraformBlockSource(name, config string) string {
+	var js json.RawMessage
+
+	// Do not process JSON.
+	if err := json.Unmarshal([]byte(config), &js); err == nil {
+		return ""
+	}
+
+	var providerBlocks strings.Builder
+
+	providerBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
+	providerBlocks.WriteString(fmt.Sprintf("      source = %q\n", getProviderAddr(name)))
+	providerBlocks.WriteString("    }\n")
 
 	return providerBlocks.String()
 }

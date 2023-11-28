@@ -68,6 +68,9 @@ terraform {
       source = "registry.terraform.io/hashicorp/externaltest"
       version = "1.2.3"
     }
+    localtest = {
+      source = "registry.terraform.io/hashicorp/localtest"
+    }
   }
 }
 
@@ -105,6 +108,9 @@ terraform {
       source = "registry.terraform.io/hashicorp/externaltest"
       version = "1.2.3"
     }
+    localtest = {
+      source = "registry.terraform.io/hashicorp/localtest"
+    }
   }
 }
 
@@ -141,6 +147,9 @@ terraform {
     externaltest = {
       source = "registry.terraform.io/hashicorp/externaltest"
       version = "1.2.3"
+    }
+    localtest = {
+      source = "registry.terraform.io/hashicorp/localtest"
     }
   }
 }
@@ -268,6 +277,16 @@ resource "test_test" "test" {}
 `,
 			},
 			expected: `
+terraform {
+  required_providers {
+    test = {
+      source = "registry.terraform.io/hashicorp/test"
+    }
+  }
+}
+
+
+
 resource "test_test" "test" {}
 `,
 		},
@@ -283,6 +302,16 @@ resource "test_test" "test" {}
 `,
 			},
 			expected: `
+terraform {
+  required_providers {
+    test = {
+      source = "registry.terraform.io/hashicorp/test"
+    }
+  }
+}
+
+
+
 resource "test_test" "test" {}
 `,
 		},
@@ -298,6 +327,16 @@ resource "test_test" "test" {}
 `,
 			},
 			expected: `
+terraform {
+  required_providers {
+    test = {
+      source = "registry.terraform.io/hashicorp/test"
+    }
+  }
+}
+
+
+
 resource "test_test" "test" {}
 `,
 		},
@@ -325,6 +364,9 @@ terraform {
     externaltest = {
       source = "registry.terraform.io/hashicorp/externaltest"
       version = "1.2.3"
+    }
+    localtest = {
+      source = "registry.terraform.io/hashicorp/localtest"
     }
   }
 }
@@ -362,6 +404,9 @@ terraform {
       source = "registry.terraform.io/hashicorp/externaltest"
       version = "1.2.3"
     }
+    localtest = {
+      source = "registry.terraform.io/hashicorp/localtest"
+    }
   }
 }
 
@@ -397,6 +442,9 @@ terraform {
     externaltest = {
       source = "registry.terraform.io/hashicorp/externaltest"
       version = "1.2.3"
+    }
+    localtest = {
+      source = "registry.terraform.io/hashicorp/localtest"
     }
   }
 }
@@ -621,6 +669,16 @@ resource "test_test" "test" {}
 `,
 			},
 			expected: `
+terraform {
+  required_providers {
+    test = {
+      source = "registry.terraform.io/hashicorp/test"
+    }
+  }
+}
+
+
+
 resource "test_test" "test" {}
 `,
 		},
@@ -635,6 +693,16 @@ resource "test_test" "test" {}
 `,
 			},
 			expected: `
+terraform {
+  required_providers {
+    test = {
+      source = "registry.terraform.io/hashicorp/test"
+    }
+  }
+}
+
+
+
 resource "test_test" "test" {}
 `,
 		},
@@ -649,6 +717,16 @@ resource "test_test" "test" {}
 `,
 			},
 			expected: `
+terraform {
+  required_providers {
+    test = {
+      source = "registry.terraform.io/hashicorp/test"
+    }
+  }
+}
+
+
+
 resource "test_test" "test" {}
 `,
 		},
@@ -697,12 +775,12 @@ terraform {
       version = "1.2.3"
     }
     localtest = {
+      source = "registry.terraform.io/hashicorp/localtest"
     }
   }
 }
 
 provider "externaltest" {}
-provider "localtest" {}
 `,
 		},
 		"externalproviders-and-protov6providerfactories": {
@@ -725,12 +803,12 @@ terraform {
       version = "1.2.3"
     }
     localtest = {
+      source = "registry.terraform.io/hashicorp/localtest"
     }
   }
 }
 
 provider "externaltest" {}
-provider "localtest" {}
 `,
 		},
 		"externalproviders-and-providerfactories": {
@@ -753,12 +831,12 @@ terraform {
       version = "1.2.3"
     }
     localtest = {
+      source = "registry.terraform.io/hashicorp/localtest"
     }
   }
 }
 
 provider "externaltest" {}
-provider "localtest" {}
 `,
 		},
 		"externalproviders-missing-source-and-versionconstraint": {
@@ -862,11 +940,10 @@ provider "test" {}
 terraform {
   required_providers {
     test = {
+      source = "registry.terraform.io/hashicorp/test"
     }
   }
-}
-
-provider "test" {}`,
+}`,
 		},
 		"protov6providerfactories": {
 			testStep: TestStep{
@@ -878,11 +955,10 @@ provider "test" {}`,
 terraform {
   required_providers {
     test = {
+      source = "registry.terraform.io/hashicorp/test"
     }
   }
-}
-
-provider "test" {}`,
+}`,
 		},
 		"providerfactories": {
 			testStep: TestStep{
@@ -894,11 +970,10 @@ provider "test" {}`,
 terraform {
   required_providers {
     test = {
+      source = "registry.terraform.io/hashicorp/test"
     }
   }
-}
-
-provider "test" {}`,
+}`,
 		},
 	}
 
@@ -1370,9 +1445,7 @@ func TestTest_TestStep_ProtoV5ProviderFactories(t *testing.T) {
 			{
 				Config: "# not empty",
 				ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
-					"test": func() (tfprotov5.ProviderServer, error) { //nolint:unparam // required signature
-						return nil, nil
-					},
+					"test": providerserver.NewProtov5ProviderServer(testprovider.Protov5Provider{}),
 				},
 			},
 		},
@@ -1406,9 +1479,7 @@ func TestTest_TestStep_ProtoV6ProviderFactories(t *testing.T) {
 			{
 				Config: "# not empty",
 				ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-					"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
-						return nil, nil
-					},
+					"test": providerserver.NewProviderServer(testprovider.Provider{}),
 				},
 			},
 		},
@@ -1503,7 +1574,7 @@ func TestTest_TestStep_ProviderFactories(t *testing.T) {
 				Config: "# not empty",
 				ProviderFactories: map[string]func() (*schema.Provider, error){
 					"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-						return nil, nil
+						return &schema.Provider{}, nil
 					},
 				},
 			},
