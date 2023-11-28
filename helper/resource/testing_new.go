@@ -228,13 +228,23 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 			var testStepConfig teststep.Config
 
+			rawCfg, err := step.providerConfig(ctx, hasProviderBlock, helper.TerraformVersion())
+
+			if err != nil {
+				logging.HelperResourceError(ctx,
+					"TestStep error generating provider configuration",
+					map[string]interface{}{logging.KeyError: err},
+				)
+				t.Fatalf("TestStep %d/%d error generating provider configuration: %s", stepNumber, len(c.Steps), err)
+			}
+
 			// Return value from step.providerConfig() is assigned to Raw as this was previously being
 			// passed to wd.SetConfig() directly when the second argument to wd.SetConfig() accepted a
 			// configuration string.
 			confRequest := teststep.PrepareConfigurationRequest{
 				Directory: step.ConfigDirectory,
 				File:      step.ConfigFile,
-				Raw:       step.providerConfig(ctx, hasProviderBlock),
+				Raw:       rawCfg,
 				TestStepConfigRequest: config.TestStepConfigRequest{
 					StepNumber: stepIndex + 1,
 					TestName:   t.Name(),
@@ -354,7 +364,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if cfg != nil {
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
-			err := testStepNewConfig(ctx, t, c, wd, step, providers, stepIndex)
+			err := testStepNewConfig(ctx, t, c, wd, step, providers, stepIndex, helper)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 
@@ -413,7 +423,15 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				}
 			}
 
-			mergedConfig := step.mergedConfig(ctx, c, hasTerraformBlock, hasProviderBlock)
+			mergedConfig, err := step.mergedConfig(ctx, c, hasTerraformBlock, hasProviderBlock, helper.TerraformVersion())
+
+			if err != nil {
+				logging.HelperResourceError(ctx,
+					"Error generating merged configuration",
+					map[string]interface{}{logging.KeyError: err},
+				)
+				t.Fatalf("Error generating merged configuration: %s", err)
+			}
 
 			confRequest := teststep.PrepareConfigurationRequest{
 				Directory: step.ConfigDirectory,
@@ -469,7 +487,7 @@ func planIsEmpty(plan *tfjson.Plan) bool {
 	return true
 }
 
-func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, r *terraform.ResourceState, providers *providerFactories, stepIndex int) error {
+func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, r *terraform.ResourceState, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
 	t.Helper()
 
 	// Build the state. The state is just the resource with an ID. There
@@ -521,11 +539,17 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 		t.Fatalf("Error setting import test config: %s", err)
 	}
 
+	rawCfg, err := step.providerConfig(ctx, hasProviderBlock, helper.TerraformVersion())
+
+	if err != nil {
+		t.Fatalf("Error generating import provider config: %s", err)
+	}
+
 	defer func() {
 		confRequest := teststep.PrepareConfigurationRequest{
 			Directory: step.ConfigDirectory,
 			File:      step.ConfigFile,
-			Raw:       step.providerConfig(ctx, hasProviderBlock),
+			Raw:       rawCfg,
 			TestStepConfigRequest: config.TestStepConfigRequest{
 				StepNumber: stepIndex + 1,
 				TestName:   t.Name(),
