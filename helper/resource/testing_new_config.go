@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
 
@@ -80,15 +81,6 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("Error setting config: %w", err)
 	}
 
-	// require a refresh before applying
-	// failing to do this will result in data sources not being updated
-	err = runProviderCommand(ctx, t, func() error {
-		return wd.Refresh(ctx)
-	}, wd, providers)
-	if err != nil {
-		return fmt.Errorf("Error running pre-apply refresh: %w", err)
-	}
-
 	// If this step is a PlanOnly step, skip over this first Plan and
 	// subsequent Apply, and use the follow-up Plan that checks for
 	// permadiffs
@@ -97,10 +89,11 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 		// Plan!
 		err := runProviderCommand(ctx, t, func() error {
+			var opts []tfexec.PlanOption
 			if step.Destroy {
-				return wd.CreateDestroyPlan(ctx)
+				opts = append(opts, tfexec.Destroy(true))
 			}
-			return wd.CreatePlan(ctx)
+			return wd.CreatePlan(ctx, opts...)
 		}, wd, providers)
 		if err != nil {
 			return fmt.Errorf("Error running pre-apply plan: %w", err)
@@ -128,15 +121,35 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		// that the destroy steps can verify their behavior in the
 		// check function
 		var stateBeforeApplication *terraform.State
-		err = runProviderCommand(ctx, t, func() error {
-			stateBeforeApplication, err = getState(ctx, t, wd)
+
+		if step.Check != nil && step.Destroy {
+			// Refresh the state before shimming it for destroy checks later.
+			// This re-implements previously existing test step logic for the
+			// specific situation that a provider developer has applied a
+			// resource with a previous schema version and is destroying it with
+			// a provider that has a newer schema version. Without this refresh
+			// the shim logic will return an error such as:
+			//
+			//    Failed to marshal state to json: schema version 0 for null_resource.test in state does not match version 1 from the provider
+			err := runProviderCommand(ctx, t, func() error {
+				return wd.Refresh(ctx)
+			}, wd, providers)
+
 			if err != nil {
-				return err
+				return fmt.Errorf("Error running pre-apply refresh: %w", err)
 			}
-			return nil
-		}, wd, providers)
-		if err != nil {
-			return fmt.Errorf("Error retrieving pre-apply state: %w", err)
+
+			err = runProviderCommand(ctx, t, func() error {
+				stateBeforeApplication, err = getState(ctx, t, wd)
+				if err != nil {
+					return err
+				}
+				return nil
+			}, wd, providers)
+
+			if err != nil {
+				return fmt.Errorf("Error retrieving pre-apply state: %w", err)
+			}
 		}
 
 		// Apply the diff, creating real resources
@@ -150,19 +163,6 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			return fmt.Errorf("Error running apply: %w", err)
 		}
 
-		// Get the new state
-		var state *terraform.State
-		err = runProviderCommand(ctx, t, func() error {
-			state, err = getState(ctx, t, wd)
-			if err != nil {
-				return err
-			}
-			return nil
-		}, wd, providers)
-		if err != nil {
-			return fmt.Errorf("Error retrieving state after apply: %w", err)
-		}
-
 		// Run any configured checks
 		if step.Check != nil {
 			logging.HelperResourceTrace(ctx, "Using TestStep Check")
@@ -172,6 +172,20 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 					return fmt.Errorf("Check failed: %w", err)
 				}
 			} else {
+				var state *terraform.State
+
+				err := runProviderCommand(ctx, t, func() error {
+					state, err = getState(ctx, t, wd)
+					if err != nil {
+						return err
+					}
+					return nil
+				}, wd, providers)
+
+				if err != nil {
+					return fmt.Errorf("Error retrieving state after apply: %w", err)
+				}
+
 				if err := step.Check(state); err != nil {
 					return fmt.Errorf("Check failed: %w", err)
 				}
@@ -184,10 +198,13 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 	// do a plan
 	err = runProviderCommand(ctx, t, func() error {
-		if step.Destroy {
-			return wd.CreateDestroyPlan(ctx)
+		opts := []tfexec.PlanOption{
+			tfexec.Refresh(false),
 		}
-		return wd.CreatePlan(ctx)
+		if step.Destroy {
+			opts = append(opts, tfexec.Destroy(true))
+		}
+		return wd.CreatePlan(ctx, opts...)
 	}, wd, providers)
 	if err != nil {
 		return fmt.Errorf("Error running post-apply plan: %w", err)
@@ -224,22 +241,17 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("After applying this test step, the plan was not empty.\nstdout:\n\n%s", stdout)
 	}
 
-	// do a refresh
-	if !step.Destroy || (step.Destroy && !step.PreventPostDestroyRefresh) {
-		err := runProviderCommand(ctx, t, func() error {
-			return wd.Refresh(ctx)
-		}, wd, providers)
-		if err != nil {
-			return fmt.Errorf("Error running post-apply refresh: %w", err)
-		}
-	}
-
 	// do another plan
 	err = runProviderCommand(ctx, t, func() error {
+		var opts []tfexec.PlanOption
 		if step.Destroy {
-			return wd.CreateDestroyPlan(ctx)
+			opts = append(opts, tfexec.Destroy(true))
+
+			if step.PreventPostDestroyRefresh {
+				opts = append(opts, tfexec.Refresh(false))
+			}
 		}
-		return wd.CreatePlan(ctx)
+		return wd.CreatePlan(ctx, opts...)
 	}, wd, providers)
 	if err != nil {
 		return fmt.Errorf("Error running second post-apply plan: %w", err)

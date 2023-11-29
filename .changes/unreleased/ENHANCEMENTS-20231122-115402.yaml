@@ -1,0 +1,6 @@
+kind: ENHANCEMENTS
+body: 'helper/resource: Removed separate refresh commands, which increases testing
+  performance'
+time: 2023-11-22T11:54:02.542726-05:00
+custom:
+  Issue: "223"
