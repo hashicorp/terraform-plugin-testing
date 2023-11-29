@@ -16,6 +16,13 @@ func Test_ExpectNonEmptyPlan_OutputChanges_None(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version0_14_0), // outputs before 0.14 always show as created
+		},
+		// Avoid our own validation that requires at least one provider config.
+		ExternalProviders: map[string]r.ExternalProvider{
+			"terraform": {Source: "terraform.io/builtin/terraform"},
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `output "test" { value = "original" }`,
@@ -36,6 +43,13 @@ func Test_ExpectNonEmptyPlan_OutputChanges_Error(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version0_14_0), // outputs before 0.14 always show as created
+		},
+		// Avoid our own validation that requires at least one provider config.
+		ExternalProviders: map[string]r.ExternalProvider{
+			"terraform": {Source: "terraform.io/builtin/terraform"},
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `output "test" { value = "original" }`,
