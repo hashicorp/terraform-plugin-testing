@@ -16,9 +16,6 @@ func Test_ExpectEmptyPlan_OutputChanges_None(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
-		ExternalProviders: map[string]r.ExternalProvider{
-			"terraform": {Source: "terraform.io/builtin/terraform"},
-		},
 		Steps: []r.TestStep{
 			{
 				Config: `output "test" { value = "original" }`,
@@ -39,9 +36,6 @@ func Test_ExpectEmptyPlan_OutputChanges_Error(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
-		ExternalProviders: map[string]r.ExternalProvider{
-			"terraform": {Source: "terraform.io/builtin/terraform"},
-		},
 		Steps: []r.TestStep{
 			{
 				Config: `output "test" { value = "original" }`,
