@@ -25,6 +25,8 @@ func Test_ExpectUnknownOutputValueAtPath_StringAttribute(t *testing.T) {
 				Source: "terraform.io/builtin/terraform",
 			},
 		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
@@ -62,6 +64,8 @@ func Test_ExpectUnknownOutputValueAtPath_ListAttribute(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
@@ -103,6 +107,8 @@ func Test_ExpectUnknownOutputValueAtPath_SetAttribute(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
@@ -144,6 +150,8 @@ func Test_ExpectUnknownOutputValueAtPath_MapAttribute(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
@@ -188,6 +196,8 @@ func Test_ExpectUnknownOutputValueAtPath_ListNestedBlock_Resource(t *testing.T) 
 				return testProvider(), nil
 			},
 		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
@@ -231,6 +241,8 @@ func Test_ExpectUnknownOutputValueAtPath_ListNestedBlock_ResourceBlocks(t *testi
 				return testProvider(), nil
 			},
 		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
@@ -274,6 +286,8 @@ func Test_ExpectUnknownOutputValueAtPath_ListNestedBlock_ObjectBlockIndex(t *tes
 				return testProvider(), nil
 			},
 		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
@@ -317,6 +331,8 @@ func Test_ExpectUnknownOutputValueAtPath_SetNestedBlock_Object(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},

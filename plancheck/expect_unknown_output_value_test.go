@@ -24,6 +24,8 @@ func Test_ExpectUnknownOutputValue_StringAttribute(t *testing.T) {
 				Source: "terraform.io/builtin/terraform",
 			},
 		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
@@ -61,6 +63,8 @@ func Test_ExpectUnknownOutputValue_ListAttribute(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
@@ -102,6 +106,8 @@ func Test_ExpectUnknownOutputValue_SetAttribute(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
@@ -143,6 +149,8 @@ func Test_ExpectUnknownOutputValue_MapAttribute(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
@@ -187,6 +195,8 @@ func Test_ExpectUnknownOutputValue_ListNestedBlock(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
