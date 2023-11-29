@@ -354,7 +354,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if cfg != nil {
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
-			err := testStepNewConfig(ctx, t, c, wd, step, providers, stepIndex, helper)
+			err := testStepNewConfig(ctx, t, c, wd, step, providers, stepIndex)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 
