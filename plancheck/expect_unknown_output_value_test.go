@@ -7,10 +7,12 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 func Test_ExpectUnknownOutputValue_StringAttribute(t *testing.T) {
@@ -21,6 +23,11 @@ func Test_ExpectUnknownOutputValue_StringAttribute(t *testing.T) {
 			"data": {
 				Source: "terraform.io/builtin/terraform",
 			},
+		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
 		Steps: []r.TestStep{
 			{
@@ -55,6 +62,11 @@ func Test_ExpectUnknownOutputValue_ListAttribute(t *testing.T) {
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
 		Steps: []r.TestStep{
 			{
@@ -94,6 +106,11 @@ func Test_ExpectUnknownOutputValue_SetAttribute(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "terraform_data" "one" {
@@ -131,6 +148,11 @@ func Test_ExpectUnknownOutputValue_MapAttribute(t *testing.T) {
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
 		Steps: []r.TestStep{
 			{
@@ -172,6 +194,11 @@ func Test_ExpectUnknownOutputValue_ListNestedBlock(t *testing.T) {
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// The terraform_data resource is not available prior to Terraform v1.4.0
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
 		Steps: []r.TestStep{
 			{
