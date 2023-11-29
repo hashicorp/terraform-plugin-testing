@@ -7,11 +7,13 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 func Test_ExpectUnknownOutputValueAtPath_StringAttribute(t *testing.T) {
@@ -22,6 +24,9 @@ func Test_ExpectUnknownOutputValueAtPath_StringAttribute(t *testing.T) {
 			"data": {
 				Source: "terraform.io/builtin/terraform",
 			},
+		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
 		Steps: []r.TestStep{
 			{
@@ -56,6 +61,9 @@ func Test_ExpectUnknownOutputValueAtPath_ListAttribute(t *testing.T) {
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
 		Steps: []r.TestStep{
 			{
@@ -95,6 +103,9 @@ func Test_ExpectUnknownOutputValueAtPath_SetAttribute(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "terraform_data" "one" {
@@ -132,6 +143,9 @@ func Test_ExpectUnknownOutputValueAtPath_MapAttribute(t *testing.T) {
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
 		Steps: []r.TestStep{
 			{
@@ -174,6 +188,9 @@ func Test_ExpectUnknownOutputValueAtPath_ListNestedBlock_Resource(t *testing.T) 
 				return testProvider(), nil
 			},
 		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "terraform_data" "one" {
@@ -213,6 +230,9 @@ func Test_ExpectUnknownOutputValueAtPath_ListNestedBlock_ResourceBlocks(t *testi
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
 		Steps: []r.TestStep{
 			{
@@ -254,6 +274,9 @@ func Test_ExpectUnknownOutputValueAtPath_ListNestedBlock_ObjectBlockIndex(t *tes
 				return testProvider(), nil
 			},
 		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "terraform_data" "one" {
@@ -293,6 +316,9 @@ func Test_ExpectUnknownOutputValueAtPath_SetNestedBlock_Object(t *testing.T) {
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
 		},
 		Steps: []r.TestStep{
 			{
