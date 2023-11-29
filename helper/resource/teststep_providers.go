@@ -8,11 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"github.com/hashicorp/go-version"
 )
-
-const tfBlockMinReqTFVersion = "1.6.0"
 
 // mergedConfig prepends any necessary terraform configuration blocks to the
 // TestStep Config.
@@ -26,7 +22,7 @@ const tfBlockMinReqTFVersion = "1.6.0"
 // When TestStep.ConfigDirectory is used, the expectation is that the
 // Terraform configuration files will specify a terraform configuration
 // block and/or provider blocks as necessary.
-func (s TestStep) mergedConfig(ctx context.Context, testCase TestCase, configHasTerraformBlock, configHasProviderBlock bool, tfVersion *version.Version) (string, error) {
+func (s TestStep) mergedConfig(ctx context.Context, testCase TestCase, configHasTerraformBlock, configHasProviderBlock bool) string {
 	var config strings.Builder
 
 	// Prevent issues with existing configurations containing the terraform
@@ -34,36 +30,24 @@ func (s TestStep) mergedConfig(ctx context.Context, testCase TestCase, configHas
 	if configHasTerraformBlock {
 		config.WriteString(s.Config)
 
-		return config.String(), nil
+		return config.String()
 	}
 
 	if testCase.hasProviders(ctx) {
-		cfg, err := s.providerConfigTestCase(ctx, configHasProviderBlock, testCase, tfVersion)
-
-		if err != nil {
-			return "", err
-		}
-
-		config.WriteString(cfg)
+		config.WriteString(s.providerConfigTestCase(ctx, configHasProviderBlock, testCase))
 	} else {
-		cfg, err := s.providerConfig(ctx, configHasProviderBlock, tfVersion)
-
-		if err != nil {
-			return "", err
-		}
-
-		config.WriteString(cfg)
+		config.WriteString(s.providerConfig(ctx, configHasProviderBlock))
 	}
 
 	config.WriteString(s.Config)
 
-	return config.String(), nil
+	return config.String()
 }
 
 // providerConfig takes the list of providers in a TestStep and returns a
 // config with only empty provider blocks. This is useful for Import, where no
 // config is provided, but the providers must be defined.
-func (s TestStep) providerConfig(_ context.Context, skipProviderBlock bool, tfVersion *version.Version) (string, error) {
+func (s TestStep) providerConfig(_ context.Context, skipProviderBlock bool) string {
 	var providerBlocks, requiredProviderBlocks strings.Builder
 
 	for name, externalProvider := range s.ExternalProviders {
@@ -88,34 +72,28 @@ func (s TestStep) providerConfig(_ context.Context, skipProviderBlock bool, tfVe
 		requiredProviderBlocks.WriteString("    }\n")
 	}
 
-	minReqVersion, err := version.NewVersion(tfBlockMinReqTFVersion)
-
-	if err != nil {
-		return "", err
-	}
-
 	for name := range s.ProviderFactories {
-		if tfVersion.LessThan(minReqVersion) {
-			break
-		}
+		providerFactoryBlocks := addTerraformBlockSource(name, s.Config)
 
-		requiredProviderBlocks.WriteString(addTerraformBlockSource(name, s.Config))
+		if len(providerFactoryBlocks) > 0 {
+			requiredProviderBlocks.WriteString(providerFactoryBlocks)
+		}
 	}
 
 	for name := range s.ProtoV5ProviderFactories {
-		if tfVersion.LessThan(minReqVersion) {
-			break
-		}
+		protov5ProviderFactoryBlocks := addTerraformBlockSource(name, s.Config)
 
-		requiredProviderBlocks.WriteString(addTerraformBlockSource(name, s.Config))
+		if len(protov5ProviderFactoryBlocks) > 0 {
+			requiredProviderBlocks.WriteString(protov5ProviderFactoryBlocks)
+		}
 	}
 
 	for name := range s.ProtoV6ProviderFactories {
-		if tfVersion.LessThan(minReqVersion) {
-			break
-		}
+		protov6ProviderFactoryBlocks := addTerraformBlockSource(name, s.Config)
 
-		requiredProviderBlocks.WriteString(addTerraformBlockSource(name, s.Config))
+		if len(protov6ProviderFactoryBlocks) > 0 {
+			requiredProviderBlocks.WriteString(addTerraformBlockSource(name, s.Config))
+		}
 	}
 
 	if requiredProviderBlocks.Len() > 0 {
@@ -127,13 +105,13 @@ terraform {
 }
 
 %[2]s
-`, strings.TrimSuffix(requiredProviderBlocks.String(), "\n"), providerBlocks.String()), nil
+`, strings.TrimSuffix(requiredProviderBlocks.String(), "\n"), providerBlocks.String())
 	}
 
-	return providerBlocks.String(), nil
+	return providerBlocks.String()
 }
 
-func (s TestStep) providerConfigTestCase(_ context.Context, skipProviderBlock bool, testCase TestCase, tfVersion *version.Version) (string, error) {
+func (s TestStep) providerConfigTestCase(_ context.Context, skipProviderBlock bool, testCase TestCase) string {
 	var providerBlocks, requiredProviderBlocks strings.Builder
 
 	providerNames := make(map[string]struct{}, len(testCase.Providers))
@@ -180,17 +158,7 @@ func (s TestStep) providerConfigTestCase(_ context.Context, skipProviderBlock bo
 		requiredProviderBlocks.WriteString("    }\n")
 	}
 
-	minReqVersion, err := version.NewVersion(tfBlockMinReqTFVersion)
-
-	if err != nil {
-		return "", err
-	}
-
 	for name := range testCase.ProviderFactories {
-		if tfVersion.LessThan(minReqVersion) {
-			break
-		}
-
 		providerFactoryBlocks := addTerraformBlockSource(name, s.Config)
 
 		if len(providerFactoryBlocks) > 0 {
@@ -199,10 +167,6 @@ func (s TestStep) providerConfigTestCase(_ context.Context, skipProviderBlock bo
 	}
 
 	for name := range testCase.ProtoV5ProviderFactories {
-		if tfVersion.LessThan(minReqVersion) {
-			break
-		}
-
 		protov5ProviderFactoryBlocks := addTerraformBlockSource(name, s.Config)
 
 		if len(protov5ProviderFactoryBlocks) > 0 {
@@ -211,10 +175,6 @@ func (s TestStep) providerConfigTestCase(_ context.Context, skipProviderBlock bo
 	}
 
 	for name := range testCase.ProtoV6ProviderFactories {
-		if tfVersion.LessThan(minReqVersion) {
-			break
-		}
-
 		protov6ProviderFactoryBlocks := addTerraformBlockSource(name, s.Config)
 
 		if len(protov6ProviderFactoryBlocks) > 0 {
@@ -231,10 +191,10 @@ terraform {
 }
 
 %[2]s
-`, strings.TrimSuffix(requiredProviderBlocks.String(), "\n"), providerBlocks.String()), nil
+`, strings.TrimSuffix(requiredProviderBlocks.String(), "\n"), providerBlocks.String())
 	}
 
-	return providerBlocks.String(), nil
+	return providerBlocks.String()
 }
 
 func addTerraformBlockSource(name, config string) string {
