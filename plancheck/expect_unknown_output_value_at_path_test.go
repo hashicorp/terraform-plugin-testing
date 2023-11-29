@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -28,7 +27,7 @@ func Test_ExpectUnknownOutputValueAtPath_StringAttribute(t *testing.T) {
 		// The terraform_data resource is not available prior to Terraform v1.4.0
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
+			tfversion.SkipBelow(tfversion.Version1_4_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -67,7 +66,7 @@ func Test_ExpectUnknownOutputValueAtPath_ListAttribute(t *testing.T) {
 		// The terraform_data resource is not available prior to Terraform v1.4.0
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
+			tfversion.SkipBelow(tfversion.Version1_4_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -110,7 +109,7 @@ func Test_ExpectUnknownOutputValueAtPath_SetAttribute(t *testing.T) {
 		// The terraform_data resource is not available prior to Terraform v1.4.0
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
+			tfversion.SkipBelow(tfversion.Version1_4_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -153,7 +152,7 @@ func Test_ExpectUnknownOutputValueAtPath_MapAttribute(t *testing.T) {
 		// The terraform_data resource is not available prior to Terraform v1.4.0
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
+			tfversion.SkipBelow(tfversion.Version1_4_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -199,7 +198,7 @@ func Test_ExpectUnknownOutputValueAtPath_ListNestedBlock_Resource(t *testing.T) 
 		// The terraform_data resource is not available prior to Terraform v1.4.0
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
+			tfversion.SkipBelow(tfversion.Version1_4_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -244,7 +243,7 @@ func Test_ExpectUnknownOutputValueAtPath_ListNestedBlock_ResourceBlocks(t *testi
 		// The terraform_data resource is not available prior to Terraform v1.4.0
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
+			tfversion.SkipBelow(tfversion.Version1_4_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -289,7 +288,7 @@ func Test_ExpectUnknownOutputValueAtPath_ListNestedBlock_ObjectBlockIndex(t *tes
 		// The terraform_data resource is not available prior to Terraform v1.4.0
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
+			tfversion.SkipBelow(tfversion.Version1_4_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -334,7 +333,7 @@ func Test_ExpectUnknownOutputValueAtPath_SetNestedBlock_Object(t *testing.T) {
 		// The terraform_data resource is not available prior to Terraform v1.4.0
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.4/CHANGELOG.md#140-march-08-2023
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.4.0"))),
+			tfversion.SkipBelow(tfversion.Version1_4_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -376,7 +375,7 @@ func Test_ExpectUnknownOutputValueAtPath_ExpectError_KnownValue(t *testing.T) {
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{

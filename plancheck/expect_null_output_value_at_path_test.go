@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -25,7 +24,7 @@ func Test_ExpectNullOutputValueAtPath_StringAttribute_EmptyConfig(t *testing.T) 
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -60,7 +59,7 @@ func Test_ExpectNullOutputValueAtPath_StringAttribute_NullConfig(t *testing.T) {
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -96,7 +95,7 @@ func Test_ExpectNullOutputValueAtPath_StringAttribute_ExpectErrorNotNull(t *test
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -138,7 +137,7 @@ func Test_ExpectNullOutputValueAtPath_ListAttribute_EmptyConfig(t *testing.T) {
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -173,7 +172,7 @@ func Test_ExpectNullOutputValueAtPath_ListAttribute_NullConfig(t *testing.T) {
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -209,7 +208,7 @@ func Test_ExpectNullOutputValueAtPath_ListAttribute_ExpectErrorNotNull(t *testin
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -246,7 +245,7 @@ func Test_ExpectNullOutputValueAtPath_SetAttribute_EmptyConfig(t *testing.T) {
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -281,7 +280,7 @@ func Test_ExpectNullOutputValueAtPath_SetAttribute_NullConfig(t *testing.T) {
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -317,7 +316,7 @@ func Test_ExpectNullOutputValueAtPath_SetAttribute_ExpectErrorNotNull(t *testing
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -354,7 +353,7 @@ func Test_ExpectNullOutputValueAtPath_MapAttribute_EmptyConfig(t *testing.T) {
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -389,7 +388,7 @@ func Test_ExpectNullOutputValueAtPath_MapAttribute_NullConfig(t *testing.T) {
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -425,7 +424,7 @@ func Test_ExpectNullOutputValueAtPath_MapAttribute_ExpectErrorNotNull(t *testing
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -465,7 +464,7 @@ func Test_ExpectNullOutputValueAtPath_MapAttribute_PartiallyNullConfig_ExpectErr
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -505,7 +504,7 @@ func Test_ExpectNullOutputValueAtPath_ListNestedBlock_EmptyConfig(t *testing.T) 
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -541,7 +540,7 @@ func Test_ExpectNullOutputValueAtPath_ListNestedBlock_NullConfig(t *testing.T) {
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -579,7 +578,7 @@ func Test_ExpectNullOutputValueAtPath_ListNestedBlock_ExpectErrorNotNull(t *test
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -618,7 +617,7 @@ func Test_ExpectNullOutputValueAtPath_SetNestedBlock_NullConfig_ExpectErrorNotNu
 		// is unknown.
 		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(version.Must(version.NewVersion("1.3.0"))),
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
