@@ -20,7 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, stepIndex int) error {
+func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
 	t.Helper()
 
 	configRequest := teststep.PrepareConfigurationRequest{
@@ -62,7 +62,15 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		}
 	}
 
-	mergedConfig := step.mergedConfig(ctx, c, hasTerraformBlock, hasProviderBlock)
+	mergedConfig, err := step.mergedConfig(ctx, c, hasTerraformBlock, hasProviderBlock, helper.TerraformVersion())
+
+	if err != nil {
+		logging.HelperResourceError(ctx,
+			"Error generating merged configuration",
+			map[string]interface{}{logging.KeyError: err},
+		)
+		t.Fatalf("Error generating merged configuration: %s", err)
+	}
 
 	confRequest := teststep.PrepareConfigurationRequest{
 		Directory: step.ConfigDirectory,
@@ -76,7 +84,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 	testStepConfig := teststep.Configuration(confRequest)
 
-	err := wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
+	err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		return fmt.Errorf("Error setting config: %w", err)
 	}
@@ -335,7 +343,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		// this fails. If refresh isn't read-only, then this will have
 		// caught a different bug.
 		if idRefreshCheck != nil {
-			if err := testIDRefresh(ctx, t, c, wd, step, idRefreshCheck, providers, stepIndex); err != nil {
+			if err := testIDRefresh(ctx, t, c, wd, step, idRefreshCheck, providers, stepIndex, helper); err != nil {
 				return fmt.Errorf(
 					"[ERROR] Test: ID-only test failed: %s", err)
 			}

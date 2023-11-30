@@ -16,6 +16,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
@@ -223,7 +225,8 @@ provider "test" {}
 					"test": {},
 				},
 			},
-			expected: `provider "test" {}`,
+			expected: `
+provider "test" {}`,
 		},
 	}
 
@@ -365,9 +368,7 @@ func TestTest_TestCase_ProtoV5ProviderFactories(t *testing.T) {
 
 	Test(&mockT{}, TestCase{
 		ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
-			"test": func() (tfprotov5.ProviderServer, error) { //nolint:unparam // required signature
-				return nil, nil
-			},
+			"test": providerserver.NewProtov5ProviderServer(testprovider.Protov5Provider{}),
 		},
 		Steps: []TestStep{
 			{
@@ -401,9 +402,7 @@ func TestTest_TestCase_ProtoV6ProviderFactories(t *testing.T) {
 
 	Test(&mockT{}, TestCase{
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
-				return nil, nil
-			},
+			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},
 		Steps: []TestStep{
 			{
@@ -438,7 +437,7 @@ func TestTest_TestCase_ProviderFactories(t *testing.T) {
 	Test(&mockT{}, TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return nil, nil
+				return &schema.Provider{}, nil
 			},
 		},
 		Steps: []TestStep{

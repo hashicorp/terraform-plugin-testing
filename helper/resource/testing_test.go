@@ -13,9 +13,8 @@ import (
 	"strings"
 	"testing"
 
-	testinginterface "github.com/mitchellh/go-testing-interface"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	testinginterface "github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -35,7 +34,7 @@ func TestParallelTest(t *testing.T) {
 		IsUnitTest: true,
 		ProviderFactories: map[string]func() (*schema.Provider, error){
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return nil, nil
+				return &schema.Provider{}, nil
 			},
 		},
 		Steps: []TestStep{
