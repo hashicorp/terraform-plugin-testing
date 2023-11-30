@@ -226,13 +226,6 @@ provider "test" {}
 				},
 			},
 			expected: `
-terraform {
-  required_providers {
-    test = {
-    }
-  }
-}
-
 provider "test" {}`,
 		},
 	}

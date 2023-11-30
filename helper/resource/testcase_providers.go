@@ -21,10 +21,6 @@ func (c TestCase) providerConfig(_ context.Context, skipProviderBlock bool) stri
 	//      it does have a special purpose that wasn't being unit tested prior.
 	for name := range c.Providers {
 		providerBlocks.WriteString(fmt.Sprintf("provider %q {}\n", name))
-
-		requiredProviderBlocks.WriteString(fmt.Sprintf("    %s = {\n", name))
-
-		requiredProviderBlocks.WriteString("    }\n")
 	}
 
 	for name, externalProvider := range c.ExternalProviders {
