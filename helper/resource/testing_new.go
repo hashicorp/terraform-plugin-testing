@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/hashicorp/go-version"
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
 
@@ -476,7 +477,7 @@ func stateIsEmpty(state *terraform.State) bool {
 	return state.Empty() || !state.HasResources() //nolint:staticcheck // legacy usage
 }
 
-func planIsEmpty(plan *tfjson.Plan) bool {
+func planIsEmpty(plan *tfjson.Plan, tfVersion *version.Version) bool {
 	for _, rc := range plan.ResourceChanges {
 		for _, a := range rc.Change.Actions {
 			if a != tfjson.ActionNoop {
@@ -484,6 +485,17 @@ func planIsEmpty(plan *tfjson.Plan) bool {
 			}
 		}
 	}
+
+	if tfVersion.LessThan(expectNonEmptyPlanOutputChangesMinTFVersion) {
+		return true
+	}
+
+	for _, change := range plan.OutputChanges {
+		if !change.Actions.NoOp() {
+			return false
+		}
+	}
+
 	return true
 }
 

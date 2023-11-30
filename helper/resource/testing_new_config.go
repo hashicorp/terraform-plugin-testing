@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
@@ -19,6 +20,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
+
+// expectNonEmptyPlanOutputChangesMinTFVersion is used to keep compatibility for
+// Terraform 0.12 and 0.13 after enabling ExpectNonEmptyPlan to check output
+// changes. Those older versions will always show outputs being created.
+var expectNonEmptyPlanOutputChangesMinTFVersion = version.Must(version.NewVersion("0.14.0"))
 
 func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
 	t.Helper()
@@ -236,7 +242,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		}
 	}
 
-	if !planIsEmpty(plan) && !step.ExpectNonEmptyPlan {
+	if !planIsEmpty(plan, helper.TerraformVersion()) && !step.ExpectNonEmptyPlan {
 		var stdout string
 		err = runProviderCommand(ctx, t, func() error {
 			var err error
@@ -283,7 +289,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	}
 
 	// check if plan is empty
-	if !planIsEmpty(plan) && !step.ExpectNonEmptyPlan {
+	if !planIsEmpty(plan, helper.TerraformVersion()) && !step.ExpectNonEmptyPlan {
 		var stdout string
 		err = runProviderCommand(ctx, t, func() error {
 			var err error
@@ -294,7 +300,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			return fmt.Errorf("Error retrieving formatted second plan output: %w", err)
 		}
 		return fmt.Errorf("After applying this test step and performing a `terraform refresh`, the plan was not empty.\nstdout\n\n%s", stdout)
-	} else if step.ExpectNonEmptyPlan && planIsEmpty(plan) {
+	} else if step.ExpectNonEmptyPlan && planIsEmpty(plan, helper.TerraformVersion()) {
 		return errors.New("Expected a non-empty plan, but got an empty plan")
 	}
 
