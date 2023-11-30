@@ -34,7 +34,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func TestStepMergedConfig_TF_1_5(t *testing.T) {
+func TestStepMergedConfig_TF_0_15(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
@@ -656,19 +656,13 @@ resource "test_test" "test" {}
 		},
 	}
 
-	v, err := version.NewVersion("1.5.0")
-
-	if err != nil {
-		t.Errorf("error generating version: %s", err)
-	}
-
 	for name, testCase := range testCases {
 		name, testCase := name, testCase
 
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := testCase.testStep.mergedConfig(context.Background(), testCase.testCase, testCase.configHasTerraformBlock, testCase.configHasProviderBlock, v)
+			got, err := testCase.testStep.mergedConfig(context.Background(), testCase.testCase, testCase.configHasTerraformBlock, testCase.configHasProviderBlock, tfversion.Version0_15_0)
 
 			if err != nil {
 				t.Errorf("cannot generate merged config: %s", err)
@@ -1406,7 +1400,7 @@ resource "test_test" "test" {}
 	}
 }
 
-func TestStepProviderConfig_TF_1_5(t *testing.T) {
+func TestStepProviderConfig_TF_0_15(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
@@ -1606,19 +1600,13 @@ provider "test" {}
 		},
 	}
 
-	v, err := version.NewVersion("1.5.0")
-
-	if err != nil {
-		t.Errorf("error generating version: %s", err)
-	}
-
 	for name, testCase := range testCases {
 		name, testCase := name, testCase
 
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := testCase.testStep.providerConfig(context.Background(), testCase.skipProviderBlock, v)
+			got, err := testCase.testStep.providerConfig(context.Background(), testCase.skipProviderBlock, tfversion.Version0_15_0)
 
 			if err != nil {
 				t.Errorf("cannot generate provider config: %s", err)

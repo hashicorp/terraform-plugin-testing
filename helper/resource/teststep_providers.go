@@ -12,7 +12,10 @@ import (
 	"github.com/hashicorp/go-version"
 )
 
-const tfBlockMinReqTFVersion = "1.6.0"
+// tfBlockMinReqTFVersion is used to prevent errors arising from
+// adding required providers to the terraform block when Terraform
+// is any version prior to v1.0.0
+const tfBlockMinReqTFVersion = "1.0.0"
 
 // mergedConfig prepends any necessary terraform configuration blocks to the
 // TestStep Config.
