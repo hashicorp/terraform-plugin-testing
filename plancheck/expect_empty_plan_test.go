@@ -9,27 +9,26 @@ import (
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func Test_ExpectEmptyPlan(t *testing.T) {
+func Test_ExpectEmptyPlan_OutputChanges_NoChanges(t *testing.T) {
 	t.Parallel()
 
-	r.Test(t, r.TestCase{
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version0_14_0), // outputs before 0.14 always show as created
+		},
+		// Avoid our own validation that requires at least one provider config.
 		ExternalProviders: map[string]r.ExternalProvider{
-			"random": {
-				Source: "registry.terraform.io/hashicorp/random",
-			},
+			"terraform": {Source: "terraform.io/builtin/terraform"},
 		},
 		Steps: []r.TestStep{
 			{
-				Config: `resource "random_string" "one" {
-					length = 16
-				}`,
+				Config: `output "test" { value = "original" }`,
 			},
 			{
-				Config: `resource "random_string" "one" {
-					length = 16
-				}`,
+				Config: `output "test" { value = "original" }`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -40,43 +39,98 @@ func Test_ExpectEmptyPlan(t *testing.T) {
 	})
 }
 
-func Test_ExpectEmptyPlan_Error(t *testing.T) {
+func Test_ExpectEmptyPlan_OutputChanges_Error(t *testing.T) {
 	t.Parallel()
 
-	r.Test(t, r.TestCase{
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version0_14_0), // outputs before 0.14 always show as created
+		},
+		// Avoid our own validation that requires at least one provider config.
 		ExternalProviders: map[string]r.ExternalProvider{
-			"random": {
-				Source: "registry.terraform.io/hashicorp/random",
-			},
+			"terraform": {Source: "terraform.io/builtin/terraform"},
 		},
 		Steps: []r.TestStep{
 			{
-				Config: `resource "random_string" "one" {
-					length = 16
+				Config: `output "test" { value = "original" }`,
+			},
+			{
+				Config: `output "test" { value = "new" }`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+				ExpectError: regexp.MustCompile(`output \"test\" has planned action\(s\): \[update\]`),
+			},
+		},
+	})
+}
+
+func Test_ExpectEmptyPlan_ResourceChanges_NoChanges(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ExternalProviders: map[string]r.ExternalProvider{
+			"terraform": {Source: "terraform.io/builtin/terraform"},
+		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_4_0),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "terraform_data" "test" {}`,
+			},
+			{
+				Config: `resource "terraform_data" "test" {}`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func Test_ExpectEmptyPlan_ResourceChanges_Error(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ExternalProviders: map[string]r.ExternalProvider{
+			"terraform": {Source: "terraform.io/builtin/terraform"},
+		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_4_0),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "terraform_data" "one" {
+					triggers_replace = ["original"]
 				}
-				resource "random_string" "two" {
-					length = 16
+				resource "terraform_data" "two" {
+					triggers_replace = ["original"]
 				}
-				resource "random_string" "three" {
-					length = 16
+				resource "terraform_data" "three" {
+					triggers_replace = ["original"]
 				}`,
 			},
 			{
-				Config: `resource "random_string" "one" {
-					length = 12
+				Config: `resource "terraform_data" "one" {
+					triggers_replace = ["new"]
 				}
-				resource "random_string" "two" {
-					length = 16
+				resource "terraform_data" "two" {
+					triggers_replace = ["original"]
 				}
-				resource "random_string" "three" {
-					length = 12
+				resource "terraform_data" "three" {
+					triggers_replace = ["new"]
 				}`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
 					},
 				},
-				ExpectError: regexp.MustCompile(`.*?(random_string.one has planned action\(s\): \[delete create\])\n.*?(random_string.three has planned action\(s\): \[delete create\])`),
+				ExpectError: regexp.MustCompile(`.*?(terraform_data.one has planned action\(s\): \[delete create\])\n.*?(terraform_data.three has planned action\(s\): \[delete create\])`),
 			},
 		},
 	})
