@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func Test_ExpectEmptyPlan_OutputChanges_None(t *testing.T) {
+func Test_ExpectEmptyPlan_OutputChanges_NoChanges(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -67,7 +67,7 @@ func Test_ExpectEmptyPlan_OutputChanges_Error(t *testing.T) {
 	})
 }
 
-func Test_ExpectEmptyPlan_ResourceChanges_None(t *testing.T) {
+func Test_ExpectEmptyPlan_ResourceChanges_NoChanges(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
