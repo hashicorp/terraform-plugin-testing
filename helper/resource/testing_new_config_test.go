@@ -65,6 +65,278 @@ func TestTest_TestStep_ExpectError_NewConfig(t *testing.T) {
 	})
 }
 
+func Test_ExpectNonEmptyPlan_EmptyPlanError(t *testing.T) {
+	t.Parallel()
+
+	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_4_0),
+		},
+		ExternalProviders: map[string]ExternalProvider{
+			"terraform": {Source: "terraform.io/builtin/terraform"},
+		},
+		Steps: []TestStep{
+			{
+				Config:             `resource "terraform_data" "test" {}`,
+				ExpectNonEmptyPlan: true,
+				ExpectError:        regexp.MustCompile("Expected a non-empty plan, but got an empty plan"),
+			},
+		},
+	})
+}
+
+func Test_ExpectNonEmptyPlan_PreRefresh_ResourceChanges(t *testing.T) {
+	t.Parallel()
+
+	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_4_0),
+		},
+		ExternalProviders: map[string]ExternalProvider{
+			"terraform": {Source: "terraform.io/builtin/terraform"},
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "terraform_data" "test" {
+					# Never recommended for real world configurations, but tests
+					# the intended behavior.
+					input = timestamp()
+				}`,
+				ConfigPlanChecks: ConfigPlanChecks{
+					// Verification of that the behavior is being caught pre
+					// refresh. We want to ensure ExpectNonEmptyPlan allows test
+					// to pass if pre refresh also has changes.
+					PostApplyPreRefresh: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("terraform_data.test", plancheck.ResourceActionUpdate),
+					},
+				},
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func Test_ExpectNonEmptyPlan_PostRefresh_OutputChanges(t *testing.T) {
+	t.Parallel()
+
+	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipAbove(tfversion.Version0_14_0), // outputs before 0.14 always show as created
+		},
+		// Avoid our own validation that requires at least one provider config.
+		ExternalProviders: map[string]ExternalProvider{
+			"terraform": {Source: "terraform.io/builtin/terraform"},
+		},
+		Steps: []TestStep{
+			{
+				Config:             `output "test" { value = timestamp() }`,
+				ExpectNonEmptyPlan: false, // compatibility compromise for 0.12 and 0.13
+			},
+		},
+	})
+
+	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version0_14_0), // outputs before 0.14 always show as created
+		},
+		// Avoid our own validation that requires at least one provider config.
+		ExternalProviders: map[string]ExternalProvider{
+			"terraform": {Source: "terraform.io/builtin/terraform"},
+		},
+		Steps: []TestStep{
+			{
+				Config:             `output "test" { value = timestamp() }`,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func Test_ExpectNonEmptyPlan_PostRefresh_ResourceChanges(t *testing.T) {
+	t.Parallel()
+
+	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"test_resource": {
+						CreateResponse: &resource.CreateResponse{
+							NewState: tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id": tftypes.String,
+									},
+								},
+								map[string]tftypes.Value{
+									"id": tftypes.NewValue(tftypes.String, "test"), // intentionally same
+								},
+							),
+						},
+						ReadResponse: &resource.ReadResponse{
+							NewState: tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id": tftypes.String,
+									},
+								},
+								map[string]tftypes.Value{
+									"id": tftypes.NewValue(tftypes.String, "not-test"), // intentionally different
+								},
+							),
+						},
+						SchemaResponse: &resource.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "id",
+											Type:     tftypes.String,
+											Required: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}),
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "test_resource" "test" {
+					# Post create refresh intentionally changes configured value
+					# which is an errant resource implementation. Create should
+					# account for the correct post creation state, preventing an
+					# immediate difference next Terraform run for practitioners.
+					# This errant resource behavior verifies the expected
+					# behavior of ExpectNonEmptyPlan for post refresh planning.
+					id = "test"
+				}`,
+				ConfigPlanChecks: ConfigPlanChecks{
+					// Verification of that the behavior is being caught post
+					// refresh. We want to ensure ExpectNonEmptyPlan is being
+					// triggered after the pre refresh plan shows no changes.
+					PostApplyPreRefresh: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("test_resource.test", plancheck.ResourceActionNoop),
+					},
+				},
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func Test_NonEmptyPlan_PreRefresh_Error(t *testing.T) {
+	t.Parallel()
+
+	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_4_0),
+		},
+		ExternalProviders: map[string]ExternalProvider{
+			"terraform": {Source: "terraform.io/builtin/terraform"},
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "terraform_data" "test" {
+					# Never recommended for real world configurations, but tests
+					# the intended behavior.
+					input = timestamp()
+				}`,
+				ConfigPlanChecks: ConfigPlanChecks{
+					// Verification of that the behavior is being caught pre
+					// refresh.
+					PostApplyPreRefresh: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("terraform_data.test", plancheck.ResourceActionUpdate),
+					},
+				},
+				ExpectNonEmptyPlan: false, // intentional
+				ExpectError:        regexp.MustCompile("After applying this test step, the plan was not empty."),
+			},
+		},
+	})
+}
+
+func Test_NonEmptyPlan_PostRefresh_Error(t *testing.T) {
+	t.Parallel()
+
+	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"test_resource": {
+						CreateResponse: &resource.CreateResponse{
+							NewState: tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id": tftypes.String,
+									},
+								},
+								map[string]tftypes.Value{
+									"id": tftypes.NewValue(tftypes.String, "test"), // intentionally same
+								},
+							),
+						},
+						ReadResponse: &resource.ReadResponse{
+							NewState: tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id": tftypes.String,
+									},
+								},
+								map[string]tftypes.Value{
+									"id": tftypes.NewValue(tftypes.String, "not-test"), // intentionally different
+								},
+							),
+						},
+						SchemaResponse: &resource.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "id",
+											Type:     tftypes.String,
+											Required: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}),
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "test_resource" "test" {
+					# Post create refresh intentionally changes configured value
+					# which is an errant resource implementation. Create should
+					# account for the correct post creation state, preventing an
+					# immediate difference next Terraform run for practitioners.
+					# This errant resource behavior verifies the expected
+					# behavior of ExpectNonEmptyPlan for post refresh planning.
+					id = "test"
+				}`,
+				ConfigPlanChecks: ConfigPlanChecks{
+					// Verification of that the behavior is being caught post
+					// refresh.
+					PostApplyPreRefresh: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("test_resource.test", plancheck.ResourceActionNoop),
+					},
+				},
+				ExpectNonEmptyPlan: false, // intentional
+				ExpectError:        regexp.MustCompile("After applying this test step and performing a `terraform refresh`, the plan was not empty."),
+			},
+		},
+	})
+}
+
 func Test_ConfigPlanChecks_PreApply_Called(t *testing.T) {
 	t.Parallel()
 
