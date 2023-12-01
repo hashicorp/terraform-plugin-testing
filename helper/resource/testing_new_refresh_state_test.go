@@ -149,3 +149,60 @@ func Test_RefreshPlanChecks_PostRefresh_Errors(t *testing.T) {
 		},
 	})
 }
+
+func Test_RefreshState_ExpectNonEmptyPlan(t *testing.T) {
+	t.Parallel()
+
+	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_4_0),
+		},
+		ExternalProviders: map[string]ExternalProvider{
+			"terraform": {Source: "terraform.io/builtin/terraform"},
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "terraform_data" "test" {
+					# Never recommended for real world configurations, but tests
+					# the intended behavior.
+					input = timestamp()
+				}`,
+				ExpectNonEmptyPlan: false, // intentional
+				ExpectError:        regexp.MustCompile("After applying this test step, the plan was not empty."),
+			},
+			{
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func Test_RefreshState_NonEmptyPlan_Error(t *testing.T) {
+	t.Parallel()
+
+	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_4_0),
+		},
+		ExternalProviders: map[string]ExternalProvider{
+			"terraform": {Source: "terraform.io/builtin/terraform"},
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "terraform_data" "test" {
+					# Never recommended for real world configurations, but tests
+					# the intended behavior.
+					input = timestamp()
+				}`,
+				ExpectNonEmptyPlan: false, // intentional
+				ExpectError:        regexp.MustCompile("After applying this test step, the plan was not empty."),
+			},
+			{
+				RefreshState:       true,
+				ExpectNonEmptyPlan: false, // intentional
+				ExpectError:        regexp.MustCompile("After refreshing state during this test step, a followup plan was not empty."),
+			},
+		},
+	})
+}

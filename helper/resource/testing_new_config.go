@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
@@ -16,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
@@ -24,7 +24,7 @@ import (
 // expectNonEmptyPlanOutputChangesMinTFVersion is used to keep compatibility for
 // Terraform 0.12 and 0.13 after enabling ExpectNonEmptyPlan to check output
 // changes. Those older versions will always show outputs being created.
-var expectNonEmptyPlanOutputChangesMinTFVersion = version.Must(version.NewVersion("0.14.0"))
+var expectNonEmptyPlanOutputChangesMinTFVersion = tfversion.Version0_14_0
 
 func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
 	t.Helper()
