@@ -1,6 +1,0 @@
-kind: BUG FIXES
-body: 'helper/resource: Ensured `TestStep.ExpectNonEmptyPlan` accounts for output
-  changes with Terraform 0.14 and later'
-time: 2023-11-30T10:23:26.348382-05:00
-custom:
-  Issue: "234"

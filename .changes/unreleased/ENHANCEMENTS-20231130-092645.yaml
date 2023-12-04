@@ -1,6 +1,0 @@
-kind: ENHANCEMENTS
-body: 'helper/resource: Automatically add `required_providers` configuration to `TestStep.Config`
-  Terraform language configuration when using Terraform >= 1.0.*'
-time: 2023-11-30T09:26:45.606859Z
-custom:
-  Issue: "216"

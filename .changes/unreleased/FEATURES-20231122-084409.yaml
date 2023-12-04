@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'plancheck: Added `ExpectUnknownOutputValueAtPath` built-in plan check, which
-  asserts that a given output value at a specified address, and path is unknown'
-time: 2023-11-22T08:44:09.522934Z
-custom:
-  Issue: "220"
