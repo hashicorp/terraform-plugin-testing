@@ -1,0 +1,6 @@
+kind: BUG FIXES
+body: 'helper/resource: Clarified error messaging from testing failures, especially
+  when using `TestStep.PlanOnly: true`'
+time: 2023-12-05T14:29:36.098289-05:00
+custom:
+  Issue: "238"
