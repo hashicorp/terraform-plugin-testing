@@ -168,7 +168,7 @@ func Test_RefreshState_ExpectNonEmptyPlan(t *testing.T) {
 					input = timestamp()
 				}`,
 				ExpectNonEmptyPlan: false, // intentional
-				ExpectError:        regexp.MustCompile("After applying this test step, the plan was not empty."),
+				ExpectError:        regexp.MustCompile("After applying this test step, the non-refresh plan was not empty."),
 			},
 			{
 				RefreshState:       true,
@@ -196,7 +196,7 @@ func Test_RefreshState_NonEmptyPlan_Error(t *testing.T) {
 					input = timestamp()
 				}`,
 				ExpectNonEmptyPlan: false, // intentional
-				ExpectError:        regexp.MustCompile("After applying this test step, the plan was not empty."),
+				ExpectError:        regexp.MustCompile("After applying this test step, the non-refresh plan was not empty."),
 			},
 			{
 				RefreshState:       true,
