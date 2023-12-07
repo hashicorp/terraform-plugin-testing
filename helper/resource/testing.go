@@ -407,6 +407,11 @@ type TestCase struct {
 
 	// ErrorCheck allows providers the option to handle errors such as skipping
 	// tests based on certain errors.
+	//
+	// This functionality is only intended for provider-controlled error
+	// messaging. While in certain scenarios this can also catch testing logic
+	// error messages, those messages are not protected by compatibility
+	// promises.
 	ErrorCheck ErrorCheckFunc
 
 	// Steps are the apply sequences done within the context of the
@@ -564,6 +569,11 @@ type TestStep struct {
 	// ExpectError allows the construction of test cases that we expect to fail
 	// with an error. The specified regexp must match against the error for the
 	// test to pass.
+	//
+	// This functionality is only intended for provider-controlled error
+	// messaging. While in certain scenarios this can also catch testing logic
+	// error messages, those messages are not protected by compatibility
+	// promises.
 	ExpectError *regexp.Regexp
 
 	// ConfigPlanChecks allows assertions to be made against the plan file at different points of a Config (apply) test using a plan check.
