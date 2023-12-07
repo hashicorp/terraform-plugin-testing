@@ -79,7 +79,7 @@ func Test_ExpectNonEmptyPlan_EmptyPlanError(t *testing.T) {
 			{
 				Config:             `resource "terraform_data" "test" {}`,
 				ExpectNonEmptyPlan: true,
-				ExpectError:        regexp.MustCompile("Expected a non-empty plan, but got an empty plan"),
+				ExpectError:        regexp.MustCompile("Expected a non-empty plan, but got an empty refresh plan"),
 			},
 		},
 	})
@@ -254,7 +254,7 @@ func Test_NonEmptyPlan_PreRefresh_Error(t *testing.T) {
 					},
 				},
 				ExpectNonEmptyPlan: false, // intentional
-				ExpectError:        regexp.MustCompile("After applying this test step, the plan was not empty."),
+				ExpectError:        regexp.MustCompile("After applying this test step, the non-refresh plan was not empty."),
 			},
 		},
 	})
@@ -331,7 +331,7 @@ func Test_NonEmptyPlan_PostRefresh_Error(t *testing.T) {
 					},
 				},
 				ExpectNonEmptyPlan: false, // intentional
-				ExpectError:        regexp.MustCompile("After applying this test step and performing a `terraform refresh`, the plan was not empty."),
+				ExpectError:        regexp.MustCompile("After applying this test step, the refresh plan was not empty."),
 			},
 		},
 	})
