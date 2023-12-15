@@ -36,7 +36,7 @@ func (e expectKnownValue) CheckPlan(ctx context.Context, req CheckPlanRequest, r
 	}
 
 	if rc == nil {
-		resp.Error = fmt.Errorf("%s - resource not found in plan", e.resourceAddress)
+		resp.Error = fmt.Errorf("%s - Resource not found in plan ResourceChanges", e.resourceAddress)
 
 		return
 	}

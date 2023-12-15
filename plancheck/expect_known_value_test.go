@@ -19,6 +19,63 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
+func TestExpectKnownValue_CheckPlan_ResourceNotFound(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.two",
+							tfjsonpath.New("bool_attribute"),
+							knownvalue.NewBoolValue(true),
+						),
+					},
+				},
+				ExpectError: regexp.MustCompile("test_resource.two - Resource not found in plan ResourceChanges"),
+			},
+		},
+	})
+}
+
+func TestExpectKnownValue_CheckPlan_AttributeValueNull(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {}`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("bool_attribute"),
+							knownvalue.NewBoolValue(true),
+						),
+					},
+				},
+				ExpectError: regexp.MustCompile("attribute value is null"),
+			},
+		},
+	})
+}
+
 func TestExpectKnownValue_CheckPlan_Bool(t *testing.T) {
 	t.Parallel()
 

@@ -348,13 +348,6 @@ func testProvider() *schema.Provider {
 						Optional: true,
 						Type:     schema.TypeString,
 					},
-					"root_map_attribute": {
-						Type: schema.TypeMap,
-						Elem: &schema.Schema{
-							Type: schema.TypeString,
-						},
-						Optional: true,
-					},
 				},
 			},
 		},
