@@ -66,15 +66,15 @@ func (e expectKnownValue) CheckPlan(ctx context.Context, req CheckPlanRequest, r
 		}
 
 		if !v.Equal(reflect.ValueOf(result).Interface()) {
-			resp.Error = fmt.Errorf("attribute value does not equal expected value: %v != %v", result, v)
+			resp.Error = fmt.Errorf("attribute value: %v does not equal expected value: %s", result, v)
 		}
-	// Float64 is the default type for all numerical values.
+	// Float64 is the default type for all numerical values in tfjson.Plan.
 	case reflect.Float64:
 		switch t := e.knownValue.(type) {
 		case
 			knownvalue.Float64Value:
 			if !t.Equal(result) {
-				resp.Error = fmt.Errorf("attribute value %v is not equal to %s", result, t)
+				resp.Error = fmt.Errorf("attribute value: %v does not equal expected value: %s", result, t)
 
 				return
 			}
@@ -83,75 +83,83 @@ func (e expectKnownValue) CheckPlan(ctx context.Context, req CheckPlanRequest, r
 			f := result.(float64)
 
 			if !t.Equal(int64(f)) {
-				resp.Error = fmt.Errorf("attribute value %v is not equal to %s", result, t)
+				resp.Error = fmt.Errorf("attribute value: %v does not equal expected value: %s", result, t)
 
 				return
 			}
 		default:
-			resp.Error = fmt.Errorf("wrong type: attribute type is %T, known value type is %T", result, t)
+			resp.Error = fmt.Errorf("wrong type: attribute type is float64 or int64, known value type is %T", t)
 		}
 	case reflect.Map:
+		elems := make(map[string]any)
+
+		val := reflect.ValueOf(result)
+
+		for _, key := range val.MapKeys() {
+			elems[key.String()] = val.MapIndex(key).Interface()
+		}
+
 		switch t := e.knownValue.(type) {
 		case knownvalue.MapValue,
-			knownvalue.MapValuePartial,
-			knownvalue.NumElements,
-			knownvalue.ObjectValue,
-			knownvalue.ObjectValuePartial:
-
-			elems := make(map[string]any)
-
-			val := reflect.ValueOf(result)
-
-			for _, key := range val.MapKeys() {
-				elems[key.String()] = val.MapIndex(key).Interface()
-			}
-
+			knownvalue.ObjectValue:
 			if !t.Equal(elems) {
-				resp.Error = fmt.Errorf("attribute %v is not equal to expected value %v", elems, t)
+				resp.Error = fmt.Errorf("attribute value: %v does not equal expected value: %s", elems, t)
+
+				return
+			}
+		case knownvalue.MapValuePartial,
+			knownvalue.ObjectValuePartial:
+			if !t.Equal(elems) {
+				resp.Error = fmt.Errorf("attribute value: %v does not contain: %v", elems, t)
+
+				return
+			}
+		case knownvalue.NumElements:
+			if !t.Equal(elems) {
+				resp.Error = fmt.Errorf("attribute contains %d elements, expected %v", len(elems), t)
 
 				return
 			}
 		default:
-			resp.Error = fmt.Errorf("wrong type: attribute type is list, or set, known value type is %T", t)
+			resp.Error = fmt.Errorf("wrong type: attribute type is map, or object, known value type is %T", t)
 
 			return
 		}
 	case reflect.Slice:
+		var elems []any
+
+		var elemsWithIndex []string
+
+		val := reflect.ValueOf(result)
+
+		for i := 0; i < val.Len(); i++ {
+			elems = append(elems, val.Index(i).Interface())
+			elemsWithIndex = append(elemsWithIndex, fmt.Sprintf("%d:%v", i, val.Index(i).Interface()))
+		}
+
 		switch t := e.knownValue.(type) {
 		case knownvalue.ListValue,
-			knownvalue.ListValuePartial,
-			knownvalue.NumElements,
-			knownvalue.SetValue,
-			knownvalue.SetValuePartial:
-
-			var elems []any
-
-			var elemsWithIndex []string
-
-			val := reflect.ValueOf(result)
-
-			for i := 0; i < val.Len(); i++ {
-				elems = append(elems, val.Index(i).Interface())
-				elemsWithIndex = append(elemsWithIndex, fmt.Sprintf("%d:%v", i, val.Index(i).Interface()))
-			}
-
+			knownvalue.SetValue:
 			if !t.Equal(elems) {
-				switch e.knownValue.(type) {
-				case knownvalue.ListValuePartial:
-					resp.Error = fmt.Errorf("attribute %v does not contain elements at the specified indices %v", elemsWithIndex, t)
+				resp.Error = fmt.Errorf("attribute value: %v does not equal expected value: %s", elems, t)
 
-					return
-				case knownvalue.NumElements:
-					resp.Error = fmt.Errorf("attribute contains %d elements, expected %v", len(elems), t)
+				return
+			}
+		case knownvalue.ListValuePartial:
+			if !t.Equal(elems) {
+				resp.Error = fmt.Errorf("attribute value: %v does not contain elements at the specified indices: %v", elemsWithIndex, t)
 
-					return
-				case knownvalue.SetValuePartial:
-					resp.Error = fmt.Errorf("attribute %v does not contain %v", elems, t)
+				return
+			}
+		case knownvalue.NumElements:
+			if !t.Equal(elems) {
+				resp.Error = fmt.Errorf("attribute contains %d elements, expected %v", len(elems), t)
 
-					return
-				}
-
-				resp.Error = fmt.Errorf("attribute %v is not equal to expected value %v", elems, t)
+				return
+			}
+		case knownvalue.SetValuePartial:
+			if !t.Equal(elems) {
+				resp.Error = fmt.Errorf("attribute value: %v does not contain: %v", elems, t)
 
 				return
 			}
@@ -160,7 +168,6 @@ func (e expectKnownValue) CheckPlan(ctx context.Context, req CheckPlanRequest, r
 
 			return
 		}
-	// String will need to handle json.Number if tfjson.Plan is modified to use json.Number for numerical values.
 	case reflect.String:
 		v, ok := e.knownValue.(knownvalue.StringValue)
 
@@ -171,12 +178,15 @@ func (e expectKnownValue) CheckPlan(ctx context.Context, req CheckPlanRequest, r
 		}
 
 		if !v.Equal(reflect.ValueOf(result).Interface()) {
-			resp.Error = fmt.Errorf("attribute value does not equal expected value: %v != %v", result, v)
+			resp.Error = fmt.Errorf("attribute value: %v does not equal expected value: %s", result, v)
 
 			return
 		}
 	default:
-		resp.Error = fmt.Errorf("wrong type: attribute type is %T, known value type is %T", result, e.knownValue)
+		errorStr := fmt.Sprintf("unrecognised attribute type: %T, known value type is %T", result, e.knownValue)
+		errorStr += "\n\nThis is an error in plancheck.ExpectKnownValue.\nPlease report this to the maintainers."
+
+		resp.Error = fmt.Errorf(errorStr)
 
 		return
 	}
