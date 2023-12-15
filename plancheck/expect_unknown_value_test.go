@@ -287,11 +287,18 @@ func testProvider() *schema.Provider {
 					return nil
 				},
 				Schema: map[string]*schema.Schema{
-					"string_attribute": {
+					"bool_attribute": {
 						Optional: true,
-						Type:     schema.TypeString,
+						Type:     schema.TypeBool,
 					},
-
+					"float_attribute": {
+						Optional: true,
+						Type:     schema.TypeFloat,
+					},
+					"int_attribute": {
+						Optional: true,
+						Type:     schema.TypeInt,
+					},
 					"list_attribute": {
 						Type: schema.TypeList,
 						Elem: &schema.Schema{
@@ -299,28 +306,6 @@ func testProvider() *schema.Provider {
 						},
 						Optional: true,
 					},
-					"set_attribute": {
-						Type: schema.TypeSet,
-						Elem: &schema.Schema{
-							Type: schema.TypeString,
-						},
-						Optional: true,
-					},
-					"map_attribute": {
-						Type: schema.TypeMap,
-						Elem: &schema.Schema{
-							Type: schema.TypeString,
-						},
-						Optional: true,
-					},
-					"root_map_attribute": {
-						Type: schema.TypeMap,
-						Elem: &schema.Schema{
-							Type: schema.TypeString,
-						},
-						Optional: true,
-					},
-
 					"list_nested_block": {
 						Type:     schema.TypeList,
 						Optional: true,
@@ -333,6 +318,20 @@ func testProvider() *schema.Provider {
 							},
 						},
 					},
+					"map_attribute": {
+						Type: schema.TypeMap,
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
+						Optional: true,
+					},
+					"set_attribute": {
+						Type: schema.TypeSet,
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
+						Optional: true,
+					},
 					"set_nested_block": {
 						Type:     schema.TypeSet,
 						Optional: true,
@@ -344,6 +343,17 @@ func testProvider() *schema.Provider {
 								},
 							},
 						},
+					},
+					"string_attribute": {
+						Optional: true,
+						Type:     schema.TypeString,
+					},
+					"root_map_attribute": {
+						Type: schema.TypeMap,
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
+						Optional: true,
 					},
 				},
 			},
