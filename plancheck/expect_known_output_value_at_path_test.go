@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 func TestExpectKnownOutputValueAtPath_CheckPlan_ResourceNotFound(t *testing.T) {
@@ -27,6 +28,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ResourceNotFound(t *testing.T) {
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -62,6 +70,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_AttributeValueNull(t *testing.T)
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {}
@@ -93,6 +108,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Bool(t *testing.T) {
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -126,6 +148,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Bool_KnownValueWrongType(t *test
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -161,6 +190,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Bool_KnownValueWrongValue(t *tes
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -195,6 +231,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Float64(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -227,6 +270,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Float64_KnownValueWrongType(t *t
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -262,6 +312,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Float64_KnownValueWrongValue(t *
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -295,6 +352,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Int64(t *testing.T) {
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -331,6 +395,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Int64_KnownValueWrongType(t *tes
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -365,6 +436,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Int64_KnownValueWrongValue(t *te
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -398,6 +476,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_List(t *testing.T) {
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -438,6 +523,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_List_KnownValueWrongType(t *test
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -474,6 +566,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_List_KnownValueWrongValue(t *tes
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -515,6 +614,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListPartial(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -555,6 +661,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListPartial_KnownValueWrongValue
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -594,6 +707,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListNumElements(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -629,6 +749,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListNumElements_WrongNum(t *test
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -666,6 +793,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListNestedBlock(t *testing.T) {
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -712,6 +846,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListNestedBlockPartial(t *testin
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -754,6 +895,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListNestedBlockNumElements(t *te
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -791,6 +939,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Map(t *testing.T) {
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -831,6 +986,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Map_KnownValueWrongType(t *testi
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -867,6 +1029,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Map_KnownValueWrongValue(t *test
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -908,6 +1077,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_MapPartial(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -945,6 +1121,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_MapPartial_KnownValueWrongValue(
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -985,6 +1168,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_MapNumElements(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -1020,6 +1210,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_MapNumElements_WrongNum(t *testi
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1057,6 +1254,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Set(t *testing.T) {
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1096,6 +1300,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Set_KnownValueWrongValue(t *test
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1137,6 +1348,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetPartial(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -1174,6 +1392,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetPartial_KnownValueWrongValue(
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1214,6 +1439,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetNumElements(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -1249,6 +1481,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetNestedBlock(t *testing.T) {
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1295,6 +1534,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetNestedBlockPartial(t *testing
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -1337,6 +1583,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetNestedBlockNumElements(t *tes
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -1375,6 +1628,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_String(t *testing.T) {
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -1406,6 +1666,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_String_KnownValueWrongType(t *te
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1439,6 +1706,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_String_KnownValueWrongValue(t *t
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
 			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
 		},
 		Steps: []r.TestStep{
 			{
