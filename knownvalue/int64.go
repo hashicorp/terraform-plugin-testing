@@ -9,6 +9,8 @@ import (
 
 var _ KnownValue = Int64Value{}
 
+// Int64Value is a KnownValue for asserting equality between the value
+// supplied to NewInt64Value and the value passed to the Equal method.
 type Int64Value struct {
 	value int64
 }

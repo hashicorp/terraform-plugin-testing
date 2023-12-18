@@ -9,6 +9,8 @@ import (
 
 var _ KnownValue = ListValue{}
 
+// ListValue is a KnownValue for asserting equality between the value
+// supplied to NewListValue and the value passed to the Equal method.
 type ListValue struct {
 	value []KnownValue
 }

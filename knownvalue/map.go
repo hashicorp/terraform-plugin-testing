@@ -10,6 +10,8 @@ import (
 
 var _ KnownValue = MapValue{}
 
+// MapValue is a KnownValue for asserting equality between the value
+// supplied to NewMapValue and the value passed to the Equal method.
 type MapValue struct {
 	value map[string]KnownValue
 }

@@ -5,6 +5,8 @@ package knownvalue
 
 var _ KnownValue = StringValue{}
 
+// StringValue is a KnownValue for asserting equality between the value
+// supplied to NewStringValue and the value passed to the Equal method.
 type StringValue struct {
 	value string
 }

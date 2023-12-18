@@ -9,6 +9,8 @@ import (
 
 var _ KnownValue = SetValue{}
 
+// SetValue is a KnownValue for asserting equality between the value
+// supplied to NewSetValue and the value passed to the Equal method.
 type SetValue struct {
 	value []KnownValue
 }

@@ -5,15 +5,17 @@ package knownvalue
 
 import "strconv"
 
-var _ KnownValue = NumElements{}
+var _ KnownValue = NumElementsValue{}
 
-type NumElements struct {
+// NumElementsValue is a KnownValue for asserting equality between the value
+// supplied to NewNumElementsValue and the value passed to the Equal method.
+type NumElementsValue struct {
 	num int
 }
 
 // Equal verifies that the passed value is a list, map, object,
 // or set, and contains a matching number of elements.
-func (v NumElements) Equal(other any) bool {
+func (v NumElementsValue) Equal(other any) bool {
 	mapVal, mapOk := other.(map[string]any)
 
 	sliceVal, sliceOk := other.([]any)
@@ -34,14 +36,14 @@ func (v NumElements) Equal(other any) bool {
 }
 
 // String returns the string representation of the value.
-func (v NumElements) String() string {
+func (v NumElementsValue) String() string {
 	return strconv.FormatInt(int64(v.num), 10)
 }
 
-// NewNumElements returns a KnownValue for asserting that
+// NewNumElementsValue returns a KnownValue for asserting that
 // a list, map, object, or set contains num elements.
-func NewNumElements(num int) NumElements {
-	return NumElements{
+func NewNumElementsValue(num int) NumElementsValue {
+	return NumElementsValue{
 		num: num,
 	}
 }

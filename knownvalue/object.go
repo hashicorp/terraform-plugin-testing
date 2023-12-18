@@ -10,6 +10,8 @@ import (
 
 var _ KnownValue = ObjectValue{}
 
+// ObjectValue is a KnownValue for asserting equality between the value
+// supplied to NewObjectValue and the value passed to the Equal method.
 type ObjectValue struct {
 	value map[string]KnownValue
 }

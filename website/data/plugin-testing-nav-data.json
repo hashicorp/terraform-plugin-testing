@@ -51,6 +51,10 @@
         ]
       },
       {
+        "title": "Known Values",
+        "path": "acceptance-tests/known-values"
+      },
+      {
         "title": "Sweepers",
         "path": "acceptance-tests/sweepers"
       },

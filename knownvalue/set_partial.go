@@ -9,6 +9,8 @@ import (
 
 var _ KnownValue = SetValuePartial{}
 
+// SetValuePartial is a KnownValue for asserting equality between the value
+// supplied to NewSetValuePartial and the value passed to the Equal method.
 type SetValuePartial struct {
 	value []KnownValue
 }

@@ -10,6 +10,8 @@ import (
 
 var _ KnownValue = ObjectValuePartial{}
 
+// ObjectValuePartial is a KnownValue for asserting equality between the value
+// supplied to NewObjectValuePartial and the value passed to the Equal method.
 type ObjectValuePartial struct {
 	value map[string]KnownValue
 }

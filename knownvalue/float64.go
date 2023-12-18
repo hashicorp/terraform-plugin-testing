@@ -9,6 +9,8 @@ import (
 
 var _ KnownValue = Float64Value{}
 
+// Float64Value is a KnownValue for asserting equality between the value
+// supplied to NewFloat64Value and the value passed to the Equal method.
 type Float64Value struct {
 	value float64
 }

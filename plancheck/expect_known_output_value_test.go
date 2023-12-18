@@ -593,7 +593,7 @@ func TestExpectKnownOutputValue_CheckPlan_ListNumElements(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"list_output",
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},
@@ -628,7 +628,7 @@ func TestExpectKnownOutputValue_CheckPlan_ListNumElements_WrongNum(t *testing.T)
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"list_output",
-							knownvalue.NewNumElements(3),
+							knownvalue.NewNumElementsValue(3),
 						),
 					},
 				},
@@ -751,7 +751,7 @@ func TestExpectKnownOutputValue_CheckPlan_ListNestedBlockNumElements(t *testing.
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"list_nested_block_output",
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},
@@ -974,7 +974,7 @@ func TestExpectKnownOutputValue_CheckPlan_MapNumElements(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"map_output",
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},
@@ -1009,7 +1009,7 @@ func TestExpectKnownOutputValue_CheckPlan_MapNumElements_WrongNum(t *testing.T) 
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"map_output",
-							knownvalue.NewNumElements(3),
+							knownvalue.NewNumElementsValue(3),
 						),
 					},
 				},
@@ -1197,7 +1197,7 @@ func TestExpectKnownOutputValue_CheckPlan_SetNumElements(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"set_output",
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},
@@ -1319,7 +1319,7 @@ func TestExpectKnownOutputValue_CheckPlan_SetNestedBlockNumElements(t *testing.T
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"set_nested_block_output",
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},

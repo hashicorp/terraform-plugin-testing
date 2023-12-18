@@ -12,6 +12,8 @@ import (
 
 var _ KnownValue = ListValuePartial{}
 
+// ListValuePartial is a KnownValue for asserting equality between the value
+// supplied to NewListValuePartial and the value passed to the Equal method.
 type ListValuePartial struct {
 	value map[int]KnownValue
 }
@@ -68,7 +70,9 @@ func (v ListValuePartial) String() string {
 }
 
 // NewListValuePartial returns a KnownValue for asserting equality between the
-// supplied map[int]KnownValue and the value passed to the Equal method.
+// supplied map[int]KnownValue and the value passed to the Equal method. The
+// map keys correspond to the position of the zero-ordered element within the
+// list that is being checked.
 func NewListValuePartial(value map[int]KnownValue) ListValuePartial {
 	return ListValuePartial{
 		value: value,

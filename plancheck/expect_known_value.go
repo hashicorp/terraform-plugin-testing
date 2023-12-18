@@ -114,7 +114,7 @@ func (e expectKnownValue) CheckPlan(ctx context.Context, req CheckPlanRequest, r
 
 				return
 			}
-		case knownvalue.NumElements:
+		case knownvalue.NumElementsValue:
 			if !t.Equal(elems) {
 				resp.Error = fmt.Errorf("attribute contains %d elements, expected %v", len(elems), t)
 
@@ -151,7 +151,7 @@ func (e expectKnownValue) CheckPlan(ctx context.Context, req CheckPlanRequest, r
 
 				return
 			}
-		case knownvalue.NumElements:
+		case knownvalue.NumElementsValue:
 			if !t.Equal(elems) {
 				resp.Error = fmt.Errorf("attribute contains %d elements, expected %v", len(elems), t)
 

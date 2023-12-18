@@ -543,7 +543,7 @@ func TestExpectKnownValue_CheckPlan_ListNumElements(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("list_attribute"),
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},
@@ -575,7 +575,7 @@ func TestExpectKnownValue_CheckPlan_ListNumElements_WrongNum(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("list_attribute"),
-							knownvalue.NewNumElements(3),
+							knownvalue.NewNumElementsValue(3),
 						),
 					},
 				},
@@ -689,7 +689,7 @@ func TestExpectKnownValue_CheckPlan_ListNestedBlockNumElements(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("list_nested_block"),
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},
@@ -894,7 +894,7 @@ func TestExpectKnownValue_CheckPlan_MapNumElements(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},
@@ -926,7 +926,7 @@ func TestExpectKnownValue_CheckPlan_MapNumElements_WrongNum(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.NewNumElements(3),
+							knownvalue.NewNumElementsValue(3),
 						),
 					},
 				},
@@ -1099,7 +1099,7 @@ func TestExpectKnownValue_CheckPlan_SetNumElements(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("set_attribute"),
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},
@@ -1212,7 +1212,7 @@ func TestExpectKnownValue_CheckPlan_SetNestedBlockNumElements(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("set_nested_block"),
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},

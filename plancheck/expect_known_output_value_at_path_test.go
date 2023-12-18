@@ -612,7 +612,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListNumElements(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("list_attribute"),
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},
@@ -648,7 +648,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListNumElements_WrongNum(t *test
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("list_attribute"),
-							knownvalue.NewNumElements(3),
+							knownvalue.NewNumElementsValue(3),
 						),
 					},
 				},
@@ -774,7 +774,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListNestedBlockNumElements(t *te
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("list_nested_block"),
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},
@@ -1003,7 +1003,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_MapNumElements(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},
@@ -1039,7 +1039,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_MapNumElements_WrongNum(t *testi
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.NewNumElements(3),
+							knownvalue.NewNumElementsValue(3),
 						),
 					},
 				},
@@ -1232,7 +1232,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetNumElements(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("set_attribute"),
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},
@@ -1357,7 +1357,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetNestedBlockNumElements(t *tes
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("set_nested_block"),
-							knownvalue.NewNumElements(2),
+							knownvalue.NewNumElementsValue(2),
 						),
 					},
 				},

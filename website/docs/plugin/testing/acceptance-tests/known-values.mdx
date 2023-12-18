@@ -1,0 +1,517 @@
+---
+page_title: 'Plugin Development - Acceptance Testing: Known Values'
+description: >-
+    How to use known values in the testing module.
+    Known values define an expected type, and value for a resource attribute, or output value in a Terraform plan or in Terraform state.
+---
+
+# Known Values
+
+Specify types, and values for use with plan checks and state checks.
+
+## Usage
+
+Example uses in the testing module include:
+
+- The [`ExpectknownValue()`](/terraform/plugin/testing/acceptance-tests/plan-checks/resource), [`ExpectKnownOutputValue()`](/terraform/plugin/testing/acceptance-tests/plan-checks/output) and [`ExpectKnownOutputValueAtPath()`](/terraform/plugin/testing/acceptance-tests/plan-checks/output) [built-in plan checks](/terraform/plugin/testing/acceptance-tests/plan-checks) use known values for asserting whether a specific resource attribute, or output value has a particular type, and value.
+
+## Concepts
+
+Known Values are for use in conjunction with plan checks and state checks, both of which leverage the [terraform-json](https://pkg.go.dev/github.com/hashicorp/terraform-json) representation of a Terraform plan, or Terraform state. The known value types that are defined (e.g., `BoolValue`), have been named to match the types defined within [Terraform Plugin Framework](https://developer.hashicorp.com/terraform/plugin/framework/handling-data/types).
+
+## Using a Known Value
+
+The known value types are implemented within the `terraform-plugin-testing` module in the [`knownvalue` package](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue). Known values are instantiated by calling the `New` constructor function.
+
+```go
+knownvalue.NewBoolValue(true)
+```
+
+For known values that represents collections, or objects, nesting of known values can be used to define a "composite" known value for use in asserting against a resource attribute, or output value that contains other values.
+
+```go
+knownvalue.NewListValue([]knownvalue.KnownValue{
+    knownvalue.NewStringValue("value1"),
+    knownvalue.NewStringValue("value2"),
+})
+```
+
+## Known Value Types
+
+The following table describes the correspondence between attributes, and [knownvalue.KnownValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#KnownValue) types. Output value correspond to the known value types in same way on the basis of the attribute to which the output value refers.
+
+| Framework Attribute Type  | SDKv2 Attribute Type | Known Value Type                                                                                                    |
+|---------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------|
+| `schema.BoolAttribute`    | `schema.TypeBool`    | [knownvalue.BoolValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#BoolValue)       |
+| `schema.Float64Attribute` | `schema.TypeFloat`   | [knownvalue.Float64Value](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Float64Value) |
+| `schema.Int64Attribute`   | `schema.TypeInt`     | [knownvalue.Int64Value](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Int64Value)     |
+| `schema.ListAttribute`    | `schema.TypeList`    | [knownvalue.ListValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListValue)       |
+| `schema.MapAttribute`     | `schema.TypeMap`     | [knownvalue.MapValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#MapValue)         |
+| `schema.ObjectAttribute`  | N/A                  | [knownvalue.ObjectValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ObjectValue)   |
+| `schema.SetAttribute`     | `schema.TypeSet`     | [knownvalue.SetValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetValue)         |
+| `schema.StringAttribute`  | `schema.TypeString`  | [knownvalue.StringValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#StringValue)   |
+
+Additionally, there are known values for use in plan checks, and state checks, in which only a part, or subset of a collection or object needs to be asserted.
+
+| Framework Attribute Type | SDKv2 Attribute Type | Known Value Type                                                                                                                |
+|--------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| `schema.ListAttribute`   | `schema.TypeList`    | [knownvalue.ListValuePartial](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListValuePartial)     |
+| `schema.MapAttribute`    | `schema.TypeMap`     | [knownvalue.MapValuePartial](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#MapValuePartial)       |
+| `schema.ObjectAttribute` | N/A                  | [knownvalue.ObjectValuePartial](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ObjectValuePartial) |
+| `schema.SetAttribute`    | `schema.TypeSet`     | [knownvalue.SetValuePartial](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetValuePartial)       |
+
+There are also general purpose known value types for use, for example, in asserting the number of elements in a collection or object:
+
+* [knownvalue.NumElements](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NumElements)
+
+
+### Bool Known Value
+
+Example usage of [knownvalue.BoolValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#BoolValue) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_Bool(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("bool_attribute"),
+							knownvalue.NewBoolValue(true),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### Float64 Known Value
+
+Example usage of [knownvalue.Float64Value](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Float64Value) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_Float64(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					float_attribute = 1.23
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("float_attribute"),
+							knownvalue.NewFloat64Value(1.23),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### Int64 Known Value
+
+Example usage of [knownvalue.Int64Value](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Int64Value) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_Int64(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					int_attribute = 123
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("int_attribute"),
+							knownvalue.NewInt64Value(123),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### List Known Value
+
+Example usage of [knownvalue.ListValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListValue) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_List(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+				// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					list_attribute = [
+						"value1",
+						"value2"
+					]
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("list_attribute"),
+							knownvalue.NewListValue([]knownvalue.KnownValue{
+								knownvalue.NewStringValue("value1"),
+								knownvalue.NewStringValue("value2"),
+							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### List Partial Known Value
+
+Example usage of [knownvalue.ListValuePartial](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListValuePartial) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+In this example, only the first element within the list is checked.
+
+```go
+func TestExpectKnownValue_CheckPlan_ListPartial(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					list_attribute = [
+						"value1",
+						"value2"
+					]
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("list_attribute"),
+							knownvalue.NewListValuePartial(map[int]knownvalue.KnownValue{
+								0: knownvalue.NewStringValue("value1"),
+							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### Num Elements Known Value
+
+Example usage of [knownvalue.NumElements](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NumElements) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_ListNumElements(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					list_attribute = [
+						"value1",
+						"value2"
+					]
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("list_attribute"),
+							knownvalue.NewNumElementsValue(2),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### Map Known Value
+
+Example usage of [knownvalue.MapValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#MapValue) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_Map(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					map_attribute = {
+						key1 = "value1"
+						key2 = "value2"
+					}
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("map_attribute"),
+							knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
+								"key1": knownvalue.NewStringValue("value1"),
+								"key2": knownvalue.NewStringValue("value2"),
+							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### Map Partial Known Value
+
+Example usage of [knownvalue.MapValuePartial](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#MapValuePartial) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_MapPartial(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					map_attribute = {
+						key1 = "value1"
+						key2 = "value2"
+					}
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("map_attribute"),
+							knownvalue.NewMapValuePartial(map[string]knownvalue.KnownValue{
+								"key1": knownvalue.NewStringValue("value1"),
+							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### Object Known Value
+
+Example usage of [knownvalue.ObjectValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ObjectValue) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_Map(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					object_attribute = {
+						key1 = "value1"
+						key2 = "value2"
+					}
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("object_attribute"),
+							knownvalue.NewObjectValue(map[string]knownvalue.KnownValue{
+								"key1": knownvalue.NewStringValue("value1"),
+								"key2": knownvalue.NewStringValue("value2"),
+							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### Object Partial Known Value
+
+Example usage of [knownvalue.ObjectValuePartial](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ObjectValuePartial) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_MapPartial(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					object_attribute = {
+						key1 = "value1"
+						key2 = "value2"
+					}
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("object_attribute"),
+							knownvalue.NewObjectValuePartial(map[string]knownvalue.KnownValue{
+								"key1": knownvalue.NewStringValue("value1"),
+							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### Set Known Value
+
+Example usage of [knownvalue.SetValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetValuePartial) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_Set(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					set_attribute = [
+						"value1",
+						"value2"
+					]
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("set_attribute"),
+							knownvalue.NewSetValue([]knownvalue.KnownValue{
+								knownvalue.NewStringValue("value1"),
+								knownvalue.NewStringValue("value2"),
+							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### Set Partial Known Value
+
+Example usage of [knownvalue.SetValuePartial](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetValuePartial) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_SetPartial(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					set_attribute = [
+						"value1",
+						"value2"
+					]
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("set_attribute"),
+							knownvalue.NewSetValuePartial([]knownvalue.KnownValue{
+								knownvalue.NewStringValue("value2"),
+							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### String Known Value
+
+Example usage of [knownvalue.StringValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#StringValue) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_String(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					string_attribute = "str"
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("string_attribute"),
+							knownvalue.NewStringValue("str")),
+					},
+				},
+			},
+		},
+	})
+}
+```

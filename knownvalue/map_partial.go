@@ -10,6 +10,8 @@ import (
 
 var _ KnownValue = MapValuePartial{}
 
+// MapValuePartial is a KnownValue for asserting equality between the value
+// supplied to NewMapValuePartial and the value passed to the Equal method.
 type MapValuePartial struct {
 	value map[string]KnownValue
 }

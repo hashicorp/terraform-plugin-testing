@@ -7,6 +7,8 @@ import "strconv"
 
 var _ KnownValue = BoolValue{}
 
+// BoolValue is a KnownValue for asserting equality between the value
+// supplied to NewBoolValue and the value passed to the Equal method.
 type BoolValue struct {
 	value bool
 }

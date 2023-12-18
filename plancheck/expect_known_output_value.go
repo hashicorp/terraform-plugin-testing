@@ -113,7 +113,7 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 
 				return
 			}
-		case knownvalue.NumElements:
+		case knownvalue.NumElementsValue:
 			if !t.Equal(elems) {
 				resp.Error = fmt.Errorf("output contains %d elements, expected %v", len(elems), t)
 
@@ -150,7 +150,7 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 
 				return
 			}
-		case knownvalue.NumElements:
+		case knownvalue.NumElementsValue:
 			if !t.Equal(elems) {
 				resp.Error = fmt.Errorf("output contains %d elements, expected %v", len(elems), t)
 
