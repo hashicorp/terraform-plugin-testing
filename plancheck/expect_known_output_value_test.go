@@ -16,10 +16,9 @@ import (
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-func TestExpectKnownValue_CheckPlan_ResourceNotFound(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_OutputNotFound(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -33,23 +32,26 @@ func TestExpectKnownValue_CheckPlan_ResourceNotFound(t *testing.T) {
 				Config: `resource "test_resource" "one" {
 					bool_attribute = true
 				}
+
+				output bool_output {
+					value = test_resource.one.bool_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.two",
-							tfjsonpath.New("bool_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"bool_not_found",
 							knownvalue.NewBoolValue(true),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("test_resource.two - Resource not found in plan ResourceChanges"),
+				ExpectError: regexp.MustCompile("bool_not_found - Output not found in plan OutputChanges"),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_AttributeValueNull(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_AttributeValueNull(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -60,23 +62,26 @@ func TestExpectKnownValue_CheckPlan_AttributeValueNull(t *testing.T) {
 		},
 		Steps: []r.TestStep{
 			{
-				Config: `resource "test_resource" "one" {}`,
+				Config: `resource "test_resource" "one" {}
+				output bool_output {
+					value = test_resource.one.bool_attribute
+				}
+				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("bool_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"bool_output",
 							knownvalue.NewBoolValue(true),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("attribute value is null"),
+				ExpectError: regexp.MustCompile("output value is null"),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_Bool(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_Bool(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -90,12 +95,15 @@ func TestExpectKnownValue_CheckPlan_Bool(t *testing.T) {
 				Config: `resource "test_resource" "one" {
 					bool_attribute = true
 				}
+		
+				output bool_output {
+					value = test_resource.one.bool_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("bool_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"bool_output",
 							knownvalue.NewBoolValue(true),
 						),
 					},
@@ -105,7 +113,7 @@ func TestExpectKnownValue_CheckPlan_Bool(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_Bool_KnownValueWrongType(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_Bool_KnownValueWrongType(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -119,23 +127,26 @@ func TestExpectKnownValue_CheckPlan_Bool_KnownValueWrongType(t *testing.T) {
 				Config: `resource "test_resource" "one" {
 					bool_attribute = true
 				}
+
+				output bool_output {
+					value = test_resource.one.bool_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("bool_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"bool_output",
 							knownvalue.NewFloat64Value(1.23),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong type: attribute value is bool, known value type is knownvalue.Float64Value"),
+				ExpectError: regexp.MustCompile("wrong type: output value is bool, known value type is knownvalue.Float64Value"),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_Bool_KnownValueWrongValue(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_Bool_KnownValueWrongValue(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -149,23 +160,26 @@ func TestExpectKnownValue_CheckPlan_Bool_KnownValueWrongValue(t *testing.T) {
 				Config: `resource "test_resource" "one" {
 					bool_attribute = true
 				}
+
+				output bool_output {
+					value = test_resource.one.bool_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("bool_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"bool_output",
 							knownvalue.NewBoolValue(false),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("attribute value: true does not equal expected value: false"),
+				ExpectError: regexp.MustCompile("value: true does not equal expected value: false"),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_Float64(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_Float64(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -179,12 +193,15 @@ func TestExpectKnownValue_CheckPlan_Float64(t *testing.T) {
 				Config: `resource "test_resource" "one" {
 					float_attribute = 1.23
 				}
+
+				output float64_output {
+					value = test_resource.one.float_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("float_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"float64_output",
 							knownvalue.NewFloat64Value(1.23),
 						),
 					},
@@ -194,7 +211,7 @@ func TestExpectKnownValue_CheckPlan_Float64(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_Float64_KnownValueWrongType(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_Float64_KnownValueWrongType(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -208,23 +225,26 @@ func TestExpectKnownValue_CheckPlan_Float64_KnownValueWrongType(t *testing.T) {
 				Config: `resource "test_resource" "one" {
 					float_attribute = 1.23
 				}
+
+				output float64_output {
+					value = test_resource.one.float_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("float_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"float64_output",
 							knownvalue.NewStringValue("str"),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong type: attribute value is float64 or int64, known value type is knownvalue.StringValue"),
+				ExpectError: regexp.MustCompile("wrong type: output value is float64 or int64, known value type is knownvalue.StringValue"),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_Float64_KnownValueWrongValue(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_Float64_KnownValueWrongValue(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -238,23 +258,26 @@ func TestExpectKnownValue_CheckPlan_Float64_KnownValueWrongValue(t *testing.T) {
 				Config: `resource "test_resource" "one" {
 					float_attribute = 1.23
 				}
+
+				output float64_output {
+					value = test_resource.one.float_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("float_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"float64_output",
 							knownvalue.NewFloat64Value(3.21),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("attribute value: 1.23 does not equal expected value: 3.21"),
+				ExpectError: regexp.MustCompile("output value: 1.23 does not equal expected value: 3.21"),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_Int64(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_Int64(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -268,12 +291,15 @@ func TestExpectKnownValue_CheckPlan_Int64(t *testing.T) {
 				Config: `resource "test_resource" "one" {
 					int_attribute = 123
 				}
+
+				output int64_output {
+					value = test_resource.one.int_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("int_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"int64_output",
 							knownvalue.NewInt64Value(123),
 						),
 					},
@@ -283,9 +309,9 @@ func TestExpectKnownValue_CheckPlan_Int64(t *testing.T) {
 	})
 }
 
-// TestExpectKnownValue_CheckPlan_Int64_KnownValueWrongType highlights a limitation of tfjson.Plan in that all numerical
+// TestExpectKnownOutputValue_CheckPlan_Int64_KnownValueWrongType highlights a limitation of tfjson.Plan in that all numerical
 // values are represented as float64.
-func TestExpectKnownValue_CheckPlan_Int64_KnownValueWrongType(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_Int64_KnownValueWrongType(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -299,23 +325,26 @@ func TestExpectKnownValue_CheckPlan_Int64_KnownValueWrongType(t *testing.T) {
 				Config: `resource "test_resource" "one" {
 					int_attribute = 123
 				}
+
+				output int64_output {
+					value = test_resource.one.int_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("int_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"int64_output",
 							knownvalue.NewStringValue("str"),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong type: attribute value is float64 or int64, known value type is knownvalue.StringValue"),
+				ExpectError: regexp.MustCompile("wrong type: output value is float64 or int64, known value type is knownvalue.StringValue"),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_Int64_KnownValueWrongValue(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_Int64_KnownValueWrongValue(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -329,23 +358,26 @@ func TestExpectKnownValue_CheckPlan_Int64_KnownValueWrongValue(t *testing.T) {
 				Config: `resource "test_resource" "one" {
 					int_attribute = 123
 				}
+
+				output int64_output {
+					value = test_resource.one.int_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("int_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"int64_output",
 							knownvalue.NewInt64Value(321),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("attribute value: 123 does not equal expected value: 321"),
+				ExpectError: regexp.MustCompile("output value: 123 does not equal expected value: 321"),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_List(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_List(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -362,12 +394,15 @@ func TestExpectKnownValue_CheckPlan_List(t *testing.T) {
 						"value2"
 					]
 				}
+
+				output list_output {
+					value = test_resource.one.list_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("list_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"list_output",
 							knownvalue.NewListValue([]knownvalue.KnownValue{
 								knownvalue.NewStringValue("value1"),
 								knownvalue.NewStringValue("value2"),
@@ -380,7 +415,7 @@ func TestExpectKnownValue_CheckPlan_List(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_List_KnownValueWrongType(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_List_KnownValueWrongType(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -397,23 +432,26 @@ func TestExpectKnownValue_CheckPlan_List_KnownValueWrongType(t *testing.T) {
 						"value2"
 					]
 				}
+				
+				output list_output {
+					value = test_resource.one.list_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("list_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"list_output",
 							knownvalue.NewMapValue(map[string]knownvalue.KnownValue{}),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong type: attribute value is list, or set, known value type is knownvalue.MapValue"),
+				ExpectError: regexp.MustCompile("wrong type: output type is list, or set, known value type is knownvalue.MapValue"),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_List_KnownValueWrongValue(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_List_KnownValueWrongValue(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -430,12 +468,15 @@ func TestExpectKnownValue_CheckPlan_List_KnownValueWrongValue(t *testing.T) {
 						"value2"
 					]
 				}
+
+				output list_output {
+					value = test_resource.one.list_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("list_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"list_output",
 							knownvalue.NewListValue([]knownvalue.KnownValue{
 								knownvalue.NewStringValue("value3"),
 								knownvalue.NewStringValue("value4"),
@@ -443,13 +484,13 @@ func TestExpectKnownValue_CheckPlan_List_KnownValueWrongValue(t *testing.T) {
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`attribute value: \[value1 value2\] does not equal expected value: \[value3 value4\]`),
+				ExpectError: regexp.MustCompile(`output value: \[value1 value2\] does not equal expected value: \[value3 value4\]`),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_ListPartial(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_ListPartial(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -466,12 +507,15 @@ func TestExpectKnownValue_CheckPlan_ListPartial(t *testing.T) {
 						"value2"
 					]
 				}
+
+				output list_output {
+					value = test_resource.one.list_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("list_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"list_output",
 							knownvalue.NewListValuePartial(map[int]knownvalue.KnownValue{
 								0: knownvalue.NewStringValue("value1"),
 							}),
@@ -485,7 +529,7 @@ func TestExpectKnownValue_CheckPlan_ListPartial(t *testing.T) {
 
 // No need to check KnownValueWrongType for ListPartial as all lists, and sets are []any in
 // tfjson.Plan.
-func TestExpectKnownValue_CheckPlan_ListPartial_KnownValueWrongValue(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_ListPartial_KnownValueWrongValue(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -502,25 +546,28 @@ func TestExpectKnownValue_CheckPlan_ListPartial_KnownValueWrongValue(t *testing.
 						"value2"
 					]
 				}
+
+				output list_output {
+					value = test_resource.one.list_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("list_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"list_output",
 							knownvalue.NewListValuePartial(map[int]knownvalue.KnownValue{
 								0: knownvalue.NewStringValue("value3"),
 							}),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`attribute value: \[0:value1 1:value2\] does not contain elements at the specified indices: \[0:value3\]`),
+				ExpectError: regexp.MustCompile(`output value: \[0:value1 1:value2\] does not contain elements at the specified indices: \[0:value3\]`),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_ListNumElements(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_ListNumElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -537,12 +584,15 @@ func TestExpectKnownValue_CheckPlan_ListNumElements(t *testing.T) {
 						"value2"
 					]
 				}
+
+				output list_output {
+					value = test_resource.one.list_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("list_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"list_output",
 							knownvalue.NewNumElements(2),
 						),
 					},
@@ -552,7 +602,7 @@ func TestExpectKnownValue_CheckPlan_ListNumElements(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_ListNumElements_WrongNum(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_ListNumElements_WrongNum(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -569,23 +619,26 @@ func TestExpectKnownValue_CheckPlan_ListNumElements_WrongNum(t *testing.T) {
 						"value2"
 					]
 				}
+
+				output list_output {
+					value = test_resource.one.list_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("list_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"list_output",
 							knownvalue.NewNumElements(3),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("attribute contains 2 elements, expected 3"),
+				ExpectError: regexp.MustCompile("output contains 2 elements, expected 3"),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_ListNestedBlock(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_ListNestedBlock(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -604,12 +657,15 @@ func TestExpectKnownValue_CheckPlan_ListNestedBlock(t *testing.T) {
 						list_nested_block_attribute = "rts"
 					}
 				}
+
+				output list_nested_block_output {
+					value = test_resource.one.list_nested_block
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("list_nested_block"),
+						plancheck.ExpectKnownOutputValue(
+							"list_nested_block_output",
 							knownvalue.NewListValue([]knownvalue.KnownValue{
 								knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
 									"list_nested_block_attribute": knownvalue.NewStringValue("str"),
@@ -626,7 +682,7 @@ func TestExpectKnownValue_CheckPlan_ListNestedBlock(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_ListNestedBlockPartial(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_ListNestedBlockPartial(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -645,12 +701,15 @@ func TestExpectKnownValue_CheckPlan_ListNestedBlockPartial(t *testing.T) {
 						list_nested_block_attribute = "rts"
 					}
 				}
+
+				output list_nested_block_output {
+					value = test_resource.one.list_nested_block
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("list_nested_block"),
+						plancheck.ExpectKnownOutputValue(
+							"list_nested_block_output",
 							knownvalue.NewListValuePartial(map[int]knownvalue.KnownValue{
 								1: knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
 									"list_nested_block_attribute": knownvalue.NewStringValue("rts"),
@@ -664,7 +723,7 @@ func TestExpectKnownValue_CheckPlan_ListNestedBlockPartial(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_ListNestedBlockNumElements(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_ListNestedBlockNumElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -683,12 +742,15 @@ func TestExpectKnownValue_CheckPlan_ListNestedBlockNumElements(t *testing.T) {
 						list_nested_block_attribute = "rts"
 					}
 				}
+
+				output list_nested_block_output {
+					value = test_resource.one.list_nested_block
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("list_nested_block"),
+						plancheck.ExpectKnownOutputValue(
+							"list_nested_block_output",
 							knownvalue.NewNumElements(2),
 						),
 					},
@@ -698,7 +760,7 @@ func TestExpectKnownValue_CheckPlan_ListNestedBlockNumElements(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_Map(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_Map(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -715,12 +777,15 @@ func TestExpectKnownValue_CheckPlan_Map(t *testing.T) {
 						key2 = "value2"
 					}
 				}
+
+				output map_output {
+					value = test_resource.one.map_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("map_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"map_output",
 							knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
 								"key1": knownvalue.NewStringValue("value1"),
 								"key2": knownvalue.NewStringValue("value2"),
@@ -733,7 +798,7 @@ func TestExpectKnownValue_CheckPlan_Map(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_Map_KnownValueWrongType(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_Map_KnownValueWrongType(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -750,23 +815,26 @@ func TestExpectKnownValue_CheckPlan_Map_KnownValueWrongType(t *testing.T) {
 						key2 = "value2"
 					}
 				}
+
+				output map_output {
+					value = test_resource.one.map_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("map_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"map_output",
 							knownvalue.NewListValue([]knownvalue.KnownValue{}),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong type: attribute value is map, or object, known value type is knownvalue.ListValue"),
+				ExpectError: regexp.MustCompile("wrong type: output type is map, or object, known value type is knownvalue.ListValue"),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_Map_KnownValueWrongValue(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_Map_KnownValueWrongValue(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -783,12 +851,15 @@ func TestExpectKnownValue_CheckPlan_Map_KnownValueWrongValue(t *testing.T) {
 						key2 = "value2"
 					}
 				}
+
+				output map_output {
+					value = test_resource.one.map_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("map_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"map_output",
 							knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
 								"key3": knownvalue.NewStringValue("value3"),
 								"key4": knownvalue.NewStringValue("value4"),
@@ -796,13 +867,13 @@ func TestExpectKnownValue_CheckPlan_Map_KnownValueWrongValue(t *testing.T) {
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`attribute value: map\[key1:value1 key2:value2\] does not equal expected value: map\[key3:value3 key4:value4\]`),
+				ExpectError: regexp.MustCompile(`output value: map\[key1:value1 key2:value2\] does not equal expected value: map\[key3:value3 key4:value4\]`),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_MapPartial(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_MapPartial(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -819,12 +890,15 @@ func TestExpectKnownValue_CheckPlan_MapPartial(t *testing.T) {
 						key2 = "value2"
 					}
 				}
+
+				output map_output {
+					value = test_resource.one.map_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("map_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"map_output",
 							knownvalue.NewMapValuePartial(map[string]knownvalue.KnownValue{
 								"key1": knownvalue.NewStringValue("value1"),
 							}),
@@ -836,7 +910,7 @@ func TestExpectKnownValue_CheckPlan_MapPartial(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_MapPartial_KnownValueWrongValue(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_MapPartial_KnownValueWrongValue(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -853,25 +927,28 @@ func TestExpectKnownValue_CheckPlan_MapPartial_KnownValueWrongValue(t *testing.T
 						key2 = "value2"
 					}
 				}
+
+				output map_output {
+					value = test_resource.one.map_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("map_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"map_output",
 							knownvalue.NewMapValuePartial(map[string]knownvalue.KnownValue{
 								"key3": knownvalue.NewStringValue("value1"),
 							}),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`attribute value: map\[key1:value1 key2:value2\] does not contain: map\[key3:value1\]`),
+				ExpectError: regexp.MustCompile(`output value: map\[key1:value1 key2:value2\] does not contain: map\[key3:value1\]`),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_MapNumElements(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_MapNumElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -888,12 +965,15 @@ func TestExpectKnownValue_CheckPlan_MapNumElements(t *testing.T) {
 						key2 = "value2"
 					}
 				}
+
+				output map_output {
+					value = test_resource.one.map_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("map_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"map_output",
 							knownvalue.NewNumElements(2),
 						),
 					},
@@ -903,7 +983,7 @@ func TestExpectKnownValue_CheckPlan_MapNumElements(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_MapNumElements_WrongNum(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_MapNumElements_WrongNum(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -920,23 +1000,26 @@ func TestExpectKnownValue_CheckPlan_MapNumElements_WrongNum(t *testing.T) {
 						key2 = "value2"
 					}
 				}
+
+				output map_output {
+					value = test_resource.one.map_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("map_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"map_output",
 							knownvalue.NewNumElements(3),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("attribute contains 2 elements, expected 3"),
+				ExpectError: regexp.MustCompile("output contains 2 elements, expected 3"),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_Set(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_Set(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -953,12 +1036,15 @@ func TestExpectKnownValue_CheckPlan_Set(t *testing.T) {
 						"value2"
 					]
 				}
+
+				output set_output {
+					value = test_resource.one.set_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("set_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"set_output",
 							knownvalue.NewSetValue([]knownvalue.KnownValue{
 								knownvalue.NewStringValue("value1"),
 								knownvalue.NewStringValue("value2"),
@@ -971,7 +1057,7 @@ func TestExpectKnownValue_CheckPlan_Set(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_Set_KnownValueWrongValue(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_Set_KnownValueWrongValue(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -988,12 +1074,15 @@ func TestExpectKnownValue_CheckPlan_Set_KnownValueWrongValue(t *testing.T) {
 						"value2"
 					]
 				}
+
+				output set_output {
+					value = test_resource.one.set_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("set_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"set_output",
 							knownvalue.NewSetValue([]knownvalue.KnownValue{
 								knownvalue.NewStringValue("value1"),
 								knownvalue.NewStringValue("value3"),
@@ -1001,13 +1090,13 @@ func TestExpectKnownValue_CheckPlan_Set_KnownValueWrongValue(t *testing.T) {
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`attribute value: \[value1 value2\] does not equal expected value: \[value1 value3\]`),
+				ExpectError: regexp.MustCompile(`output value: \[value1 value2\] does not equal expected value: \[value1 value3\]`),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_SetPartial(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_SetPartial(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -1024,12 +1113,15 @@ func TestExpectKnownValue_CheckPlan_SetPartial(t *testing.T) {
 						"value2"
 					]
 				}
+
+				output set_output {
+					value = test_resource.one.set_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("set_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"set_output",
 							knownvalue.NewSetValuePartial([]knownvalue.KnownValue{
 								knownvalue.NewStringValue("value2"),
 							}),
@@ -1041,7 +1133,7 @@ func TestExpectKnownValue_CheckPlan_SetPartial(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_SetPartial_KnownValueWrongValue(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_SetPartial_KnownValueWrongValue(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -1058,25 +1150,28 @@ func TestExpectKnownValue_CheckPlan_SetPartial_KnownValueWrongValue(t *testing.T
 						"value2"
 					]
 				}
+
+				output set_output {
+					value = test_resource.one.set_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("set_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"set_output",
 							knownvalue.NewSetValuePartial([]knownvalue.KnownValue{
 								knownvalue.NewStringValue("value3"),
 							}),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`attribute value: \[value1 value2\] does not contain: \[value3\]`),
+				ExpectError: regexp.MustCompile(`output value: \[value1 value2\] does not contain: \[value3\]`),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_SetNumElements(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_SetNumElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -1093,12 +1188,15 @@ func TestExpectKnownValue_CheckPlan_SetNumElements(t *testing.T) {
 						"value2"
 					]
 				}
+
+				output set_output {
+					value = test_resource.one.set_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("set_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"set_output",
 							knownvalue.NewNumElements(2),
 						),
 					},
@@ -1108,7 +1206,7 @@ func TestExpectKnownValue_CheckPlan_SetNumElements(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_SetNestedBlock(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_SetNestedBlock(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -1127,12 +1225,15 @@ func TestExpectKnownValue_CheckPlan_SetNestedBlock(t *testing.T) {
 						set_nested_block_attribute = "rts"
 					}
 				}
+
+				output set_nested_block_output {
+					value = test_resource.one.set_nested_block
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("set_nested_block"),
+						plancheck.ExpectKnownOutputValue(
+							"set_nested_block_output",
 							knownvalue.NewSetValue([]knownvalue.KnownValue{
 								knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
 									"set_nested_block_attribute": knownvalue.NewStringValue("str"),
@@ -1149,7 +1250,7 @@ func TestExpectKnownValue_CheckPlan_SetNestedBlock(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_SetNestedBlockPartial(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_SetNestedBlockPartial(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -1168,12 +1269,15 @@ func TestExpectKnownValue_CheckPlan_SetNestedBlockPartial(t *testing.T) {
 						set_nested_block_attribute = "rts"
 					}
 				}
+
+				output set_nested_block_output {
+					value = test_resource.one.set_nested_block
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("set_nested_block"),
+						plancheck.ExpectKnownOutputValue(
+							"set_nested_block_output",
 							knownvalue.NewSetValuePartial([]knownvalue.KnownValue{
 								knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
 									"set_nested_block_attribute": knownvalue.NewStringValue("rts"),
@@ -1187,7 +1291,7 @@ func TestExpectKnownValue_CheckPlan_SetNestedBlockPartial(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_SetNestedBlockNumElements(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_SetNestedBlockNumElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -1206,12 +1310,15 @@ func TestExpectKnownValue_CheckPlan_SetNestedBlockNumElements(t *testing.T) {
 						set_nested_block_attribute = "rts"
 					}
 				}
+
+				output set_nested_block_output {
+					value = test_resource.one.set_nested_block
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("set_nested_block"),
+						plancheck.ExpectKnownOutputValue(
+							"set_nested_block_output",
 							knownvalue.NewNumElements(2),
 						),
 					},
@@ -1221,7 +1328,7 @@ func TestExpectKnownValue_CheckPlan_SetNestedBlockNumElements(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_String(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_String(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -1235,12 +1342,15 @@ func TestExpectKnownValue_CheckPlan_String(t *testing.T) {
 				Config: `resource "test_resource" "one" {
 					string_attribute = "str"
 				}
+
+				output string_output {
+					value = test_resource.one.string_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("string_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"string_output",
 							knownvalue.NewStringValue("str")),
 					},
 				},
@@ -1249,7 +1359,7 @@ func TestExpectKnownValue_CheckPlan_String(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_String_KnownValueWrongType(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_String_KnownValueWrongType(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -1263,22 +1373,25 @@ func TestExpectKnownValue_CheckPlan_String_KnownValueWrongType(t *testing.T) {
 				Config: `resource "test_resource" "one" {
 					string_attribute = "str"
 				}
+
+				output string_output {
+					value = test_resource.one.string_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("string_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"string_output",
 							knownvalue.NewBoolValue(true)),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong type: attribute value is string, known value type is knownvalue.BoolValue"),
+				ExpectError: regexp.MustCompile("wrong type: output value is string, known value type is knownvalue.BoolValue"),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_String_KnownValueWrongValue(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_String_KnownValueWrongValue(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -1292,22 +1405,25 @@ func TestExpectKnownValue_CheckPlan_String_KnownValueWrongValue(t *testing.T) {
 				Config: `resource "test_resource" "one" {
 					string_attribute = "str"
 				}
+
+				output string_output {
+					value = test_resource.one.string_attribute
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("string_attribute"),
+						plancheck.ExpectKnownOutputValue(
+							"string_output",
 							knownvalue.NewStringValue("rts")),
 					},
 				},
-				ExpectError: regexp.MustCompile("attribute value: str does not equal expected value: rts"),
+				ExpectError: regexp.MustCompile("output value: str does not equal expected value: rts"),
 			},
 		},
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_UnknownAttributeType(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_UnknownAttributeType(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
@@ -1319,19 +1435,14 @@ func TestExpectKnownValue_CheckPlan_UnknownAttributeType(t *testing.T) {
 			knownValue: knownvalue.NewInt64Value(123),
 			req: plancheck.CheckPlanRequest{
 				Plan: &tfjson.Plan{
-					ResourceChanges: []*tfjson.ResourceChange{
-						{
-							Address: "example_resource.test",
-							Change: &tfjson.Change{
-								After: map[string]any{
-									"attribute": float32(123),
-								},
-							},
+					OutputChanges: map[string]*tfjson.Change{
+						"float32_output": {
+							After: float32(123),
 						},
 					},
 				},
 			},
-			expectedErr: fmt.Errorf("unrecognised attribute type: float32, known value type is knownvalue.Int64Value\n\nThis is an error in plancheck.ExpectKnownValue.\nPlease report this to the maintainers."),
+			expectedErr: fmt.Errorf("unrecognised output type: float32, known value type is knownvalue.Int64Value\n\nThis is an error in plancheck.ExpectKnownOutputValue.\nPlease report this to the maintainers."),
 		},
 	}
 
@@ -1341,7 +1452,7 @@ func TestExpectKnownValue_CheckPlan_UnknownAttributeType(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			e := plancheck.ExpectKnownValue("example_resource.test", tfjsonpath.New("attribute"), testCase.knownValue)
+			e := plancheck.ExpectKnownOutputValue("float32_output", testCase.knownValue)
 
 			resp := plancheck.CheckPlanResponse{}
 
@@ -1353,11 +1464,3 @@ func TestExpectKnownValue_CheckPlan_UnknownAttributeType(t *testing.T) {
 		})
 	}
 }
-
-var equateErrorMessage = cmp.Comparer(func(x, y error) bool {
-	if x == nil || y == nil {
-		return x == nil && y == nil
-	}
-
-	return x.Error() == y.Error()
-})

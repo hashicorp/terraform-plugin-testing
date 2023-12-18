@@ -88,7 +88,7 @@ func (e expectKnownValue) CheckPlan(ctx context.Context, req CheckPlanRequest, r
 				return
 			}
 		default:
-			resp.Error = fmt.Errorf("wrong type: attribute type is float64 or int64, known value type is %T", t)
+			resp.Error = fmt.Errorf("wrong type: attribute value is float64 or int64, known value type is %T", t)
 		}
 	case reflect.Map:
 		elems := make(map[string]any)
@@ -121,7 +121,7 @@ func (e expectKnownValue) CheckPlan(ctx context.Context, req CheckPlanRequest, r
 				return
 			}
 		default:
-			resp.Error = fmt.Errorf("wrong type: attribute type is map, or object, known value type is %T", t)
+			resp.Error = fmt.Errorf("wrong type: attribute value is map, or object, known value type is %T", t)
 
 			return
 		}
@@ -164,7 +164,7 @@ func (e expectKnownValue) CheckPlan(ctx context.Context, req CheckPlanRequest, r
 				return
 			}
 		default:
-			resp.Error = fmt.Errorf("wrong type: attribute type is list, or set, known value type is %T", t)
+			resp.Error = fmt.Errorf("wrong type: attribute value is list, or set, known value type is %T", t)
 
 			return
 		}
@@ -192,7 +192,8 @@ func (e expectKnownValue) CheckPlan(ctx context.Context, req CheckPlanRequest, r
 	}
 }
 
-// ExpectKnownValue returns a plan check that asserts that the specified attribute at the given resource has a known type, and value.
+// ExpectKnownValue returns a plan check that asserts that the specified attribute at the given resource
+// has a known type and value.
 func ExpectKnownValue(resourceAddress string, attributePath tfjsonpath.Path, knownValue knownvalue.KnownValue) PlanCheck {
 	return expectKnownValue{
 		resourceAddress: resourceAddress,
