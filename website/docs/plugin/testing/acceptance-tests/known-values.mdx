@@ -47,6 +47,7 @@ The following table describes the correspondence between attributes, and [knownv
 | `schema.Int64Attribute`   | `schema.TypeInt`     | [knownvalue.Int64Value](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Int64Value)     |
 | `schema.ListAttribute`    | `schema.TypeList`    | [knownvalue.ListValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListValue)       |
 | `schema.MapAttribute`     | `schema.TypeMap`     | [knownvalue.MapValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#MapValue)         |
+| `schema.NumberAttribute`  | N/A                  | [knownvalue.NumberValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NumberValue)   |
 | `schema.ObjectAttribute`  | N/A                  | [knownvalue.ObjectValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ObjectValue)   |
 | `schema.SetAttribute`     | `schema.TypeSet`     | [knownvalue.SetValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetValue)         |
 | `schema.StringAttribute`  | `schema.TypeString`  | [knownvalue.StringValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#StringValue)   |
@@ -233,40 +234,6 @@ func TestExpectKnownValue_CheckPlan_ListPartial(t *testing.T) {
 }
 ```
 
-### Num Elements Known Value
-
-Example usage of [knownvalue.NumElements](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NumElements) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
-
-```go
-func TestExpectKnownValue_CheckPlan_ListNumElements(t *testing.T) {
-	t.Parallel()
-
-	r.Test(t, r.TestCase{
-		// Provider definition omitted.
-		Steps: []r.TestStep{
-			{
-				Config: `resource "test_resource" "one" {
-					list_attribute = [
-						"value1",
-						"value2"
-					]
-				}
-				`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("list_attribute"),
-							knownvalue.NewNumElementsValue(2),
-						),
-					},
-				},
-			},
-		},
-	})
-}
-```
-
 ### Map Known Value
 
 Example usage of [knownvalue.MapValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#MapValue) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
@@ -331,6 +298,77 @@ func TestExpectKnownValue_CheckPlan_MapPartial(t *testing.T) {
 							knownvalue.NewMapValuePartial(map[string]knownvalue.KnownValue{
 								"key1": knownvalue.NewStringValue("value1"),
 							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### Num Elements Known Value
+
+Example usage of [knownvalue.NumElements](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NumElements) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_ListNumElements(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					list_attribute = [
+						"value1",
+						"value2"
+					]
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("list_attribute"),
+							knownvalue.NewNumElementsValue(2),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+### Number Known Value
+
+Example usage of [knownvalue.NumberValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NumberValue) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_Int64(t *testing.T) {
+	t.Parallel()
+
+    f, _, err := big.ParseFloat("1.797693134862315797693134862315797693134862315", 10, 512, big.ToNearestEven)
+
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					number_attribute = 123
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("number_attribute"),
+							knownvalue.NewNumberValue(f),
 						),
 					},
 				},

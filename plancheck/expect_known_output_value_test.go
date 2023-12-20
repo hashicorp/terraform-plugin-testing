@@ -6,6 +6,7 @@ package plancheck_test
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"regexp"
 	"testing"
 
@@ -211,6 +212,7 @@ func TestExpectKnownOutputValue_CheckPlan_Float64(t *testing.T) {
 	})
 }
 
+// We do not need equivalent tests for Int64 and Number as they all test the same logic.
 func TestExpectKnownOutputValue_CheckPlan_Float64_KnownValueWrongType(t *testing.T) {
 	t.Parallel()
 
@@ -238,7 +240,7 @@ func TestExpectKnownOutputValue_CheckPlan_Float64_KnownValueWrongType(t *testing
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong type: output value is float64 or int64, known value type is knownvalue.StringValue"),
+				ExpectError: regexp.MustCompile("wrong type: output value is number, known value type is knownvalue.StringValue"),
 			},
 		},
 	})
@@ -304,41 +306,6 @@ func TestExpectKnownOutputValue_CheckPlan_Int64(t *testing.T) {
 						),
 					},
 				},
-			},
-		},
-	})
-}
-
-// TestExpectKnownOutputValue_CheckPlan_Int64_KnownValueWrongType highlights a limitation of tfjson.Plan in that all numerical
-// values are represented as float64.
-func TestExpectKnownOutputValue_CheckPlan_Int64_KnownValueWrongType(t *testing.T) {
-	t.Parallel()
-
-	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `resource "test_resource" "one" {
-					int_attribute = 123
-				}
-
-				output int64_output {
-					value = test_resource.one.int_attribute
-				}
-				`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownOutputValue(
-							"int64_output",
-							knownvalue.NewStringValue("str"),
-						),
-					},
-				},
-				ExpectError: regexp.MustCompile("wrong type: output value is float64 or int64, known value type is knownvalue.StringValue"),
 			},
 		},
 	})
@@ -445,7 +412,7 @@ func TestExpectKnownOutputValue_CheckPlan_List_KnownValueWrongType(t *testing.T)
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong type: output type is list, or set, known value type is knownvalue.MapValue"),
+				ExpectError: regexp.MustCompile("wrong type: output value is list, or set, known value type is knownvalue.MapValue"),
 			},
 		},
 	})
@@ -828,7 +795,7 @@ func TestExpectKnownOutputValue_CheckPlan_Map_KnownValueWrongType(t *testing.T) 
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong type: output type is map, or object, known value type is knownvalue.ListValue"),
+				ExpectError: regexp.MustCompile("wrong type: output value is map, or object, known value type is knownvalue.ListValue"),
 			},
 		},
 	})
@@ -1014,6 +981,83 @@ func TestExpectKnownOutputValue_CheckPlan_MapNumElements_WrongNum(t *testing.T) 
 					},
 				},
 				ExpectError: regexp.MustCompile("output contains 2 elements, expected 3"),
+			},
+		},
+	})
+}
+
+func TestExpectKnownOutputValue_CheckPlan_Number(t *testing.T) {
+	t.Parallel()
+
+	f, _, err := big.ParseFloat("123", 10, 512, big.ToNearestEven)
+
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					int_attribute = 123
+				}
+
+				output int64_output {
+					value = test_resource.one.int_attribute
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownOutputValue(
+							"int64_output",
+							knownvalue.NewNumberValue(f),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+
+func TestExpectKnownOutputValue_CheckPlan_Number_KnownValueWrongValue(t *testing.T) {
+	t.Parallel()
+
+	f, _, err := big.ParseFloat("321", 10, 512, big.ToNearestEven)
+
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					int_attribute = 123
+				}
+
+				output int64_output {
+					value = test_resource.one.int_attribute
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownOutputValue(
+							"int64_output",
+							knownvalue.NewNumberValue(f),
+						),
+					},
+				},
+				ExpectError: regexp.MustCompile("output value: 123 does not equal expected value: 321"),
 			},
 		},
 	})
