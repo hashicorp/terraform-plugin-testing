@@ -22,6 +22,8 @@ Change all instances of the following Go import statements in `*_test.go` files:
 | `github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource` | `github.com/hashicorp/terraform-plugin-testing/helper/resource` |
 | `github.com/hashicorp/terraform-plugin-sdk/v2/terraform` | `github.com/hashicorp/terraform-plugin-testing/terraform` |
 
+If the provider implements terraform-plugin-sdk based state migration unit testing with `github.com/hashicorp/terraform-plugin-sdk/v2/terraform.InstanceState`, this must remain with the original import since it is testing terraform-plugin-sdk functionality.
+
 Change all instances of the following in **non-test** `*.go` files:
 
 | Original Reference | Migrated Reference |
@@ -29,6 +31,7 @@ Change all instances of the following in **non-test** `*.go` files:
 | `github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource.NonRetryableError` | `github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.NonRetryableError` |
 | `github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource.NotFoundError` | `github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.NotFoundError` |
 | `github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource.PrefixedUniqueId` | `github.com/hashicorp/terraform-plugin-sdk/v2/helper/id.PrefixedUniqueId` |
+| `github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource.Retry` | `github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.Retry` |
 | `github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource.RetryableError` | `github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.RetryableError` |
 | `github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource.RetryContext` | `github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.RetryContext` |
 | `github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource.RetryError` | `github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.RetryError` |
