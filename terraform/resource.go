@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-cty/cty"
-	"github.com/mitchellh/reflectwalk"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/configs/configschema"
 	"github.com/hashicorp/terraform-plugin-testing/internal/configs/hcl2shim"
@@ -284,12 +283,7 @@ func (c *ResourceConfig) IsComputed(k string) bool {
 	}
 
 	// Test if the value contains an unknown value
-	var w unknownCheckWalker
-	if err := reflectwalk.Walk(v, &w); err != nil {
-		panic(err)
-	}
-
-	return w.Unknown
+	return unknownValueWalk(reflect.ValueOf(v))
 }
 
 func (c *ResourceConfig) get(
@@ -365,19 +359,4 @@ func (c *ResourceConfig) get(
 	}
 
 	return current, true
-}
-
-// unknownCheckWalker
-type unknownCheckWalker struct {
-	Unknown bool
-}
-
-// TODO: investigate why deleting this causes odd runtime test failures
-// must be some kind of interface implementation
-func (w *unknownCheckWalker) Primitive(v reflect.Value) error {
-	if v.Interface() == hcl2shim.UnknownVariableValue {
-		w.Unknown = true
-	}
-
-	return nil
 }
