@@ -4,6 +4,7 @@ NOTES:
 
 * all: This Go module has been updated to Go 1.20 per the [Go support policy](https://go.dev/doc/devel/release#policy). It is recommended to review the [Go 1.20 release notes](https://go.dev/doc/go1.20) before upgrading. Any consumers building on earlier Go versions may experience errors. ([#180](https://github.com/hashicorp/terraform-plugin-testing/issues/180))
 * helper/resource: Configuration based `TestStep` now include post-apply plan checks for output changes in addition to resource changes. If this causes unexpected new test failures, most `output` configuration blocks can be likely be removed. Test steps involving resources and data sources should never need to use `output` configuration blocks as plan and state checks support working on resource and data source attributes values directly. ([#234](https://github.com/hashicorp/terraform-plugin-testing/issues/234))
+* helper/resource: Implicit `terraform refresh` commands during each `TestStep` have been removed to fix plan check and performance issues, which can cause new test failures when testing schema changes (e.g. state upgrades) that have a final `TestStep` with `PlanOnly: true`. Remove `PlanOnly: true` from the final `TestStep` to fix affected tests which will ensure that updated schema changes are applied to the state before attempting to automatically destroy resources. ([#223](https://github.com/hashicorp/terraform-plugin-testing/issues/223))
 
 FEATURES:
 
