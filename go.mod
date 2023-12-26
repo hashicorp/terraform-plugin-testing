@@ -21,7 +21,6 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2
 	github.com/zclconf/go-cty v1.14.1
 	golang.org/x/crypto v0.17.0
-	golang.org/x/exp v0.0.0-20230809150735-7b3493d9a819
 )
 
 require (
