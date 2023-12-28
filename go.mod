@@ -17,7 +17,6 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.31.0
 	github.com/mitchellh/go-testing-interface v1.14.1
-	github.com/mitchellh/reflectwalk v1.0.2
 	github.com/zclconf/go-cty v1.14.1
 	golang.org/x/crypto v0.17.0
 	golang.org/x/exp v0.0.0-20230809150735-7b3493d9a819
@@ -43,6 +42,7 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
