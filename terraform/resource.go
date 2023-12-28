@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-cty/cty"
-	"github.com/mitchellh/copystructure"
 	"github.com/mitchellh/reflectwalk"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/configs/configschema"
@@ -177,19 +176,31 @@ func (c *ResourceConfig) DeepCopy() *ResourceConfig {
 		return nil
 	}
 
-	// Copy, this will copy all the exported attributes
-	copiedConfig, err := copystructure.Config{Lock: true}.Copy(c)
-	if err != nil {
-		panic(err)
+	copied := &ResourceConfig{}
+
+	if c.ComputedKeys != nil {
+		copied.ComputedKeys = make([]string, len(c.ComputedKeys))
+
+		copy(copied.ComputedKeys, c.ComputedKeys)
 	}
 
-	// Force the type
-	result, ok := copiedConfig.(*ResourceConfig)
-	if !ok {
-		panic(fmt.Errorf("unexpected type %T for copiedConfig", copiedConfig))
+	if c.Config != nil {
+		copied.Config = make(map[string]any, len(c.Config))
+
+		for key, value := range c.Config {
+			copied.Config[key] = value
+		}
 	}
 
-	return result
+	if c.Raw != nil {
+		copied.Raw = make(map[string]any, len(c.Raw))
+
+		for key, value := range c.Raw {
+			copied.Raw[key] = value
+		}
+	}
+
+	return copied
 }
 
 // Equal checks the equality of two resource configs.
