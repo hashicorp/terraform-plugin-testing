@@ -6,7 +6,7 @@ package knownvalue
 var _ KnownValue = StringValue{}
 
 // StringValue is a KnownValue for asserting equality between the value
-// supplied to NewStringValue and the value passed to the Equal method.
+// supplied to StringValueExact and the value passed to the Equal method.
 type StringValue struct {
 	value string
 }
@@ -32,9 +32,9 @@ func (v StringValue) String() string {
 	return v.value
 }
 
-// NewStringValue returns a KnownValue for asserting equality between the
+// StringValueExact returns a KnownValue for asserting equality between the
 // supplied string and a value passed to the Equal method.
-func NewStringValue(value string) StringValue {
+func StringValueExact(value string) StringValue {
 	return StringValue{
 		value: value,
 	}

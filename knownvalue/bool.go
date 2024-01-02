@@ -8,7 +8,7 @@ import "strconv"
 var _ KnownValue = BoolValue{}
 
 // BoolValue is a KnownValue for asserting equality between the value
-// supplied to NewBoolValue and the value passed to the Equal method.
+// supplied to BoolValueExact and the value passed to the Equal method.
 type BoolValue struct {
 	value bool
 }
@@ -34,9 +34,9 @@ func (v BoolValue) String() string {
 	return strconv.FormatBool(v.value)
 }
 
-// NewBoolValue returns a KnownValue for asserting equality between the
+// BoolValueExact returns a KnownValue for asserting equality between the
 // supplied bool and the value passed to the Equal method.
-func NewBoolValue(value bool) BoolValue {
+func BoolValueExact(value bool) BoolValue {
 	return BoolValue{
 		value: value,
 	}

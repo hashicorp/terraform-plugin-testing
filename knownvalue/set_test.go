@@ -62,10 +62,10 @@ func TestSetValue_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.NewSetValue([]knownvalue.KnownValue{
-				knownvalue.NewInt64Value(123),
-				knownvalue.NewInt64Value(456),
-				knownvalue.NewInt64Value(789),
+			got := knownvalue.SetValueExact([]knownvalue.KnownValue{
+				knownvalue.Int64ValueExact(123),
+				knownvalue.Int64ValueExact(456),
+				knownvalue.Int64ValueExact(789),
 			}).Equal(testCase.other)
 
 			if diff := cmp.Diff(got, testCase.expected); diff != "" {
@@ -79,9 +79,9 @@ func TestSetValue_String(t *testing.T) {
 	t.Parallel()
 
 	got := knownvalue.NewListValue([]knownvalue.KnownValue{
-		knownvalue.NewInt64Value(123),
-		knownvalue.NewInt64Value(456),
-		knownvalue.NewInt64Value(789),
+		knownvalue.Int64ValueExact(123),
+		knownvalue.Int64ValueExact(456),
+		knownvalue.Int64ValueExact(789),
 	}).String()
 
 	if diff := cmp.Diff(got, "[123 456 789]"); diff != "" {

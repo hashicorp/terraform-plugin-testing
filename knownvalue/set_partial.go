@@ -10,7 +10,7 @@ import (
 var _ KnownValue = SetValuePartial{}
 
 // SetValuePartial is a KnownValue for asserting equality between the value
-// supplied to NewSetValuePartial and the value passed to the Equal method.
+// supplied to SetValuePartialMatch and the value passed to the Equal method.
 type SetValuePartial struct {
 	value []KnownValue
 }
@@ -61,9 +61,9 @@ func (v SetValuePartial) String() string {
 	return fmt.Sprintf("%s", setVals)
 }
 
-// NewSetValuePartial returns a KnownValue for asserting equality of the elements
+// SetValuePartialMatch returns a KnownValue for asserting equality of the elements
 // supplied in []KnownValue and the elements in the value passed to the Equal method.
-func NewSetValuePartial(value []KnownValue) SetValuePartial {
+func SetValuePartialMatch(value []KnownValue) SetValuePartial {
 	return SetValuePartial{
 		value: value,
 	}

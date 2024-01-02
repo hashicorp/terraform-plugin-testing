@@ -10,7 +10,7 @@ import (
 var _ KnownValue = SetValue{}
 
 // SetValue is a KnownValue for asserting equality between the value
-// supplied to NewSetValue and the value passed to the Equal method.
+// supplied to SetValueExact and the value passed to the Equal method.
 type SetValue struct {
 	value []KnownValue
 }
@@ -65,9 +65,9 @@ func (v SetValue) String() string {
 	return fmt.Sprintf("%s", setVals)
 }
 
-// NewSetValue returns a KnownValue for asserting equality between the
+// SetValueExact returns a KnownValue for asserting equality between the
 // supplied []KnownValue and the value passed to the Equal method.
-func NewSetValue(value []KnownValue) SetValue {
+func SetValueExact(value []KnownValue) SetValue {
 	return SetValue{
 		value: value,
 	}

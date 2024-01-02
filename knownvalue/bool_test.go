@@ -37,7 +37,7 @@ func TestBoolValue_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.NewBoolValue(true).Equal(testCase.other)
+			got := knownvalue.BoolValueExact(true).Equal(testCase.other)
 
 			if diff := cmp.Diff(got, testCase.expected); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)
@@ -49,7 +49,7 @@ func TestBoolValue_Equal(t *testing.T) {
 func TestBoolValue_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.NewBoolValue(true).String()
+	got := knownvalue.BoolValueExact(true).String()
 
 	if diff := cmp.Diff(got, "true"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)

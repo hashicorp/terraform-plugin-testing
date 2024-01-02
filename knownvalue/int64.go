@@ -10,7 +10,7 @@ import (
 var _ KnownValue = Int64Value{}
 
 // Int64Value is a KnownValue for asserting equality between the value
-// supplied to NewInt64Value and the value passed to the Equal method.
+// supplied to Int64ValueExact and the value passed to the Equal method.
 type Int64Value struct {
 	value int64
 }
@@ -36,9 +36,9 @@ func (v Int64Value) String() string {
 	return strconv.FormatInt(v.value, 10)
 }
 
-// NewInt64Value returns a KnownValue for asserting equality between the
+// Int64ValueExact returns a KnownValue for asserting equality between the
 // supplied int64 and the value passed to the Equal method.
-func NewInt64Value(value int64) Int64Value {
+func Int64ValueExact(value int64) Int64Value {
 	return Int64Value{
 		value: value,
 	}

@@ -52,7 +52,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ResourceNotFound(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_two_output",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.NewBoolValue(true),
+							knownvalue.BoolValueExact(true),
 						),
 					},
 				},
@@ -91,7 +91,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_AttributeValueNull(t *testing.T)
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.NewBoolValue(true),
+							knownvalue.BoolValueExact(true),
 						),
 					},
 				},
@@ -132,7 +132,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Bool(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.NewBoolValue(true),
+							knownvalue.BoolValueExact(true),
 						),
 					},
 				},
@@ -172,7 +172,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Bool_KnownValueWrongType(t *test
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.NewFloat64Value(1.23),
+							knownvalue.Float64ValueExact(1.23),
 						),
 					},
 				},
@@ -213,7 +213,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Bool_KnownValueWrongValue(t *tes
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.NewBoolValue(false),
+							knownvalue.BoolValueExact(false),
 						),
 					},
 				},
@@ -254,7 +254,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Float64(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("float_attribute"),
-							knownvalue.NewFloat64Value(1.23),
+							knownvalue.Float64ValueExact(1.23),
 						),
 					},
 				},
@@ -295,7 +295,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Float64_KnownValueWrongType(t *t
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("float_attribute"),
-							knownvalue.NewStringValue("str"),
+							knownvalue.StringValueExact("str"),
 						),
 					},
 				},
@@ -336,7 +336,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Float64_KnownValueWrongValue(t *
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("float_attribute"),
-							knownvalue.NewFloat64Value(3.21),
+							knownvalue.Float64ValueExact(3.21),
 						),
 					},
 				},
@@ -377,7 +377,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Int64(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("int_attribute"),
-							knownvalue.NewInt64Value(123),
+							knownvalue.Int64ValueExact(123),
 						),
 					},
 				},
@@ -417,7 +417,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Int64_KnownValueWrongValue(t *te
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("int_attribute"),
-							knownvalue.NewInt64Value(321),
+							knownvalue.Int64ValueExact(321),
 						),
 					},
 				},
@@ -462,8 +462,8 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_List(t *testing.T) {
 							"test_resource_one_output",
 							tfjsonpath.New("list_attribute"),
 							knownvalue.NewListValue([]knownvalue.KnownValue{
-								knownvalue.NewStringValue("value1"),
-								knownvalue.NewStringValue("value2"),
+								knownvalue.StringValueExact("value1"),
+								knownvalue.StringValueExact("value2"),
 							}),
 						),
 					},
@@ -507,7 +507,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_List_KnownValueWrongType(t *test
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("list_attribute"),
-							knownvalue.NewMapValue(map[string]knownvalue.KnownValue{}),
+							knownvalue.MapValueExact(map[string]knownvalue.KnownValue{}),
 						),
 					},
 				},
@@ -552,8 +552,8 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_List_KnownValueWrongValue(t *tes
 							"test_resource_one_output",
 							tfjsonpath.New("list_attribute"),
 							knownvalue.NewListValue([]knownvalue.KnownValue{
-								knownvalue.NewStringValue("value3"),
-								knownvalue.NewStringValue("value4"),
+								knownvalue.StringValueExact("value3"),
+								knownvalue.StringValueExact("value4"),
 							}),
 						),
 					},
@@ -599,7 +599,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListPartial(t *testing.T) {
 							"test_resource_one_output",
 							tfjsonpath.New("list_attribute"),
 							knownvalue.NewListValuePartial(map[int]knownvalue.KnownValue{
-								0: knownvalue.NewStringValue("value1"),
+								0: knownvalue.StringValueExact("value1"),
 							}),
 						),
 					},
@@ -646,7 +646,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListPartial_KnownValueWrongValue
 							"test_resource_one_output",
 							tfjsonpath.New("list_attribute"),
 							knownvalue.NewListValuePartial(map[int]knownvalue.KnownValue{
-								0: knownvalue.NewStringValue("value3"),
+								0: knownvalue.StringValueExact("value3"),
 							}),
 						),
 					},
@@ -691,7 +691,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListNumElements(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("list_attribute"),
-							knownvalue.NewNumElementsValue(2),
+							knownvalue.NumElementsExact(2),
 						),
 					},
 				},
@@ -734,7 +734,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListNumElements_WrongNum(t *test
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("list_attribute"),
-							knownvalue.NewNumElementsValue(3),
+							knownvalue.NumElementsExact(3),
 						),
 					},
 				},
@@ -781,11 +781,11 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListNestedBlock(t *testing.T) {
 							"test_resource_one_output",
 							tfjsonpath.New("list_nested_block"),
 							knownvalue.NewListValue([]knownvalue.KnownValue{
-								knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
-									"list_nested_block_attribute": knownvalue.NewStringValue("str"),
+								knownvalue.MapValueExact(map[string]knownvalue.KnownValue{
+									"list_nested_block_attribute": knownvalue.StringValueExact("str"),
 								}),
-								knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
-									"list_nested_block_attribute": knownvalue.NewStringValue("rts"),
+								knownvalue.MapValueExact(map[string]knownvalue.KnownValue{
+									"list_nested_block_attribute": knownvalue.StringValueExact("rts"),
 								}),
 							}),
 						),
@@ -833,8 +833,8 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListNestedBlockPartial(t *testin
 							"test_resource_one_output",
 							tfjsonpath.New("list_nested_block"),
 							knownvalue.NewListValuePartial(map[int]knownvalue.KnownValue{
-								1: knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
-									"list_nested_block_attribute": knownvalue.NewStringValue("rts"),
+								1: knownvalue.MapValueExact(map[string]knownvalue.KnownValue{
+									"list_nested_block_attribute": knownvalue.StringValueExact("rts"),
 								}),
 							}),
 						),
@@ -881,7 +881,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListNestedBlockNumElements(t *te
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("list_nested_block"),
-							knownvalue.NewNumElementsValue(2),
+							knownvalue.NumElementsExact(2),
 						),
 					},
 				},
@@ -924,9 +924,9 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Map(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
-								"key1": knownvalue.NewStringValue("value1"),
-								"key2": knownvalue.NewStringValue("value2"),
+							knownvalue.MapValueExact(map[string]knownvalue.KnownValue{
+								"key1": knownvalue.StringValueExact("value1"),
+								"key2": knownvalue.StringValueExact("value2"),
 							}),
 						),
 					},
@@ -1014,9 +1014,9 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Map_KnownValueWrongValue(t *test
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
-								"key3": knownvalue.NewStringValue("value3"),
-								"key4": knownvalue.NewStringValue("value4"),
+							knownvalue.MapValueExact(map[string]knownvalue.KnownValue{
+								"key3": knownvalue.StringValueExact("value3"),
+								"key4": knownvalue.StringValueExact("value4"),
 							}),
 						),
 					},
@@ -1061,8 +1061,8 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_MapPartial(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.NewMapValuePartial(map[string]knownvalue.KnownValue{
-								"key1": knownvalue.NewStringValue("value1"),
+							knownvalue.MapValuePartialMatch(map[string]knownvalue.KnownValue{
+								"key1": knownvalue.StringValueExact("value1"),
 							}),
 						),
 					},
@@ -1106,8 +1106,8 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_MapPartial_KnownValueWrongValue(
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.NewMapValuePartial(map[string]knownvalue.KnownValue{
-								"key3": knownvalue.NewStringValue("value1"),
+							knownvalue.MapValuePartialMatch(map[string]knownvalue.KnownValue{
+								"key3": knownvalue.StringValueExact("value1"),
 							}),
 						),
 					},
@@ -1152,7 +1152,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_MapNumElements(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.NewNumElementsValue(2),
+							knownvalue.NumElementsExact(2),
 						),
 					},
 				},
@@ -1195,7 +1195,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_MapNumElements_WrongNum(t *testi
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.NewNumElementsValue(3),
+							knownvalue.NumElementsExact(3),
 						),
 					},
 				},
@@ -1242,7 +1242,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Number(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("int_attribute"),
-							knownvalue.NewNumberValue(f),
+							knownvalue.NumberValueExact(f),
 						),
 					},
 				},
@@ -1288,7 +1288,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Number_KnownValueWrongValue(t *t
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("int_attribute"),
-							knownvalue.NewNumberValue(f),
+							knownvalue.NumberValueExact(f),
 						),
 					},
 				},
@@ -1332,9 +1332,9 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Set(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("set_attribute"),
-							knownvalue.NewSetValue([]knownvalue.KnownValue{
-								knownvalue.NewStringValue("value1"),
-								knownvalue.NewStringValue("value2"),
+							knownvalue.SetValueExact([]knownvalue.KnownValue{
+								knownvalue.StringValueExact("value1"),
+								knownvalue.StringValueExact("value2"),
 							}),
 						),
 					},
@@ -1378,9 +1378,9 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Set_KnownValueWrongValue(t *test
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("set_attribute"),
-							knownvalue.NewSetValue([]knownvalue.KnownValue{
-								knownvalue.NewStringValue("value1"),
-								knownvalue.NewStringValue("value3"),
+							knownvalue.SetValueExact([]knownvalue.KnownValue{
+								knownvalue.StringValueExact("value1"),
+								knownvalue.StringValueExact("value3"),
 							}),
 						),
 					},
@@ -1425,8 +1425,8 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetPartial(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("set_attribute"),
-							knownvalue.NewSetValuePartial([]knownvalue.KnownValue{
-								knownvalue.NewStringValue("value2"),
+							knownvalue.SetValuePartialMatch([]knownvalue.KnownValue{
+								knownvalue.StringValueExact("value2"),
 							}),
 						),
 					},
@@ -1470,8 +1470,8 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetPartial_KnownValueWrongValue(
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("set_attribute"),
-							knownvalue.NewSetValuePartial([]knownvalue.KnownValue{
-								knownvalue.NewStringValue("value3"),
+							knownvalue.SetValuePartialMatch([]knownvalue.KnownValue{
+								knownvalue.StringValueExact("value3"),
 							}),
 						),
 					},
@@ -1516,7 +1516,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetNumElements(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("set_attribute"),
-							knownvalue.NewNumElementsValue(2),
+							knownvalue.NumElementsExact(2),
 						),
 					},
 				},
@@ -1561,12 +1561,12 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetNestedBlock(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("set_nested_block"),
-							knownvalue.NewSetValue([]knownvalue.KnownValue{
-								knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
-									"set_nested_block_attribute": knownvalue.NewStringValue("str"),
+							knownvalue.SetValueExact([]knownvalue.KnownValue{
+								knownvalue.MapValueExact(map[string]knownvalue.KnownValue{
+									"set_nested_block_attribute": knownvalue.StringValueExact("str"),
 								}),
-								knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
-									"set_nested_block_attribute": knownvalue.NewStringValue("rts"),
+								knownvalue.MapValueExact(map[string]knownvalue.KnownValue{
+									"set_nested_block_attribute": knownvalue.StringValueExact("rts"),
 								}),
 							}),
 						),
@@ -1613,9 +1613,9 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetNestedBlockPartial(t *testing
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("set_nested_block"),
-							knownvalue.NewSetValuePartial([]knownvalue.KnownValue{
-								knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
-									"set_nested_block_attribute": knownvalue.NewStringValue("rts"),
+							knownvalue.SetValuePartialMatch([]knownvalue.KnownValue{
+								knownvalue.MapValueExact(map[string]knownvalue.KnownValue{
+									"set_nested_block_attribute": knownvalue.StringValueExact("rts"),
 								}),
 							}),
 						),
@@ -1662,7 +1662,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetNestedBlockNumElements(t *tes
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("set_nested_block"),
-							knownvalue.NewNumElementsValue(2),
+							knownvalue.NumElementsExact(2),
 						),
 					},
 				},
@@ -1702,7 +1702,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_String(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("string_attribute"),
-							knownvalue.NewStringValue("str")),
+							knownvalue.StringValueExact("str")),
 					},
 				},
 			},
@@ -1741,7 +1741,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_String_KnownValueWrongType(t *te
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("string_attribute"),
-							knownvalue.NewBoolValue(true)),
+							knownvalue.BoolValueExact(true)),
 					},
 				},
 				ExpectError: regexp.MustCompile("wrong type: output value is string, known value type is knownvalue.BoolValue"),
@@ -1781,7 +1781,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_String_KnownValueWrongValue(t *t
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("string_attribute"),
-							knownvalue.NewStringValue("rts")),
+							knownvalue.StringValueExact("rts")),
 					},
 				},
 				ExpectError: regexp.MustCompile("output value: str does not equal expected value: rts"),
@@ -1799,7 +1799,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_UnknownAttributeType(t *testing.
 		expectedErr error
 	}{
 		"unrecognised-type": {
-			knownValue: knownvalue.NewInt64Value(123),
+			knownValue: knownvalue.Int64ValueExact(123),
 			req: plancheck.CheckPlanRequest{
 				Plan: &tfjson.Plan{
 					OutputChanges: map[string]*tfjson.Change{

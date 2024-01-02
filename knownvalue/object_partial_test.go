@@ -54,9 +54,9 @@ func TestObjectValuePartial_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.NewObjectValuePartial(map[string]knownvalue.KnownValue{
-				"one":   knownvalue.NewFloat64Value(1.23),
-				"three": knownvalue.NewFloat64Value(7.89),
+			got := knownvalue.ObjectValuePartialMatch(map[string]knownvalue.KnownValue{
+				"one":   knownvalue.Float64ValueExact(1.23),
+				"three": knownvalue.Float64ValueExact(7.89),
 			}).Equal(testCase.other)
 
 			if diff := cmp.Diff(got, testCase.expected); diff != "" {
@@ -69,9 +69,9 @@ func TestObjectValuePartial_Equal(t *testing.T) {
 func TestObjectValuePartial_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.NewObjectValuePartial(map[string]knownvalue.KnownValue{
-		"one":   knownvalue.NewFloat64Value(1.23),
-		"three": knownvalue.NewFloat64Value(7.89),
+	got := knownvalue.ObjectValuePartialMatch(map[string]knownvalue.KnownValue{
+		"one":   knownvalue.Float64ValueExact(1.23),
+		"three": knownvalue.Float64ValueExact(7.89),
 	}).String()
 
 	if diff := cmp.Diff(got, "map[one:1.23 three:7.89]"); diff != "" {

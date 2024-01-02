@@ -37,7 +37,7 @@ func TestStringValue_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.NewStringValue("str").Equal(testCase.other)
+			got := knownvalue.StringValueExact("str").Equal(testCase.other)
 
 			if diff := cmp.Diff(got, testCase.expected); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)
@@ -49,7 +49,7 @@ func TestStringValue_Equal(t *testing.T) {
 func TestStringValue_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.NewStringValue("str").String()
+	got := knownvalue.StringValueExact("str").String()
 
 	if diff := cmp.Diff(got, "str"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)

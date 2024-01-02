@@ -10,7 +10,7 @@ import (
 var _ KnownValue = NumberValue{}
 
 // NumberValue is a KnownValue for asserting equality between the value
-// supplied to NewNumberValue and the value passed to the Equal method.
+// supplied to NumberValueExact and the value passed to the Equal method.
 type NumberValue struct {
 	value *big.Float
 }
@@ -36,9 +36,9 @@ func (v NumberValue) String() string {
 	return v.value.Text('f', -1)
 }
 
-// NewNumberValue returns a KnownValue for asserting equality between the
+// NumberValueExact returns a KnownValue for asserting equality between the
 // supplied *big.Float and the value passed to the Equal method.
-func NewNumberValue(value *big.Float) NumberValue {
+func NumberValueExact(value *big.Float) NumberValue {
 	return NumberValue{
 		value: value,
 	}

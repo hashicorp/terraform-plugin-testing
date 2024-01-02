@@ -54,10 +54,10 @@ func TestMapValue_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
-				"one":   knownvalue.NewFloat64Value(1.23),
-				"two":   knownvalue.NewFloat64Value(4.56),
-				"three": knownvalue.NewFloat64Value(7.89),
+			got := knownvalue.MapValueExact(map[string]knownvalue.KnownValue{
+				"one":   knownvalue.Float64ValueExact(1.23),
+				"two":   knownvalue.Float64ValueExact(4.56),
+				"three": knownvalue.Float64ValueExact(7.89),
 			}).Equal(testCase.other)
 
 			if diff := cmp.Diff(got, testCase.expected); diff != "" {
@@ -70,10 +70,10 @@ func TestMapValue_Equal(t *testing.T) {
 func TestMapValue_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
-		"one":   knownvalue.NewFloat64Value(1.23),
-		"two":   knownvalue.NewFloat64Value(4.56),
-		"three": knownvalue.NewFloat64Value(7.89),
+	got := knownvalue.MapValueExact(map[string]knownvalue.KnownValue{
+		"one":   knownvalue.Float64ValueExact(1.23),
+		"two":   knownvalue.Float64ValueExact(4.56),
+		"three": knownvalue.Float64ValueExact(7.89),
 	}).String()
 
 	if diff := cmp.Diff(got, "map[one:1.23 three:7.89 two:4.56]"); diff != "" {

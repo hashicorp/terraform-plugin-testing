@@ -47,9 +47,9 @@ func TestListValuePartial_Equal(t *testing.T) {
 			t.Parallel()
 
 			got := knownvalue.NewListValuePartial(map[int]knownvalue.KnownValue{
-				0: knownvalue.NewFloat64Value(1.23),
-				2: knownvalue.NewFloat64Value(4.56),
-				3: knownvalue.NewFloat64Value(7.89),
+				0: knownvalue.Float64ValueExact(1.23),
+				2: knownvalue.Float64ValueExact(4.56),
+				3: knownvalue.Float64ValueExact(7.89),
 			}).Equal(testCase.other)
 
 			if diff := cmp.Diff(got, testCase.expected); diff != "" {
@@ -63,9 +63,9 @@ func TestListValuePartial_String(t *testing.T) {
 	t.Parallel()
 
 	got := knownvalue.NewListValuePartial(map[int]knownvalue.KnownValue{
-		0: knownvalue.NewFloat64Value(1.23),
-		2: knownvalue.NewFloat64Value(4.56),
-		3: knownvalue.NewFloat64Value(7.89),
+		0: knownvalue.Float64ValueExact(1.23),
+		2: knownvalue.Float64ValueExact(4.56),
+		3: knownvalue.Float64ValueExact(7.89),
 	}).String()
 
 	if diff := cmp.Diff(got, "[0:1.23 2:4.56 3:7.89]"); diff != "" {

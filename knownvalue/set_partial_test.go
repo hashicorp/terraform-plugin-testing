@@ -47,10 +47,10 @@ func TestSetValuePartial_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.NewSetValuePartial([]knownvalue.KnownValue{
-				knownvalue.NewFloat64Value(1.23),
-				knownvalue.NewFloat64Value(4.56),
-				knownvalue.NewFloat64Value(7.89),
+			got := knownvalue.SetValuePartialMatch([]knownvalue.KnownValue{
+				knownvalue.Float64ValueExact(1.23),
+				knownvalue.Float64ValueExact(4.56),
+				knownvalue.Float64ValueExact(7.89),
 			}).Equal(testCase.other)
 
 			if diff := cmp.Diff(got, testCase.expected); diff != "" {
@@ -63,10 +63,10 @@ func TestSetValuePartial_Equal(t *testing.T) {
 func TestSetValuePartial_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.NewSetValuePartial([]knownvalue.KnownValue{
-		knownvalue.NewFloat64Value(1.23),
-		knownvalue.NewFloat64Value(4.56),
-		knownvalue.NewFloat64Value(7.89),
+	got := knownvalue.SetValuePartialMatch([]knownvalue.KnownValue{
+		knownvalue.Float64ValueExact(1.23),
+		knownvalue.Float64ValueExact(4.56),
+		knownvalue.Float64ValueExact(7.89),
 	}).String()
 
 	if diff := cmp.Diff(got, "[1.23 4.56 7.89]"); diff != "" {

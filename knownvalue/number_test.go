@@ -50,7 +50,7 @@ func TestNumberValue_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.NewNumberValue(bigFloat).Equal(testCase.other)
+			got := knownvalue.NumberValueExact(bigFloat).Equal(testCase.other)
 
 			if diff := cmp.Diff(got, testCase.expected); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)
@@ -68,7 +68,7 @@ func TestNumberValue_String(t *testing.T) {
 		t.Errorf("%s", err)
 	}
 
-	got := knownvalue.NewNumberValue(bigFloat).String()
+	got := knownvalue.NumberValueExact(bigFloat).String()
 
 	if diff := cmp.Diff(got, "1.797693134862315797693134862315797693134862315"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)

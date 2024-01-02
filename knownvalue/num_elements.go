@@ -8,7 +8,7 @@ import "strconv"
 var _ KnownValue = NumElementsValue{}
 
 // NumElementsValue is a KnownValue for asserting equality between the value
-// supplied to NewNumElementsValue and the value passed to the Equal method.
+// supplied to NumElementsExact and the value passed to the Equal method.
 type NumElementsValue struct {
 	num int
 }
@@ -40,9 +40,9 @@ func (v NumElementsValue) String() string {
 	return strconv.FormatInt(int64(v.num), 10)
 }
 
-// NewNumElementsValue returns a KnownValue for asserting that
+// NumElementsExact returns a KnownValue for asserting that
 // a list, map, object, or set contains num elements.
-func NewNumElementsValue(num int) NumElementsValue {
+func NumElementsExact(num int) NumElementsValue {
 	return NumElementsValue{
 		num: num,
 	}

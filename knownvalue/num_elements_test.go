@@ -57,7 +57,7 @@ func TestNumElements_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.NewNumElementsValue(3).Equal(testCase.other)
+			got := knownvalue.NumElementsExact(3).Equal(testCase.other)
 
 			if diff := cmp.Diff(got, testCase.expected); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)
@@ -69,7 +69,7 @@ func TestNumElements_Equal(t *testing.T) {
 func TestNumElements_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.NewNumElementsValue(2).String()
+	got := knownvalue.NumElementsExact(2).String()
 
 	if diff := cmp.Diff(got, "2"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)

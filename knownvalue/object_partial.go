@@ -11,7 +11,7 @@ import (
 var _ KnownValue = ObjectValuePartial{}
 
 // ObjectValuePartial is a KnownValue for asserting equality between the value
-// supplied to NewObjectValuePartial and the value passed to the Equal method.
+// supplied to ObjectValuePartialMatch and the value passed to the Equal method.
 type ObjectValuePartial struct {
 	value map[string]KnownValue
 }
@@ -61,9 +61,9 @@ func (v ObjectValuePartial) String() string {
 	return fmt.Sprintf("%v", mapVals)
 }
 
-// NewObjectValuePartial returns a KnownValue for asserting partial equality between the
+// ObjectValuePartialMatch returns a KnownValue for asserting partial equality between the
 // supplied map[string]KnownValue and the value passed to the Equal method.
-func NewObjectValuePartial(value map[string]KnownValue) ObjectValuePartial {
+func ObjectValuePartialMatch(value map[string]KnownValue) ObjectValuePartial {
 	return ObjectValuePartial{
 		value: value,
 	}

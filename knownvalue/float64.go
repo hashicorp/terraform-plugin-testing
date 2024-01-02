@@ -10,7 +10,7 @@ import (
 var _ KnownValue = Float64Value{}
 
 // Float64Value is a KnownValue for asserting equality between the value
-// supplied to NewFloat64Value and the value passed to the Equal method.
+// supplied to Float64ValueExact and the value passed to the Equal method.
 type Float64Value struct {
 	value float64
 }
@@ -36,9 +36,9 @@ func (v Float64Value) String() string {
 	return strconv.FormatFloat(v.value, 'f', -1, 64)
 }
 
-// NewFloat64Value returns a KnownValue for asserting equality between the
+// Float64ValueExact returns a KnownValue for asserting equality between the
 // supplied float64 and the value passed to the Equal method.
-func NewFloat64Value(value float64) Float64Value {
+func Float64ValueExact(value float64) Float64Value {
 	return Float64Value{
 		value: value,
 	}

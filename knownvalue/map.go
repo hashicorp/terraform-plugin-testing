@@ -11,7 +11,7 @@ import (
 var _ KnownValue = MapValue{}
 
 // MapValue is a KnownValue for asserting equality between the value
-// supplied to NewMapValue and the value passed to the Equal method.
+// supplied to MapValueExact and the value passed to the Equal method.
 type MapValue struct {
 	value map[string]KnownValue
 }
@@ -65,9 +65,9 @@ func (v MapValue) String() string {
 	return fmt.Sprintf("%v", mapVals)
 }
 
-// NewMapValue returns a KnownValue for asserting equality between the
+// MapValueExact returns a KnownValue for asserting equality between the
 // supplied map[string]KnownValue and the value passed to the Equal method.
-func NewMapValue(value map[string]KnownValue) MapValue {
+func MapValueExact(value map[string]KnownValue) MapValue {
 	return MapValue{
 		value: value,
 	}

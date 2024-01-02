@@ -37,7 +37,7 @@ func TestFloat64Value_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.NewFloat64Value(1.23).Equal(testCase.other)
+			got := knownvalue.Float64ValueExact(1.23).Equal(testCase.other)
 
 			if diff := cmp.Diff(got, testCase.expected); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)
@@ -49,7 +49,7 @@ func TestFloat64Value_Equal(t *testing.T) {
 func TestFloat64Value_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.NewFloat64Value(1.234567890123e+09).String()
+	got := knownvalue.Float64ValueExact(1.234567890123e+09).String()
 
 	if diff := cmp.Diff(got, "1234567890.123"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)

@@ -37,7 +37,7 @@ func TestInt64Value_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.NewInt64Value(123).Equal(testCase.other)
+			got := knownvalue.Int64ValueExact(123).Equal(testCase.other)
 
 			if diff := cmp.Diff(got, testCase.expected); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)
@@ -49,7 +49,7 @@ func TestInt64Value_Equal(t *testing.T) {
 func TestInt64Value_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.NewInt64Value(1234567890123).String()
+	got := knownvalue.Int64ValueExact(1234567890123).String()
 
 	if diff := cmp.Diff(got, "1234567890123"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
