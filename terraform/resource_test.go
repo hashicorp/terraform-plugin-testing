@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/hashicorp/go-cty/cty"
-	"github.com/mitchellh/reflectwalk"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/configs/configschema"
 	"github.com/hashicorp/terraform-plugin-testing/internal/configs/hcl2shim"
@@ -278,60 +277,6 @@ func TestResourceConfigEqual_computedKeyOrder(t *testing.T) {
 
 	if !rc.Equal(rc2) {
 		t.Fatal("should be equal")
-	}
-}
-
-func TestUnknownCheckWalker(t *testing.T) {
-	t.Parallel()
-
-	cases := []struct {
-		Name   string
-		Input  interface{}
-		Result bool
-	}{
-		{
-			"primitive",
-			42,
-			false,
-		},
-
-		{
-			"primitive computed",
-			hcl2shim.UnknownVariableValue,
-			true,
-		},
-
-		{
-			"list",
-			[]interface{}{"foo", hcl2shim.UnknownVariableValue},
-			true,
-		},
-
-		{
-			"nested list",
-			[]interface{}{
-				"foo",
-				[]interface{}{hcl2shim.UnknownVariableValue},
-			},
-			true,
-		},
-	}
-
-	for i, tc := range cases {
-		i, tc := i, tc
-
-		t.Run(fmt.Sprintf("%d-%s", i, tc.Name), func(t *testing.T) {
-			t.Parallel()
-
-			var w unknownCheckWalker
-			if err := reflectwalk.Walk(tc.Input, &w); err != nil {
-				t.Fatalf("err: %s", err)
-			}
-
-			if w.Unknown != tc.Result {
-				t.Fatalf("bad: %v", w.Unknown)
-			}
-		})
 	}
 }
 
