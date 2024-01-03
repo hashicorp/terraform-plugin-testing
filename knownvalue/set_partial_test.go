@@ -21,7 +21,7 @@ func TestSetValuePartial_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("wrong type: <nil>, known value type is []Check"),
+			expectedError: fmt.Errorf("expected []any value for SetValuePartial check, got: <nil>"),
 		},
 		"zero-other": {
 			other: []any{}, // checking against the underlying value field zero-value
@@ -32,7 +32,7 @@ func TestSetValuePartial_CheckValue(t *testing.T) {
 				knownvalue.Float64ValueExact(4.56),
 				knownvalue.Float64ValueExact(7.89),
 			}),
-			expectedError: fmt.Errorf("wrong type: <nil>, known value type is []Check"),
+			expectedError: fmt.Errorf("expected []any value for SetValuePartial check, got: <nil>"),
 		},
 		"wrong-type": {
 			self: knownvalue.SetValuePartialMatch([]knownvalue.Check{
@@ -41,7 +41,7 @@ func TestSetValuePartial_CheckValue(t *testing.T) {
 				knownvalue.Float64ValueExact(7.89),
 			}),
 			other:         1.234,
-			expectedError: fmt.Errorf("wrong type: float64, known value type is []Check"),
+			expectedError: fmt.Errorf("expected []any value for SetValuePartial check, got: float64"),
 		},
 		"equal-empty": {
 			self: knownvalue.SetValuePartialMatch([]knownvalue.Check{
@@ -50,7 +50,7 @@ func TestSetValuePartial_CheckValue(t *testing.T) {
 				knownvalue.Float64ValueExact(7.89),
 			}),
 			other:         []any{},
-			expectedError: fmt.Errorf("expected value not found: 1.23"),
+			expectedError: fmt.Errorf("missing value 1.23 for SetValuePartial check"),
 		},
 		"not-equal": {
 			self: knownvalue.SetValuePartialMatch([]knownvalue.Check{
@@ -59,7 +59,7 @@ func TestSetValuePartial_CheckValue(t *testing.T) {
 				knownvalue.Float64ValueExact(7.89),
 			}),
 			other:         []any{1.23, 4.56, 6.54, 5.46},
-			expectedError: fmt.Errorf("expected value not found: 7.89"),
+			expectedError: fmt.Errorf("missing value 7.89 for SetValuePartial check"),
 		},
 		"equal-different-order": {
 			self: knownvalue.SetValuePartialMatch([]knownvalue.Check{

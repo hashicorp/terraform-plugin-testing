@@ -19,14 +19,25 @@ type ListElements struct {
 // CheckValue verifies that the passed value is a list, map, object,
 // or set, and contains a matching number of elements.
 func (v ListElements) CheckValue(other any) error {
-	val, ok := other.([]any)
+	otherVal, ok := other.([]any)
 
 	if !ok {
-		return fmt.Errorf("wrong type: %T, expected []any", other)
+		return fmt.Errorf("expected []any value for ListElements check, got: %T", other)
 	}
 
-	if len(val) != v.num {
-		return fmt.Errorf("wrong length: %d, expected %d", len(val), v.num)
+	if len(otherVal) != v.num {
+		expectedElements := "elements"
+		actualElements := "elements"
+
+		if v.num == 1 {
+			expectedElements = "element"
+		}
+
+		if len(otherVal) == 1 {
+			actualElements = "element"
+		}
+
+		return fmt.Errorf("expected %d %s for ListElements check, got %d %s", v.num, expectedElements, len(otherVal), actualElements)
 	}
 
 	return nil

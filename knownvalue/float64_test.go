@@ -21,24 +21,24 @@ func TestFloat64Value_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("wrong type: <nil>, known value type is float64"),
+			expectedError: fmt.Errorf("expected float64 value for Float64Value check, got: <nil>"),
 		},
 		"zero-other": {
 			other: 0.0, // checking against the underlying value field zero-value
 		},
 		"nil": {
 			self:          knownvalue.Float64ValueExact(1.234),
-			expectedError: fmt.Errorf("wrong type: <nil>, known value type is float64"),
+			expectedError: fmt.Errorf("expected float64 value for Float64Value check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.Float64ValueExact(1.234),
 			other:         int64(1234),
-			expectedError: fmt.Errorf("wrong type: int64, known value type is float64"),
+			expectedError: fmt.Errorf("expected float64 value for Float64Value check, got: int64"),
 		},
 		"not-equal": {
 			self:          knownvalue.Float64ValueExact(1.234),
 			other:         4.321,
-			expectedError: fmt.Errorf("value: 4.321 does not equal expected value: 1.234"),
+			expectedError: fmt.Errorf("expected value 1.234 for Float64Value check, got: 4.321"),
 		},
 		"equal": {
 			self:  knownvalue.Float64ValueExact(1.234),

@@ -21,24 +21,24 @@ func TestObjectAttributes_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("wrong type: <nil>, expected map[string]any"),
+			expectedError: fmt.Errorf("expected map[string]any value for ObjectAttributes check, got: <nil>"),
 		},
 		"zero-other": {
 			other: map[string]any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
 			self:          knownvalue.ObjectAttributesExact(3),
-			expectedError: fmt.Errorf("wrong type: <nil>, expected map[string]any"),
+			expectedError: fmt.Errorf("expected map[string]any value for ObjectAttributes check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.ObjectAttributesExact(3),
 			other:         1.234,
-			expectedError: fmt.Errorf("wrong type: float64, expected map[string]any"),
+			expectedError: fmt.Errorf("expected map[string]any value for ObjectAttributes check, got: float64"),
 		},
 		"empty": {
 			self:          knownvalue.ObjectAttributesExact(3),
 			other:         map[string]any{},
-			expectedError: fmt.Errorf("wrong length: 0, expected 3"),
+			expectedError: fmt.Errorf("expected 3 attributes for ObjectAttributes check, got 0 attributes"),
 		},
 		"wrong-length": {
 			self: knownvalue.ObjectAttributesExact(3),
@@ -46,7 +46,7 @@ func TestObjectAttributes_CheckValue(t *testing.T) {
 				"one": int64(123),
 				"two": int64(456),
 			},
-			expectedError: fmt.Errorf("wrong length: 2, expected 3"),
+			expectedError: fmt.Errorf("expected 3 attributes for ObjectAttributes check, got 2 attributes"),
 		},
 		"equal": {
 			self: knownvalue.ObjectAttributesExact(3),

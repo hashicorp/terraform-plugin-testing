@@ -26,11 +26,11 @@ func (v NumberValue) CheckValue(other any) error {
 	otherVal, ok := other.(*big.Float)
 
 	if !ok {
-		return fmt.Errorf("wrong type: %T, known value type is *big.Float", other)
+		return fmt.Errorf("expected *big.Float value for NumberValue check, got: %T", other)
 	}
 
 	if v.value.Cmp(otherVal) != 0 {
-		return fmt.Errorf("value: %s does not equal expected value: %s", otherVal.Text('f', -1), v.String())
+		return fmt.Errorf("expected value %s for NumberValue check, got: %s", v.String(), otherVal.Text('f', -1))
 	}
 
 	return nil

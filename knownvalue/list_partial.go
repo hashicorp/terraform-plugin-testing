@@ -24,7 +24,7 @@ func (v ListValuePartial) CheckValue(other any) error {
 	otherVal, ok := other.([]any)
 
 	if !ok {
-		return fmt.Errorf("wrong type: %T, known value type is map[int]Check", other)
+		return fmt.Errorf("expected []any value for ListValuePartial check, got: %T", other)
 	}
 
 	var keys []int
@@ -39,11 +39,11 @@ func (v ListValuePartial) CheckValue(other any) error {
 
 	for _, k := range keys {
 		if len(otherVal) <= k {
-			return fmt.Errorf("index out of bounds: %d", k)
+			return fmt.Errorf("missing element index %d for ListValuePartial check", k)
 		}
 
 		if err := v.value[k].CheckValue(otherVal[k]); err != nil {
-			return err
+			return fmt.Errorf("list element %d: %s", k, err)
 		}
 	}
 

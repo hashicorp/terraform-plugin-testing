@@ -22,11 +22,11 @@ func (v Float64Value) CheckValue(other any) error {
 	otherVal, ok := other.(float64)
 
 	if !ok {
-		return fmt.Errorf("wrong type: %T, known value type is float64", other)
+		return fmt.Errorf("expected float64 value for Float64Value check, got: %T", other)
 	}
 
 	if otherVal != v.value {
-		return fmt.Errorf("value: %v does not equal expected value: %s", strconv.FormatFloat(otherVal, 'f', -1, 64), v.String())
+		return fmt.Errorf("expected value %s for Float64Value check, got: %s", v.String(), strconv.FormatFloat(otherVal, 'f', -1, 64))
 	}
 
 	return nil

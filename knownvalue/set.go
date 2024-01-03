@@ -21,11 +21,22 @@ func (v SetValue) CheckValue(other any) error {
 	otherVal, ok := other.([]any)
 
 	if !ok {
-		return fmt.Errorf("wrong type: %T, known value type is []Check", other)
+		return fmt.Errorf("expected []any value for SetValue check, got: %T", other)
 	}
 
 	if len(otherVal) != len(v.value) {
-		return fmt.Errorf("wrong length: %d, known value length is %d", len(otherVal), len(v.value))
+		expectedElements := "elements"
+		actualElements := "elements"
+
+		if len(v.value) == 1 {
+			expectedElements = "element"
+		}
+
+		if len(otherVal) == 1 {
+			actualElements = "element"
+		}
+
+		return fmt.Errorf("expected %d %s for SetValue check, got %d %s", len(v.value), expectedElements, len(otherVal), actualElements)
 	}
 
 	otherValCopy := make([]any, len(otherVal))
@@ -33,7 +44,7 @@ func (v SetValue) CheckValue(other any) error {
 	copy(otherValCopy, otherVal)
 
 	for i := 0; i < len(v.value); i++ {
-		err := fmt.Errorf("expected value not found: %s", v.value[i].String())
+		err := fmt.Errorf("missing value %s for SetValue check", v.value[i].String())
 
 		for j := 0; j < len(otherValCopy); j++ {
 			checkValueErr := v.value[i].CheckValue(otherValCopy[j])

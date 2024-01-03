@@ -22,11 +22,11 @@ func (v Int64Value) CheckValue(other any) error {
 	otherVal, ok := other.(int64)
 
 	if !ok {
-		return fmt.Errorf("wrong type: %T, known value type is int64", other)
+		return fmt.Errorf("expected int64 value for Int64Value check, got: %T", other)
 	}
 
 	if otherVal != v.value {
-		return fmt.Errorf("value: %d does not equal expected value: %d", otherVal, v.value)
+		return fmt.Errorf("expected value %d for Int64Value check, got: %d", v.value, otherVal)
 	}
 
 	return nil

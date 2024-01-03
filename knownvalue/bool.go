@@ -22,11 +22,11 @@ func (v BoolValue) CheckValue(other any) error {
 	otherVal, ok := other.(bool)
 
 	if !ok {
-		return fmt.Errorf("wrong type: %T, known value type is bool", other)
+		return fmt.Errorf("expected bool value for BoolValue check, got: %T", other)
 	}
 
 	if otherVal != v.value {
-		return fmt.Errorf("value: %t does not equal expected value: %t", otherVal, v.value)
+		return fmt.Errorf("expected value %t for BoolValue check, got: %t", v.value, otherVal)
 	}
 
 	return nil

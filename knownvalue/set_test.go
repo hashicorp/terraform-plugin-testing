@@ -21,7 +21,7 @@ func TestSetValue_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("wrong type: <nil>, known value type is []Check"),
+			expectedError: fmt.Errorf("expected []any value for SetValue check, got: <nil>"),
 		},
 		"zero-other": {
 			other: []any{}, // checking against the underlying value field zero-value
@@ -32,7 +32,7 @@ func TestSetValue_CheckValue(t *testing.T) {
 				knownvalue.Int64ValueExact(456),
 				knownvalue.Int64ValueExact(789),
 			}),
-			expectedError: fmt.Errorf("wrong type: <nil>, known value type is []Check"),
+			expectedError: fmt.Errorf("expected []any value for SetValue check, got: <nil>"),
 		},
 		"wrong-type": {
 			self: knownvalue.SetValueExact([]knownvalue.Check{
@@ -41,7 +41,7 @@ func TestSetValue_CheckValue(t *testing.T) {
 				knownvalue.Int64ValueExact(789),
 			}),
 			other:         1.234,
-			expectedError: fmt.Errorf("wrong type: float64, known value type is []Check"),
+			expectedError: fmt.Errorf("expected []any value for SetValue check, got: float64"),
 		},
 		"empty": {
 			self: knownvalue.SetValueExact([]knownvalue.Check{
@@ -50,7 +50,7 @@ func TestSetValue_CheckValue(t *testing.T) {
 				knownvalue.Int64ValueExact(789),
 			}),
 			other:         []any{},
-			expectedError: fmt.Errorf("wrong length: 0, known value length is 3"),
+			expectedError: fmt.Errorf("expected 3 elements for SetValue check, got 0 elements"),
 		},
 		"wrong-length": {
 			self: knownvalue.SetValueExact([]knownvalue.Check{
@@ -62,7 +62,7 @@ func TestSetValue_CheckValue(t *testing.T) {
 				int64(123),
 				int64(456),
 			},
-			expectedError: fmt.Errorf("wrong length: 2, known value length is 3"),
+			expectedError: fmt.Errorf("expected 3 elements for SetValue check, got 2 elements"),
 		},
 		"not-equal": {
 			self: knownvalue.SetValueExact([]knownvalue.Check{
@@ -75,7 +75,7 @@ func TestSetValue_CheckValue(t *testing.T) {
 				int64(456),
 				int64(654),
 			},
-			expectedError: fmt.Errorf("expected value not found: 789"),
+			expectedError: fmt.Errorf("missing value 789 for SetValue check"),
 		},
 		"equal-different-order": {
 			self: knownvalue.SetValueExact([]knownvalue.Check{

@@ -21,7 +21,7 @@ func (v SetValuePartial) CheckValue(other any) error {
 	otherVal, ok := other.([]any)
 
 	if !ok {
-		return fmt.Errorf("wrong type: %T, known value type is []Check", other)
+		return fmt.Errorf("expected []any value for SetValuePartial check, got: %T", other)
 	}
 
 	otherValCopy := make([]any, len(otherVal))
@@ -29,7 +29,7 @@ func (v SetValuePartial) CheckValue(other any) error {
 	copy(otherValCopy, otherVal)
 
 	for i := 0; i < len(v.value); i++ {
-		err := fmt.Errorf("expected value not found: %s", v.value[i].String())
+		err := fmt.Errorf("missing value %s for SetValuePartial check", v.value[i].String())
 
 		for j := 0; j < len(otherValCopy); j++ {
 			checkValueErr := v.value[i].CheckValue(otherValCopy[j])

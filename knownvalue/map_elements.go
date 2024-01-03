@@ -19,14 +19,25 @@ type MapElements struct {
 // CheckValue verifies that the passed value is a list, map, object,
 // or set, and contains a matching number of elements.
 func (v MapElements) CheckValue(other any) error {
-	val, ok := other.(map[string]any)
+	otherVal, ok := other.(map[string]any)
 
 	if !ok {
-		return fmt.Errorf("wrong type: %T, expected map[string]any", other)
+		return fmt.Errorf("expected map[string]any value for MapElements check, got: %T", other)
 	}
 
-	if len(val) != v.num {
-		return fmt.Errorf("wrong length: %d, expected %d", len(val), v.num)
+	if len(otherVal) != v.num {
+		expectedElements := "elements"
+		actualElements := "elements"
+
+		if v.num == 1 {
+			expectedElements = "element"
+		}
+
+		if len(otherVal) == 1 {
+			actualElements = "element"
+		}
+
+		return fmt.Errorf("expected %d %s for MapElements check, got %d %s", v.num, expectedElements, len(otherVal), actualElements)
 	}
 
 	return nil

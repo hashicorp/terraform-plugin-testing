@@ -22,11 +22,22 @@ func (v ObjectValue) CheckValue(other any) error {
 	otherVal, ok := other.(map[string]any)
 
 	if !ok {
-		return fmt.Errorf("wrong type: %T, known value type is map[string]Check", other)
+		return fmt.Errorf("expected map[string]any value for ObjectValue check, got: %T", other)
 	}
 
 	if len(otherVal) != len(v.value) {
-		return fmt.Errorf("wrong length: %d, known value length is %d", len(otherVal), len(v.value))
+		expectedAttributes := "attributes"
+		actualAttributes := "attributes"
+
+		if len(v.value) == 1 {
+			expectedAttributes = "attribute"
+		}
+
+		if len(otherVal) == 1 {
+			actualAttributes = "attribute"
+		}
+
+		return fmt.Errorf("expected %d %s for ObjectValue check, got %d %s", len(v.value), expectedAttributes, len(otherVal), actualAttributes)
 	}
 
 	var keys []string
@@ -43,11 +54,11 @@ func (v ObjectValue) CheckValue(other any) error {
 		otherValItem, ok := otherVal[k]
 
 		if !ok {
-			return fmt.Errorf("missing key: %s", k)
+			return fmt.Errorf("missing attribute %s for ObjectValue check", k)
 		}
 
 		if err := v.value[k].CheckValue(otherValItem); err != nil {
-			return err
+			return fmt.Errorf("%s object attribute: %s", k, err)
 		}
 	}
 

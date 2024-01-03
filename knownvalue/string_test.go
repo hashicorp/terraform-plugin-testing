@@ -21,24 +21,24 @@ func TestStringValue_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("wrong type: <nil>, known value type is string"),
+			expectedError: fmt.Errorf("expected string value for StringValue check, got: <nil>"),
 		},
 		"zero-other": {
 			other: "", // checking against the underlying value field zero-value
 		},
 		"nil": {
 			self:          knownvalue.StringValueExact("str"),
-			expectedError: fmt.Errorf("wrong type: <nil>, known value type is string"),
+			expectedError: fmt.Errorf("expected string value for StringValue check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.StringValueExact("str"),
 			other:         1.234,
-			expectedError: fmt.Errorf("wrong type: float64, known value type is string"),
+			expectedError: fmt.Errorf("expected string value for StringValue check, got: float64"),
 		},
 		"not-equal": {
 			self:          knownvalue.StringValueExact("str"),
 			other:         "rts",
-			expectedError: fmt.Errorf("value: rts does not equal expected value: str"),
+			expectedError: fmt.Errorf("expected value str for StringValue check, got: rts"),
 		},
 		"equal": {
 			self:  knownvalue.StringValueExact("str"),

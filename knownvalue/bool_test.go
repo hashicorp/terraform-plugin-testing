@@ -21,24 +21,24 @@ func TestBoolValue_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("wrong type: <nil>, known value type is bool"),
+			expectedError: fmt.Errorf("expected bool value for BoolValue check, got: <nil>"),
 		},
 		"zero-other": {
 			other: false, // checking against the underlying value field zero-value
 		},
 		"nil": {
 			self:          knownvalue.BoolValueExact(false),
-			expectedError: fmt.Errorf("wrong type: <nil>, known value type is bool"),
+			expectedError: fmt.Errorf("expected bool value for BoolValue check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.BoolValueExact(true),
 			other:         1.23,
-			expectedError: fmt.Errorf("wrong type: float64, known value type is bool"),
+			expectedError: fmt.Errorf("expected bool value for BoolValue check, got: float64"),
 		},
 		"not-equal": {
 			self:          knownvalue.BoolValueExact(true),
 			other:         false,
-			expectedError: fmt.Errorf("value: false does not equal expected value: true"),
+			expectedError: fmt.Errorf("expected value true for BoolValue check, got: false"),
 		},
 		"equal": {
 			self:  knownvalue.BoolValueExact(true),

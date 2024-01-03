@@ -19,11 +19,11 @@ func (v StringValue) CheckValue(other any) error {
 	otherVal, ok := other.(string)
 
 	if !ok {
-		return fmt.Errorf("wrong type: %T, known value type is string", other)
+		return fmt.Errorf("expected string value for StringValue check, got: %T", other)
 	}
 
 	if otherVal != v.value {
-		return fmt.Errorf("value: %s does not equal expected value: %s", otherVal, v.value)
+		return fmt.Errorf("expected value %s for StringValue check, got: %s", v.value, otherVal)
 	}
 
 	return nil

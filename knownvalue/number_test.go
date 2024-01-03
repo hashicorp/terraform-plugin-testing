@@ -42,17 +42,17 @@ func TestNumberValue_Equal(t *testing.T) {
 		},
 		"nil": {
 			self:          knownvalue.NumberValueExact(bigFloat),
-			expectedError: fmt.Errorf("wrong type: <nil>, known value type is *big.Float"),
+			expectedError: fmt.Errorf("expected *big.Float value for NumberValue check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.NumberValueExact(bigFloat),
 			other:         1.234,
-			expectedError: fmt.Errorf("wrong type: float64, known value type is *big.Float"),
+			expectedError: fmt.Errorf("expected *big.Float value for NumberValue check, got: float64"),
 		},
 		"not-equal": {
 			self:          knownvalue.NumberValueExact(bigFloat),
 			other:         otherBigFloat,
-			expectedError: fmt.Errorf("value: 1.797693134862315797693134862315797693134862314 does not equal expected value: 1.797693134862315797693134862315797693134862315"),
+			expectedError: fmt.Errorf("expected value 1.797693134862315797693134862315797693134862315 for NumberValue check, got: 1.797693134862315797693134862315797693134862314"),
 		},
 		"equal": {
 			self:  knownvalue.NumberValueExact(bigFloat),

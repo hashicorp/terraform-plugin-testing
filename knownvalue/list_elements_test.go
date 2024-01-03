@@ -21,24 +21,24 @@ func TestListElements_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("wrong type: <nil>, expected []any"),
+			expectedError: fmt.Errorf("expected []any value for ListElements check, got: <nil>"),
 		},
 		"zero-other": {
 			other: []any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
 			self:          knownvalue.ListElementsExact(3),
-			expectedError: fmt.Errorf("wrong type: <nil>, expected []any"),
+			expectedError: fmt.Errorf("expected []any value for ListElements check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.ListElementsExact(3),
 			other:         1.234,
-			expectedError: fmt.Errorf("wrong type: float64, expected []any"),
+			expectedError: fmt.Errorf("expected []any value for ListElements check, got: float64"),
 		},
 		"empty": {
 			self:          knownvalue.ListElementsExact(3),
 			other:         []any{},
-			expectedError: fmt.Errorf("wrong length: 0, expected 3"),
+			expectedError: fmt.Errorf("expected 3 elements for ListElements check, got 0 elements"),
 		},
 		"wrong-length": {
 			self: knownvalue.ListElementsExact(3),
@@ -46,7 +46,7 @@ func TestListElements_CheckValue(t *testing.T) {
 				int64(123),
 				int64(456),
 			},
-			expectedError: fmt.Errorf("wrong length: 2, expected 3"),
+			expectedError: fmt.Errorf("expected 3 elements for ListElements check, got 2 elements"),
 		},
 		"equal": {
 			self: knownvalue.ListElementsExact(3),

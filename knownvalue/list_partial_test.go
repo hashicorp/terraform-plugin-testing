@@ -21,7 +21,7 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("wrong type: <nil>, known value type is map[int]Check"),
+			expectedError: fmt.Errorf("expected []any value for ListValuePartial check, got: <nil>"),
 		},
 		"zero-other": {
 			other: []any{}, // checking against the underlying value field zero-value
@@ -32,7 +32,7 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 				2: knownvalue.Float64ValueExact(4.56),
 				3: knownvalue.Float64ValueExact(7.89),
 			}),
-			expectedError: fmt.Errorf("wrong type: <nil>, known value type is map[int]Check"),
+			expectedError: fmt.Errorf("expected []any value for ListValuePartial check, got: <nil>"),
 		},
 		"wrong-type": {
 			self: knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{
@@ -41,7 +41,7 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 				3: knownvalue.Float64ValueExact(7.89),
 			}),
 			other:         1.234,
-			expectedError: fmt.Errorf("wrong type: float64, known value type is map[int]Check"),
+			expectedError: fmt.Errorf("expected []any value for ListValuePartial check, got: float64"),
 		},
 		"empty": {
 			self: knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{
@@ -50,7 +50,7 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 				3: knownvalue.Float64ValueExact(7.89),
 			}),
 			other:         []any{},
-			expectedError: fmt.Errorf("index out of bounds: 0"),
+			expectedError: fmt.Errorf("missing element index 0 for ListValuePartial check"),
 		},
 		"wrong-length": {
 			self: knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{
@@ -59,7 +59,7 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 				3: knownvalue.Float64ValueExact(7.89),
 			}),
 			other:         []any{1.23, 4.56},
-			expectedError: fmt.Errorf("index out of bounds: 2"),
+			expectedError: fmt.Errorf("missing element index 2 for ListValuePartial check"),
 		},
 		"not-equal": {
 			self: knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{
@@ -68,7 +68,7 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 				3: knownvalue.Float64ValueExact(7.89),
 			}),
 			other:         []any{1.23, 4.56, 6.54, 5.46},
-			expectedError: fmt.Errorf("value: 6.54 does not equal expected value: 4.56"),
+			expectedError: fmt.Errorf("list element 2: expected value 4.56 for Float64Value check, got: 6.54"),
 		},
 		"wrong-order": {
 			self: knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{
@@ -77,7 +77,7 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 				3: knownvalue.Float64ValueExact(7.89),
 			}),
 			other:         []any{1.23, 0.00, 7.89, 4.56},
-			expectedError: fmt.Errorf("value: 7.89 does not equal expected value: 4.56"),
+			expectedError: fmt.Errorf("list element 2: expected value 4.56 for Float64Value check, got: 7.89"),
 		},
 		"equal": {
 			self: knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{

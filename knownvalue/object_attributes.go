@@ -19,14 +19,25 @@ type ObjectAttributes struct {
 // CheckValue verifies that the passed value is a list, map, object,
 // or set, and contains a matching number of elements.
 func (v ObjectAttributes) CheckValue(other any) error {
-	val, ok := other.(map[string]any)
+	otherVal, ok := other.(map[string]any)
 
 	if !ok {
-		return fmt.Errorf("wrong type: %T, expected map[string]any", other)
+		return fmt.Errorf("expected map[string]any value for ObjectAttributes check, got: %T", other)
 	}
 
-	if len(val) != v.num {
-		return fmt.Errorf("wrong length: %d, expected %d", len(val), v.num)
+	if len(otherVal) != v.num {
+		expectedAttributes := "attributes"
+		actualAttributes := "attributes"
+
+		if v.num == 1 {
+			expectedAttributes = "attribute"
+		}
+
+		if len(otherVal) == 1 {
+			actualAttributes = "attribute"
+		}
+
+		return fmt.Errorf("expected %d %s for ObjectAttributes check, got %d %s", v.num, expectedAttributes, len(otherVal), actualAttributes)
 	}
 
 	return nil

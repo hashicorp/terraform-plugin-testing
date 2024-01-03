@@ -22,7 +22,7 @@ func (v MapValuePartial) CheckValue(other any) error {
 	otherVal, ok := other.(map[string]any)
 
 	if !ok {
-		return fmt.Errorf("wrong type: %T, known value type is map[string]Check", other)
+		return fmt.Errorf("expected map[string]any value for MapValuePartial check, got: %T", other)
 	}
 
 	var keys []string
@@ -39,11 +39,11 @@ func (v MapValuePartial) CheckValue(other any) error {
 		otherValItem, ok := otherVal[k]
 
 		if !ok {
-			return fmt.Errorf("missing key: %s", k)
+			return fmt.Errorf("missing element %s for MapValuePartial check", k)
 		}
 
 		if err := v.value[k].CheckValue(otherValItem); err != nil {
-			return err
+			return fmt.Errorf("%s map element: %s", k, err)
 		}
 	}
 
