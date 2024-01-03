@@ -3,8 +3,11 @@
 
 package knownvalue
 
-// KnownValue defines an interface that is implemented to determine equality on the basis of type and value.
-type KnownValue interface {
-	// Equal should perform equality testing.
-	Equal(other any) bool
+// Check defines an interface that is implemented to determine whether type and value match. Individual
+// implementations determine how the match is performed (e.g., exact match, partial match).
+type Check interface {
+	// CheckValue should perform match testing.
+	CheckValue(value any) error
+	// String should return a string representation of the type and value.
+	String() string
 }

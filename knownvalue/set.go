@@ -7,25 +7,25 @@ import (
 	"fmt"
 )
 
-var _ KnownValue = SetValue{}
+var _ Check = SetValue{}
 
-// SetValue is a KnownValue for asserting equality between the value
-// supplied to SetValueExact and the value passed to the Equal method.
+// SetValue is a KnownValue for asserting equality between the value supplied
+// to SetValueExact and the value passed to the CheckValue method.
 type SetValue struct {
-	value []KnownValue
+	value []Check
 }
 
-// Equal determines whether the passed value is of type []any, and
+// CheckValue determines whether the passed value is of type []any, and
 // contains matching slice entries independent of the sequence.
-func (v SetValue) Equal(other any) bool {
+func (v SetValue) CheckValue(other any) error {
 	otherVal, ok := other.([]any)
 
 	if !ok {
-		return false
+		return fmt.Errorf("wrong type: %T, known value type is []Check", other)
 	}
 
 	if len(otherVal) != len(v.value) {
-		return false
+		return fmt.Errorf("wrong length: %d, known value length is %d", len(otherVal), len(v.value))
 	}
 
 	otherValCopy := make([]any, len(otherVal))
@@ -33,25 +33,27 @@ func (v SetValue) Equal(other any) bool {
 	copy(otherValCopy, otherVal)
 
 	for i := 0; i < len(v.value); i++ {
-		var equal bool
+		err := fmt.Errorf("expected value not found: %s", v.value[i].String())
 
 		for j := 0; j < len(otherValCopy); j++ {
-			equal = v.value[i].Equal(otherValCopy[j])
+			checkValueErr := v.value[i].CheckValue(otherValCopy[j])
 
-			if equal {
+			if checkValueErr == nil {
 				otherValCopy[j] = otherValCopy[len(otherValCopy)-1]
 				otherValCopy = otherValCopy[:len(otherValCopy)-1]
+
+				err = nil
 
 				break
 			}
 		}
 
-		if !equal {
-			return false
+		if err != nil {
+			return err
 		}
 	}
 
-	return true
+	return nil
 }
 
 // String returns the string representation of the value.
@@ -65,9 +67,9 @@ func (v SetValue) String() string {
 	return fmt.Sprintf("%s", setVals)
 }
 
-// SetValueExact returns a KnownValue for asserting equality between the
-// supplied []KnownValue and the value passed to the Equal method.
-func SetValueExact(value []KnownValue) SetValue {
+// SetValueExact returns a Check for asserting equality between the
+// supplied []Check and the value passed to the CheckValue method.
+func SetValueExact(value []Check) SetValue {
 	return SetValue{
 		value: value,
 	}

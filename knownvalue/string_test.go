@@ -4,6 +4,7 @@
 package knownvalue_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -11,23 +12,37 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 )
 
-func TestStringValue_Equal(t *testing.T) {
+func TestStringValue_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		other    any
-		expected bool
+		self          knownvalue.StringValue
+		other         any
+		expectedError error
 	}{
-		"nil": {},
+		"zero-nil": {
+			expectedError: fmt.Errorf("wrong type: <nil>, known value type is string"),
+		},
+		"zero-other": {
+			other: "", // checking against the underlying value field zero-value
+		},
+		"nil": {
+			self:          knownvalue.StringValueExact("str"),
+			expectedError: fmt.Errorf("wrong type: <nil>, known value type is string"),
+		},
 		"wrong-type": {
-			other: 1.23,
+			self:          knownvalue.StringValueExact("str"),
+			other:         1.234,
+			expectedError: fmt.Errorf("wrong type: float64, known value type is string"),
 		},
 		"not-equal": {
-			other: "other",
+			self:          knownvalue.StringValueExact("str"),
+			other:         "rts",
+			expectedError: fmt.Errorf("value: rts does not equal expected value: str"),
 		},
 		"equal": {
-			other:    "str",
-			expected: true,
+			self:  knownvalue.StringValueExact("str"),
+			other: "str",
 		},
 	}
 
@@ -37,9 +52,9 @@ func TestStringValue_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.StringValueExact("str").Equal(testCase.other)
+			got := testCase.self.CheckValue(testCase.other)
 
-			if diff := cmp.Diff(got, testCase.expected); diff != "" {
+			if diff := cmp.Diff(got, testCase.expectedError, equateErrorMessage); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)
 			}
 		})

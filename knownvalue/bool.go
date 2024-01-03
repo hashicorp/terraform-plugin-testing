@@ -3,30 +3,33 @@
 
 package knownvalue
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
-var _ KnownValue = BoolValue{}
+var _ Check = BoolValue{}
 
-// BoolValue is a KnownValue for asserting equality between the value
-// supplied to BoolValueExact and the value passed to the Equal method.
+// BoolValue is a KnownValue for asserting equality between the value supplied
+// to BoolValueExact and the value passed to the CheckValue method.
 type BoolValue struct {
 	value bool
 }
 
-// Equal determines whether the passed value is of type bool, and
+// CheckValue determines whether the passed value is of type bool, and
 // contains a matching bool value.
-func (v BoolValue) Equal(other any) bool {
+func (v BoolValue) CheckValue(other any) error {
 	otherVal, ok := other.(bool)
 
 	if !ok {
-		return false
+		return fmt.Errorf("wrong type: %T, known value type is bool", other)
 	}
 
 	if otherVal != v.value {
-		return false
+		return fmt.Errorf("value: %t does not equal expected value: %t", otherVal, v.value)
 	}
 
-	return true
+	return nil
 }
 
 // String returns the string representation of the bool value.
@@ -34,8 +37,8 @@ func (v BoolValue) String() string {
 	return strconv.FormatBool(v.value)
 }
 
-// BoolValueExact returns a KnownValue for asserting equality between the
-// supplied bool and the value passed to the Equal method.
+// BoolValueExact returns a Check for asserting equality between the
+// supplied bool and the value passed to the CheckValue method.
 func BoolValueExact(value bool) BoolValue {
 	return BoolValue{
 		value: value,

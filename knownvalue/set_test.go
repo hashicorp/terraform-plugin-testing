@@ -4,6 +4,7 @@
 package knownvalue_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -11,48 +12,94 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 )
 
-func TestSetValue_Equal(t *testing.T) {
+func TestSetValue_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		other    any
-		expected bool
+		self          knownvalue.SetValue
+		other         any
+		expectedError error
 	}{
-		"nil": {},
+		"zero-nil": {
+			expectedError: fmt.Errorf("wrong type: <nil>, known value type is []Check"),
+		},
+		"zero-other": {
+			other: []any{}, // checking against the underlying value field zero-value
+		},
+		"nil": {
+			self: knownvalue.SetValueExact([]knownvalue.Check{
+				knownvalue.Int64ValueExact(123),
+				knownvalue.Int64ValueExact(456),
+				knownvalue.Int64ValueExact(789),
+			}),
+			expectedError: fmt.Errorf("wrong type: <nil>, known value type is []Check"),
+		},
 		"wrong-type": {
-			other: 1.23,
+			self: knownvalue.SetValueExact([]knownvalue.Check{
+				knownvalue.Int64ValueExact(123),
+				knownvalue.Int64ValueExact(456),
+				knownvalue.Int64ValueExact(789),
+			}),
+			other:         1.234,
+			expectedError: fmt.Errorf("wrong type: float64, known value type is []Check"),
 		},
 		"empty": {
-			other: []any{},
+			self: knownvalue.SetValueExact([]knownvalue.Check{
+				knownvalue.Int64ValueExact(123),
+				knownvalue.Int64ValueExact(456),
+				knownvalue.Int64ValueExact(789),
+			}),
+			other:         []any{},
+			expectedError: fmt.Errorf("wrong length: 0, known value length is 3"),
 		},
-		"different-len": {
+		"wrong-length": {
+			self: knownvalue.SetValueExact([]knownvalue.Check{
+				knownvalue.Int64ValueExact(123),
+				knownvalue.Int64ValueExact(456),
+				knownvalue.Int64ValueExact(789),
+			}),
 			other: []any{
 				int64(123),
 				int64(456),
 			},
+			expectedError: fmt.Errorf("wrong length: 2, known value length is 3"),
 		},
 		"not-equal": {
+			self: knownvalue.SetValueExact([]knownvalue.Check{
+				knownvalue.Int64ValueExact(123),
+				knownvalue.Int64ValueExact(456),
+				knownvalue.Int64ValueExact(789),
+			}),
 			other: []any{
 				int64(123),
 				int64(456),
 				int64(654),
 			},
+			expectedError: fmt.Errorf("expected value not found: 789"),
 		},
 		"equal-different-order": {
+			self: knownvalue.SetValueExact([]knownvalue.Check{
+				knownvalue.Int64ValueExact(123),
+				knownvalue.Int64ValueExact(456),
+				knownvalue.Int64ValueExact(789),
+			}),
 			other: []any{
+				int64(123),
 				int64(789),
 				int64(456),
-				int64(123),
 			},
-			expected: true,
 		},
 		"equal-same-order": {
+			self: knownvalue.SetValueExact([]knownvalue.Check{
+				knownvalue.Int64ValueExact(123),
+				knownvalue.Int64ValueExact(456),
+				knownvalue.Int64ValueExact(789),
+			}),
 			other: []any{
 				int64(123),
 				int64(456),
 				int64(789),
 			},
-			expected: true,
 		},
 	}
 
@@ -62,13 +109,9 @@ func TestSetValue_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.SetValueExact([]knownvalue.KnownValue{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
-			}).Equal(testCase.other)
+			got := testCase.self.CheckValue(testCase.other)
 
-			if diff := cmp.Diff(got, testCase.expected); diff != "" {
+			if diff := cmp.Diff(got, testCase.expectedError, equateErrorMessage); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)
 			}
 		})
@@ -78,7 +121,7 @@ func TestSetValue_Equal(t *testing.T) {
 func TestSetValue_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.NewListValue([]knownvalue.KnownValue{
+	got := knownvalue.SetValueExact([]knownvalue.Check{
 		knownvalue.Int64ValueExact(123),
 		knownvalue.Int64ValueExact(456),
 		knownvalue.Int64ValueExact(789),

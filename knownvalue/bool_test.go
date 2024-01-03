@@ -4,6 +4,7 @@
 package knownvalue_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -11,23 +12,37 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 )
 
-func TestBoolValue_Equal(t *testing.T) {
+func TestBoolValue_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		other    any
-		expected bool
+		self          knownvalue.BoolValue
+		other         any
+		expectedError error
 	}{
-		"nil": {},
+		"zero-nil": {
+			expectedError: fmt.Errorf("wrong type: <nil>, known value type is bool"),
+		},
+		"zero-other": {
+			other: false, // checking against the underlying value field zero-value
+		},
+		"nil": {
+			self:          knownvalue.BoolValueExact(false),
+			expectedError: fmt.Errorf("wrong type: <nil>, known value type is bool"),
+		},
 		"wrong-type": {
-			other: 1.23,
+			self:          knownvalue.BoolValueExact(true),
+			other:         1.23,
+			expectedError: fmt.Errorf("wrong type: float64, known value type is bool"),
 		},
 		"not-equal": {
-			other: false,
+			self:          knownvalue.BoolValueExact(true),
+			other:         false,
+			expectedError: fmt.Errorf("value: false does not equal expected value: true"),
 		},
 		"equal": {
-			other:    true,
-			expected: true,
+			self:  knownvalue.BoolValueExact(true),
+			other: true,
 		},
 	}
 
@@ -37,9 +52,9 @@ func TestBoolValue_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.BoolValueExact(true).Equal(testCase.other)
+			got := testCase.self.CheckValue(testCase.other)
 
-			if diff := cmp.Diff(got, testCase.expected); diff != "" {
+			if diff := cmp.Diff(got, testCase.expectedError, equateErrorMessage); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)
 			}
 		})
@@ -55,3 +70,12 @@ func TestBoolValue_String(t *testing.T) {
 		t.Errorf("unexpected difference: %s", diff)
 	}
 }
+
+// equateErrorMessage reports errors to be equal if both are nil
+// or both have the same message.
+var equateErrorMessage = cmp.Comparer(func(x, y error) bool {
+	if x == nil || y == nil {
+		return x == nil && y == nil
+	}
+	return x.Error() == y.Error()
+})

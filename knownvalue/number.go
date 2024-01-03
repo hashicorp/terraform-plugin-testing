@@ -4,31 +4,36 @@
 package knownvalue
 
 import (
+	"fmt"
 	"math/big"
 )
 
-var _ KnownValue = NumberValue{}
+var _ Check = NumberValue{}
 
-// NumberValue is a KnownValue for asserting equality between the value
-// supplied to NumberValueExact and the value passed to the Equal method.
+// NumberValue is a KnownValue for asserting equality between the value supplied
+// to NumberValueExact and the value passed to the CheckValue method.
 type NumberValue struct {
 	value *big.Float
 }
 
-// Equal determines whether the passed value is of type *big.Float, and
+// CheckValue determines whether the passed value is of type *big.Float, and
 // contains a matching *big.Float value.
-func (v NumberValue) Equal(other any) bool {
+func (v NumberValue) CheckValue(other any) error {
+	if v.value == nil {
+		return fmt.Errorf("known value type is nil")
+	}
+
 	otherVal, ok := other.(*big.Float)
 
 	if !ok {
-		return false
+		return fmt.Errorf("wrong type: %T, known value type is *big.Float", other)
 	}
 
 	if v.value.Cmp(otherVal) != 0 {
-		return false
+		return fmt.Errorf("value: %s does not equal expected value: %s", otherVal.Text('f', -1), v.String())
 	}
 
-	return true
+	return nil
 }
 
 // String returns the string representation of the *big.Float value.
@@ -36,8 +41,8 @@ func (v NumberValue) String() string {
 	return v.value.Text('f', -1)
 }
 
-// NumberValueExact returns a KnownValue for asserting equality between the
-// supplied *big.Float and the value passed to the Equal method.
+// NumberValueExact returns a Check for asserting equality between the
+// supplied *big.Float and the value passed to the CheckValue method.
 func NumberValueExact(value *big.Float) NumberValue {
 	return NumberValue{
 		value: value,

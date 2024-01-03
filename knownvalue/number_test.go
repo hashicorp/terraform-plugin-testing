@@ -4,6 +4,7 @@
 package knownvalue_test
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -28,19 +29,34 @@ func TestNumberValue_Equal(t *testing.T) {
 	}
 
 	testCases := map[string]struct {
-		other    any
-		expected bool
+		self          knownvalue.NumberValue
+		other         any
+		expectedError error
 	}{
-		"nil": {},
+		"zero-nil": {
+			expectedError: fmt.Errorf("known value type is nil"),
+		},
+		"zero-other": {
+			other:         otherBigFloat, // checking against the underlying value field zero-value
+			expectedError: fmt.Errorf("known value type is nil"),
+		},
+		"nil": {
+			self:          knownvalue.NumberValueExact(bigFloat),
+			expectedError: fmt.Errorf("wrong type: <nil>, known value type is *big.Float"),
+		},
 		"wrong-type": {
-			other: "str",
+			self:          knownvalue.NumberValueExact(bigFloat),
+			other:         1.234,
+			expectedError: fmt.Errorf("wrong type: float64, known value type is *big.Float"),
 		},
 		"not-equal": {
-			other: otherBigFloat,
+			self:          knownvalue.NumberValueExact(bigFloat),
+			other:         otherBigFloat,
+			expectedError: fmt.Errorf("value: 1.797693134862315797693134862315797693134862314 does not equal expected value: 1.797693134862315797693134862315797693134862315"),
 		},
 		"equal": {
-			other:    bigFloat,
-			expected: true,
+			self:  knownvalue.NumberValueExact(bigFloat),
+			other: bigFloat,
 		},
 	}
 
@@ -50,9 +66,9 @@ func TestNumberValue_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.NumberValueExact(bigFloat).Equal(testCase.other)
+			got := testCase.self.CheckValue(testCase.other)
 
-			if diff := cmp.Diff(got, testCase.expected); diff != "" {
+			if diff := cmp.Diff(got, testCase.expectedError, equateErrorMessage); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)
 			}
 		})

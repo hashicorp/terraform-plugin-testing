@@ -3,28 +3,30 @@
 
 package knownvalue
 
-var _ KnownValue = StringValue{}
+import "fmt"
+
+var _ Check = StringValue{}
 
 // StringValue is a KnownValue for asserting equality between the value
-// supplied to StringValueExact and the value passed to the Equal method.
+// supplied to StringValueExact and the value passed to the CheckValue method.
 type StringValue struct {
 	value string
 }
 
-// Equal determines whether the passed value is of type string, and
+// CheckValue determines whether the passed value is of type string, and
 // contains a matching sequence of bytes.
-func (v StringValue) Equal(other any) bool {
+func (v StringValue) CheckValue(other any) error {
 	otherVal, ok := other.(string)
 
 	if !ok {
-		return false
+		return fmt.Errorf("wrong type: %T, known value type is string", other)
 	}
 
 	if otherVal != v.value {
-		return false
+		return fmt.Errorf("value: %s does not equal expected value: %s", otherVal, v.value)
 	}
 
-	return true
+	return nil
 }
 
 // String returns the string representation of the value.
@@ -32,8 +34,8 @@ func (v StringValue) String() string {
 	return v.value
 }
 
-// StringValueExact returns a KnownValue for asserting equality between the
-// supplied string and a value passed to the Equal method.
+// StringValueExact returns a Check for asserting equality between the
+// supplied string and a value passed to the CheckValue method.
 func StringValueExact(value string) StringValue {
 	return StringValue{
 		value: value,

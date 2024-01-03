@@ -8,36 +8,46 @@ import (
 	"sort"
 )
 
-var _ KnownValue = ObjectValuePartial{}
+var _ Check = ObjectValuePartial{}
 
-// ObjectValuePartial is a KnownValue for asserting equality between the value
-// supplied to ObjectValuePartialMatch and the value passed to the Equal method.
+// ObjectValuePartial is a KnownValue for asserting equality between the value supplied
+// to ObjectValuePartialMatch and the value passed to the CheckValue method.
 type ObjectValuePartial struct {
-	value map[string]KnownValue
+	value map[string]Check
 }
 
-// Equal determines whether the passed value is of type map[string]any, and
+// CheckValue determines whether the passed value is of type map[string]any, and
 // contains matching map entries.
-func (v ObjectValuePartial) Equal(other any) bool {
+func (v ObjectValuePartial) CheckValue(other any) error {
 	otherVal, ok := other.(map[string]any)
 
 	if !ok {
-		return false
+		return fmt.Errorf("wrong type: %T, known value type is map[string]Check", other)
 	}
 
-	for k, v := range v.value {
+	var keys []string
+
+	for k := range v.value {
+		keys = append(keys, k)
+	}
+
+	sort.SliceStable(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+
+	for _, k := range keys {
 		otherValItem, ok := otherVal[k]
 
 		if !ok {
-			return false
+			return fmt.Errorf("missing key: %s", k)
 		}
 
-		if !v.Equal(otherValItem) {
-			return false
+		if err := v.value[k].CheckValue(otherValItem); err != nil {
+			return err
 		}
 	}
 
-	return true
+	return nil
 }
 
 // String returns the string representation of the value.
@@ -61,9 +71,9 @@ func (v ObjectValuePartial) String() string {
 	return fmt.Sprintf("%v", mapVals)
 }
 
-// ObjectValuePartialMatch returns a KnownValue for asserting partial equality between the
-// supplied map[string]KnownValue and the value passed to the Equal method.
-func ObjectValuePartialMatch(value map[string]KnownValue) ObjectValuePartial {
+// ObjectValuePartialMatch returns a Check for asserting partial equality between the
+// supplied map[string]KnownValue and the value passed to the CheckValue method.
+func ObjectValuePartialMatch(value map[string]Check) ObjectValuePartial {
 	return ObjectValuePartial{
 		value: value,
 	}

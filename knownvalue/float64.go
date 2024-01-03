@@ -4,31 +4,32 @@
 package knownvalue
 
 import (
+	"fmt"
 	"strconv"
 )
 
-var _ KnownValue = Float64Value{}
+var _ Check = Float64Value{}
 
-// Float64Value is a KnownValue for asserting equality between the value
-// supplied to Float64ValueExact and the value passed to the Equal method.
+// Float64Value is a KnownValue for asserting equality between the value supplied
+// to Float64ValueExact and the value passed to the CheckValue method.
 type Float64Value struct {
 	value float64
 }
 
-// Equal determines whether the passed value is of type float64, and
+// CheckValue determines whether the passed value is of type float64, and
 // contains a matching float64 value.
-func (v Float64Value) Equal(other any) bool {
+func (v Float64Value) CheckValue(other any) error {
 	otherVal, ok := other.(float64)
 
 	if !ok {
-		return false
+		return fmt.Errorf("wrong type: %T, known value type is float64", other)
 	}
 
 	if otherVal != v.value {
-		return false
+		return fmt.Errorf("value: %v does not equal expected value: %s", strconv.FormatFloat(otherVal, 'f', -1, 64), v.String())
 	}
 
-	return true
+	return nil
 }
 
 // String returns the string representation of the float64 value.
@@ -36,8 +37,8 @@ func (v Float64Value) String() string {
 	return strconv.FormatFloat(v.value, 'f', -1, 64)
 }
 
-// Float64ValueExact returns a KnownValue for asserting equality between the
-// supplied float64 and the value passed to the Equal method.
+// Float64ValueExact returns a Check for asserting equality between the
+// supplied float64 and the value passed to the CheckValue method.
 func Float64ValueExact(value float64) Float64Value {
 	return Float64Value{
 		value: value,

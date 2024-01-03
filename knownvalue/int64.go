@@ -4,31 +4,32 @@
 package knownvalue
 
 import (
+	"fmt"
 	"strconv"
 )
 
-var _ KnownValue = Int64Value{}
+var _ Check = Int64Value{}
 
-// Int64Value is a KnownValue for asserting equality between the value
-// supplied to Int64ValueExact and the value passed to the Equal method.
+// Int64Value is a KnownValue for asserting equality between the value supplied
+// to Int64ValueExact and the value passed to the CheckValue method.
 type Int64Value struct {
 	value int64
 }
 
-// Equal determines whether the passed value is of type int64, and
+// CheckValue determines whether the passed value is of type int64, and
 // contains a matching int64 value.
-func (v Int64Value) Equal(other any) bool {
+func (v Int64Value) CheckValue(other any) error {
 	otherVal, ok := other.(int64)
 
 	if !ok {
-		return false
+		return fmt.Errorf("wrong type: %T, known value type is int64", other)
 	}
 
 	if otherVal != v.value {
-		return false
+		return fmt.Errorf("value: %d does not equal expected value: %d", otherVal, v.value)
 	}
 
-	return true
+	return nil
 }
 
 // String returns the string representation of the int64 value.
@@ -36,8 +37,8 @@ func (v Int64Value) String() string {
 	return strconv.FormatInt(v.value, 10)
 }
 
-// Int64ValueExact returns a KnownValue for asserting equality between the
-// supplied int64 and the value passed to the Equal method.
+// Int64ValueExact returns a Check for asserting equality between the
+// supplied int64 and the value passed to the CheckValue method.
 func Int64ValueExact(value int64) Int64Value {
 	return Int64Value{
 		value: value,

@@ -4,6 +4,7 @@
 package knownvalue_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -11,23 +12,37 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 )
 
-func TestFloat64Value_Equal(t *testing.T) {
+func TestFloat64Value_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		other    any
-		expected bool
+		self          knownvalue.Float64Value
+		other         any
+		expectedError error
 	}{
-		"nil": {},
+		"zero-nil": {
+			expectedError: fmt.Errorf("wrong type: <nil>, known value type is float64"),
+		},
+		"zero-other": {
+			other: 0.0, // checking against the underlying value field zero-value
+		},
+		"nil": {
+			self:          knownvalue.Float64ValueExact(1.234),
+			expectedError: fmt.Errorf("wrong type: <nil>, known value type is float64"),
+		},
 		"wrong-type": {
-			other: 123,
+			self:          knownvalue.Float64ValueExact(1.234),
+			other:         int64(1234),
+			expectedError: fmt.Errorf("wrong type: int64, known value type is float64"),
 		},
 		"not-equal": {
-			other: false,
+			self:          knownvalue.Float64ValueExact(1.234),
+			other:         4.321,
+			expectedError: fmt.Errorf("value: 4.321 does not equal expected value: 1.234"),
 		},
 		"equal": {
-			other:    1.23,
-			expected: true,
+			self:  knownvalue.Float64ValueExact(1.234),
+			other: 1.234,
 		},
 	}
 
@@ -37,9 +52,9 @@ func TestFloat64Value_Equal(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			got := knownvalue.Float64ValueExact(1.23).Equal(testCase.other)
+			got := testCase.self.CheckValue(testCase.other)
 
-			if diff := cmp.Diff(got, testCase.expected); diff != "" {
+			if diff := cmp.Diff(got, testCase.expectedError, equateErrorMessage); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)
 			}
 		})

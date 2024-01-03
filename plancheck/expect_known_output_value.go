@@ -21,7 +21,7 @@ var _ PlanCheck = expectKnownOutputValue{}
 
 type expectKnownOutputValue struct {
 	outputAddress string
-	knownValue    knownvalue.KnownValue
+	knownValue    knownvalue.Check
 }
 
 // CheckPlan implements the plan check logic.
@@ -51,7 +51,7 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 	}
 
 	if result == nil {
-		resp.Error = fmt.Errorf("output value is null")
+		resp.Error = fmt.Errorf("value is null")
 
 		return
 	}
@@ -61,13 +61,13 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 		v, ok := e.knownValue.(knownvalue.BoolValue)
 
 		if !ok {
-			resp.Error = fmt.Errorf("wrong type: output value is bool, known value type is %T", e.knownValue)
+			resp.Error = fmt.Errorf("wrong type: value is bool, known value type is %T", e.knownValue)
 
 			return
 		}
 
-		if !v.Equal(result) {
-			resp.Error = fmt.Errorf("output value: %v does not equal expected value: %s", result, v)
+		if err := v.CheckValue(result); err != nil {
+			resp.Error = err
 
 			return
 		}
@@ -81,28 +81,19 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 		}
 
 		switch t := e.knownValue.(type) {
-		case knownvalue.MapValue,
-			knownvalue.ObjectValue:
-			if !t.Equal(elems) {
-				resp.Error = fmt.Errorf("output value: %v does not equal expected value: %s", elems, t)
-
-				return
-			}
-		case knownvalue.MapValuePartial,
+		case knownvalue.MapElements,
+			knownvalue.MapValue,
+			knownvalue.MapValuePartial,
+			knownvalue.ObjectAttributes,
+			knownvalue.ObjectValue,
 			knownvalue.ObjectValuePartial:
-			if !t.Equal(elems) {
-				resp.Error = fmt.Errorf("output value: %v does not contain: %v", elems, t)
-
-				return
-			}
-		case knownvalue.NumElementsValue:
-			if !t.Equal(elems) {
-				resp.Error = fmt.Errorf("output contains %d elements, expected %v", len(elems), t)
+			if err := t.CheckValue(elems); err != nil {
+				resp.Error = err
 
 				return
 			}
 		default:
-			resp.Error = fmt.Errorf("wrong type: output value is map, or object, known value type is %T", t)
+			resp.Error = fmt.Errorf("wrong type: value is map, or object, known value type is %T", t)
 
 			return
 		}
@@ -119,33 +110,19 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 		}
 
 		switch t := e.knownValue.(type) {
-		case knownvalue.ListValue,
-			knownvalue.SetValue:
-			if !t.Equal(elems) {
-				resp.Error = fmt.Errorf("output value: %v does not equal expected value: %s", elems, t)
-
-				return
-			}
-		case knownvalue.ListValuePartial:
-			if !t.Equal(elems) {
-				resp.Error = fmt.Errorf("output value: %v does not contain elements at the specified indices: %v", elemsWithIndex, t)
-
-				return
-			}
-		case knownvalue.NumElementsValue:
-			if !t.Equal(elems) {
-				resp.Error = fmt.Errorf("output contains %d elements, expected %v", len(elems), t)
-
-				return
-			}
-		case knownvalue.SetValuePartial:
-			if !t.Equal(elems) {
-				resp.Error = fmt.Errorf("output value: %v does not contain: %v", elems, t)
+		case knownvalue.ListElements,
+			knownvalue.ListValue,
+			knownvalue.ListValuePartial,
+			knownvalue.SetElements,
+			knownvalue.SetValue,
+			knownvalue.SetValuePartial:
+			if err := t.CheckValue(elems); err != nil {
+				resp.Error = err
 
 				return
 			}
 		default:
-			resp.Error = fmt.Errorf("wrong type: output value is list, or set, known value type is %T", t)
+			resp.Error = fmt.Errorf("wrong type: value is list, or set, known value type is %T", t)
 
 			return
 		}
@@ -160,7 +137,7 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 			numberValue, numberValOk := e.knownValue.(knownvalue.NumberValue)
 
 			if !float64ValOk && !int64ValOk && !numberValOk {
-				resp.Error = fmt.Errorf("wrong type: output value is number, known value type is %T", e.knownValue)
+				resp.Error = fmt.Errorf("wrong type: value is number, known value type is %T", e.knownValue)
 			}
 
 			switch {
@@ -173,8 +150,8 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 					return
 				}
 
-				if !float64Val.Equal(f) {
-					resp.Error = fmt.Errorf("output value: %v does not equal expected value: %v", result, float64Val)
+				if err := float64Val.CheckValue(f); err != nil {
+					resp.Error = err
 
 					return
 				}
@@ -187,8 +164,8 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 					return
 				}
 
-				if !int64Val.Equal(i) {
-					resp.Error = fmt.Errorf("output value: %v does not equal expected value: %v", result, int64Val)
+				if err := int64Val.CheckValue(i); err != nil {
+					resp.Error = err
 
 					return
 				}
@@ -201,8 +178,8 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 					return
 				}
 
-				if !numberValue.Equal(f) {
-					resp.Error = fmt.Errorf("output value: %v does not equal expected value: %v", result, numberValue)
+				if err := numberValue.CheckValue(f); err != nil {
+					resp.Error = err
 
 					return
 				}
@@ -211,13 +188,13 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 			v, ok := e.knownValue.(knownvalue.StringValue)
 
 			if !ok {
-				resp.Error = fmt.Errorf("wrong type: output value is string, known value type is %T", e.knownValue)
+				resp.Error = fmt.Errorf("wrong type: value is string, known value type is %T", e.knownValue)
 
 				return
 			}
 
-			if !v.Equal(result) {
-				resp.Error = fmt.Errorf("output value: %v does not equal expected value: %v", result, v)
+			if err := v.CheckValue(result); err != nil {
+				resp.Error = err
 
 				return
 			}
@@ -232,9 +209,9 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 	}
 }
 
-// ExpectKnownOutputValue returns a plan check that asserts that the specified output value
+// ExpectKnownOutputValue returns a plan check that asserts that the specified value
 // has a known type, and value.
-func ExpectKnownOutputValue(outputAddress string, knownValue knownvalue.KnownValue) PlanCheck {
+func ExpectKnownOutputValue(outputAddress string, knownValue knownvalue.Check) PlanCheck {
 	return expectKnownOutputValue{
 		outputAddress: outputAddress,
 		knownValue:    knownValue,
