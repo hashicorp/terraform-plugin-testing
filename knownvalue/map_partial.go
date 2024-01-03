@@ -65,7 +65,7 @@ func (v MapValuePartial) String() string {
 	mapVals := make(map[string]string, len(keys))
 
 	for _, k := range keys {
-		mapVals[k] = fmt.Sprintf("%s", v.value[k])
+		mapVals[k] = v.value[k].String()
 	}
 
 	return fmt.Sprintf("%v", mapVals)

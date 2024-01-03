@@ -61,7 +61,7 @@ func (v SetValue) String() string {
 	var setVals []string
 
 	for _, val := range v.value {
-		setVals = append(setVals, fmt.Sprintf("%s", val))
+		setVals = append(setVals, val.String())
 	}
 
 	return fmt.Sprintf("%s", setVals)

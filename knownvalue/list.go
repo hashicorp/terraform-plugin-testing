@@ -42,7 +42,7 @@ func (v ListValue) String() string {
 	var listVals []string
 
 	for _, val := range v.value {
-		listVals = append(listVals, fmt.Sprintf("%s", val))
+		listVals = append(listVals, val.String())
 	}
 
 	return fmt.Sprintf("%s", listVals)

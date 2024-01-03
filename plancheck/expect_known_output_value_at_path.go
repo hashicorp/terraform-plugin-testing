@@ -101,13 +101,10 @@ func (e expectKnownOutputValueAtPath) CheckPlan(ctx context.Context, req CheckPl
 	case reflect.Slice:
 		var elems []any
 
-		var elemsWithIndex []string
-
 		val := reflect.ValueOf(result)
 
 		for i := 0; i < val.Len(); i++ {
 			elems = append(elems, val.Index(i).Interface())
-			elemsWithIndex = append(elemsWithIndex, fmt.Sprintf("%d:%v", i, val.Index(i).Interface()))
 		}
 
 		switch t := e.knownValue.(type) {
