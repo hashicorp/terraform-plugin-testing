@@ -174,7 +174,7 @@ func TestExpectKnownOutputValue_CheckPlan_Bool_KnownValueWrongValue(t *testing.T
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("value: true does not equal expected value: false"),
+				ExpectError: regexp.MustCompile("expected value false for BoolValue check, got: true"),
 			},
 		},
 	})
@@ -273,7 +273,7 @@ func TestExpectKnownOutputValue_CheckPlan_Float64_KnownValueWrongValue(t *testin
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("value: 1.23 does not equal expected value: 3.21"),
+				ExpectError: regexp.MustCompile("expected value 3.21 for Float64Value check, got: 1.23"),
 			},
 		},
 	})
@@ -338,7 +338,7 @@ func TestExpectKnownOutputValue_CheckPlan_Int64_KnownValueWrongValue(t *testing.
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("value: 123 does not equal expected value: 321"),
+				ExpectError: regexp.MustCompile("expected value 321 for Int64Value check, got: 123"),
 			},
 		},
 	})
@@ -451,7 +451,7 @@ func TestExpectKnownOutputValue_CheckPlan_List_KnownValueWrongValue(t *testing.T
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`value: value1 does not equal expected value: value3`),
+				ExpectError: regexp.MustCompile(`list element index 0: expected value value3 for StringValue check, got: value1`),
 			},
 		},
 	})
@@ -528,7 +528,7 @@ func TestExpectKnownOutputValue_CheckPlan_ListPartial_KnownValueWrongValue(t *te
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`value: value1 does not equal expected value: value3`),
+				ExpectError: regexp.MustCompile(`list element 0: expected value value3 for StringValue check, got: value1`),
 			},
 		},
 	})
@@ -599,7 +599,7 @@ func TestExpectKnownOutputValue_CheckPlan_ListNumElements_WrongNum(t *testing.T)
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong length: 2, expected 3"),
+				ExpectError: regexp.MustCompile("expected 3 elements for ListElements check, got 2 elements"),
 			},
 		},
 	})
@@ -834,7 +834,7 @@ func TestExpectKnownOutputValue_CheckPlan_Map_KnownValueWrongValue(t *testing.T)
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`missing key: key3`),
+				ExpectError: regexp.MustCompile(`missing element key3 for MapValue check`),
 			},
 		},
 	})
@@ -909,7 +909,7 @@ func TestExpectKnownOutputValue_CheckPlan_MapPartial_KnownValueWrongValue(t *tes
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`missing key: key3`),
+				ExpectError: regexp.MustCompile(`missing element key3 for MapValuePartial check`),
 			},
 		},
 	})
@@ -980,7 +980,7 @@ func TestExpectKnownOutputValue_CheckPlan_MapNumElements_WrongNum(t *testing.T) 
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong length: 2, expected 3"),
+				ExpectError: regexp.MustCompile("expected 3 elements for MapElements check, got 2 elements"),
 			},
 		},
 	})
@@ -1057,7 +1057,7 @@ func TestExpectKnownOutputValue_CheckPlan_Number_KnownValueWrongValue(t *testing
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("value: 123 does not equal expected value: 321"),
+				ExpectError: regexp.MustCompile("expected value 321 for NumberValue check, got: 123"),
 			},
 		},
 	})
@@ -1134,7 +1134,7 @@ func TestExpectKnownOutputValue_CheckPlan_Set_KnownValueWrongValue(t *testing.T)
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`expected value not found: value3`),
+				ExpectError: regexp.MustCompile(`missing value value3 for SetValue check`),
 			},
 		},
 	})
@@ -1209,7 +1209,7 @@ func TestExpectKnownOutputValue_CheckPlan_SetPartial_KnownValueWrongValue(t *tes
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`expected value not found: value3`),
+				ExpectError: regexp.MustCompile(`missing value value3 for SetValuePartial check`),
 			},
 		},
 	})
@@ -1461,7 +1461,7 @@ func TestExpectKnownOutputValue_CheckPlan_String_KnownValueWrongValue(t *testing
 							knownvalue.StringValueExact("rts")),
 					},
 				},
-				ExpectError: regexp.MustCompile("value: str does not equal expected value: rts"),
+				ExpectError: regexp.MustCompile("expected value rts for StringValue check, got: str"),
 			},
 		},
 	})
