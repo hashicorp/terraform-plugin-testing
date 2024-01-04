@@ -62,6 +62,10 @@
             "path": "acceptance-tests/known-value-checks/bool"
           },
           {
+            "title": "Custom",
+            "path": "acceptance-tests/known-value-checks/custom"
+          },
+          {
             "title": "Float64",
             "path": "acceptance-tests/known-value-checks/float64"
           },
