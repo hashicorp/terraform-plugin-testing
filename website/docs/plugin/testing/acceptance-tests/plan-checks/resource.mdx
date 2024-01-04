@@ -20,7 +20,7 @@ The `terraform-plugin-testing` module provides a package [`plancheck`](https://p
 
 The [`plancheck.ExpectKnownValue(address, path, value)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectKnownValue) plan check provides a basis for asserting that a specific resource attribute has a known type, and value.
 
-Refer to [Known Values](/terraform/plugin/testing/acceptance-tests/known-values) for details, and examples of the available [knownvalue.KnownValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#KnownValue) types that can be used with the `ExpectKnownValue` plan check.
+Refer to [Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks) for details, and examples of the available [knownvalue.Check](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check) types that can be used with the `ExpectKnownValue` plan check.
 
 ```go
 func TestExpectKnownValue_CheckPlan_String(t *testing.T) {
@@ -39,7 +39,7 @@ func TestExpectKnownValue_CheckPlan_String(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("string_attribute"),
-							knownvalue.NewStringValue("str")),
+							knownvalue.StringValueExact("str")),
 					},
 				},
 			},

@@ -17,24 +17,24 @@ Example uses in the testing module include:
 
 ## Using a Known Value
 
-The known value types are implemented within the `terraform-plugin-testing` module in the [`knownvalue` package](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue). Known values are instantiated by calling the `New` constructor function.
+The known value types are implemented within the `terraform-plugin-testing` module in the [`knownvalue` package](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue). Known values are instantiated by calling the relevant constructor function. For example
 
 ```go
-knownvalue.NewBoolValue(true)
+knownvalue.BoolValueExact(true)
 ```
 
 For known values that represents collections, or objects, nesting of known values can be used to define a "composite" known value for use in asserting against a resource attribute, or output value that contains other values.
 
 ```go
-knownvalue.NewListValue([]knownvalue.KnownValue{
-    knownvalue.NewStringValue("value1"),
-    knownvalue.NewStringValue("value2"),
+knownvalue.ListValueExact([]knownvalue.Check{
+    knownvalue.StringValueExact("value1"),
+    knownvalue.StringValueExact("value2"),
 })
 ```
 
 ## Known Value Types
 
-The following table describes the correspondence between attributes, and [knownvalue.KnownValue](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#KnownValue) types. Output value correspond to the known value types in same way on the basis of the attribute to which the output value refers.
+The following table describes the correspondence between attributes, and [knownvalue.Check](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check) types. Output value correspond to the known value types in same way on the basis of the attribute to which the output value refers.
 
 | Framework Attribute Type  | SDKv2 Attribute Type | Known Value Type                                                                                                    |
 |---------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------|
@@ -179,7 +179,7 @@ func TestExpectKnownValue_CheckPlan_List(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("list_attribute"),
-							knownvalue.NewListValue([]knownvalue.KnownValue{
+							knownvalue.NewListValue([]knownvalue.Check{
 								knownvalue.NewStringValue("value1"),
 								knownvalue.NewStringValue("value2"),
 							}),
@@ -218,7 +218,7 @@ func TestExpectKnownValue_CheckPlan_ListPartial(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("list_attribute"),
-							knownvalue.NewListValuePartial(map[int]knownvalue.KnownValue{
+							knownvalue.NewListValuePartial(map[int]knownvalue.Check{
 								0: knownvalue.NewStringValue("value1"),
 							}),
 						),
@@ -254,7 +254,7 @@ func TestExpectKnownValue_CheckPlan_Map(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.NewMapValue(map[string]knownvalue.KnownValue{
+							knownvalue.NewMapValue(map[string]knownvalue.Check{
 								"key1": knownvalue.NewStringValue("value1"),
 								"key2": knownvalue.NewStringValue("value2"),
 							}),
@@ -291,7 +291,7 @@ func TestExpectKnownValue_CheckPlan_MapPartial(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.NewMapValuePartial(map[string]knownvalue.KnownValue{
+							knownvalue.NewMapValuePartial(map[string]knownvalue.Check{
 								"key1": knownvalue.NewStringValue("value1"),
 							}),
 						),
@@ -398,7 +398,7 @@ func TestExpectKnownValue_CheckPlan_Map(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("object_attribute"),
-							knownvalue.NewObjectValue(map[string]knownvalue.KnownValue{
+							knownvalue.NewObjectValue(map[string]knownvalue.Check{
 								"key1": knownvalue.NewStringValue("value1"),
 								"key2": knownvalue.NewStringValue("value2"),
 							}),
@@ -435,7 +435,7 @@ func TestExpectKnownValue_CheckPlan_MapPartial(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("object_attribute"),
-							knownvalue.NewObjectValuePartial(map[string]knownvalue.KnownValue{
+							knownvalue.NewObjectValuePartial(map[string]knownvalue.Check{
 								"key1": knownvalue.NewStringValue("value1"),
 							}),
 						),
@@ -471,7 +471,7 @@ func TestExpectKnownValue_CheckPlan_Set(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("set_attribute"),
-							knownvalue.NewSetValue([]knownvalue.KnownValue{
+							knownvalue.NewSetValue([]knownvalue.Check{
 								knownvalue.NewStringValue("value1"),
 								knownvalue.NewStringValue("value2"),
 							}),
@@ -508,7 +508,7 @@ func TestExpectKnownValue_CheckPlan_SetPartial(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("set_attribute"),
-							knownvalue.NewSetValuePartial([]knownvalue.KnownValue{
+							knownvalue.NewSetValuePartial([]knownvalue.Check{
 								knownvalue.NewStringValue("value2"),
 							}),
 						),
