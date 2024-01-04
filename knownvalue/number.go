@@ -10,7 +10,7 @@ import (
 
 var _ Check = NumberValue{}
 
-// NumberValue is a KnownValue for asserting equality between the value supplied
+// NumberValue is a Check for asserting equality between the value supplied
 // to NumberValueExact and the value passed to the CheckValue method.
 type NumberValue struct {
 	value *big.Float

@@ -10,7 +10,7 @@ import (
 
 var _ Check = BoolValue{}
 
-// BoolValue is a KnownValue for asserting equality between the value supplied
+// BoolValue is a Check for asserting equality between the value supplied
 // to BoolValueExact and the value passed to the CheckValue method.
 type BoolValue struct {
 	value bool

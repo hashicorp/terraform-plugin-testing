@@ -9,7 +9,7 @@ import (
 
 var _ Check = ListValue{}
 
-// ListValue is a KnownValue for asserting equality between the value supplied
+// ListValue is a Check for asserting equality between the value supplied
 // to ListValueExact and the value passed to the CheckValue method.
 type ListValue struct {
 	value []Check
@@ -60,7 +60,8 @@ func (v ListValue) String() string {
 }
 
 // ListValueExact returns a Check for asserting equality between the
-// supplied []KnownValue and the value passed to the CheckValue method.
+// supplied []Check and the value passed to the CheckValue method.
+// This is an order-dependent check.
 func ListValueExact(value []Check) ListValue {
 	return ListValue{
 		value: value,

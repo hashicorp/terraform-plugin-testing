@@ -10,7 +10,7 @@ import (
 
 var _ Check = Float64Value{}
 
-// Float64Value is a KnownValue for asserting equality between the value supplied
+// Float64Value is a Check for asserting equality between the value supplied
 // to Float64ValueExact and the value passed to the CheckValue method.
 type Float64Value struct {
 	value float64

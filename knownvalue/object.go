@@ -10,7 +10,7 @@ import (
 
 var _ Check = ObjectValue{}
 
-// ObjectValue is a KnownValue for asserting equality between the value supplied
+// ObjectValue is a Check for asserting equality between the value supplied
 // to ObjectValueExact and the value passed to the CheckValue method.
 type ObjectValue struct {
 	value map[string]Check
@@ -86,8 +86,9 @@ func (v ObjectValue) String() string {
 	return fmt.Sprintf("%v", mapVals)
 }
 
-// ObjectValueExact returns a Check for asserting equality between the
-// supplied map[string]KnownValue and the value passed to the CheckValue method.
+// ObjectValueExact returns a Check for asserting equality between the supplied
+// map[string]Check and the value passed to the CheckValue method. The map
+// keys represent object attribute names.
 func ObjectValueExact(value map[string]Check) ObjectValue {
 	return ObjectValue{
 		value: value,

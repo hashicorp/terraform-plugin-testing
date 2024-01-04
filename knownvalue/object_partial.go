@@ -10,8 +10,9 @@ import (
 
 var _ Check = ObjectValuePartial{}
 
-// ObjectValuePartial is a KnownValue for asserting equality between the value supplied
-// to ObjectValuePartialMatch and the value passed to the CheckValue method.
+// ObjectValuePartial is a Check for asserting partial equality between the
+// value supplied to ObjectValuePartialMatch and the value passed to the
+// CheckValue method.
 type ObjectValuePartial struct {
 	value map[string]Check
 }
@@ -72,7 +73,9 @@ func (v ObjectValuePartial) String() string {
 }
 
 // ObjectValuePartialMatch returns a Check for asserting partial equality between the
-// supplied map[string]KnownValue and the value passed to the CheckValue method.
+// supplied map[string]Check and the value passed to the CheckValue method. The map
+// keys represent object attribute names. Only the object attributes defined by the
+// map keys within the supplied map[string]Check are checked.
 func ObjectValuePartialMatch(value map[string]Check) ObjectValuePartial {
 	return ObjectValuePartial{
 		value: value,

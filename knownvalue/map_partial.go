@@ -10,8 +10,9 @@ import (
 
 var _ Check = MapValuePartial{}
 
-// MapValuePartial is a KnownValue for asserting equality between the value supplied
-// to MapValuePartialMatch and the value passed to the CheckValue method.
+// MapValuePartial is a Check for asserting partial equality between the
+// value supplied to MapValuePartialMatch and the value passed to the
+// CheckValue method.
 type MapValuePartial struct {
 	value map[string]Check
 }
@@ -72,7 +73,9 @@ func (v MapValuePartial) String() string {
 }
 
 // MapValuePartialMatch returns a Check for asserting partial equality between the
-// supplied map[string]Check and the value passed to the CheckValue method.
+// supplied map[string]Check and the value passed to the CheckValue method. Only
+// the elements at the map keys defined within the supplied map[string]Check are
+// checked.
 func MapValuePartialMatch(value map[string]Check) MapValuePartial {
 	return MapValuePartial{
 		value: value,

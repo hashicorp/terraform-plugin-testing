@@ -9,8 +9,9 @@ import (
 
 var _ Check = SetValuePartial{}
 
-// SetValuePartial is a KnownValue for asserting equality between the value supplied
-// to SetValuePartialMatch and the value passed to the CheckValue method.
+// SetValuePartial is a Check for asserting partial equality between the
+// value supplied to SetValuePartialMatch and the value passed to the
+// CheckValue method.
 type SetValuePartial struct {
 	value []Check
 }
@@ -63,8 +64,10 @@ func (v SetValuePartial) String() string {
 	return fmt.Sprintf("%s", setVals)
 }
 
-// SetValuePartialMatch returns a Check for asserting equality of the elements
-// supplied in []Check and the elements in the value passed to the CheckValue method.
+// SetValuePartialMatch returns a Check for asserting partial equality between the
+// supplied []Check and the value passed to the CheckValue method. Only the
+// elements defined within the supplied []Check are checked. This is an
+// order-independent check.
 func SetValuePartialMatch(value []Check) SetValuePartial {
 	return SetValuePartial{
 		value: value,

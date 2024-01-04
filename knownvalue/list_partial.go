@@ -12,8 +12,9 @@ import (
 
 var _ Check = ListValuePartial{}
 
-// ListValuePartial is a KnownValue for asserting equality between the value supplied
-// to ListValuePartialMatch and the value passed to the CheckValue method.
+// ListValuePartial is a Check for asserting partial equality between the
+// value supplied to ListValuePartialMatch and the value passed to the
+// CheckValue method.
 type ListValuePartial struct {
 	value map[int]Check
 }
@@ -79,10 +80,11 @@ func (v ListValuePartial) String() string {
 	return b.String()
 }
 
-// ListValuePartialMatch returns a Check for asserting equality between the
-// supplied map[int]KnownValue and the value passed to the CheckValue method. The
-// map keys correspond to the position of the zero-ordered element within the
-// list that is being checked.
+// ListValuePartialMatch returns a Check for asserting partial equality between the
+// supplied map[int]Check and the value passed to the CheckValue method. The
+// map keys represent the zero-ordered element indices within the list that is
+// being checked. Only the elements at the indices defined within the
+// supplied map[int]Check are checked.
 func ListValuePartialMatch(value map[int]Check) ListValuePartial {
 	return ListValuePartial{
 		value: value,

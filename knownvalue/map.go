@@ -10,7 +10,7 @@ import (
 
 var _ Check = MapValue{}
 
-// MapValue is a KnownValue for asserting equality between the value supplied
+// MapValue is a Check for asserting equality between the value supplied
 // to MapValueExact and the value passed to the CheckValue method.
 type MapValue struct {
 	value map[string]Check
@@ -87,7 +87,7 @@ func (v MapValue) String() string {
 }
 
 // MapValueExact returns a Check for asserting equality between the
-// supplied map[string]KnownValue and the value passed to the CheckValue method.
+// supplied map[string]Check and the value passed to the CheckValue method.
 func MapValueExact(value map[string]Check) MapValue {
 	return MapValue{
 		value: value,

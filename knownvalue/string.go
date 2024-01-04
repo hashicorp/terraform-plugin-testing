@@ -7,7 +7,7 @@ import "fmt"
 
 var _ Check = StringValue{}
 
-// StringValue is a KnownValue for asserting equality between the value
+// StringValue is a Check for asserting equality between the value
 // supplied to StringValueExact and the value passed to the CheckValue method.
 type StringValue struct {
 	value string

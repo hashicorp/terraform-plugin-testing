@@ -9,7 +9,7 @@ import (
 
 var _ Check = SetValue{}
 
-// SetValue is a KnownValue for asserting equality between the value supplied
+// SetValue is a Check for asserting equality between the value supplied
 // to SetValueExact and the value passed to the CheckValue method.
 type SetValue struct {
 	value []Check
@@ -80,6 +80,7 @@ func (v SetValue) String() string {
 
 // SetValueExact returns a Check for asserting equality between the
 // supplied []Check and the value passed to the CheckValue method.
+// This is an order-independent check.
 func SetValueExact(value []Check) SetValue {
 	return SetValue{
 		value: value,

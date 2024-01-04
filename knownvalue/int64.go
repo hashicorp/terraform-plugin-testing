@@ -10,7 +10,7 @@ import (
 
 var _ Check = Int64Value{}
 
-// Int64Value is a KnownValue for asserting equality between the value supplied
+// Int64Value is a Check for asserting equality between the value supplied
 // to Int64ValueExact and the value passed to the CheckValue method.
 type Int64Value struct {
 	value int64
