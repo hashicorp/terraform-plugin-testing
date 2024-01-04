@@ -490,7 +490,7 @@ func TestExpectKnownValue_CheckPlan_ListPartial_KnownValueWrongValue(t *testing.
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_ListNumElements(t *testing.T) {
+func TestExpectKnownValue_CheckPlan_ListElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -522,7 +522,7 @@ func TestExpectKnownValue_CheckPlan_ListNumElements(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_ListNumElements_WrongNum(t *testing.T) {
+func TestExpectKnownValue_CheckPlan_ListElements_WrongNum(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -634,7 +634,7 @@ func TestExpectKnownValue_CheckPlan_ListNestedBlockPartial(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_ListNestedBlockNumElements(t *testing.T) {
+func TestExpectKnownValue_CheckPlan_ListNestedBlockElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -841,7 +841,7 @@ func TestExpectKnownValue_CheckPlan_MapPartial_KnownValueWrongValue(t *testing.T
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_MapNumElements(t *testing.T) {
+func TestExpectKnownValue_CheckPlan_MapElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -873,7 +873,7 @@ func TestExpectKnownValue_CheckPlan_MapNumElements(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_MapNumElements_WrongNum(t *testing.T) {
+func TestExpectKnownValue_CheckPlan_MapElements_WrongNum(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -1001,8 +1001,8 @@ func TestExpectKnownValue_CheckPlan_Set(t *testing.T) {
 							"test_resource.one",
 							tfjsonpath.New("set_attribute"),
 							knownvalue.SetValueExact([]knownvalue.Check{
-								knownvalue.StringValueExact("value1"),
 								knownvalue.StringValueExact("value2"),
+								knownvalue.StringValueExact("value1"),
 							}),
 						),
 					},
@@ -1117,7 +1117,7 @@ func TestExpectKnownValue_CheckPlan_SetPartial_KnownValueWrongValue(t *testing.T
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_SetNumElements(t *testing.T) {
+func TestExpectKnownValue_CheckPlan_SetElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -1228,7 +1228,7 @@ func TestExpectKnownValue_CheckPlan_SetNestedBlockPartial(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_CheckPlan_SetNestedBlockNumElements(t *testing.T) {
+func TestExpectKnownValue_CheckPlan_SetNestedBlockElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{

@@ -534,7 +534,7 @@ func TestExpectKnownOutputValue_CheckPlan_ListPartial_KnownValueWrongValue(t *te
 	})
 }
 
-func TestExpectKnownOutputValue_CheckPlan_ListNumElements(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_ListElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -569,7 +569,7 @@ func TestExpectKnownOutputValue_CheckPlan_ListNumElements(t *testing.T) {
 	})
 }
 
-func TestExpectKnownOutputValue_CheckPlan_ListNumElements_WrongNum(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_ListElements_WrongNum(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -690,7 +690,7 @@ func TestExpectKnownOutputValue_CheckPlan_ListNestedBlockPartial(t *testing.T) {
 	})
 }
 
-func TestExpectKnownOutputValue_CheckPlan_ListNestedBlockNumElements(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_ListNestedBlockElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -915,7 +915,7 @@ func TestExpectKnownOutputValue_CheckPlan_MapPartial_KnownValueWrongValue(t *tes
 	})
 }
 
-func TestExpectKnownOutputValue_CheckPlan_MapNumElements(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_MapElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -950,7 +950,7 @@ func TestExpectKnownOutputValue_CheckPlan_MapNumElements(t *testing.T) {
 	})
 }
 
-func TestExpectKnownOutputValue_CheckPlan_MapNumElements_WrongNum(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_MapElements_WrongNum(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -1215,7 +1215,7 @@ func TestExpectKnownOutputValue_CheckPlan_SetPartial_KnownValueWrongValue(t *tes
 	})
 }
 
-func TestExpectKnownOutputValue_CheckPlan_SetNumElements(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_SetElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -1335,7 +1335,7 @@ func TestExpectKnownOutputValue_CheckPlan_SetNestedBlockPartial(t *testing.T) {
 	})
 }
 
-func TestExpectKnownOutputValue_CheckPlan_SetNestedBlockNumElements(t *testing.T) {
+func TestExpectKnownOutputValue_CheckPlan_SetNestedBlockElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
