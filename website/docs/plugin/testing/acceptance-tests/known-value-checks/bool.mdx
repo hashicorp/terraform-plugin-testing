@@ -1,0 +1,44 @@
+---
+page_title: 'Plugin Development - Acceptance Testing: Known Values'
+description: >-
+    Bool Value Checks for use with Plan Checks.
+---
+
+# Bool Known Value Checks
+
+The known value checks that are available for bool values are:
+
+* [BoolValueExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/bool#boolvalueexact-check)
+
+## `BoolValueExact` Check
+
+The [BoolValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#BoolValueExact) check tests that a resource attribute, or output value has an exactly matching bool value.
+
+Example usage of [BoolValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#BoolValueExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_Bool(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("bool_attribute"),
+							knownvalue.BoolValueExact(true),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```

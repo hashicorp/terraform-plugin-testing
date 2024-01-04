@@ -56,6 +56,42 @@
           {
             "title": "Overview",
             "path": "acceptance-tests/known-value-checks"
+          },
+          {
+            "title": "Bool",
+            "path": "acceptance-tests/known-value-checks/bool"
+          },
+          {
+            "title": "Float64",
+            "path": "acceptance-tests/known-value-checks/float64"
+          },
+          {
+            "title": "Int64",
+            "path": "acceptance-tests/known-value-checks/int64"
+          },
+          {
+            "title": "List",
+            "path": "acceptance-tests/known-value-checks/list"
+          },
+          {
+            "title": "Map",
+            "path": "acceptance-tests/known-value-checks/map"
+          },
+          {
+            "title": "Number",
+            "path": "acceptance-tests/known-value-checks/number"
+          },
+          {
+            "title": "Object",
+            "path": "acceptance-tests/known-value-checks/object"
+          },
+          {
+            "title": "Set",
+            "path": "acceptance-tests/known-value-checks/set"
+          },
+          {
+            "title": "String",
+            "path": "acceptance-tests/known-value-checks/string"
           }
         ]
       },

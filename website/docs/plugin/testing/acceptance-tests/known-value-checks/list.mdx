@@ -1,0 +1,126 @@
+---
+page_title: 'Plugin Development - Acceptance Testing: Known Values'
+description: >-
+    List Value Checks for use with Plan Checks.
+---
+
+# List Known Value Checks
+
+The known value checks that are available for list values are:
+
+* [ListElementsExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/list#listelementsexact-check)
+* [ListValueExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/list#listvalueexact-check)
+* [ListValuePartialMatch](/terraform/plugin/testing/acceptance-tests/known-value-checks/list#listvaluepartialmatch-check)
+
+## `ListElementsExact` Check
+
+The [ListElementsExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListElementsExact) check tests that a resource attribute, or output value contains the specified number of elements.
+
+Example usage of [ListElementsExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListElementsExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_ListElements(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					list_attribute = [
+						"value1",
+						"value2"
+					]
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("list_attribute"),
+							knownvalue.ListElementsExact(2),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+## `ListValueExact` Check
+
+The [ListValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListValueExact) check tests that a resource attribute, or output value has an order-dependent, matching collection of element values.
+
+Example usage of [ListValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListValueExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_List(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+				// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					list_attribute = [
+						"value1",
+						"value2"
+					]
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("list_attribute"),
+							knownvalue.ListValueExact([]knownvalue.Check{
+								knownvalue.StringValueExact("value1"),
+								knownvalue.StringValueExact("value2"),
+							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+## `ListValuePartialMatch` Check
+
+The [ListValuePartialMatch](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListValuePartialMatch) check tests that a resource attribute, or output value has matching element values for the specified collection indices.
+
+Example usage of [ListValuePartialMatch](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListValuePartialMatch) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check. In this example, only the first element within the list, the element defined at index `0`, is checked.
+
+```go
+func TestExpectKnownValue_CheckPlan_ListPartial(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					list_attribute = [
+						"value1",
+						"value2"
+					]
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("list_attribute"),
+							knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{
+								0: knownvalue.StringValueExact("value1"),
+							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```

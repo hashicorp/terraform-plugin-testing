@@ -44,7 +44,7 @@ func TestExpectKnownOutputValue_CheckPlan_Bool(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"bool_output",
-							knownvalue.NewBoolValue(true),
+							knownvalue.BoolValueExact(true),
 						),
 					},
 				},
@@ -80,7 +80,7 @@ func TestExpectKnownOutputValue_CheckPlan_Bool(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"bool_output",
-							knownvalue.NewBoolValue(true),
+							knownvalue.BoolValueExact(true),
 						),
 					},
 				},
