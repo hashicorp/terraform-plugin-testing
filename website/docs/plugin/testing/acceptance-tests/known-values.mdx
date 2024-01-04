@@ -7,17 +7,13 @@ description: >-
 
 # Known Values
 
-Specify types, and values for use with plan checks.
+Known Values are for use in conjunction with [Plan Checks](/terraform/plugin/testing/acceptance-tests/plan-checks), which leverage the [terraform-json](https://pkg.go.dev/github.com/hashicorp/terraform-json) representation of a Terraform plan, or Terraform state.
 
 ## Usage
 
 Example uses in the testing module include:
 
 - The [`ExpectknownValue()`](/terraform/plugin/testing/acceptance-tests/plan-checks/resource), [`ExpectKnownOutputValue()`](/terraform/plugin/testing/acceptance-tests/plan-checks/output) and [`ExpectKnownOutputValueAtPath()`](/terraform/plugin/testing/acceptance-tests/plan-checks/output) [built-in plan checks](/terraform/plugin/testing/acceptance-tests/plan-checks) use known values for asserting whether a specific resource attribute, or output value has a particular type, and value.
-
-## Concepts
-
-Known Values are for use in conjunction with plan checks and state checks, both of which leverage the [terraform-json](https://pkg.go.dev/github.com/hashicorp/terraform-json) representation of a Terraform plan, or Terraform state. The known value types that are defined (e.g., `BoolValue`), have been named to match the types defined within [Terraform Plugin Framework](https://developer.hashicorp.com/terraform/plugin/framework/handling-data/types).
 
 ## Using a Known Value
 
