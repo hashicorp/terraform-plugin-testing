@@ -32,7 +32,7 @@ func (v StringValueContains) CheckValue(other any) error {
 	}
 
 	if !strings.Contains(v.value, otherVal) {
-		return fmt.Errorf("expected string %q to contain %q for StringValueContains check", v.value, otherVal)
+		return fmt.Errorf("expected string %q to contain %q for StringValueContains check", otherVal, v.value)
 	}
 
 	return nil
