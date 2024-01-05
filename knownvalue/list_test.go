@@ -4,6 +4,7 @@
 package knownvalue_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -71,9 +72,9 @@ func TestListValue_CheckValue(t *testing.T) {
 				knownvalue.Int64ValueExact(789),
 			}),
 			other: []any{
-				int64(123),
-				int64(456),
-				int64(654),
+				json.Number("123"),
+				json.Number("456"),
+				json.Number("654"),
 			},
 			expectedError: fmt.Errorf("list element index 2: expected value 789 for Int64Value check, got: 654"),
 		},
@@ -84,9 +85,9 @@ func TestListValue_CheckValue(t *testing.T) {
 				knownvalue.Int64ValueExact(789),
 			}),
 			other: []any{
-				int64(123),
-				int64(789),
-				int64(456),
+				json.Number("123"),
+				json.Number("789"),
+				json.Number("456"),
 			},
 			expectedError: fmt.Errorf("list element index 1: expected value 456 for Int64Value check, got: 789"),
 		},
@@ -97,9 +98,9 @@ func TestListValue_CheckValue(t *testing.T) {
 				knownvalue.Int64ValueExact(789),
 			}),
 			other: []any{
-				int64(123),
-				int64(456),
-				int64(789),
+				json.Number("123"),
+				json.Number("456"),
+				json.Number("789"),
 			},
 		},
 	}

@@ -4,6 +4,7 @@
 package knownvalue_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -58,7 +59,12 @@ func TestSetValuePartial_CheckValue(t *testing.T) {
 				knownvalue.Float64ValueExact(4.56),
 				knownvalue.Float64ValueExact(7.89),
 			}),
-			other:         []any{1.23, 4.56, 6.54, 5.46},
+			other: []any{
+				json.Number("1.23"),
+				json.Number("4.56"),
+				json.Number("6.54"),
+				json.Number("5.46"),
+			},
 			expectedError: fmt.Errorf("missing value 7.89 for SetValuePartial check"),
 		},
 		"equal-different-order": {
@@ -67,7 +73,12 @@ func TestSetValuePartial_CheckValue(t *testing.T) {
 				knownvalue.Float64ValueExact(4.56),
 				knownvalue.Float64ValueExact(7.89),
 			}),
-			other: []any{1.23, 0.00, 7.89, 4.56},
+			other: []any{
+				json.Number("1.23"),
+				json.Number("0.00"),
+				json.Number("7.89"),
+				json.Number("4.56"),
+			},
 		},
 		"equal-same-order": {
 			self: knownvalue.SetValuePartialMatch([]knownvalue.Check{
@@ -75,7 +86,12 @@ func TestSetValuePartial_CheckValue(t *testing.T) {
 				knownvalue.Float64ValueExact(4.56),
 				knownvalue.Float64ValueExact(7.89),
 			}),
-			other: []any{1.23, 0.00, 4.56, 7.89},
+			other: []any{
+				json.Number("1.23"),
+				json.Number("0.00"),
+				json.Number("4.56"),
+				json.Number("7.89"),
+			},
 		},
 	}
 

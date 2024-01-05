@@ -4,6 +4,7 @@
 package knownvalue
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 )
@@ -20,13 +21,19 @@ type NumberValue struct {
 // contains a matching *big.Float value.
 func (v NumberValue) CheckValue(other any) error {
 	if v.value == nil {
-		return fmt.Errorf("known value type is nil")
+		return fmt.Errorf("value in NumberValue check is nil")
 	}
 
-	otherVal, ok := other.(*big.Float)
+	jsonNum, ok := other.(json.Number)
 
 	if !ok {
-		return fmt.Errorf("expected *big.Float value for NumberValue check, got: %T", other)
+		return fmt.Errorf("expected json.Number value for NumberValue check, got: %T", other)
+	}
+
+	otherVal, _, err := big.ParseFloat(jsonNum.String(), 10, 512, big.ToNearestEven)
+
+	if err != nil {
+		return fmt.Errorf("expected json.Number to be parseable as big.Float value for NumberValue check: %s", err)
 	}
 
 	if v.value.Cmp(otherVal) != 0 {

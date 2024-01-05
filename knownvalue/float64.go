@@ -4,6 +4,7 @@
 package knownvalue
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 )
@@ -19,10 +20,16 @@ type Float64Value struct {
 // CheckValue determines whether the passed value is of type float64, and
 // contains a matching float64 value.
 func (v Float64Value) CheckValue(other any) error {
-	otherVal, ok := other.(float64)
+	jsonNum, ok := other.(json.Number)
 
 	if !ok {
-		return fmt.Errorf("expected float64 value for Float64Value check, got: %T", other)
+		return fmt.Errorf("expected json.Number value for Float64Value check, got: %T", other)
+	}
+
+	otherVal, err := jsonNum.Float64()
+
+	if err != nil {
+		return fmt.Errorf("expected json.Number to be parseable as float64 value for Float64Value check: %s", err)
 	}
 
 	if otherVal != v.value {

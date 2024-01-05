@@ -4,6 +4,7 @@
 package knownvalue_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -59,8 +60,8 @@ func TestSetValue_CheckValue(t *testing.T) {
 				knownvalue.Int64ValueExact(789),
 			}),
 			other: []any{
-				int64(123),
-				int64(456),
+				json.Number("123"),
+				json.Number("456"),
 			},
 			expectedError: fmt.Errorf("expected 3 elements for SetValue check, got 2 elements"),
 		},
@@ -71,9 +72,9 @@ func TestSetValue_CheckValue(t *testing.T) {
 				knownvalue.Int64ValueExact(789),
 			}),
 			other: []any{
-				int64(123),
-				int64(456),
-				int64(654),
+				json.Number("123"),
+				json.Number("456"),
+				json.Number("654"),
 			},
 			expectedError: fmt.Errorf("missing value 789 for SetValue check"),
 		},
@@ -84,9 +85,9 @@ func TestSetValue_CheckValue(t *testing.T) {
 				knownvalue.Int64ValueExact(789),
 			}),
 			other: []any{
-				int64(123),
-				int64(789),
-				int64(456),
+				json.Number("123"),
+				json.Number("789"),
+				json.Number("456"),
 			},
 		},
 		"equal-same-order": {
@@ -96,9 +97,9 @@ func TestSetValue_CheckValue(t *testing.T) {
 				knownvalue.Int64ValueExact(789),
 			}),
 			other: []any{
-				int64(123),
-				int64(456),
-				int64(789),
+				json.Number("123"),
+				json.Number("456"),
+				json.Number("789"),
 			},
 		},
 	}

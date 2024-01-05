@@ -4,6 +4,7 @@
 package knownvalue_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -55,8 +56,8 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
 			other: map[string]any{
-				"one": 1.23,
-				"two": 4.56,
+				"one": json.Number("1.23"),
+				"two": json.Number("4.56"),
 			},
 			expectedError: fmt.Errorf("missing attribute three for ObjectValuePartial check"),
 		},
@@ -66,9 +67,9 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
 			other: map[string]any{
-				"one":   1.23,
-				"two":   4.56,
-				"three": 6.54,
+				"one":   json.Number("1.23"),
+				"two":   json.Number("4.56"),
+				"three": json.Number("6.54"),
 			},
 			expectedError: fmt.Errorf("three object attribute: expected value 7.89 for Float64Value check, got: 6.54"),
 		},
@@ -78,9 +79,9 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
 			other: map[string]any{
-				"one":   1.23,
-				"two":   7.89,
-				"three": 4.56,
+				"one":   json.Number("1.23"),
+				"two":   json.Number("7.89"),
+				"three": json.Number("4.56"),
 			},
 			expectedError: fmt.Errorf("three object attribute: expected value 7.89 for Float64Value check, got: 4.56"),
 		},
@@ -91,9 +92,9 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
 			other: map[string]any{
-				"four": 1.23,
-				"five": 7.89,
-				"six":  4.56,
+				"four": json.Number("1.23"),
+				"five": json.Number("7.89"),
+				"six":  json.Number("4.56"),
 			},
 			expectedError: fmt.Errorf("missing attribute one for ObjectValuePartial check"),
 		},
@@ -103,9 +104,9 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
 			other: map[string]any{
-				"one":   1.23,
-				"two":   4.56,
-				"three": 7.89,
+				"one":   json.Number("1.23"),
+				"two":   json.Number("4.56"),
+				"three": json.Number("7.89"),
 			},
 		},
 	}

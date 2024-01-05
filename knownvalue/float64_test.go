@@ -4,6 +4,7 @@
 package knownvalue_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -21,28 +22,28 @@ func TestFloat64Value_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("expected float64 value for Float64Value check, got: <nil>"),
+			expectedError: fmt.Errorf("expected json.Number value for Float64Value check, got: <nil>"),
 		},
 		"zero-other": {
-			other: 0.0, // checking against the underlying value field zero-value
+			other: json.Number("0.0"), // checking against the underlying value field zero-value
 		},
 		"nil": {
 			self:          knownvalue.Float64ValueExact(1.234),
-			expectedError: fmt.Errorf("expected float64 value for Float64Value check, got: <nil>"),
+			expectedError: fmt.Errorf("expected json.Number value for Float64Value check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.Float64ValueExact(1.234),
-			other:         int64(1234),
-			expectedError: fmt.Errorf("expected float64 value for Float64Value check, got: int64"),
+			other:         json.Number("str"),
+			expectedError: fmt.Errorf("expected json.Number to be parseable as float64 value for Float64Value check: strconv.ParseFloat: parsing \"str\": invalid syntax"),
 		},
 		"not-equal": {
 			self:          knownvalue.Float64ValueExact(1.234),
-			other:         4.321,
+			other:         json.Number("4.321"),
 			expectedError: fmt.Errorf("expected value 1.234 for Float64Value check, got: 4.321"),
 		},
 		"equal": {
 			self:  knownvalue.Float64ValueExact(1.234),
-			other: 1.234,
+			other: json.Number("1.234"),
 		},
 	}
 

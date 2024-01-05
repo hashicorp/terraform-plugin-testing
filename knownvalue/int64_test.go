@@ -4,6 +4,7 @@
 package knownvalue_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -21,28 +22,28 @@ func TestInt64Value_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("expected int64 value for Int64Value check, got: <nil>"),
+			expectedError: fmt.Errorf("expected json.Number value for Int64Value check, got: <nil>"),
 		},
 		"zero-other": {
-			other: int64(0), // checking against the underlying value field zero-value
+			other: json.Number("0"), // checking against the underlying value field zero-value
 		},
 		"nil": {
 			self:          knownvalue.Int64ValueExact(1234),
-			expectedError: fmt.Errorf("expected int64 value for Int64Value check, got: <nil>"),
+			expectedError: fmt.Errorf("expected json.Number value for Int64Value check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.Int64ValueExact(1234),
-			other:         1.234,
-			expectedError: fmt.Errorf("expected int64 value for Int64Value check, got: float64"),
+			other:         json.Number("str"),
+			expectedError: fmt.Errorf("expected json.Number to be parseable as int64 value for Int64Value check: strconv.ParseInt: parsing \"str\": invalid syntax"),
 		},
 		"not-equal": {
 			self:          knownvalue.Int64ValueExact(1234),
-			other:         int64(4321),
+			other:         json.Number("4321"),
 			expectedError: fmt.Errorf("expected value 1234 for Int64Value check, got: 4321"),
 		},
 		"equal": {
 			self:  knownvalue.Int64ValueExact(1234),
-			other: int64(1234),
+			other: json.Number("1234"),
 		},
 	}
 

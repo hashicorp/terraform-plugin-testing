@@ -4,6 +4,7 @@
 package knownvalue_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -58,7 +59,10 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 				2: knownvalue.Float64ValueExact(4.56),
 				3: knownvalue.Float64ValueExact(7.89),
 			}),
-			other:         []any{1.23, 4.56},
+			other: []any{
+				json.Number("1.23"),
+				json.Number("4.56"),
+			},
 			expectedError: fmt.Errorf("missing element index 2 for ListValuePartial check"),
 		},
 		"not-equal": {
@@ -67,7 +71,12 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 				2: knownvalue.Float64ValueExact(4.56),
 				3: knownvalue.Float64ValueExact(7.89),
 			}),
-			other:         []any{1.23, 4.56, 6.54, 5.46},
+			other: []any{
+				json.Number("1.23"),
+				json.Number("4.56"),
+				json.Number("6.54"),
+				json.Number("5.46"),
+			},
 			expectedError: fmt.Errorf("list element 2: expected value 4.56 for Float64Value check, got: 6.54"),
 		},
 		"wrong-order": {
@@ -76,7 +85,12 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 				2: knownvalue.Float64ValueExact(4.56),
 				3: knownvalue.Float64ValueExact(7.89),
 			}),
-			other:         []any{1.23, 0.00, 7.89, 4.56},
+			other: []any{
+				json.Number("1.23"),
+				json.Number("0.00"),
+				json.Number("7.89"),
+				json.Number("4.56"),
+			},
 			expectedError: fmt.Errorf("list element 2: expected value 4.56 for Float64Value check, got: 7.89"),
 		},
 		"equal": {
@@ -85,7 +99,12 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 				2: knownvalue.Float64ValueExact(4.56),
 				3: knownvalue.Float64ValueExact(7.89),
 			}),
-			other: []any{1.23, 0.00, 4.56, 7.89},
+			other: []any{
+				json.Number("1.23"),
+				json.Number("0.00"),
+				json.Number("4.56"),
+				json.Number("7.89"),
+			},
 		},
 	}
 

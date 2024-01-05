@@ -4,6 +4,7 @@
 package knownvalue
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 )
@@ -19,10 +20,16 @@ type Int64Value struct {
 // CheckValue determines whether the passed value is of type int64, and
 // contains a matching int64 value.
 func (v Int64Value) CheckValue(other any) error {
-	otherVal, ok := other.(int64)
+	jsonNum, ok := other.(json.Number)
 
 	if !ok {
-		return fmt.Errorf("expected int64 value for Int64Value check, got: %T", other)
+		return fmt.Errorf("expected json.Number value for Int64Value check, got: %T", other)
+	}
+
+	otherVal, err := jsonNum.Int64()
+
+	if err != nil {
+		return fmt.Errorf("expected json.Number to be parseable as int64 value for Int64Value check: %s", err)
 	}
 
 	if otherVal != v.value {

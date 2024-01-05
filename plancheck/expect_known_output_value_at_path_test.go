@@ -176,7 +176,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Bool_KnownValueWrongType(t *test
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong type: value is bool, known value type is knownvalue.Float64Value"),
+				ExpectError: regexp.MustCompile(`expected json\.Number value for Float64Value check, got: bool`),
 			},
 		},
 	})
@@ -299,7 +299,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Float64_KnownValueWrongType(t *t
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong type: value is number, known value type is knownvalue.StringValue"),
+				ExpectError: regexp.MustCompile(`expected string value for StringValue check, got: json\.Number`),
 			},
 		},
 	})
@@ -511,7 +511,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_List_KnownValueWrongType(t *test
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong type: value is list, or set, known value type is knownvalue.MapValue"),
+				ExpectError: regexp.MustCompile(`expected map\[string\]any value for MapValue check, got: \[\]interface {}`),
 			},
 		},
 	})
@@ -974,7 +974,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Map_KnownValueWrongType(t *testi
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong type: value is map, or object, known value type is knownvalue.ListValue"),
+				ExpectError: regexp.MustCompile(`expected \[\]any value for ListValue check, got: map\[string\]interface {}`),
 			},
 		},
 	})
@@ -1744,7 +1744,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_String_KnownValueWrongType(t *te
 							knownvalue.BoolValueExact(true)),
 					},
 				},
-				ExpectError: regexp.MustCompile("wrong type: value is string, known value type is knownvalue.BoolValue"),
+				ExpectError: regexp.MustCompile("expected bool value for BoolValue check, got: string"),
 			},
 		},
 	})
