@@ -70,10 +70,34 @@ resource "test_test" "test" {}
 			},
 			expected: true,
 		},
+		"provider-block-quoted-with-attributes-no-spaces": {
+			configRaw: configurationString{
+				raw: `
+provider"test"{
+ test = true
+}
+
+resource "test_test" "test" {}
+`,
+			},
+			expected: true,
+		},
 		"provider-block-unquoted-with-attributes": {
 			configRaw: configurationString{
 				raw: `
 provider test {
+ test = true
+}
+
+resource "test_test" "test" {}
+`,
+			},
+			expected: true,
+		},
+		"provider-block-unquoted-with-attributes-no-trailing-space": {
+			configRaw: configurationString{
+				raw: `
+provider test{
  test = true
 }
 
@@ -92,10 +116,30 @@ resource "test_test" "test" {}
 			},
 			expected: true,
 		},
+		"provider-block-quoted-without-attributes-no-spaces": {
+			configRaw: configurationString{
+				raw: `
+provider"test"{}
+
+resource "test_test" "test" {}
+`,
+			},
+			expected: true,
+		},
 		"provider-block-unquoted-without-attributes": {
 			configRaw: configurationString{
 				raw: `
 provider test {}
+
+resource "test_test" "test" {}
+`,
+			},
+			expected: true,
+		},
+		"provider-block-unquoted-without-attributes-no-trailing-space": {
+			configRaw: configurationString{
+				raw: `
+provider test{}
 
 resource "test_test" "test" {}
 `,

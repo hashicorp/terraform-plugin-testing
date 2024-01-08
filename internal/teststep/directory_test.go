@@ -57,9 +57,21 @@ func TestConfigurationDirectory_HasProviderBlock(t *testing.T) {
 			},
 			expected: true,
 		},
+		"provider-block-quoted-with-attributes-no-spaces": {
+			configDirectory: configurationDirectory{
+				directory: "testdata/provider_block_quoted_with_attributes_no_spaces",
+			},
+			expected: true,
+		},
 		"provider-block-unquoted-with-attributes": {
 			configDirectory: configurationDirectory{
 				directory: "testdata/provider_block_unquoted_with_attributes",
+			},
+			expected: true,
+		},
+		"provider-block-unquoted-with-attributes_no-trailing-space": {
+			configDirectory: configurationDirectory{
+				directory: "testdata/provider_block_unquoted_with_attributes_no_trailing_space",
 			},
 			expected: true,
 		},
@@ -69,9 +81,21 @@ func TestConfigurationDirectory_HasProviderBlock(t *testing.T) {
 			},
 			expected: true,
 		},
+		"provider-block-quoted-without-attributes-no-spaces": {
+			configDirectory: configurationDirectory{
+				directory: "testdata/provider_block_quoted_without_attributes_no_spaces",
+			},
+			expected: true,
+		},
 		"provider-block-unquoted-without-attributes": {
 			configDirectory: configurationDirectory{
 				directory: "testdata/provider_block_unquoted_without_attributes",
+			},
+			expected: true,
+		},
+		"provider-block-unquoted-without-attributes-no-trailing-space": {
+			configDirectory: configurationDirectory{
+				directory: "testdata/provider_block_unquoted_without_attributes_no_trailing_space",
 			},
 			expected: true,
 		},

@@ -57,9 +57,21 @@ func TestConfigurationFile_HasProviderBlock(t *testing.T) {
 			},
 			expected: true,
 		},
+		"provider-block-quoted-with-attributes-no-spaces": {
+			configFile: configurationFile{
+				file: "testdata/provider_block_quoted_with_attributes_no_spaces/main.tf",
+			},
+			expected: true,
+		},
 		"provider-block-unquoted-with-attributes": {
 			configFile: configurationFile{
 				file: "testdata/provider_block_unquoted_with_attributes/main.tf",
+			},
+			expected: true,
+		},
+		"provider-block-unquoted-with-attributes-no-trailing-space": {
+			configFile: configurationFile{
+				file: "testdata/provider_block_unquoted_with_attributes_no_trailing_space/main.tf",
 			},
 			expected: true,
 		},
@@ -69,9 +81,21 @@ func TestConfigurationFile_HasProviderBlock(t *testing.T) {
 			},
 			expected: true,
 		},
+		"provider-block-quoted-without-attributes-no-spaces": {
+			configFile: configurationFile{
+				file: "testdata/provider_block_quoted_without_attributes_no_spaces/main.tf",
+			},
+			expected: true,
+		},
 		"provider-block-unquoted-without-attributes": {
 			configFile: configurationFile{
 				file: "testdata/provider_block_unquoted_without_attributes/main.tf",
+			},
+			expected: true,
+		},
+		"provider-block-unquoted-without-attributes-no-trailing-space": {
+			configFile: configurationFile{
+				file: "testdata/provider_block_unquoted_without_attributes_no_trailing_space/main.tf",
 			},
 			expected: true,
 		},

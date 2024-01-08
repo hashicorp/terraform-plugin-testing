@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	providerConfigBlockRegex  = regexp.MustCompile(`provider "?[a-zA-Z0-9_-]+"? {`)
+	providerConfigBlockRegex  = regexp.MustCompile(`provider(\s*"[a-zA-Z0-9_-]+"\s*|\s+[a-zA-Z0-9_-]+\s*){`)
 	terraformConfigBlockRegex = regexp.MustCompile(`terraform {`)
 )
 
