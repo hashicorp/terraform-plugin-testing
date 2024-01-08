@@ -27,8 +27,11 @@ var (
 	//     provider example {
 	//     provider example{
 	//     provider"example"{
-	providerConfigBlockRegex  = regexp.MustCompile(`provider(\s*"[a-zA-Z0-9_-]+"\s*|\s+[a-zA-Z0-9_-]+\s*){`)
-	terraformConfigBlockRegex = regexp.MustCompile(`terraform {`)
+	providerConfigBlockRegex = regexp.MustCompile(`provider(\s*"[a-zA-Z0-9_-]+"\s*|\s+[a-zA-Z0-9_-]+\s*){`)
+	// Expected to match:
+	//     terraform {
+	//     terraform{
+	terraformConfigBlockRegex = regexp.MustCompile(`terraform\s*{`)
 )
 
 // Config defines an interface implemented by all types

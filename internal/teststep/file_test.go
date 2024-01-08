@@ -174,9 +174,21 @@ func TestConfigurationFile_HasProviderBlock_AbsolutePath(t *testing.T) {
 			},
 			expected: true,
 		},
+		"provider-block-quoted-with-attributes-no-spaces": {
+			configFile: configurationFile{
+				file: "testdata/provider_block_quoted_with_attributes_no_spaces/main.tf",
+			},
+			expected: true,
+		},
 		"provider-block-unquoted-with-attributes": {
 			configFile: configurationFile{
 				file: "testdata/provider_block_unquoted_with_attributes/main.tf",
+			},
+			expected: true,
+		},
+		"provider-block-unquoted-with-attributes-no-trailing-space": {
+			configFile: configurationFile{
+				file: "testdata/provider_block_unquoted_with_attributes_no_trailing_space/main.tf",
 			},
 			expected: true,
 		},
@@ -186,9 +198,21 @@ func TestConfigurationFile_HasProviderBlock_AbsolutePath(t *testing.T) {
 			},
 			expected: true,
 		},
+		"provider-block-quoted-without-attributes-no-spaces": {
+			configFile: configurationFile{
+				file: "testdata/provider_block_quoted_without_attributes_no_spaces/main.tf",
+			},
+			expected: true,
+		},
 		"provider-block-unquoted-without-attributes": {
 			configFile: configurationFile{
 				file: "testdata/provider_block_unquoted_without_attributes/main.tf",
+			},
+			expected: true,
+		},
+		"provider-block-unquoted-without-attributes-no-trailing-space": {
+			configFile: configurationFile{
+				file: "testdata/provider_block_unquoted_without_attributes_no_trailing_space/main.tf",
 			},
 			expected: true,
 		},
@@ -275,6 +299,12 @@ func TestConfigurationFile_HasTerraformBlock(t *testing.T) {
 			},
 			expected: true,
 		},
+		"terraform-block-no-space": {
+			configFile: configurationFile{
+				file: "testdata/terraform_block_no_space/main.tf",
+			},
+			expected: true,
+		},
 	}
 
 	for name, testCase := range testCases {
@@ -347,6 +377,12 @@ func TestConfigurationFile_HasTerraformBlock_AbsolutePath(t *testing.T) {
 		"terraform-block": {
 			configFile: configurationFile{
 				file: "testdata/terraform_block/main.tf",
+			},
+			expected: true,
+		},
+		"terraform-block-no-space": {
+			configFile: configurationFile{
+				file: "testdata/terraform_block_no_space/main.tf",
 			},
 			expected: true,
 		},

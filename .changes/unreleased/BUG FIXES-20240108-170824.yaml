@@ -1,0 +1,6 @@
+kind: BUG FIXES
+body: 'helper/resource: Fix detection of terraform block declaration in `Config`,
+  `ConfigDirectory`, and `ConfigFile`'
+time: 2024-01-08T17:08:24.219063Z
+custom:
+  Issue: "265"

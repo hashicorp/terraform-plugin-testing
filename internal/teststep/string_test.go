@@ -225,6 +225,18 @@ resource "test_test" "test" {}
 			},
 			expected: true,
 		},
+		"terraform-block-no-space": {
+			configRaw: configurationString{
+				raw: `
+terraform{
+  test = true
+}
+
+resource "test_test" "test" {}
+`,
+			},
+			expected: true,
+		},
 	}
 
 	for name, testCase := range testCases {
