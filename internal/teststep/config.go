@@ -21,6 +21,12 @@ const (
 )
 
 var (
+	// Expected to match:
+	//     provider "example" {
+	//     provider "example"{
+	//     provider example {
+	//     provider example{
+	//     provider"example"{
 	providerConfigBlockRegex  = regexp.MustCompile(`provider(\s*"[a-zA-Z0-9_-]+"\s*|\s+[a-zA-Z0-9_-]+\s*){`)
 	terraformConfigBlockRegex = regexp.MustCompile(`terraform {`)
 )
