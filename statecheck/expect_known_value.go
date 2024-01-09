@@ -27,6 +27,10 @@ type expectKnownValue struct {
 func (e expectKnownValue) CheckState(ctx context.Context, req CheckStateRequest, resp *CheckStateResponse) {
 	var rc *tfjson.StateResource
 
+	if req.State == nil {
+		resp.Error = fmt.Errorf("state is nil")
+	}
+
 	if req.State.Values == nil {
 		resp.Error = fmt.Errorf("state does not contain any state values")
 	}
