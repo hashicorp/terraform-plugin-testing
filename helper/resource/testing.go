@@ -24,6 +24,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
@@ -590,6 +591,13 @@ type TestStep struct {
 	// [plancheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck
 	RefreshPlanChecks RefreshPlanChecks
 
+	// ConfigStateChecks allow assertions to be made against the state file at different points of a Config (apply) test using a state check.
+	// Custom state checks can be created by implementing the [StateCheck] interface, or by using a StateCheck implementation from the provided [statecheck] package
+	//
+	// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
+	// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
+	ConfigStateChecks ConfigStateChecks
+
 	// PlanOnly can be set to only run `plan` with this configuration, and not
 	// actually apply it. This is useful for ensuring config changes result in
 	// no-op plans
@@ -794,6 +802,10 @@ type RefreshPlanChecks struct {
 	// All errors by plan checks in this slice are aggregated, reported, and will result in a test failure.
 	PostRefresh []plancheck.PlanCheck
 }
+
+// ConfigStateChecks runs all state checks in the slice. This occurs after the apply and refresh of a Config test are run.
+// All errors by state checks in this slice are aggregated, reported, and will result in a test failure.
+type ConfigStateChecks []statecheck.StateCheck
 
 // ParallelTest performs an acceptance test on a resource, allowing concurrency
 // with other ParallelTest. The number of concurrent tests is controlled by the
