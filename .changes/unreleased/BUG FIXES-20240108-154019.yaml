@@ -1,0 +1,6 @@
+kind: BUG FIXES
+body: 'helper/resource: Fix detection of provider block declaration in `Config`,
+  `ConfigDirectory`, and `ConfigFile`'
+time: 2024-01-08T15:40:19.089652Z
+custom:
+  Issue: "265"
