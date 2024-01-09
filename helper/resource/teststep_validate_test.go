@@ -466,6 +466,16 @@ func TestTestStepValidate(t *testing.T) {
 			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
 			expectedError:           errors.New("TestStep ConfigPlanChecks.PostApplyPostRefresh must only be specified with Config"),
 		},
+		"configstatechecks-not-config-mode": {
+			testStep: TestStep{
+				ConfigStateChecks: ConfigStateChecks{
+					&stateCheckSpy{},
+				},
+				RefreshState: true,
+			},
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep ConfigStateChecks must only be specified with Config"),
+		},
 		"refreshplanchecks-postrefresh-not-refresh-mode": {
 			testStep: TestStep{
 				RefreshPlanChecks: RefreshPlanChecks{
