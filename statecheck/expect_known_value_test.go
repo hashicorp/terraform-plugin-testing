@@ -65,10 +65,9 @@ func TestExpectKnownValue_CheckState_AttributeValueNull(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.BoolValueExact(true),
+						knownvalue.NullValueExact(),
 					),
 				},
-				ExpectError: regexp.MustCompile("value is null"),
 			},
 		},
 	})
@@ -1295,7 +1294,7 @@ func TestExpectKnownValue_CheckState_UnknownAttributeType(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: fmt.Errorf("unrecognised attribute type: float32, known value type is knownvalue.Int64Value\n\nThis is an error in statecheck.ExpectKnownValue.\nPlease report this to the maintainers."),
+			expectedErr: fmt.Errorf("expected json.Number value for Int64Value check, got: float32"),
 		},
 	}
 

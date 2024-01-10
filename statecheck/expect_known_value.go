@@ -6,7 +6,6 @@ package statecheck
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	tfjson "github.com/hashicorp/terraform-json"
 
@@ -61,29 +60,8 @@ func (e expectKnownValue) CheckState(ctx context.Context, req CheckStateRequest,
 		return
 	}
 
-	if result == nil {
-		resp.Error = fmt.Errorf("value is null")
-
-		return
-	}
-
-	switch reflect.TypeOf(result).Kind() {
-	case reflect.Bool,
-		reflect.Map,
-		reflect.Slice,
-		reflect.String:
-		if err := e.knownValue.CheckValue(result); err != nil {
-			resp.Error = err
-
-			return
-		}
-	default:
-		errorStr := fmt.Sprintf("unrecognised attribute type: %T, known value type is %T", result, e.knownValue)
-		errorStr += "\n\nThis is an error in statecheck.ExpectKnownValue.\nPlease report this to the maintainers."
-
-		resp.Error = fmt.Errorf(errorStr)
-
-		return
+	if err := e.knownValue.CheckValue(result); err != nil {
+		resp.Error = err
 	}
 }
 

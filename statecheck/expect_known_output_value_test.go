@@ -50,6 +50,10 @@ func TestExpectKnownOutputValue_CheckState_OutputNotFound(t *testing.T) {
 	})
 }
 
+// TestExpectKnownOutputValue_CheckState_AttributeValueNull shows that outputs that reference
+// null values do not appear in state. Indicating that there is no way to discriminate
+// between null outputs and non-existent outputs.
+// Reference: https://github.com/hashicorp/terraform/issues/34080
 func TestExpectKnownOutputValue_CheckState_AttributeValueNull(t *testing.T) {
 	t.Parallel()
 
@@ -1408,7 +1412,7 @@ func TestExpectKnownOutputValue_CheckState_UnknownAttributeType(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: fmt.Errorf("unrecognised output type: float32, known value type is knownvalue.Int64Value\n\nThis is an error in statecheck.ExpectKnownOutputValue.\nPlease report this to the maintainers."),
+			expectedErr: fmt.Errorf("expected json.Number value for Int64Value check, got: float32"),
 		},
 	}
 
