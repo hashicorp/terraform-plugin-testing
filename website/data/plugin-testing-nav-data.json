@@ -51,6 +51,27 @@
         ]
       },
       {
+        "title": "State Checks",
+        "routes": [
+          {
+            "title": "Overview",
+            "path": "acceptance-tests/state-checks"
+          },
+          {
+            "title": "Resource State Checks",
+            "path": "acceptance-tests/state-checks/resource"
+          },
+          {
+            "title": "Output State Checks",
+            "path": "acceptance-tests/state-checks/output"
+          },
+          {
+            "title": "Custom State Checks",
+            "path": "acceptance-tests/state-checks/custom"
+          }
+        ]
+      },
+      {
         "title": "Known Value Checks",
         "routes": [
           {
@@ -84,6 +105,10 @@
           {
             "title": "Number",
             "path": "acceptance-tests/known-value-checks/number"
+          },
+          {
+            "title": "Null ",
+            "path": "acceptance-tests/known-value-checks/null"
           },
           {
             "title": "Object",

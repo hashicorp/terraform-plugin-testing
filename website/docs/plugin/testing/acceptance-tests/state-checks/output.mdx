@@ -1,0 +1,84 @@
+---
+page_title: 'Plugin Development - Acceptance Testing: State Checks'
+description: >-
+  State Checks are test assertions that can inspect state during a TestStep. The testing module
+  provides built-in Output Value State Checks for common use-cases.
+---
+
+# Output State Checks
+
+The `terraform-plugin-testing` module provides a package [`statecheck`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck) with built-in output value state checks for common use-cases:
+
+| Check                                                                                                                                                                       | Description                                                                              |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| [`statecheck.ExpectKnownOutputValue(address, value)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownOutputValue)                   | Asserts the output at the specified address has the specified type, and value.           |
+| [`statecheck.ExpectKnownOutputValueAtPath(address, path, value)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownOutputValueAtPath) | Asserts the output at the specified address, and path has the specified type, and value. |
+
+## Example using `statecheck.ExpectKnownOutputValue`
+
+The [`statecheck.ExpectKnownOutputValue(address, value)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownOutputValue) state check verifies that a specific output value has a known type, and value.
+
+Refer to [Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks) for details, and examples of the available [knownvalue.Check](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check) types that can be used with the `ExpectKnownOutputValue` state check.
+
+```go
+func TestExpectKnownOutputValue_CheckState_Bool(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+				}
+
+				output bool_output {
+					value = test_resource.one.bool_attribute
+				}
+				`,
+				ConfigStateChecks: r.ConfigStateChecks{
+					statecheck.ExpectKnownOutputValue(
+						"bool_output",
+						knownvalue.BoolValueExact(true),
+					),
+				},
+			},
+		},
+	})
+}
+```
+
+## Example using `statecheck.ExpectKnownOutputValueAtPath`
+
+The [`statecheck.ExpectKnownOutputValueAtPath(address, path, value)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownOutputValueAtPath) state check verifies that a specific output value at a defined path has a known type, and value.
+
+Refer to [Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks) for details, and examples of the available [knownvalue.Check](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check) types that can be used with the `ExpectKnownOutputValueAtPath` state check.
+
+```go
+func TestExpectKnownOutputValueAtPath_CheckState_Bool(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+				}
+
+				output test_resource_one_output {
+					value = test_resource.one
+				}
+				`,
+				ConfigStateChecks: r.ConfigStateChecks{
+					statecheck.ExpectKnownOutputValueAtPath(
+						"test_resource_one_output",
+						tfjsonpath.New("bool_attribute"),
+						knownvalue.BoolValueExact(true),
+					),
+				},
+			},
+		},
+	})
+}
+```
