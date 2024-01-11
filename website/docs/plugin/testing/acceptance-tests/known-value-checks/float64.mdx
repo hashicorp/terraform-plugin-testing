@@ -20,15 +20,15 @@ Example usage of [Float64ValueExact](https://pkg.go.dev/github.com/hashicorp/ter
 func TestExpectKnownValue_CheckPlan_Float64(t *testing.T) {
 	t.Parallel()
 
-	r.Test(t, r.TestCase{
+	resource.Test(t, resource.TestCase{
 		// Provider definition omitted.
-		Steps: []r.TestStep{
+		Steps: []resource.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
 					float_attribute = 1.23
 				}
 				`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
+				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",

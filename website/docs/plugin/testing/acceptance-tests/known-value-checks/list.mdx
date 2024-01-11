@@ -22,9 +22,9 @@ Example usage of [ListElementsExact](https://pkg.go.dev/github.com/hashicorp/ter
 func TestExpectKnownValue_CheckPlan_ListElements(t *testing.T) {
 	t.Parallel()
 
-	r.Test(t, r.TestCase{
+	resource.Test(t, resource.TestCase{
 		// Provider definition omitted.
-		Steps: []r.TestStep{
+		Steps: []resource.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
 					list_attribute = [
@@ -33,7 +33,7 @@ func TestExpectKnownValue_CheckPlan_ListElements(t *testing.T) {
 					]
 				}
 				`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
+				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
@@ -58,9 +58,9 @@ Example usage of [ListValueExact](https://pkg.go.dev/github.com/hashicorp/terraf
 func TestExpectKnownValue_CheckPlan_List(t *testing.T) {
 	t.Parallel()
 
-	r.Test(t, r.TestCase{
+	resource.Test(t, resource.TestCase{
 				// Provider definition omitted.
-		Steps: []r.TestStep{
+		Steps: []resource.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
 					list_attribute = [
@@ -69,7 +69,7 @@ func TestExpectKnownValue_CheckPlan_List(t *testing.T) {
 					]
 				}
 				`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
+				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
@@ -97,9 +97,9 @@ Example usage of [ListValuePartialMatch](https://pkg.go.dev/github.com/hashicorp
 func TestExpectKnownValue_CheckPlan_ListPartial(t *testing.T) {
 	t.Parallel()
 
-	r.Test(t, r.TestCase{
+	resource.Test(t, resource.TestCase{
 		// Provider definition omitted.
-		Steps: []r.TestStep{
+		Steps: []resource.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
 					list_attribute = [
@@ -108,7 +108,7 @@ func TestExpectKnownValue_CheckPlan_ListPartial(t *testing.T) {
 					]
 				}
 				`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
+				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
