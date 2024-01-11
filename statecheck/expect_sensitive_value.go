@@ -78,8 +78,6 @@ func (e expectSensitiveValue) CheckState(ctx context.Context, req CheckStateRequ
 		resp.Error = fmt.Errorf("attribute at path is not sensitive")
 		return
 	}
-
-	return
 }
 
 // ExpectSensitiveValue returns a state check that asserts that the specified attribute at the given resource has a sensitive value.
