@@ -48,3 +48,26 @@ func StringValueMatch(value string) StringValue {
 	}
 }
 ```
+
+## `CheckValue` Method Implementation
+
+The `other` parameter passed to the `CheckValue` method is one of the following types:
+
+* bool
+* map[string]any
+* []any
+* string
+
+-> **Note:** Numerical values will be of type `json.Number`, with an underlying type of `string`.
+
+Refer to the following built-in known value checks for implementations that handle the different types that can be passed to the `CheckValue` method in the `other` parameter:
+
+* [BoolValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#BoolValueExact)
+* [Float64ValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Float64ValueExact)
+* [Int64ValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Int64ValueExact)
+* [ListValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListValueExact)
+* [MapValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#MapValueExact)
+* [NumberValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NumberValueExact)
+* [ObjectValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ObjectValueExact)
+* [SetValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetValueExact)
+* [StringValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#StringValueExact)
