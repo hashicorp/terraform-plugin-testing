@@ -49,7 +49,7 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 	}
 
 	if result == nil {
-		resp.Error = fmt.Errorf("value is null")
+		resp.Error = fmt.Errorf("value is null for output at path: %s", e.outputAddress)
 
 		return
 	}
@@ -60,7 +60,7 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 		reflect.Slice,
 		reflect.String:
 		if err := e.knownValue.CheckValue(result); err != nil {
-			resp.Error = err
+			resp.Error = fmt.Errorf("error checking value for output at path: %s, err: %s", e.outputAddress, err)
 
 			return
 		}

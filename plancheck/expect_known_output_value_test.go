@@ -76,7 +76,7 @@ func TestExpectKnownOutputValue_CheckPlan_AttributeValueNull(t *testing.T) {
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("value is null"),
+				ExpectError: regexp.MustCompile("value is null for output at path: bool_output"),
 			},
 		},
 	})
@@ -141,7 +141,7 @@ func TestExpectKnownOutputValue_CheckPlan_Bool_KnownValueWrongType(t *testing.T)
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`expected json\.Number value for Float64ValueExact check, got: bool`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: bool_output, err: expected json\.Number value for Float64ValueExact check, got: bool`),
 			},
 		},
 	})
@@ -174,7 +174,7 @@ func TestExpectKnownOutputValue_CheckPlan_Bool_KnownValueWrongValue(t *testing.T
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected value false for BoolValueExact check, got: true"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: bool_output, err: expected value false for BoolValueExact check, got: true"),
 			},
 		},
 	})
@@ -240,7 +240,7 @@ func TestExpectKnownOutputValue_CheckPlan_Float64_KnownValueWrongType(t *testing
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`expected string value for StringValueExact check, got: json\.Number`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: float64_output, err: expected string value for StringValueExact check, got: json\.Number`),
 			},
 		},
 	})
@@ -273,7 +273,7 @@ func TestExpectKnownOutputValue_CheckPlan_Float64_KnownValueWrongValue(t *testin
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected value 3.21 for Float64ValueExact check, got: 1.23"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: float64_output, err: expected value 3.21 for Float64ValueExact check, got: 1.23"),
 			},
 		},
 	})
@@ -338,7 +338,7 @@ func TestExpectKnownOutputValue_CheckPlan_Int64_KnownValueWrongValue(t *testing.
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected value 321 for Int64ValueExact check, got: 123"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: int64_output, err: expected value 321 for Int64ValueExact check, got: 123"),
 			},
 		},
 	})
@@ -412,7 +412,7 @@ func TestExpectKnownOutputValue_CheckPlan_List_KnownValueWrongType(t *testing.T)
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`expected map\[string\]any value for MapValueExact check, got: \[\]interface {}`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: list_output, err: expected map\[string\]any value for MapValueExact check, got: \[\]interface {}`),
 			},
 		},
 	})
@@ -451,7 +451,7 @@ func TestExpectKnownOutputValue_CheckPlan_List_KnownValueWrongValue(t *testing.T
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`list element index 0: expected value value3 for StringValueExact check, got: value1`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: list_output, err: list element index 0: expected value value3 for StringValueExact check, got: value1`),
 			},
 		},
 	})
@@ -528,7 +528,7 @@ func TestExpectKnownOutputValue_CheckPlan_ListPartial_KnownValueWrongValue(t *te
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`list element 0: expected value value3 for StringValueExact check, got: value1`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: list_output, err: list element 0: expected value value3 for StringValueExact check, got: value1`),
 			},
 		},
 	})
@@ -599,7 +599,7 @@ func TestExpectKnownOutputValue_CheckPlan_ListElements_WrongNum(t *testing.T) {
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected 3 elements for ListElementsExact check, got 2 elements"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: list_output, err: expected 3 elements for ListElementsExact check, got 2 elements"),
 			},
 		},
 	})
@@ -795,7 +795,7 @@ func TestExpectKnownOutputValue_CheckPlan_Map_KnownValueWrongType(t *testing.T) 
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`expected \[\]any value for ListValueExact check, got: map\[string\]interface {}`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: map_output, err: expected \[\]any value for ListValueExact check, got: map\[string\]interface {}`),
 			},
 		},
 	})
@@ -834,7 +834,7 @@ func TestExpectKnownOutputValue_CheckPlan_Map_KnownValueWrongValue(t *testing.T)
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`missing element key3 for MapValueExact check`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: map_output, err: missing element key3 for MapValueExact check`),
 			},
 		},
 	})
@@ -909,7 +909,7 @@ func TestExpectKnownOutputValue_CheckPlan_MapPartial_KnownValueWrongValue(t *tes
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`missing element key3 for MapValuePartial check`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: map_output, err: missing element key3 for MapValuePartial check`),
 			},
 		},
 	})
@@ -980,7 +980,7 @@ func TestExpectKnownOutputValue_CheckPlan_MapElements_WrongNum(t *testing.T) {
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected 3 elements for MapElementsExact check, got 2 elements"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: map_output, err: expected 3 elements for MapElementsExact check, got 2 elements"),
 			},
 		},
 	})
@@ -1057,7 +1057,7 @@ func TestExpectKnownOutputValue_CheckPlan_Number_KnownValueWrongValue(t *testing
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected value 321 for NumberValueExact check, got: 123"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: int64_output, err: expected value 321 for NumberValueExact check, got: 123"),
 			},
 		},
 	})
@@ -1134,7 +1134,7 @@ func TestExpectKnownOutputValue_CheckPlan_Set_KnownValueWrongValue(t *testing.T)
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`missing value value3 for SetValueExact check`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: set_output, err: missing value value3 for SetValueExact check`),
 			},
 		},
 	})
@@ -1209,7 +1209,7 @@ func TestExpectKnownOutputValue_CheckPlan_SetPartial_KnownValueWrongValue(t *tes
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`missing value value3 for SetValuePartial check`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: set_output, err: missing value value3 for SetValuePartial check`),
 			},
 		},
 	})
@@ -1429,7 +1429,7 @@ func TestExpectKnownOutputValue_CheckPlan_String_KnownValueWrongType(t *testing.
 							knownvalue.BoolValueExact(true)),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected bool value for BoolValueExact check, got: string"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: string_output, err: expected bool value for BoolValueExact check, got: string"),
 			},
 		},
 	})
@@ -1461,7 +1461,7 @@ func TestExpectKnownOutputValue_CheckPlan_String_KnownValueWrongValue(t *testing
 							knownvalue.StringValueExact("rts")),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected value rts for StringValueExact check, got: str"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: string_output, err: expected value rts for StringValueExact check, got: str"),
 			},
 		},
 	})

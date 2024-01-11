@@ -50,7 +50,7 @@ func (e expectKnownValue) CheckPlan(ctx context.Context, req CheckPlanRequest, r
 	}
 
 	if result == nil {
-		resp.Error = fmt.Errorf("value is null")
+		resp.Error = fmt.Errorf("value is null for attribute at path: %s.%s", e.resourceAddress, e.attributePath.String())
 
 		return
 	}
@@ -61,7 +61,7 @@ func (e expectKnownValue) CheckPlan(ctx context.Context, req CheckPlanRequest, r
 		reflect.Slice,
 		reflect.String:
 		if err := e.knownValue.CheckValue(result); err != nil {
-			resp.Error = err
+			resp.Error = fmt.Errorf("error checking value for attribute at path: %s.%s, err: %s", e.resourceAddress, e.attributePath.String(), err)
 
 			return
 		}

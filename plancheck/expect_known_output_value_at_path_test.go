@@ -95,7 +95,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_AttributeValueNull(t *testing.T)
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("value is null"),
+				ExpectError: regexp.MustCompile("value is null for output at path: test_resource_one_output.bool_attribute"),
 			},
 		},
 	})
@@ -176,7 +176,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Bool_KnownValueWrongType(t *test
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`expected json\.Number value for Float64ValueExact check, got: bool`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: test_resource_one_output.bool_attribute, err: expected json\.Number value for Float64ValueExact check, got: bool`),
 			},
 		},
 	})
@@ -217,7 +217,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Bool_KnownValueWrongValue(t *tes
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected value false for BoolValueExact check, got: true"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.bool_attribute, err: expected value false for BoolValueExact check, got: true"),
 			},
 		},
 	})
@@ -299,7 +299,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Float64_KnownValueWrongType(t *t
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`expected string value for StringValueExact check, got: json\.Number`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: test_resource_one_output.float_attribute, err: expected string value for StringValueExact check, got: json\.Number`),
 			},
 		},
 	})
@@ -340,7 +340,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Float64_KnownValueWrongValue(t *
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected value 3.21 for Float64ValueExact check, got: 1.23"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.float_attribute, err: expected value 3.21 for Float64ValueExact check, got: 1.23"),
 			},
 		},
 	})
@@ -421,7 +421,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Int64_KnownValueWrongValue(t *te
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected value 321 for Int64ValueExact check, got: 123"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.int_attribute, err: expected value 321 for Int64ValueExact check, got: 123"),
 			},
 		},
 	})
@@ -511,7 +511,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_List_KnownValueWrongType(t *test
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`expected map\[string\]any value for MapValueExact check, got: \[\]interface {}`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: test_resource_one_output.list_attribute, err: expected map\[string\]any value for MapValueExact check, got: \[\]interface {}`),
 			},
 		},
 	})
@@ -558,7 +558,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_List_KnownValueWrongValue(t *tes
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`list element index 0: expected value value3 for StringValueExact check, got: value1`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: test_resource_one_output.list_attribute, err: list element index 0: expected value value3 for StringValueExact check, got: value1`),
 			},
 		},
 	})
@@ -651,7 +651,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListPartial_KnownValueWrongValue
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`list element 0: expected value value3 for StringValueExact check, got: value1`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: test_resource_one_output.list_attribute, err: list element 0: expected value value3 for StringValueExact check, got: value1`),
 			},
 		},
 	})
@@ -738,7 +738,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListElements_WrongNum(t *testing
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected 3 elements for ListElementsExact check, got 2 elements"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.list_attribute, err: expected 3 elements for ListElementsExact check, got 2 elements"),
 			},
 		},
 	})
@@ -974,7 +974,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Map_KnownValueWrongType(t *testi
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`expected \[\]any value for ListValueExact check, got: map\[string\]interface {}`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: test_resource_one_output.map_attribute, err: expected \[\]any value for ListValueExact check, got: map\[string\]interface {}`),
 			},
 		},
 	})
@@ -1021,7 +1021,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Map_KnownValueWrongValue(t *test
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`missing element key3 for MapValueExact check`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: test_resource_one_output.map_attribute, err: missing element key3 for MapValueExact check`),
 			},
 		},
 	})
@@ -1112,7 +1112,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_MapPartial_KnownValueWrongValue(
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`missing element key3 for MapValuePartial check`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: test_resource_one_output.map_attribute, err: missing element key3 for MapValuePartial check`),
 			},
 		},
 	})
@@ -1199,7 +1199,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_MapElements_WrongNum(t *testing.
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected 3 elements for MapElementsExact check, got 2 elements"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.map_attribute, err: expected 3 elements for MapElementsExact check, got 2 elements"),
 			},
 		},
 	})
@@ -1292,7 +1292,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Number_KnownValueWrongValue(t *t
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected value 321 for NumberValueExact check, got: 123"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.int_attribute, err: expected value 321 for NumberValueExact check, got: 123"),
 			},
 		},
 	})
@@ -1385,7 +1385,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Set_KnownValueWrongValue(t *test
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`missing value value3 for SetValueExact check`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: test_resource_one_output.set_attribute, err: missing value value3 for SetValueExact check`),
 			},
 		},
 	})
@@ -1476,7 +1476,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetPartial_KnownValueWrongValue(
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile(`missing value value3 for SetValuePartial check`),
+				ExpectError: regexp.MustCompile(`error checking value for output at path: test_resource_one_output.set_attribute, err: missing value value3 for SetValuePartial check`),
 			},
 		},
 	})
@@ -1744,7 +1744,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_String_KnownValueWrongType(t *te
 							knownvalue.BoolValueExact(true)),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected bool value for BoolValueExact check, got: string"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.string_attribute, err: expected bool value for BoolValueExact check, got: string"),
 			},
 		},
 	})
@@ -1784,7 +1784,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_String_KnownValueWrongValue(t *t
 							knownvalue.StringValueExact("rts")),
 					},
 				},
-				ExpectError: regexp.MustCompile("expected value rts for StringValueExact check, got: str"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.string_attribute, err: expected value rts for StringValueExact check, got: str"),
 			},
 		},
 	})
