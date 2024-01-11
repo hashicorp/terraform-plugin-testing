@@ -48,6 +48,7 @@ func (v numberValueExact) String() string {
 
 // NumberValueExact returns a Check for asserting equality between the
 // supplied *big.Float and the value passed to the CheckValue method.
+// The CheckValue method uses 512-bit precision to perform this assertion.
 func NumberValueExact(value *big.Float) numberValueExact {
 	return numberValueExact{
 		value: value,
