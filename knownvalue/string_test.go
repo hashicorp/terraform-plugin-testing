@@ -16,29 +16,31 @@ func TestStringValue_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		self          knownvalue.StringValue
+		self          knownvalue.Check
 		other         any
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("expected string value for StringValue check, got: <nil>"),
+			self:          knownvalue.StringValueExact(""),
+			expectedError: fmt.Errorf("expected string value for StringValueExact check, got: <nil>"),
 		},
 		"zero-other": {
+			self:  knownvalue.StringValueExact(""),
 			other: "", // checking against the underlying value field zero-value
 		},
 		"nil": {
 			self:          knownvalue.StringValueExact("str"),
-			expectedError: fmt.Errorf("expected string value for StringValue check, got: <nil>"),
+			expectedError: fmt.Errorf("expected string value for StringValueExact check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.StringValueExact("str"),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected string value for StringValue check, got: float64"),
+			expectedError: fmt.Errorf("expected string value for StringValueExact check, got: float64"),
 		},
 		"not-equal": {
 			self:          knownvalue.StringValueExact("str"),
 			other:         "rts",
-			expectedError: fmt.Errorf("expected value str for StringValue check, got: rts"),
+			expectedError: fmt.Errorf("expected value str for StringValueExact check, got: rts"),
 		},
 		"equal": {
 			self:  knownvalue.StringValueExact("str"),

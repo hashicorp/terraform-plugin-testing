@@ -7,18 +7,15 @@ import (
 	"fmt"
 )
 
-var _ Check = SetValuePartial{}
+var _ Check = setValuePartial{}
 
-// SetValuePartial is a Check for asserting partial equality between the
-// value supplied to SetValuePartialMatch and the value passed to the
-// CheckValue method.
-type SetValuePartial struct {
+type setValuePartial struct {
 	value []Check
 }
 
 // CheckValue determines whether the passed value is of type []any, and
 // contains matching slice entries in any sequence.
-func (v SetValuePartial) CheckValue(other any) error {
+func (v setValuePartial) CheckValue(other any) error {
 	otherVal, ok := other.([]any)
 
 	if !ok {
@@ -54,7 +51,7 @@ func (v SetValuePartial) CheckValue(other any) error {
 }
 
 // String returns the string representation of the value.
-func (v SetValuePartial) String() string {
+func (v setValuePartial) String() string {
 	var setVals []string
 
 	for _, val := range v.value {
@@ -64,12 +61,12 @@ func (v SetValuePartial) String() string {
 	return fmt.Sprintf("%s", setVals)
 }
 
-// SetValuePartialMatch returns a Check for asserting partial equality between the
+// SetValuePartial returns a Check for asserting partial equality between the
 // supplied []Check and the value passed to the CheckValue method. Only the
 // elements defined within the supplied []Check are checked. This is an
 // order-independent check.
-func SetValuePartialMatch(value []Check) SetValuePartial {
-	return SetValuePartial{
+func SetValuePartial(value []Check) setValuePartial {
+	return setValuePartial{
 		value: value,
 	}
 }

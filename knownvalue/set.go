@@ -7,21 +7,19 @@ import (
 	"fmt"
 )
 
-var _ Check = SetValue{}
+var _ Check = setValueExact{}
 
-// SetValue is a Check for asserting equality between the value supplied
-// to SetValueExact and the value passed to the CheckValue method.
-type SetValue struct {
+type setValueExact struct {
 	value []Check
 }
 
 // CheckValue determines whether the passed value is of type []any, and
 // contains matching slice entries independent of the sequence.
-func (v SetValue) CheckValue(other any) error {
+func (v setValueExact) CheckValue(other any) error {
 	otherVal, ok := other.([]any)
 
 	if !ok {
-		return fmt.Errorf("expected []any value for SetValue check, got: %T", other)
+		return fmt.Errorf("expected []any value for SetValueExact check, got: %T", other)
 	}
 
 	if len(otherVal) != len(v.value) {
@@ -36,7 +34,7 @@ func (v SetValue) CheckValue(other any) error {
 			actualElements = "element"
 		}
 
-		return fmt.Errorf("expected %d %s for SetValue check, got %d %s", len(v.value), expectedElements, len(otherVal), actualElements)
+		return fmt.Errorf("expected %d %s for SetValueExact check, got %d %s", len(v.value), expectedElements, len(otherVal), actualElements)
 	}
 
 	otherValCopy := make([]any, len(otherVal))
@@ -44,7 +42,7 @@ func (v SetValue) CheckValue(other any) error {
 	copy(otherValCopy, otherVal)
 
 	for i := 0; i < len(v.value); i++ {
-		err := fmt.Errorf("missing value %s for SetValue check", v.value[i].String())
+		err := fmt.Errorf("missing value %s for SetValueExact check", v.value[i].String())
 
 		for j := 0; j < len(otherValCopy); j++ {
 			checkValueErr := v.value[i].CheckValue(otherValCopy[j])
@@ -68,7 +66,7 @@ func (v SetValue) CheckValue(other any) error {
 }
 
 // String returns the string representation of the value.
-func (v SetValue) String() string {
+func (v setValueExact) String() string {
 	var setVals []string
 
 	for _, val := range v.value {
@@ -81,8 +79,8 @@ func (v SetValue) String() string {
 // SetValueExact returns a Check for asserting equality between the
 // supplied []Check and the value passed to the CheckValue method.
 // This is an order-independent check.
-func SetValueExact(value []Check) SetValue {
-	return SetValue{
+func SetValueExact(value []Check) setValueExact {
+	return setValueExact{
 		value: value,
 	}
 }

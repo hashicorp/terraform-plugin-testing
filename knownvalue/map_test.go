@@ -17,14 +17,16 @@ func TestMapValue_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		self          knownvalue.MapValue
+		self          knownvalue.Check
 		other         any
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("expected map[string]any value for MapValue check, got: <nil>"),
+			self:          knownvalue.MapValueExact(map[string]knownvalue.Check{}),
+			expectedError: fmt.Errorf("expected map[string]any value for MapValueExact check, got: <nil>"),
 		},
 		"zero-other": {
+			self:  knownvalue.MapValueExact(map[string]knownvalue.Check{}),
 			other: map[string]any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
@@ -33,7 +35,7 @@ func TestMapValue_CheckValue(t *testing.T) {
 				"two":   knownvalue.Float64ValueExact(4.56),
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
-			expectedError: fmt.Errorf("expected map[string]any value for MapValue check, got: <nil>"),
+			expectedError: fmt.Errorf("expected map[string]any value for MapValueExact check, got: <nil>"),
 		},
 		"wrong-type": {
 			self: knownvalue.MapValueExact(map[string]knownvalue.Check{
@@ -42,7 +44,7 @@ func TestMapValue_CheckValue(t *testing.T) {
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected map[string]any value for MapValue check, got: float64"),
+			expectedError: fmt.Errorf("expected map[string]any value for MapValueExact check, got: float64"),
 		},
 		"empty": {
 			self: knownvalue.MapValueExact(map[string]knownvalue.Check{
@@ -51,7 +53,7 @@ func TestMapValue_CheckValue(t *testing.T) {
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
 			other:         map[string]any{},
-			expectedError: fmt.Errorf("expected 3 elements for MapValue check, got 0 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for MapValueExact check, got 0 elements"),
 		},
 		"wrong-length": {
 			self: knownvalue.MapValueExact(map[string]knownvalue.Check{
@@ -63,7 +65,7 @@ func TestMapValue_CheckValue(t *testing.T) {
 				"one": json.Number("1.23"),
 				"two": json.Number("4.56"),
 			},
-			expectedError: fmt.Errorf("expected 3 elements for MapValue check, got 2 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for MapValueExact check, got 2 elements"),
 		},
 		"not-equal": {
 			self: knownvalue.MapValueExact(map[string]knownvalue.Check{
@@ -76,7 +78,7 @@ func TestMapValue_CheckValue(t *testing.T) {
 				"two":   json.Number("4.56"),
 				"three": json.Number("6.54"),
 			},
-			expectedError: fmt.Errorf("three map element: expected value 7.89 for Float64Value check, got: 6.54"),
+			expectedError: fmt.Errorf("three map element: expected value 7.89 for Float64ValueExact check, got: 6.54"),
 		},
 		"wrong-order": {
 			self: knownvalue.MapValueExact(map[string]knownvalue.Check{
@@ -89,7 +91,7 @@ func TestMapValue_CheckValue(t *testing.T) {
 				"two":   json.Number("7.89"),
 				"three": json.Number("4.56"),
 			},
-			expectedError: fmt.Errorf("three map element: expected value 7.89 for Float64Value check, got: 4.56"),
+			expectedError: fmt.Errorf("three map element: expected value 7.89 for Float64ValueExact check, got: 4.56"),
 		},
 		"key-not-found": {
 			self: knownvalue.MapValueExact(map[string]knownvalue.Check{
@@ -102,7 +104,7 @@ func TestMapValue_CheckValue(t *testing.T) {
 				"five": json.Number("7.89"),
 				"six":  json.Number("4.56"),
 			},
-			expectedError: fmt.Errorf("missing element one for MapValue check"),
+			expectedError: fmt.Errorf("missing element one for MapValueExact check"),
 		},
 		"equal": {
 			self: knownvalue.MapValueExact(map[string]knownvalue.Check{

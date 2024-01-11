@@ -26,15 +26,15 @@ func TestExpectKnownValue_CheckPlan_Number(t *testing.T) {
 		t.Errorf("%s", err)
 	}
 
-	r.Test(t, r.TestCase{
+	resource.Test(t, resource.TestCase{
 		// Provider definition omitted.
-		Steps: []r.TestStep{
+		Steps: []resource.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
 					number_attribute = 123
 				}
 				`,
-				ConfigPlanChecks: r.ConfigPlanChecks{
+				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",

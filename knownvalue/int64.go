@@ -9,45 +9,43 @@ import (
 	"strconv"
 )
 
-var _ Check = Int64Value{}
+var _ Check = int64ValueExact{}
 
-// Int64Value is a Check for asserting equality between the value supplied
-// to Int64ValueExact and the value passed to the CheckValue method.
-type Int64Value struct {
+type int64ValueExact struct {
 	value int64
 }
 
 // CheckValue determines whether the passed value is of type int64, and
 // contains a matching int64 value.
-func (v Int64Value) CheckValue(other any) error {
+func (v int64ValueExact) CheckValue(other any) error {
 	jsonNum, ok := other.(json.Number)
 
 	if !ok {
-		return fmt.Errorf("expected json.Number value for Int64Value check, got: %T", other)
+		return fmt.Errorf("expected json.Number value for Int64ValueExact check, got: %T", other)
 	}
 
 	otherVal, err := jsonNum.Int64()
 
 	if err != nil {
-		return fmt.Errorf("expected json.Number to be parseable as int64 value for Int64Value check: %s", err)
+		return fmt.Errorf("expected json.Number to be parseable as int64 value for Int64ValueExact check: %s", err)
 	}
 
 	if otherVal != v.value {
-		return fmt.Errorf("expected value %d for Int64Value check, got: %d", v.value, otherVal)
+		return fmt.Errorf("expected value %d for Int64ValueExact check, got: %d", v.value, otherVal)
 	}
 
 	return nil
 }
 
 // String returns the string representation of the int64 value.
-func (v Int64Value) String() string {
+func (v int64ValueExact) String() string {
 	return strconv.FormatInt(v.value, 10)
 }
 
 // Int64ValueExact returns a Check for asserting equality between the
 // supplied int64 and the value passed to the CheckValue method.
-func Int64ValueExact(value int64) Int64Value {
-	return Int64Value{
+func Int64ValueExact(value int64) int64ValueExact {
+	return int64ValueExact{
 		value: value,
 	}
 }

@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func Test_Traverse_StringValue(t *testing.T) {
@@ -483,6 +485,46 @@ func Test_Traverse_Array_ExpectError(t *testing.T) {
 
 			if !tc.expectedError(err) {
 				t.Errorf("Unexpected error: %s", err)
+			}
+		})
+	}
+}
+
+func TestPath_String(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		path     Path
+		expected string
+	}{
+		"slice_step": {
+			path:     New(1),
+			expected: "1",
+		},
+		"map_step": {
+			path:     New("attr"),
+			expected: "attr",
+		},
+		"slice_step_map_step": {
+			path:     New(0).AtMapKey("attr"),
+			expected: "0.attr",
+		},
+		"map_step_slice_step": {
+			path:     New("attr").AtSliceIndex(0),
+			expected: "attr.0",
+		},
+	}
+
+	for name, tc := range testCases {
+		name, tc := name, tc
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			got := tc.path.String()
+
+			if diff := cmp.Diff(got, tc.expected); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
 			}
 		})
 	}

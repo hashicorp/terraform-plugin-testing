@@ -17,18 +17,20 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		self          knownvalue.ListValuePartial
+		self          knownvalue.Check
 		other         any
 		expectedError error
 	}{
 		"zero-nil": {
+			self:          knownvalue.ListValuePartial(map[int]knownvalue.Check{}),
 			expectedError: fmt.Errorf("expected []any value for ListValuePartial check, got: <nil>"),
 		},
 		"zero-other": {
+			self:  knownvalue.ListValuePartial(map[int]knownvalue.Check{}),
 			other: []any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
-			self: knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{
+			self: knownvalue.ListValuePartial(map[int]knownvalue.Check{
 				0: knownvalue.Float64ValueExact(1.23),
 				2: knownvalue.Float64ValueExact(4.56),
 				3: knownvalue.Float64ValueExact(7.89),
@@ -36,7 +38,7 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 			expectedError: fmt.Errorf("expected []any value for ListValuePartial check, got: <nil>"),
 		},
 		"wrong-type": {
-			self: knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{
+			self: knownvalue.ListValuePartial(map[int]knownvalue.Check{
 				0: knownvalue.Float64ValueExact(1.23),
 				2: knownvalue.Float64ValueExact(4.56),
 				3: knownvalue.Float64ValueExact(7.89),
@@ -45,7 +47,7 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 			expectedError: fmt.Errorf("expected []any value for ListValuePartial check, got: float64"),
 		},
 		"empty": {
-			self: knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{
+			self: knownvalue.ListValuePartial(map[int]knownvalue.Check{
 				0: knownvalue.Float64ValueExact(1.23),
 				2: knownvalue.Float64ValueExact(4.56),
 				3: knownvalue.Float64ValueExact(7.89),
@@ -54,7 +56,7 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 			expectedError: fmt.Errorf("missing element index 0 for ListValuePartial check"),
 		},
 		"wrong-length": {
-			self: knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{
+			self: knownvalue.ListValuePartial(map[int]knownvalue.Check{
 				0: knownvalue.Float64ValueExact(1.23),
 				2: knownvalue.Float64ValueExact(4.56),
 				3: knownvalue.Float64ValueExact(7.89),
@@ -66,7 +68,7 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 			expectedError: fmt.Errorf("missing element index 2 for ListValuePartial check"),
 		},
 		"not-equal": {
-			self: knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{
+			self: knownvalue.ListValuePartial(map[int]knownvalue.Check{
 				0: knownvalue.Float64ValueExact(1.23),
 				2: knownvalue.Float64ValueExact(4.56),
 				3: knownvalue.Float64ValueExact(7.89),
@@ -77,10 +79,10 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 				json.Number("6.54"),
 				json.Number("5.46"),
 			},
-			expectedError: fmt.Errorf("list element 2: expected value 4.56 for Float64Value check, got: 6.54"),
+			expectedError: fmt.Errorf("list element 2: expected value 4.56 for Float64ValueExact check, got: 6.54"),
 		},
 		"wrong-order": {
-			self: knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{
+			self: knownvalue.ListValuePartial(map[int]knownvalue.Check{
 				0: knownvalue.Float64ValueExact(1.23),
 				2: knownvalue.Float64ValueExact(4.56),
 				3: knownvalue.Float64ValueExact(7.89),
@@ -91,10 +93,10 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 				json.Number("7.89"),
 				json.Number("4.56"),
 			},
-			expectedError: fmt.Errorf("list element 2: expected value 4.56 for Float64Value check, got: 7.89"),
+			expectedError: fmt.Errorf("list element 2: expected value 4.56 for Float64ValueExact check, got: 7.89"),
 		},
 		"equal": {
-			self: knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{
+			self: knownvalue.ListValuePartial(map[int]knownvalue.Check{
 				0: knownvalue.Float64ValueExact(1.23),
 				2: knownvalue.Float64ValueExact(4.56),
 				3: knownvalue.Float64ValueExact(7.89),
@@ -126,7 +128,7 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 func TestListValuePartialPartial_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.ListValuePartialMatch(map[int]knownvalue.Check{
+	got := knownvalue.ListValuePartial(map[int]knownvalue.Check{
 		0: knownvalue.Float64ValueExact(1.23),
 		2: knownvalue.Float64ValueExact(4.56),
 		3: knownvalue.Float64ValueExact(7.89),

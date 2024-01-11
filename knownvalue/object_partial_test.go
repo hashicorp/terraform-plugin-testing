@@ -17,25 +17,27 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		self          knownvalue.ObjectValuePartial
+		self          knownvalue.Check
 		other         any
 		expectedError error
 	}{
 		"zero-nil": {
+			self:          knownvalue.ObjectValuePartial(map[string]knownvalue.Check{}),
 			expectedError: fmt.Errorf("expected map[string]any value for ObjectValuePartial check, got: <nil>"),
 		},
 		"zero-other": {
+			self:  knownvalue.ObjectValuePartial(map[string]knownvalue.Check{}),
 			other: map[string]any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
-			self: knownvalue.ObjectValuePartialMatch(map[string]knownvalue.Check{
+			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
 				"one":   knownvalue.Float64ValueExact(1.23),
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
 			expectedError: fmt.Errorf("expected map[string]any value for ObjectValuePartial check, got: <nil>"),
 		},
 		"wrong-type": {
-			self: knownvalue.ObjectValuePartialMatch(map[string]knownvalue.Check{
+			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
 				"one":   knownvalue.Float64ValueExact(1.23),
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
@@ -43,7 +45,7 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 			expectedError: fmt.Errorf("expected map[string]any value for ObjectValuePartial check, got: float64"),
 		},
 		"empty": {
-			self: knownvalue.ObjectValuePartialMatch(map[string]knownvalue.Check{
+			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
 				"one":   knownvalue.Float64ValueExact(1.23),
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
@@ -51,7 +53,7 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 			expectedError: fmt.Errorf("missing attribute one for ObjectValuePartial check"),
 		},
 		"wrong-length": {
-			self: knownvalue.ObjectValuePartialMatch(map[string]knownvalue.Check{
+			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
 				"one":   knownvalue.Float64ValueExact(1.23),
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
@@ -62,7 +64,7 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 			expectedError: fmt.Errorf("missing attribute three for ObjectValuePartial check"),
 		},
 		"not-equal": {
-			self: knownvalue.ObjectValuePartialMatch(map[string]knownvalue.Check{
+			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
 				"one":   knownvalue.Float64ValueExact(1.23),
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
@@ -71,10 +73,10 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 				"two":   json.Number("4.56"),
 				"three": json.Number("6.54"),
 			},
-			expectedError: fmt.Errorf("three object attribute: expected value 7.89 for Float64Value check, got: 6.54"),
+			expectedError: fmt.Errorf("three object attribute: expected value 7.89 for Float64ValueExact check, got: 6.54"),
 		},
 		"wrong-order": {
-			self: knownvalue.ObjectValuePartialMatch(map[string]knownvalue.Check{
+			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
 				"one":   knownvalue.Float64ValueExact(1.23),
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
@@ -83,10 +85,10 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 				"two":   json.Number("7.89"),
 				"three": json.Number("4.56"),
 			},
-			expectedError: fmt.Errorf("three object attribute: expected value 7.89 for Float64Value check, got: 4.56"),
+			expectedError: fmt.Errorf("three object attribute: expected value 7.89 for Float64ValueExact check, got: 4.56"),
 		},
 		"key-not-found": {
-			self: knownvalue.ObjectValuePartialMatch(map[string]knownvalue.Check{
+			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
 				"one":   knownvalue.Float64ValueExact(1.23),
 				"two":   knownvalue.Float64ValueExact(4.56),
 				"three": knownvalue.Float64ValueExact(7.89),
@@ -99,7 +101,7 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 			expectedError: fmt.Errorf("missing attribute one for ObjectValuePartial check"),
 		},
 		"equal": {
-			self: knownvalue.ObjectValuePartialMatch(map[string]knownvalue.Check{
+			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
 				"one":   knownvalue.Float64ValueExact(1.23),
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
@@ -129,7 +131,7 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 func TestObjectValuePartial_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.ObjectValuePartialMatch(map[string]knownvalue.Check{
+	got := knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
 		"one":   knownvalue.Float64ValueExact(1.23),
 		"three": knownvalue.Float64ValueExact(7.89),
 	}).String()
