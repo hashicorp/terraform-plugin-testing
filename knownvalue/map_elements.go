@@ -43,7 +43,7 @@ func (v mapElementsExact) CheckValue(other any) error {
 
 // String returns the string representation of the value.
 func (v mapElementsExact) String() string {
-	return strconv.FormatInt(int64(v.num), 10)
+	return strconv.Itoa(v.num)
 }
 
 // MapElementsExact returns a Check for asserting that
