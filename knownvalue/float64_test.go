@@ -17,29 +17,31 @@ func TestFloat64Value_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		self          knownvalue.Float64Value
+		self          knownvalue.Check
 		other         any
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("expected json.Number value for Float64Value check, got: <nil>"),
+			self:          knownvalue.Float64ValueExact(0),
+			expectedError: fmt.Errorf("expected json.Number value for Float64ValueExact check, got: <nil>"),
 		},
 		"zero-other": {
+			self:  knownvalue.Float64ValueExact(0),
 			other: json.Number("0.0"), // checking against the underlying value field zero-value
 		},
 		"nil": {
 			self:          knownvalue.Float64ValueExact(1.234),
-			expectedError: fmt.Errorf("expected json.Number value for Float64Value check, got: <nil>"),
+			expectedError: fmt.Errorf("expected json.Number value for Float64ValueExact check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.Float64ValueExact(1.234),
 			other:         json.Number("str"),
-			expectedError: fmt.Errorf("expected json.Number to be parseable as float64 value for Float64Value check: strconv.ParseFloat: parsing \"str\": invalid syntax"),
+			expectedError: fmt.Errorf("expected json.Number to be parseable as float64 value for Float64ValueExact check: strconv.ParseFloat: parsing \"str\": invalid syntax"),
 		},
 		"not-equal": {
 			self:          knownvalue.Float64ValueExact(1.234),
 			other:         json.Number("4.321"),
-			expectedError: fmt.Errorf("expected value 1.234 for Float64Value check, got: 4.321"),
+			expectedError: fmt.Errorf("expected value 1.234 for Float64ValueExact check, got: 4.321"),
 		},
 		"equal": {
 			self:  knownvalue.Float64ValueExact(1.234),

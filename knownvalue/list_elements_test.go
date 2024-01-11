@@ -16,29 +16,31 @@ func TestListElements_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		self          knownvalue.ListElements
+		self          knownvalue.Check
 		other         any
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("expected []any value for ListElements check, got: <nil>"),
+			self:          knownvalue.ListElementsExact(0),
+			expectedError: fmt.Errorf("expected []any value for ListElementsExact check, got: <nil>"),
 		},
 		"zero-other": {
+			self:  knownvalue.ListElementsExact(0),
 			other: []any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
 			self:          knownvalue.ListElementsExact(3),
-			expectedError: fmt.Errorf("expected []any value for ListElements check, got: <nil>"),
+			expectedError: fmt.Errorf("expected []any value for ListElementsExact check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.ListElementsExact(3),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected []any value for ListElements check, got: float64"),
+			expectedError: fmt.Errorf("expected []any value for ListElementsExact check, got: float64"),
 		},
 		"empty": {
 			self:          knownvalue.ListElementsExact(3),
 			other:         []any{},
-			expectedError: fmt.Errorf("expected 3 elements for ListElements check, got 0 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for ListElementsExact check, got 0 elements"),
 		},
 		"wrong-length": {
 			self: knownvalue.ListElementsExact(3),
@@ -46,7 +48,7 @@ func TestListElements_CheckValue(t *testing.T) {
 				int64(123),
 				int64(456),
 			},
-			expectedError: fmt.Errorf("expected 3 elements for ListElements check, got 2 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for ListElementsExact check, got 2 elements"),
 		},
 		"equal": {
 			self: knownvalue.ListElementsExact(3),

@@ -8,21 +8,19 @@ import (
 	"strconv"
 )
 
-var _ Check = ObjectAttributes{}
+var _ Check = objectAttributesExact{}
 
-// ObjectAttributes is a Check for asserting equality between the value supplied
-// to ObjectAttributesExact and the value passed to the CheckValue method.
-type ObjectAttributes struct {
+type objectAttributesExact struct {
 	num int
 }
 
 // CheckValue verifies that the passed value is a list, map, object,
 // or set, and contains a matching number of elements.
-func (v ObjectAttributes) CheckValue(other any) error {
+func (v objectAttributesExact) CheckValue(other any) error {
 	otherVal, ok := other.(map[string]any)
 
 	if !ok {
-		return fmt.Errorf("expected map[string]any value for ObjectAttributes check, got: %T", other)
+		return fmt.Errorf("expected map[string]any value for ObjectAttributesExact check, got: %T", other)
 	}
 
 	if len(otherVal) != v.num {
@@ -37,21 +35,21 @@ func (v ObjectAttributes) CheckValue(other any) error {
 			actualAttributes = "attribute"
 		}
 
-		return fmt.Errorf("expected %d %s for ObjectAttributes check, got %d %s", v.num, expectedAttributes, len(otherVal), actualAttributes)
+		return fmt.Errorf("expected %d %s for ObjectAttributesExact check, got %d %s", v.num, expectedAttributes, len(otherVal), actualAttributes)
 	}
 
 	return nil
 }
 
 // String returns the string representation of the value.
-func (v ObjectAttributes) String() string {
+func (v objectAttributesExact) String() string {
 	return strconv.FormatInt(int64(v.num), 10)
 }
 
 // ObjectAttributesExact returns a Check for asserting that
-// a list num elements.
-func ObjectAttributesExact(num int) ObjectAttributes {
-	return ObjectAttributes{
+// an object has num attributes.
+func ObjectAttributesExact(num int) objectAttributesExact {
+	return objectAttributesExact{
 		num: num,
 	}
 }

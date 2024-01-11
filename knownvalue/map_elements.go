@@ -8,21 +8,19 @@ import (
 	"strconv"
 )
 
-var _ Check = MapElements{}
+var _ Check = mapElementsExact{}
 
-// MapElements is a Check for asserting equality between the value supplied
-// to MapElementsExact and the value passed to the CheckValue method.
-type MapElements struct {
+type mapElementsExact struct {
 	num int
 }
 
 // CheckValue verifies that the passed value is a list, map, object,
 // or set, and contains a matching number of elements.
-func (v MapElements) CheckValue(other any) error {
+func (v mapElementsExact) CheckValue(other any) error {
 	otherVal, ok := other.(map[string]any)
 
 	if !ok {
-		return fmt.Errorf("expected map[string]any value for MapElements check, got: %T", other)
+		return fmt.Errorf("expected map[string]any value for MapElementsExact check, got: %T", other)
 	}
 
 	if len(otherVal) != v.num {
@@ -37,21 +35,21 @@ func (v MapElements) CheckValue(other any) error {
 			actualElements = "element"
 		}
 
-		return fmt.Errorf("expected %d %s for MapElements check, got %d %s", v.num, expectedElements, len(otherVal), actualElements)
+		return fmt.Errorf("expected %d %s for MapElementsExact check, got %d %s", v.num, expectedElements, len(otherVal), actualElements)
 	}
 
 	return nil
 }
 
 // String returns the string representation of the value.
-func (v MapElements) String() string {
+func (v mapElementsExact) String() string {
 	return strconv.FormatInt(int64(v.num), 10)
 }
 
 // MapElementsExact returns a Check for asserting that
-// a list num elements.
-func MapElementsExact(num int) MapElements {
-	return MapElements{
+// a map has num elements.
+func MapElementsExact(num int) mapElementsExact {
+	return mapElementsExact{
 		num: num,
 	}
 }

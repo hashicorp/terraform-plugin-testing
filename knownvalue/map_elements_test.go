@@ -16,29 +16,31 @@ func TestMapElements_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		self          knownvalue.MapElements
+		self          knownvalue.Check
 		other         any
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("expected map[string]any value for MapElements check, got: <nil>"),
+			self:          knownvalue.MapElementsExact(0),
+			expectedError: fmt.Errorf("expected map[string]any value for MapElementsExact check, got: <nil>"),
 		},
 		"zero-other": {
+			self:  knownvalue.MapElementsExact(0),
 			other: map[string]any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
 			self:          knownvalue.MapElementsExact(3),
-			expectedError: fmt.Errorf("expected map[string]any value for MapElements check, got: <nil>"),
+			expectedError: fmt.Errorf("expected map[string]any value for MapElementsExact check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.MapElementsExact(3),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected map[string]any value for MapElements check, got: float64"),
+			expectedError: fmt.Errorf("expected map[string]any value for MapElementsExact check, got: float64"),
 		},
 		"empty": {
 			self:          knownvalue.MapElementsExact(3),
 			other:         map[string]any{},
-			expectedError: fmt.Errorf("expected 3 elements for MapElements check, got 0 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for MapElementsExact check, got 0 elements"),
 		},
 		"wrong-length": {
 			self: knownvalue.MapElementsExact(3),
@@ -46,7 +48,7 @@ func TestMapElements_CheckValue(t *testing.T) {
 				"one": int64(123),
 				"two": int64(456),
 			},
-			expectedError: fmt.Errorf("expected 3 elements for MapElements check, got 2 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for MapElementsExact check, got 2 elements"),
 		},
 		"equal": {
 			self: knownvalue.MapElementsExact(3),

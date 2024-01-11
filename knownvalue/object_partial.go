@@ -8,18 +8,15 @@ import (
 	"sort"
 )
 
-var _ Check = ObjectValuePartial{}
+var _ Check = objectValuePartial{}
 
-// ObjectValuePartial is a Check for asserting partial equality between the
-// value supplied to ObjectValuePartialMatch and the value passed to the
-// CheckValue method.
-type ObjectValuePartial struct {
+type objectValuePartial struct {
 	value map[string]Check
 }
 
 // CheckValue determines whether the passed value is of type map[string]any, and
 // contains matching map entries.
-func (v ObjectValuePartial) CheckValue(other any) error {
+func (v objectValuePartial) CheckValue(other any) error {
 	otherVal, ok := other.(map[string]any)
 
 	if !ok {
@@ -52,7 +49,7 @@ func (v ObjectValuePartial) CheckValue(other any) error {
 }
 
 // String returns the string representation of the value.
-func (v ObjectValuePartial) String() string {
+func (v objectValuePartial) String() string {
 	var keys []string
 
 	for k := range v.value {
@@ -72,12 +69,12 @@ func (v ObjectValuePartial) String() string {
 	return fmt.Sprintf("%v", mapVals)
 }
 
-// ObjectValuePartialMatch returns a Check for asserting partial equality between the
+// ObjectValuePartial returns a Check for asserting partial equality between the
 // supplied map[string]Check and the value passed to the CheckValue method. The map
 // keys represent object attribute names. Only the object attributes defined by the
 // map keys within the supplied map[string]Check are checked.
-func ObjectValuePartialMatch(value map[string]Check) ObjectValuePartial {
-	return ObjectValuePartial{
+func ObjectValuePartial(value map[string]Check) objectValuePartial {
+	return objectValuePartial{
 		value: value,
 	}
 }

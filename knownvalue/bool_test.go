@@ -16,29 +16,31 @@ func TestBoolValue_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		self          knownvalue.BoolValue
+		self          knownvalue.Check
 		other         any
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("expected bool value for BoolValue check, got: <nil>"),
+			self:          knownvalue.BoolValueExact(false),
+			expectedError: fmt.Errorf("expected bool value for BoolValueExact check, got: <nil>"),
 		},
 		"zero-other": {
+			self:  knownvalue.BoolValueExact(false),
 			other: false, // checking against the underlying value field zero-value
 		},
 		"nil": {
 			self:          knownvalue.BoolValueExact(false),
-			expectedError: fmt.Errorf("expected bool value for BoolValue check, got: <nil>"),
+			expectedError: fmt.Errorf("expected bool value for BoolValueExact check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.BoolValueExact(true),
 			other:         1.23,
-			expectedError: fmt.Errorf("expected bool value for BoolValue check, got: float64"),
+			expectedError: fmt.Errorf("expected bool value for BoolValueExact check, got: float64"),
 		},
 		"not-equal": {
 			self:          knownvalue.BoolValueExact(true),
 			other:         false,
-			expectedError: fmt.Errorf("expected value true for BoolValue check, got: false"),
+			expectedError: fmt.Errorf("expected value true for BoolValueExact check, got: false"),
 		},
 		"equal": {
 			self:  knownvalue.BoolValueExact(true),

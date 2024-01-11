@@ -17,14 +17,16 @@ func TestSetValue_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		self          knownvalue.SetValue
+		self          knownvalue.Check
 		other         any
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("expected []any value for SetValue check, got: <nil>"),
+			self:          knownvalue.SetValueExact([]knownvalue.Check{}),
+			expectedError: fmt.Errorf("expected []any value for SetValueExact check, got: <nil>"),
 		},
 		"zero-other": {
+			self:  knownvalue.SetValueExact([]knownvalue.Check{}),
 			other: []any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
@@ -33,7 +35,7 @@ func TestSetValue_CheckValue(t *testing.T) {
 				knownvalue.Int64ValueExact(456),
 				knownvalue.Int64ValueExact(789),
 			}),
-			expectedError: fmt.Errorf("expected []any value for SetValue check, got: <nil>"),
+			expectedError: fmt.Errorf("expected []any value for SetValueExact check, got: <nil>"),
 		},
 		"wrong-type": {
 			self: knownvalue.SetValueExact([]knownvalue.Check{
@@ -42,7 +44,7 @@ func TestSetValue_CheckValue(t *testing.T) {
 				knownvalue.Int64ValueExact(789),
 			}),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected []any value for SetValue check, got: float64"),
+			expectedError: fmt.Errorf("expected []any value for SetValueExact check, got: float64"),
 		},
 		"empty": {
 			self: knownvalue.SetValueExact([]knownvalue.Check{
@@ -51,7 +53,7 @@ func TestSetValue_CheckValue(t *testing.T) {
 				knownvalue.Int64ValueExact(789),
 			}),
 			other:         []any{},
-			expectedError: fmt.Errorf("expected 3 elements for SetValue check, got 0 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for SetValueExact check, got 0 elements"),
 		},
 		"wrong-length": {
 			self: knownvalue.SetValueExact([]knownvalue.Check{
@@ -63,7 +65,7 @@ func TestSetValue_CheckValue(t *testing.T) {
 				json.Number("123"),
 				json.Number("456"),
 			},
-			expectedError: fmt.Errorf("expected 3 elements for SetValue check, got 2 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for SetValueExact check, got 2 elements"),
 		},
 		"not-equal": {
 			self: knownvalue.SetValueExact([]knownvalue.Check{
@@ -76,7 +78,7 @@ func TestSetValue_CheckValue(t *testing.T) {
 				json.Number("456"),
 				json.Number("654"),
 			},
-			expectedError: fmt.Errorf("missing value 789 for SetValue check"),
+			expectedError: fmt.Errorf("missing value 789 for SetValueExact check"),
 		},
 		"equal-different-order": {
 			self: knownvalue.SetValueExact([]knownvalue.Check{

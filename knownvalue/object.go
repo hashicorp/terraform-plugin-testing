@@ -8,21 +8,19 @@ import (
 	"sort"
 )
 
-var _ Check = ObjectValue{}
+var _ Check = objectValueExact{}
 
-// ObjectValue is a Check for asserting equality between the value supplied
-// to ObjectValueExact and the value passed to the CheckValue method.
-type ObjectValue struct {
+type objectValueExact struct {
 	value map[string]Check
 }
 
 // CheckValue determines whether the passed value is of type map[string]any, and
 // contains matching object entries.
-func (v ObjectValue) CheckValue(other any) error {
+func (v objectValueExact) CheckValue(other any) error {
 	otherVal, ok := other.(map[string]any)
 
 	if !ok {
-		return fmt.Errorf("expected map[string]any value for ObjectValue check, got: %T", other)
+		return fmt.Errorf("expected map[string]any value for ObjectValueExact check, got: %T", other)
 	}
 
 	if len(otherVal) != len(v.value) {
@@ -37,7 +35,7 @@ func (v ObjectValue) CheckValue(other any) error {
 			actualAttributes = "attribute"
 		}
 
-		return fmt.Errorf("expected %d %s for ObjectValue check, got %d %s", len(v.value), expectedAttributes, len(otherVal), actualAttributes)
+		return fmt.Errorf("expected %d %s for ObjectValueExact check, got %d %s", len(v.value), expectedAttributes, len(otherVal), actualAttributes)
 	}
 
 	var keys []string
@@ -54,7 +52,7 @@ func (v ObjectValue) CheckValue(other any) error {
 		otherValItem, ok := otherVal[k]
 
 		if !ok {
-			return fmt.Errorf("missing attribute %s for ObjectValue check", k)
+			return fmt.Errorf("missing attribute %s for ObjectValueExact check", k)
 		}
 
 		if err := v.value[k].CheckValue(otherValItem); err != nil {
@@ -66,7 +64,7 @@ func (v ObjectValue) CheckValue(other any) error {
 }
 
 // String returns the string representation of the value.
-func (v ObjectValue) String() string {
+func (v objectValueExact) String() string {
 	var keys []string
 
 	for k := range v.value {
@@ -89,8 +87,8 @@ func (v ObjectValue) String() string {
 // ObjectValueExact returns a Check for asserting equality between the supplied
 // map[string]Check and the value passed to the CheckValue method. The map
 // keys represent object attribute names.
-func ObjectValueExact(value map[string]Check) ObjectValue {
-	return ObjectValue{
+func ObjectValueExact(value map[string]Check) objectValueExact {
+	return objectValueExact{
 		value: value,
 	}
 }

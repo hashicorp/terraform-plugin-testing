@@ -10,18 +10,15 @@ import (
 	"strings"
 )
 
-var _ Check = ListValuePartial{}
+var _ Check = listValuePartial{}
 
-// ListValuePartial is a Check for asserting partial equality between the
-// value supplied to ListValuePartialMatch and the value passed to the
-// CheckValue method.
-type ListValuePartial struct {
+type listValuePartial struct {
 	value map[int]Check
 }
 
 // CheckValue determines whether the passed value is of type []any, and
 // contains matching slice entries in the same sequence.
-func (v ListValuePartial) CheckValue(other any) error {
+func (v listValuePartial) CheckValue(other any) error {
 	otherVal, ok := other.([]any)
 
 	if !ok {
@@ -52,7 +49,7 @@ func (v ListValuePartial) CheckValue(other any) error {
 }
 
 // String returns the string representation of the value.
-func (v ListValuePartial) String() string {
+func (v listValuePartial) String() string {
 	var b bytes.Buffer
 
 	b.WriteString("[")
@@ -80,13 +77,13 @@ func (v ListValuePartial) String() string {
 	return b.String()
 }
 
-// ListValuePartialMatch returns a Check for asserting partial equality between the
+// ListValuePartial returns a Check for asserting partial equality between the
 // supplied map[int]Check and the value passed to the CheckValue method. The
 // map keys represent the zero-ordered element indices within the list that is
 // being checked. Only the elements at the indices defined within the
 // supplied map[int]Check are checked.
-func ListValuePartialMatch(value map[int]Check) ListValuePartial {
-	return ListValuePartial{
+func ListValuePartial(value map[int]Check) listValuePartial {
+	return listValuePartial{
 		value: value,
 	}
 }

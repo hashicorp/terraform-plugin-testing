@@ -17,14 +17,16 @@ func TestObjectValue_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		self          knownvalue.ObjectValue
+		self          knownvalue.Check
 		other         any
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("expected map[string]any value for ObjectValue check, got: <nil>"),
+			self:          knownvalue.ObjectValueExact(map[string]knownvalue.Check{}),
+			expectedError: fmt.Errorf("expected map[string]any value for ObjectValueExact check, got: <nil>"),
 		},
 		"zero-other": {
+			self:  knownvalue.ObjectValueExact(map[string]knownvalue.Check{}),
 			other: map[string]any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
@@ -33,7 +35,7 @@ func TestObjectValue_CheckValue(t *testing.T) {
 				"two":   knownvalue.Float64ValueExact(4.56),
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
-			expectedError: fmt.Errorf("expected map[string]any value for ObjectValue check, got: <nil>"),
+			expectedError: fmt.Errorf("expected map[string]any value for ObjectValueExact check, got: <nil>"),
 		},
 		"wrong-type": {
 			self: knownvalue.ObjectValueExact(map[string]knownvalue.Check{
@@ -42,7 +44,7 @@ func TestObjectValue_CheckValue(t *testing.T) {
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected map[string]any value for ObjectValue check, got: float64"),
+			expectedError: fmt.Errorf("expected map[string]any value for ObjectValueExact check, got: float64"),
 		},
 		"empty": {
 			self: knownvalue.ObjectValueExact(map[string]knownvalue.Check{
@@ -51,7 +53,7 @@ func TestObjectValue_CheckValue(t *testing.T) {
 				"three": knownvalue.Float64ValueExact(7.89),
 			}),
 			other:         map[string]any{},
-			expectedError: fmt.Errorf("expected 3 attributes for ObjectValue check, got 0 attributes"),
+			expectedError: fmt.Errorf("expected 3 attributes for ObjectValueExact check, got 0 attributes"),
 		},
 		"wrong-length": {
 			self: knownvalue.ObjectValueExact(map[string]knownvalue.Check{
@@ -63,7 +65,7 @@ func TestObjectValue_CheckValue(t *testing.T) {
 				"one": json.Number("1.23"),
 				"two": json.Number("4.56"),
 			},
-			expectedError: fmt.Errorf("expected 3 attributes for ObjectValue check, got 2 attributes"),
+			expectedError: fmt.Errorf("expected 3 attributes for ObjectValueExact check, got 2 attributes"),
 		},
 		"not-equal": {
 			self: knownvalue.ObjectValueExact(map[string]knownvalue.Check{
@@ -76,7 +78,7 @@ func TestObjectValue_CheckValue(t *testing.T) {
 				"two":   json.Number("4.56"),
 				"three": json.Number("6.54"),
 			},
-			expectedError: fmt.Errorf("three object attribute: expected value 7.89 for Float64Value check, got: 6.54"),
+			expectedError: fmt.Errorf("three object attribute: expected value 7.89 for Float64ValueExact check, got: 6.54"),
 		},
 		"wrong-order": {
 			self: knownvalue.ObjectValueExact(map[string]knownvalue.Check{
@@ -89,7 +91,7 @@ func TestObjectValue_CheckValue(t *testing.T) {
 				"two":   json.Number("7.89"),
 				"three": json.Number("4.56"),
 			},
-			expectedError: fmt.Errorf("three object attribute: expected value 7.89 for Float64Value check, got: 4.56"),
+			expectedError: fmt.Errorf("three object attribute: expected value 7.89 for Float64ValueExact check, got: 4.56"),
 		},
 		"key-not-found": {
 			self: knownvalue.ObjectValueExact(map[string]knownvalue.Check{
@@ -102,7 +104,7 @@ func TestObjectValue_CheckValue(t *testing.T) {
 				"five": json.Number("7.89"),
 				"six":  json.Number("4.56"),
 			},
-			expectedError: fmt.Errorf("missing attribute one for ObjectValue check"),
+			expectedError: fmt.Errorf("missing attribute one for ObjectValueExact check"),
 		},
 		"equal": {
 			self: knownvalue.ObjectValueExact(map[string]knownvalue.Check{

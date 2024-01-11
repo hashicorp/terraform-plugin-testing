@@ -8,21 +8,19 @@ import (
 	"strconv"
 )
 
-var _ Check = ListElements{}
+var _ Check = listElementsExact{}
 
-// ListElements is a Check for asserting equality between the value supplied
-// to ListElementsExact and the value passed to the CheckValue method.
-type ListElements struct {
+type listElementsExact struct {
 	num int
 }
 
 // CheckValue verifies that the passed value is a list, map, object,
 // or set, and contains a matching number of elements.
-func (v ListElements) CheckValue(other any) error {
+func (v listElementsExact) CheckValue(other any) error {
 	otherVal, ok := other.([]any)
 
 	if !ok {
-		return fmt.Errorf("expected []any value for ListElements check, got: %T", other)
+		return fmt.Errorf("expected []any value for ListElementsExact check, got: %T", other)
 	}
 
 	if len(otherVal) != v.num {
@@ -37,21 +35,21 @@ func (v ListElements) CheckValue(other any) error {
 			actualElements = "element"
 		}
 
-		return fmt.Errorf("expected %d %s for ListElements check, got %d %s", v.num, expectedElements, len(otherVal), actualElements)
+		return fmt.Errorf("expected %d %s for ListElementsExact check, got %d %s", v.num, expectedElements, len(otherVal), actualElements)
 	}
 
 	return nil
 }
 
 // String returns the string representation of the value.
-func (v ListElements) String() string {
+func (v listElementsExact) String() string {
 	return strconv.FormatInt(int64(v.num), 10)
 }
 
 // ListElementsExact returns a Check for asserting that
-// a list num elements.
-func ListElementsExact(num int) ListElements {
-	return ListElements{
+// a list has num elements.
+func ListElementsExact(num int) listElementsExact {
+	return listElementsExact{
 		num: num,
 	}
 }

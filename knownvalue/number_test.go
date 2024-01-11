@@ -24,30 +24,32 @@ func TestNumberValue_Equal(t *testing.T) {
 	}
 
 	testCases := map[string]struct {
-		self          knownvalue.NumberValue
+		self          knownvalue.Check
 		other         any
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("value in NumberValue check is nil"),
+			self:          knownvalue.NumberValueExact(nil),
+			expectedError: fmt.Errorf("value in NumberValueExact check is nil"),
 		},
 		"zero-other": {
+			self:          knownvalue.NumberValueExact(nil),
 			other:         json.Number("1.797693134862315797693134862315797693134862314"), // checking against the underlying value field zero-value
-			expectedError: fmt.Errorf("value in NumberValue check is nil"),
+			expectedError: fmt.Errorf("value in NumberValueExact check is nil"),
 		},
 		"nil": {
 			self:          knownvalue.NumberValueExact(bigFloat),
-			expectedError: fmt.Errorf("expected json.Number value for NumberValue check, got: <nil>"),
+			expectedError: fmt.Errorf("expected json.Number value for NumberValueExact check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.NumberValueExact(bigFloat),
 			other:         json.Number("str"),
-			expectedError: fmt.Errorf("expected json.Number to be parseable as big.Float value for NumberValue check: number has no digits"),
+			expectedError: fmt.Errorf("expected json.Number to be parseable as big.Float value for NumberValueExact check: number has no digits"),
 		},
 		"not-equal": {
 			self:          knownvalue.NumberValueExact(bigFloat),
 			other:         json.Number("1.797693134862315797693134862315797693134862314"),
-			expectedError: fmt.Errorf("expected value 1.797693134862315797693134862315797693134862315 for NumberValue check, got: 1.797693134862315797693134862315797693134862314"),
+			expectedError: fmt.Errorf("expected value 1.797693134862315797693134862315797693134862315 for NumberValueExact check, got: 1.797693134862315797693134862315797693134862314"),
 		},
 		"equal": {
 			self:  knownvalue.NumberValueExact(bigFloat),

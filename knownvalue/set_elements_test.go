@@ -16,29 +16,31 @@ func TestSetElements_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		self          knownvalue.SetElements
+		self          knownvalue.Check
 		other         any
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("expected []any value for SetElements check, got: <nil>"),
+			self:          knownvalue.SetElementsExact(0),
+			expectedError: fmt.Errorf("expected []any value for SetElementExact check, got: <nil>"),
 		},
 		"zero-other": {
+			self:  knownvalue.SetElementsExact(0),
 			other: []any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
 			self:          knownvalue.SetElementsExact(3),
-			expectedError: fmt.Errorf("expected []any value for SetElements check, got: <nil>"),
+			expectedError: fmt.Errorf("expected []any value for SetElementExact check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.SetElementsExact(3),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected []any value for SetElements check, got: float64"),
+			expectedError: fmt.Errorf("expected []any value for SetElementExact check, got: float64"),
 		},
 		"empty": {
 			self:          knownvalue.SetElementsExact(3),
 			other:         []any{},
-			expectedError: fmt.Errorf("expected 3 elements for SetElements check, got 0 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for SetElementExact check, got 0 elements"),
 		},
 		"wrong-length": {
 			self: knownvalue.SetElementsExact(3),
@@ -46,7 +48,7 @@ func TestSetElements_CheckValue(t *testing.T) {
 				int64(123),
 				int64(456),
 			},
-			expectedError: fmt.Errorf("expected 3 elements for SetElements check, got 2 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for SetElementExact check, got 2 elements"),
 		},
 		"equal": {
 			self: knownvalue.SetElementsExact(3),

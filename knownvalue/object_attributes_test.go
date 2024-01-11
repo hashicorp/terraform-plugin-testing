@@ -16,29 +16,31 @@ func TestObjectAttributes_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		self          knownvalue.ObjectAttributes
+		self          knownvalue.Check
 		other         any
 		expectedError error
 	}{
 		"zero-nil": {
-			expectedError: fmt.Errorf("expected map[string]any value for ObjectAttributes check, got: <nil>"),
+			self:          knownvalue.ObjectAttributesExact(0),
+			expectedError: fmt.Errorf("expected map[string]any value for ObjectAttributesExact check, got: <nil>"),
 		},
 		"zero-other": {
+			self:  knownvalue.ObjectAttributesExact(0),
 			other: map[string]any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
 			self:          knownvalue.ObjectAttributesExact(3),
-			expectedError: fmt.Errorf("expected map[string]any value for ObjectAttributes check, got: <nil>"),
+			expectedError: fmt.Errorf("expected map[string]any value for ObjectAttributesExact check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.ObjectAttributesExact(3),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected map[string]any value for ObjectAttributes check, got: float64"),
+			expectedError: fmt.Errorf("expected map[string]any value for ObjectAttributesExact check, got: float64"),
 		},
 		"empty": {
 			self:          knownvalue.ObjectAttributesExact(3),
 			other:         map[string]any{},
-			expectedError: fmt.Errorf("expected 3 attributes for ObjectAttributes check, got 0 attributes"),
+			expectedError: fmt.Errorf("expected 3 attributes for ObjectAttributesExact check, got 0 attributes"),
 		},
 		"wrong-length": {
 			self: knownvalue.ObjectAttributesExact(3),
@@ -46,7 +48,7 @@ func TestObjectAttributes_CheckValue(t *testing.T) {
 				"one": int64(123),
 				"two": int64(456),
 			},
-			expectedError: fmt.Errorf("expected 3 attributes for ObjectAttributes check, got 2 attributes"),
+			expectedError: fmt.Errorf("expected 3 attributes for ObjectAttributesExact check, got 2 attributes"),
 		},
 		"equal": {
 			self: knownvalue.ObjectAttributesExact(3),
