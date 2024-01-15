@@ -8,13 +8,13 @@ description: >-
 
 The known value checks that are available for bool values are:
 
-* [BoolValueExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/bool#boolvalueexact-check)
+* [BoolExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/bool#boolexact-check)
 
-## `BoolValueExact` Check
+## `BoolExact` Check
 
-The [BoolValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#BoolValueExact) check tests that a resource attribute, or output value has an exactly matching bool value.
+The [BoolExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#BoolExact) check tests that a resource attribute, or output value has an exactly matching bool value.
 
-Example usage of [BoolValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#BoolValueExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+Example usage of [BoolExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#BoolExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
 
 ```go
 func TestExpectKnownValue_CheckPlan_Bool(t *testing.T) {
@@ -33,7 +33,7 @@ func TestExpectKnownValue_CheckPlan_Bool(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.BoolValueExact(true),
+							knownvalue.BoolExact(true),
 						),
 					},
 				},

@@ -8,13 +8,13 @@ description: >-
 
 The known value checks that are available for float64 values are:
 
-* [Float64ValueExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/float64#float64valueexact-check)
+* [Float64Exact](/terraform/plugin/testing/acceptance-tests/known-value-checks/float64#float64exact-check)
 
-## `Float64ValueExact` Check
+## `Float64Exact` Check
 
-The [Float64ValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Float64ValueExact) check tests that a resource attribute, or output value has an exactly matching float64 value.
+The [Float64Exact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Float64Exact) check tests that a resource attribute, or output value has an exactly matching float64 value.
 
-Example usage of [Float64ValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Float64ValueExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+Example usage of [Float64Exact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Float64Exact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
 
 ```go
 func TestExpectKnownValue_CheckPlan_Float64(t *testing.T) {
@@ -33,7 +33,7 @@ func TestExpectKnownValue_CheckPlan_Float64(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("float_attribute"),
-							knownvalue.Float64ValueExact(1.23),
+							knownvalue.Float64Exact(1.23),
 						),
 					},
 				},
