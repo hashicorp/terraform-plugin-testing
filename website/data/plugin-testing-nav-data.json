@@ -103,6 +103,10 @@
             "path": "acceptance-tests/known-value-checks/map"
           },
           {
+            "title": "Null",
+            "path": "acceptance-tests/known-value-checks/null"
+          },
+          {
             "title": "Number",
             "path": "acceptance-tests/known-value-checks/number"
           },

@@ -39,7 +39,7 @@ func TestExpectKnownOutputValue_CheckState_Bool(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"bool_output",
-						knownvalue.BoolValueExact(true),
+						knownvalue.BoolExact(true),
 					),
 				},
 			},
@@ -74,7 +74,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Bool(t *testing.T) {
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.BoolValueExact(true),
+						knownvalue.BoolExact(true),
 					),
 				},
 			},

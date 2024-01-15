@@ -39,7 +39,7 @@ func TestExpectKnownValue_CheckPlan_String(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("string_attribute"),
-							knownvalue.StringValueExact("str")),
+							knownvalue.StringExact("str")),
 					},
 				},
 			},
