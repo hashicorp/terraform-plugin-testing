@@ -16,21 +16,24 @@ func TestNullValue_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		self          knownvalue.NullValue
+		self          knownvalue.Check
 		other         any
 		expectedError error
 	}{
-		"zero-nil": {},
+		"zero-nil": {
+			self: knownvalue.NullExact(),
+		},
 		"zero-other": {
+			self:  knownvalue.NullExact(),
 			other: nil, // checking against the underlying value field zero-value
 		},
 		"not-nil": {
-			self:          knownvalue.NullValueExact(),
+			self:          knownvalue.NullExact(),
 			other:         false,
-			expectedError: fmt.Errorf("expected value nil for NullValue check, got: bool"),
+			expectedError: fmt.Errorf("expected value nil for NullExact check, got: bool"),
 		},
 		"equal": {
-			self:  knownvalue.NullValueExact(),
+			self:  knownvalue.NullExact(),
 			other: nil,
 		},
 	}
@@ -53,7 +56,7 @@ func TestNullValue_CheckValue(t *testing.T) {
 func TestNullValue_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.NullValueExact().String()
+	got := knownvalue.NullExact().String()
 
 	if diff := cmp.Diff(got, "nil"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
