@@ -61,7 +61,7 @@ func (e expectKnownValue) CheckState(ctx context.Context, req CheckStateRequest,
 	}
 
 	if err := e.knownValue.CheckValue(result); err != nil {
-		resp.Error = err
+		resp.Error = fmt.Errorf("error checking value for attribute at path: %s.%s, err: %s", e.resourceAddress, e.attributePath.String(), err)
 	}
 }
 
