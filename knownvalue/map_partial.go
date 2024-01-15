@@ -8,19 +8,19 @@ import (
 	"sort"
 )
 
-var _ Check = mapValuePartial{}
+var _ Check = mapPartial{}
 
-type mapValuePartial struct {
+type mapPartial struct {
 	value map[string]Check
 }
 
 // CheckValue determines whether the passed value is of type map[string]any, and
 // contains matching map entries.
-func (v mapValuePartial) CheckValue(other any) error {
+func (v mapPartial) CheckValue(other any) error {
 	otherVal, ok := other.(map[string]any)
 
 	if !ok {
-		return fmt.Errorf("expected map[string]any value for MapValuePartial check, got: %T", other)
+		return fmt.Errorf("expected map[string]any value for MapPartial check, got: %T", other)
 	}
 
 	var keys []string
@@ -37,7 +37,7 @@ func (v mapValuePartial) CheckValue(other any) error {
 		otherValItem, ok := otherVal[k]
 
 		if !ok {
-			return fmt.Errorf("missing element %s for MapValuePartial check", k)
+			return fmt.Errorf("missing element %s for MapPartial check", k)
 		}
 
 		if err := v.value[k].CheckValue(otherValItem); err != nil {
@@ -49,7 +49,7 @@ func (v mapValuePartial) CheckValue(other any) error {
 }
 
 // String returns the string representation of the value.
-func (v mapValuePartial) String() string {
+func (v mapPartial) String() string {
 	var keys []string
 
 	for k := range v.value {
@@ -69,12 +69,12 @@ func (v mapValuePartial) String() string {
 	return fmt.Sprintf("%v", mapVals)
 }
 
-// MapValuePartial returns a Check for asserting partial equality between the
+// MapPartial returns a Check for asserting partial equality between the
 // supplied map[string]Check and the value passed to the CheckValue method. Only
 // the elements at the map keys defined within the supplied map[string]Check are
 // checked.
-func MapValuePartial(value map[string]Check) mapValuePartial {
-	return mapValuePartial{
+func MapPartial(value map[string]Check) mapPartial {
+	return mapPartial{
 		value: value,
 	}
 }

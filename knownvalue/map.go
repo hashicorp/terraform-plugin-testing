@@ -8,19 +8,19 @@ import (
 	"sort"
 )
 
-var _ Check = mapValueExact{}
+var _ Check = mapExact{}
 
-type mapValueExact struct {
+type mapExact struct {
 	value map[string]Check
 }
 
 // CheckValue determines whether the passed value is of type map[string]any, and
 // contains matching map entries.
-func (v mapValueExact) CheckValue(other any) error {
+func (v mapExact) CheckValue(other any) error {
 	otherVal, ok := other.(map[string]any)
 
 	if !ok {
-		return fmt.Errorf("expected map[string]any value for MapValueExact check, got: %T", other)
+		return fmt.Errorf("expected map[string]any value for MapExact check, got: %T", other)
 	}
 
 	if len(otherVal) != len(v.value) {
@@ -35,7 +35,7 @@ func (v mapValueExact) CheckValue(other any) error {
 			actualElements = "element"
 		}
 
-		return fmt.Errorf("expected %d %s for MapValueExact check, got %d %s", len(v.value), expectedElements, len(otherVal), actualElements)
+		return fmt.Errorf("expected %d %s for MapExact check, got %d %s", len(v.value), expectedElements, len(otherVal), actualElements)
 	}
 
 	var keys []string
@@ -52,7 +52,7 @@ func (v mapValueExact) CheckValue(other any) error {
 		otherValItem, ok := otherVal[k]
 
 		if !ok {
-			return fmt.Errorf("missing element %s for MapValueExact check", k)
+			return fmt.Errorf("missing element %s for MapExact check", k)
 		}
 
 		if err := v.value[k].CheckValue(otherValItem); err != nil {
@@ -64,7 +64,7 @@ func (v mapValueExact) CheckValue(other any) error {
 }
 
 // String returns the string representation of the value.
-func (v mapValueExact) String() string {
+func (v mapExact) String() string {
 	var keys []string
 
 	for k := range v.value {
@@ -84,10 +84,10 @@ func (v mapValueExact) String() string {
 	return fmt.Sprintf("%v", mapVals)
 }
 
-// MapValueExact returns a Check for asserting equality between the
+// MapExact returns a Check for asserting equality between the
 // supplied map[string]Check and the value passed to the CheckValue method.
-func MapValueExact(value map[string]Check) mapValueExact {
-	return mapValueExact{
+func MapExact(value map[string]Check) mapExact {
+	return mapExact{
 		value: value,
 	}
 }

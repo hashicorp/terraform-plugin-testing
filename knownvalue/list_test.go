@@ -22,82 +22,82 @@ func TestListValue_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			self:          knownvalue.ListValueExact([]knownvalue.Check{}),
-			expectedError: fmt.Errorf("expected []any value for ListValueExact check, got: <nil>"),
+			self:          knownvalue.ListExact([]knownvalue.Check{}),
+			expectedError: fmt.Errorf("expected []any value for ListExact check, got: <nil>"),
 		},
 		"zero-other": {
-			self:  knownvalue.ListValueExact([]knownvalue.Check{}),
+			self:  knownvalue.ListExact([]knownvalue.Check{}),
 			other: []any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
-			self: knownvalue.ListValueExact([]knownvalue.Check{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
+			self: knownvalue.ListExact([]knownvalue.Check{
+				knownvalue.Int64Exact(123),
+				knownvalue.Int64Exact(456),
+				knownvalue.Int64Exact(789),
 			}),
-			expectedError: fmt.Errorf("expected []any value for ListValueExact check, got: <nil>"),
+			expectedError: fmt.Errorf("expected []any value for ListExact check, got: <nil>"),
 		},
 		"wrong-type": {
-			self: knownvalue.ListValueExact([]knownvalue.Check{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
+			self: knownvalue.ListExact([]knownvalue.Check{
+				knownvalue.Int64Exact(123),
+				knownvalue.Int64Exact(456),
+				knownvalue.Int64Exact(789),
 			}),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected []any value for ListValueExact check, got: float64"),
+			expectedError: fmt.Errorf("expected []any value for ListExact check, got: float64"),
 		},
 		"empty": {
-			self: knownvalue.ListValueExact([]knownvalue.Check{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
+			self: knownvalue.ListExact([]knownvalue.Check{
+				knownvalue.Int64Exact(123),
+				knownvalue.Int64Exact(456),
+				knownvalue.Int64Exact(789),
 			}),
 			other:         []any{},
-			expectedError: fmt.Errorf("expected 3 elements for ListValueExact check, got 0 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for ListExact check, got 0 elements"),
 		},
 		"wrong-length": {
-			self: knownvalue.ListValueExact([]knownvalue.Check{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
+			self: knownvalue.ListExact([]knownvalue.Check{
+				knownvalue.Int64Exact(123),
+				knownvalue.Int64Exact(456),
+				knownvalue.Int64Exact(789),
 			}),
 			other: []any{
 				int64(123),
 				int64(456),
 			},
-			expectedError: fmt.Errorf("expected 3 elements for ListValueExact check, got 2 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for ListExact check, got 2 elements"),
 		},
 		"not-equal": {
-			self: knownvalue.ListValueExact([]knownvalue.Check{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
+			self: knownvalue.ListExact([]knownvalue.Check{
+				knownvalue.Int64Exact(123),
+				knownvalue.Int64Exact(456),
+				knownvalue.Int64Exact(789),
 			}),
 			other: []any{
 				json.Number("123"),
 				json.Number("456"),
 				json.Number("654"),
 			},
-			expectedError: fmt.Errorf("list element index 2: expected value 789 for Int64ValueExact check, got: 654"),
+			expectedError: fmt.Errorf("list element index 2: expected value 789 for Int64Exact check, got: 654"),
 		},
 		"wrong-order": {
-			self: knownvalue.ListValueExact([]knownvalue.Check{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
+			self: knownvalue.ListExact([]knownvalue.Check{
+				knownvalue.Int64Exact(123),
+				knownvalue.Int64Exact(456),
+				knownvalue.Int64Exact(789),
 			}),
 			other: []any{
 				json.Number("123"),
 				json.Number("789"),
 				json.Number("456"),
 			},
-			expectedError: fmt.Errorf("list element index 1: expected value 456 for Int64ValueExact check, got: 789"),
+			expectedError: fmt.Errorf("list element index 1: expected value 456 for Int64Exact check, got: 789"),
 		},
 		"equal": {
-			self: knownvalue.ListValueExact([]knownvalue.Check{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
+			self: knownvalue.ListExact([]knownvalue.Check{
+				knownvalue.Int64Exact(123),
+				knownvalue.Int64Exact(456),
+				knownvalue.Int64Exact(789),
 			}),
 			other: []any{
 				json.Number("123"),
@@ -125,10 +125,10 @@ func TestListValue_CheckValue(t *testing.T) {
 func TestListValue_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.ListValueExact([]knownvalue.Check{
-		knownvalue.Int64ValueExact(123),
-		knownvalue.Int64ValueExact(456),
-		knownvalue.Int64ValueExact(789),
+	got := knownvalue.ListExact([]knownvalue.Check{
+		knownvalue.Int64Exact(123),
+		knownvalue.Int64Exact(456),
+		knownvalue.Int64Exact(789),
 	}).String()
 
 	if diff := cmp.Diff(got, "[123 456 789]"); diff != "" {

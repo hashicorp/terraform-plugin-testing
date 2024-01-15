@@ -22,88 +22,88 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			self:          knownvalue.ObjectValuePartial(map[string]knownvalue.Check{}),
-			expectedError: fmt.Errorf("expected map[string]any value for ObjectValuePartial check, got: <nil>"),
+			self:          knownvalue.ObjectPartial(map[string]knownvalue.Check{}),
+			expectedError: fmt.Errorf("expected map[string]any value for ObjectPartial check, got: <nil>"),
 		},
 		"zero-other": {
-			self:  knownvalue.ObjectValuePartial(map[string]knownvalue.Check{}),
+			self:  knownvalue.ObjectPartial(map[string]knownvalue.Check{}),
 			other: map[string]any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
-			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
-				"one":   knownvalue.Float64ValueExact(1.23),
-				"three": knownvalue.Float64ValueExact(7.89),
+			self: knownvalue.ObjectPartial(map[string]knownvalue.Check{
+				"one":   knownvalue.Float64Exact(1.23),
+				"three": knownvalue.Float64Exact(7.89),
 			}),
-			expectedError: fmt.Errorf("expected map[string]any value for ObjectValuePartial check, got: <nil>"),
+			expectedError: fmt.Errorf("expected map[string]any value for ObjectPartial check, got: <nil>"),
 		},
 		"wrong-type": {
-			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
-				"one":   knownvalue.Float64ValueExact(1.23),
-				"three": knownvalue.Float64ValueExact(7.89),
+			self: knownvalue.ObjectPartial(map[string]knownvalue.Check{
+				"one":   knownvalue.Float64Exact(1.23),
+				"three": knownvalue.Float64Exact(7.89),
 			}),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected map[string]any value for ObjectValuePartial check, got: float64"),
+			expectedError: fmt.Errorf("expected map[string]any value for ObjectPartial check, got: float64"),
 		},
 		"empty": {
-			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
-				"one":   knownvalue.Float64ValueExact(1.23),
-				"three": knownvalue.Float64ValueExact(7.89),
+			self: knownvalue.ObjectPartial(map[string]knownvalue.Check{
+				"one":   knownvalue.Float64Exact(1.23),
+				"three": knownvalue.Float64Exact(7.89),
 			}),
 			other:         map[string]any{},
-			expectedError: fmt.Errorf("missing attribute one for ObjectValuePartial check"),
+			expectedError: fmt.Errorf("missing attribute one for ObjectPartial check"),
 		},
 		"wrong-length": {
-			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
-				"one":   knownvalue.Float64ValueExact(1.23),
-				"three": knownvalue.Float64ValueExact(7.89),
+			self: knownvalue.ObjectPartial(map[string]knownvalue.Check{
+				"one":   knownvalue.Float64Exact(1.23),
+				"three": knownvalue.Float64Exact(7.89),
 			}),
 			other: map[string]any{
 				"one": json.Number("1.23"),
 				"two": json.Number("4.56"),
 			},
-			expectedError: fmt.Errorf("missing attribute three for ObjectValuePartial check"),
+			expectedError: fmt.Errorf("missing attribute three for ObjectPartial check"),
 		},
 		"not-equal": {
-			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
-				"one":   knownvalue.Float64ValueExact(1.23),
-				"three": knownvalue.Float64ValueExact(7.89),
+			self: knownvalue.ObjectPartial(map[string]knownvalue.Check{
+				"one":   knownvalue.Float64Exact(1.23),
+				"three": knownvalue.Float64Exact(7.89),
 			}),
 			other: map[string]any{
 				"one":   json.Number("1.23"),
 				"two":   json.Number("4.56"),
 				"three": json.Number("6.54"),
 			},
-			expectedError: fmt.Errorf("three object attribute: expected value 7.89 for Float64ValueExact check, got: 6.54"),
+			expectedError: fmt.Errorf("three object attribute: expected value 7.89 for Float64Exact check, got: 6.54"),
 		},
 		"wrong-order": {
-			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
-				"one":   knownvalue.Float64ValueExact(1.23),
-				"three": knownvalue.Float64ValueExact(7.89),
+			self: knownvalue.ObjectPartial(map[string]knownvalue.Check{
+				"one":   knownvalue.Float64Exact(1.23),
+				"three": knownvalue.Float64Exact(7.89),
 			}),
 			other: map[string]any{
 				"one":   json.Number("1.23"),
 				"two":   json.Number("7.89"),
 				"three": json.Number("4.56"),
 			},
-			expectedError: fmt.Errorf("three object attribute: expected value 7.89 for Float64ValueExact check, got: 4.56"),
+			expectedError: fmt.Errorf("three object attribute: expected value 7.89 for Float64Exact check, got: 4.56"),
 		},
 		"key-not-found": {
-			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
-				"one":   knownvalue.Float64ValueExact(1.23),
-				"two":   knownvalue.Float64ValueExact(4.56),
-				"three": knownvalue.Float64ValueExact(7.89),
+			self: knownvalue.ObjectPartial(map[string]knownvalue.Check{
+				"one":   knownvalue.Float64Exact(1.23),
+				"two":   knownvalue.Float64Exact(4.56),
+				"three": knownvalue.Float64Exact(7.89),
 			}),
 			other: map[string]any{
 				"four": json.Number("1.23"),
 				"five": json.Number("7.89"),
 				"six":  json.Number("4.56"),
 			},
-			expectedError: fmt.Errorf("missing attribute one for ObjectValuePartial check"),
+			expectedError: fmt.Errorf("missing attribute one for ObjectPartial check"),
 		},
 		"equal": {
-			self: knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
-				"one":   knownvalue.Float64ValueExact(1.23),
-				"three": knownvalue.Float64ValueExact(7.89),
+			self: knownvalue.ObjectPartial(map[string]knownvalue.Check{
+				"one":   knownvalue.Float64Exact(1.23),
+				"three": knownvalue.Float64Exact(7.89),
 			}),
 			other: map[string]any{
 				"one":   json.Number("1.23"),
@@ -131,9 +131,9 @@ func TestObjectValuePartial_CheckValue(t *testing.T) {
 func TestObjectValuePartial_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.ObjectValuePartial(map[string]knownvalue.Check{
-		"one":   knownvalue.Float64ValueExact(1.23),
-		"three": knownvalue.Float64ValueExact(7.89),
+	got := knownvalue.ObjectPartial(map[string]knownvalue.Check{
+		"one":   knownvalue.Float64Exact(1.23),
+		"three": knownvalue.Float64Exact(7.89),
 	}).String()
 
 	if diff := cmp.Diff(got, "map[one:1.23 three:7.89]"); diff != "" {
