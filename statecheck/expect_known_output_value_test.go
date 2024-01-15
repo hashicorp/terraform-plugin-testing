@@ -41,7 +41,7 @@ func TestExpectKnownOutputValue_CheckState_OutputNotFound(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"bool_not_found",
-						knownvalue.BoolValueExact(true),
+						knownvalue.BoolExact(true),
 					),
 				},
 				ExpectError: regexp.MustCompile("bool_not_found - Output not found in state"),
@@ -73,7 +73,7 @@ func TestExpectKnownOutputValue_CheckState_AttributeValueNull(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"bool_output",
-						knownvalue.BoolValueExact(true),
+						knownvalue.BoolExact(true),
 					),
 				},
 				ExpectError: regexp.MustCompile("bool_output - Output not found in state"),
@@ -104,7 +104,7 @@ func TestExpectKnownOutputValue_CheckState_Bool(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"bool_output",
-						knownvalue.BoolValueExact(true),
+						knownvalue.BoolExact(true),
 					),
 				},
 			},
@@ -134,10 +134,10 @@ func TestExpectKnownOutputValue_CheckState_Bool_KnownValueWrongType(t *testing.T
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"bool_output",
-						knownvalue.Float64ValueExact(1.23),
+						knownvalue.Float64Exact(1.23),
 					),
 				},
-				ExpectError: regexp.MustCompile(`expected json\.Number value for Float64ValueExact check, got: bool`),
+				ExpectError: regexp.MustCompile(`expected json\.Number value for Float64Exact check, got: bool`),
 			},
 		},
 	})
@@ -165,10 +165,10 @@ func TestExpectKnownOutputValue_CheckState_Bool_KnownValueWrongValue(t *testing.
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"bool_output",
-						knownvalue.BoolValueExact(false),
+						knownvalue.BoolExact(false),
 					),
 				},
-				ExpectError: regexp.MustCompile("expected value false for BoolValueExact check, got: true"),
+				ExpectError: regexp.MustCompile("expected value false for BoolExact check, got: true"),
 			},
 		},
 	})
@@ -196,7 +196,7 @@ func TestExpectKnownOutputValue_CheckState_Float64(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"float64_output",
-						knownvalue.Float64ValueExact(1.23),
+						knownvalue.Float64Exact(1.23),
 					),
 				},
 			},
@@ -227,10 +227,10 @@ func TestExpectKnownOutputValue_CheckState_Float64_KnownValueWrongType(t *testin
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"float64_output",
-						knownvalue.StringValueExact("str"),
+						knownvalue.StringExact("str"),
 					),
 				},
-				ExpectError: regexp.MustCompile(`expected string value for StringValueExact check, got: json\.Number`),
+				ExpectError: regexp.MustCompile(`expected string value for StringExact check, got: json\.Number`),
 			},
 		},
 	})
@@ -258,10 +258,10 @@ func TestExpectKnownOutputValue_CheckState_Float64_KnownValueWrongValue(t *testi
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"float64_output",
-						knownvalue.Float64ValueExact(3.21),
+						knownvalue.Float64Exact(3.21),
 					),
 				},
-				ExpectError: regexp.MustCompile("expected value 3.21 for Float64ValueExact check, got: 1.23"),
+				ExpectError: regexp.MustCompile("expected value 3.21 for Float64Exact check, got: 1.23"),
 			},
 		},
 	})
@@ -289,7 +289,7 @@ func TestExpectKnownOutputValue_CheckState_Int64(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"int64_output",
-						knownvalue.Int64ValueExact(123),
+						knownvalue.Int64Exact(123),
 					),
 				},
 			},
@@ -319,10 +319,10 @@ func TestExpectKnownOutputValue_CheckState_Int64_KnownValueWrongValue(t *testing
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"int64_output",
-						knownvalue.Int64ValueExact(321),
+						knownvalue.Int64Exact(321),
 					),
 				},
-				ExpectError: regexp.MustCompile("expected value 321 for Int64ValueExact check, got: 123"),
+				ExpectError: regexp.MustCompile("expected value 321 for Int64Exact check, got: 123"),
 			},
 		},
 	})
@@ -353,9 +353,9 @@ func TestExpectKnownOutputValue_CheckState_List(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"list_output",
-						knownvalue.ListValueExact([]knownvalue.Check{
-							knownvalue.StringValueExact("value1"),
-							knownvalue.StringValueExact("value2"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.StringExact("value1"),
+							knownvalue.StringExact("value2"),
 						}),
 					),
 				},
@@ -389,10 +389,10 @@ func TestExpectKnownOutputValue_CheckState_List_KnownValueWrongType(t *testing.T
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"list_output",
-						knownvalue.MapValueExact(map[string]knownvalue.Check{}),
+						knownvalue.MapExact(map[string]knownvalue.Check{}),
 					),
 				},
-				ExpectError: regexp.MustCompile(`expected map\[string\]any value for MapValueExact check, got: \[\]interface {}`),
+				ExpectError: regexp.MustCompile(`expected map\[string\]any value for MapExact check, got: \[\]interface {}`),
 			},
 		},
 	})
@@ -423,13 +423,13 @@ func TestExpectKnownOutputValue_CheckState_List_KnownValueWrongValue(t *testing.
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"list_output",
-						knownvalue.ListValueExact([]knownvalue.Check{
-							knownvalue.StringValueExact("value3"),
-							knownvalue.StringValueExact("value4"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.StringExact("value3"),
+							knownvalue.StringExact("value4"),
 						}),
 					),
 				},
-				ExpectError: regexp.MustCompile(`list element index 0: expected value value3 for StringValueExact check, got: value1`),
+				ExpectError: regexp.MustCompile(`list element index 0: expected value value3 for StringExact check, got: value1`),
 			},
 		},
 	})
@@ -460,8 +460,8 @@ func TestExpectKnownOutputValue_CheckState_ListPartial(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"list_output",
-						knownvalue.ListValuePartial(map[int]knownvalue.Check{
-							0: knownvalue.StringValueExact("value1"),
+						knownvalue.ListPartial(map[int]knownvalue.Check{
+							0: knownvalue.StringExact("value1"),
 						}),
 					),
 				},
@@ -497,12 +497,12 @@ func TestExpectKnownOutputValue_CheckState_ListPartial_KnownValueWrongValue(t *t
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"list_output",
-						knownvalue.ListValuePartial(map[int]knownvalue.Check{
-							0: knownvalue.StringValueExact("value3"),
+						knownvalue.ListPartial(map[int]knownvalue.Check{
+							0: knownvalue.StringExact("value3"),
 						}),
 					),
 				},
-				ExpectError: regexp.MustCompile(`list element 0: expected value value3 for StringValueExact check, got: value1`),
+				ExpectError: regexp.MustCompile(`list element 0: expected value value3 for StringExact check, got: value1`),
 			},
 		},
 	})
@@ -533,7 +533,7 @@ func TestExpectKnownOutputValue_CheckState_ListElements(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"list_output",
-						knownvalue.ListElementsExact(2),
+						knownvalue.ListSizeExact(2),
 					),
 				},
 			},
@@ -566,10 +566,10 @@ func TestExpectKnownOutputValue_CheckState_ListElements_WrongNum(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"list_output",
-						knownvalue.ListElementsExact(3),
+						knownvalue.ListSizeExact(3),
 					),
 				},
-				ExpectError: regexp.MustCompile("expected 3 elements for ListElementsExact check, got 2 elements"),
+				ExpectError: regexp.MustCompile("expected 3 elements for ListSizeExact check, got 2 elements"),
 			},
 		},
 	})
@@ -602,12 +602,12 @@ func TestExpectKnownOutputValue_CheckState_ListNestedBlock(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"list_nested_block_output",
-						knownvalue.ListValueExact([]knownvalue.Check{
-							knownvalue.MapValueExact(map[string]knownvalue.Check{
-								"list_nested_block_attribute": knownvalue.StringValueExact("str"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.MapExact(map[string]knownvalue.Check{
+								"list_nested_block_attribute": knownvalue.StringExact("str"),
 							}),
-							knownvalue.MapValueExact(map[string]knownvalue.Check{
-								"list_nested_block_attribute": knownvalue.StringValueExact("rts"),
+							knownvalue.MapExact(map[string]knownvalue.Check{
+								"list_nested_block_attribute": knownvalue.StringExact("rts"),
 							}),
 						}),
 					),
@@ -644,9 +644,9 @@ func TestExpectKnownOutputValue_CheckState_ListNestedBlockPartial(t *testing.T) 
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"list_nested_block_output",
-						knownvalue.ListValuePartial(map[int]knownvalue.Check{
-							1: knownvalue.MapValueExact(map[string]knownvalue.Check{
-								"list_nested_block_attribute": knownvalue.StringValueExact("rts"),
+						knownvalue.ListPartial(map[int]knownvalue.Check{
+							1: knownvalue.MapExact(map[string]knownvalue.Check{
+								"list_nested_block_attribute": knownvalue.StringExact("rts"),
 							}),
 						}),
 					),
@@ -683,7 +683,7 @@ func TestExpectKnownOutputValue_CheckState_ListNestedBlockElements(t *testing.T)
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"list_nested_block_output",
-						knownvalue.ListElementsExact(2),
+						knownvalue.ListSizeExact(2),
 					),
 				},
 			},
@@ -716,9 +716,9 @@ func TestExpectKnownOutputValue_CheckState_Map(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"map_output",
-						knownvalue.MapValueExact(map[string]knownvalue.Check{
-							"key1": knownvalue.StringValueExact("value1"),
-							"key2": knownvalue.StringValueExact("value2"),
+						knownvalue.MapExact(map[string]knownvalue.Check{
+							"key1": knownvalue.StringExact("value1"),
+							"key2": knownvalue.StringExact("value2"),
 						}),
 					),
 				},
@@ -752,10 +752,10 @@ func TestExpectKnownOutputValue_CheckState_Map_KnownValueWrongType(t *testing.T)
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"map_output",
-						knownvalue.ListValueExact([]knownvalue.Check{}),
+						knownvalue.ListExact([]knownvalue.Check{}),
 					),
 				},
-				ExpectError: regexp.MustCompile(`expected \[\]any value for ListValueExact check, got: map\[string\]interface {}`),
+				ExpectError: regexp.MustCompile(`expected \[\]any value for ListExact check, got: map\[string\]interface {}`),
 			},
 		},
 	})
@@ -786,13 +786,13 @@ func TestExpectKnownOutputValue_CheckState_Map_KnownValueWrongValue(t *testing.T
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"map_output",
-						knownvalue.MapValueExact(map[string]knownvalue.Check{
-							"key3": knownvalue.StringValueExact("value3"),
-							"key4": knownvalue.StringValueExact("value4"),
+						knownvalue.MapExact(map[string]knownvalue.Check{
+							"key3": knownvalue.StringExact("value3"),
+							"key4": knownvalue.StringExact("value4"),
 						}),
 					),
 				},
-				ExpectError: regexp.MustCompile(`missing element key3 for MapValueExact check`),
+				ExpectError: regexp.MustCompile(`missing element key3 for MapExact check`),
 			},
 		},
 	})
@@ -823,8 +823,8 @@ func TestExpectKnownOutputValue_CheckState_MapPartial(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"map_output",
-						knownvalue.MapValuePartial(map[string]knownvalue.Check{
-							"key1": knownvalue.StringValueExact("value1"),
+						knownvalue.MapPartial(map[string]knownvalue.Check{
+							"key1": knownvalue.StringExact("value1"),
 						}),
 					),
 				},
@@ -858,12 +858,12 @@ func TestExpectKnownOutputValue_CheckState_MapPartial_KnownValueWrongValue(t *te
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"map_output",
-						knownvalue.MapValuePartial(map[string]knownvalue.Check{
-							"key3": knownvalue.StringValueExact("value1"),
+						knownvalue.MapPartial(map[string]knownvalue.Check{
+							"key3": knownvalue.StringExact("value1"),
 						}),
 					),
 				},
-				ExpectError: regexp.MustCompile(`missing element key3 for MapValuePartial check`),
+				ExpectError: regexp.MustCompile(`missing element key3 for MapPartial check`),
 			},
 		},
 	})
@@ -894,7 +894,7 @@ func TestExpectKnownOutputValue_CheckState_MapElements(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"map_output",
-						knownvalue.MapElementsExact(2),
+						knownvalue.MapSizeExact(2),
 					),
 				},
 			},
@@ -927,10 +927,10 @@ func TestExpectKnownOutputValue_CheckState_MapElements_WrongNum(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"map_output",
-						knownvalue.MapElementsExact(3),
+						knownvalue.MapSizeExact(3),
 					),
 				},
-				ExpectError: regexp.MustCompile("expected 3 elements for MapElementsExact check, got 2 elements"),
+				ExpectError: regexp.MustCompile("expected 3 elements for MapSizeExact check, got 2 elements"),
 			},
 		},
 	})
@@ -964,7 +964,7 @@ func TestExpectKnownOutputValue_CheckState_Number(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"int64_output",
-						knownvalue.NumberValueExact(f),
+						knownvalue.NumberExact(f),
 					),
 				},
 			},
@@ -1000,10 +1000,10 @@ func TestExpectKnownOutputValue_CheckState_Number_KnownValueWrongValue(t *testin
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"int64_output",
-						knownvalue.NumberValueExact(f),
+						knownvalue.NumberExact(f),
 					),
 				},
-				ExpectError: regexp.MustCompile("expected value 321 for NumberValueExact check, got: 123"),
+				ExpectError: regexp.MustCompile("expected value 321 for NumberExact check, got: 123"),
 			},
 		},
 	})
@@ -1034,9 +1034,9 @@ func TestExpectKnownOutputValue_CheckState_Set(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"set_output",
-						knownvalue.SetValueExact([]knownvalue.Check{
-							knownvalue.StringValueExact("value1"),
-							knownvalue.StringValueExact("value2"),
+						knownvalue.SetExact([]knownvalue.Check{
+							knownvalue.StringExact("value1"),
+							knownvalue.StringExact("value2"),
 						}),
 					),
 				},
@@ -1070,13 +1070,13 @@ func TestExpectKnownOutputValue_CheckState_Set_KnownValueWrongValue(t *testing.T
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"set_output",
-						knownvalue.SetValueExact([]knownvalue.Check{
-							knownvalue.StringValueExact("value1"),
-							knownvalue.StringValueExact("value3"),
+						knownvalue.SetExact([]knownvalue.Check{
+							knownvalue.StringExact("value1"),
+							knownvalue.StringExact("value3"),
 						}),
 					),
 				},
-				ExpectError: regexp.MustCompile(`missing value value3 for SetValueExact check`),
+				ExpectError: regexp.MustCompile(`missing value value3 for SetExact check`),
 			},
 		},
 	})
@@ -1107,8 +1107,8 @@ func TestExpectKnownOutputValue_CheckState_SetPartial(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"set_output",
-						knownvalue.SetValuePartial([]knownvalue.Check{
-							knownvalue.StringValueExact("value2"),
+						knownvalue.SetPartial([]knownvalue.Check{
+							knownvalue.StringExact("value2"),
 						}),
 					),
 				},
@@ -1142,12 +1142,12 @@ func TestExpectKnownOutputValue_CheckState_SetPartial_KnownValueWrongValue(t *te
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"set_output",
-						knownvalue.SetValuePartial([]knownvalue.Check{
-							knownvalue.StringValueExact("value3"),
+						knownvalue.SetPartial([]knownvalue.Check{
+							knownvalue.StringExact("value3"),
 						}),
 					),
 				},
-				ExpectError: regexp.MustCompile(`missing value value3 for SetValuePartial check`),
+				ExpectError: regexp.MustCompile(`missing value value3 for SetPartial check`),
 			},
 		},
 	})
@@ -1178,7 +1178,7 @@ func TestExpectKnownOutputValue_CheckState_SetElements(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"set_output",
-						knownvalue.SetElementsExact(2),
+						knownvalue.SetSizeExact(2),
 					),
 				},
 			},
@@ -1213,12 +1213,12 @@ func TestExpectKnownOutputValue_CheckState_SetNestedBlock(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"set_nested_block_output",
-						knownvalue.SetValueExact([]knownvalue.Check{
-							knownvalue.MapValueExact(map[string]knownvalue.Check{
-								"set_nested_block_attribute": knownvalue.StringValueExact("str"),
+						knownvalue.SetExact([]knownvalue.Check{
+							knownvalue.MapExact(map[string]knownvalue.Check{
+								"set_nested_block_attribute": knownvalue.StringExact("str"),
 							}),
-							knownvalue.MapValueExact(map[string]knownvalue.Check{
-								"set_nested_block_attribute": knownvalue.StringValueExact("rts"),
+							knownvalue.MapExact(map[string]knownvalue.Check{
+								"set_nested_block_attribute": knownvalue.StringExact("rts"),
 							}),
 						}),
 					),
@@ -1255,9 +1255,9 @@ func TestExpectKnownOutputValue_CheckState_SetNestedBlockPartial(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"set_nested_block_output",
-						knownvalue.SetValuePartial([]knownvalue.Check{
-							knownvalue.MapValueExact(map[string]knownvalue.Check{
-								"set_nested_block_attribute": knownvalue.StringValueExact("rts"),
+						knownvalue.SetPartial([]knownvalue.Check{
+							knownvalue.MapExact(map[string]knownvalue.Check{
+								"set_nested_block_attribute": knownvalue.StringExact("rts"),
 							}),
 						}),
 					),
@@ -1294,7 +1294,7 @@ func TestExpectKnownOutputValue_CheckState_SetNestedBlockElements(t *testing.T) 
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"set_nested_block_output",
-						knownvalue.SetElementsExact(2),
+						knownvalue.SetSizeExact(2),
 					),
 				},
 			},
@@ -1324,7 +1324,7 @@ func TestExpectKnownOutputValue_CheckState_String(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"string_output",
-						knownvalue.StringValueExact("str")),
+						knownvalue.StringExact("str")),
 				},
 			},
 		},
@@ -1353,9 +1353,9 @@ func TestExpectKnownOutputValue_CheckState_String_KnownValueWrongType(t *testing
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"string_output",
-						knownvalue.BoolValueExact(true)),
+						knownvalue.BoolExact(true)),
 				},
-				ExpectError: regexp.MustCompile("expected bool value for BoolValueExact check, got: string"),
+				ExpectError: regexp.MustCompile("expected bool value for BoolExact check, got: string"),
 			},
 		},
 	})
@@ -1383,9 +1383,9 @@ func TestExpectKnownOutputValue_CheckState_String_KnownValueWrongValue(t *testin
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"string_output",
-						knownvalue.StringValueExact("rts")),
+						knownvalue.StringExact("rts")),
 				},
-				ExpectError: regexp.MustCompile("expected value rts for StringValueExact check, got: str"),
+				ExpectError: regexp.MustCompile("expected value rts for StringExact check, got: str"),
 			},
 		},
 	})
@@ -1400,7 +1400,7 @@ func TestExpectKnownOutputValue_CheckState_UnknownAttributeType(t *testing.T) {
 		expectedErr error
 	}{
 		"unrecognised-type": {
-			knownValue: knownvalue.Int64ValueExact(123),
+			knownValue: knownvalue.Int64Exact(123),
 			req: statecheck.CheckStateRequest{
 				State: &tfjson.State{
 					Values: &tfjson.StateValues{
@@ -1412,7 +1412,7 @@ func TestExpectKnownOutputValue_CheckState_UnknownAttributeType(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: fmt.Errorf("expected json.Number value for Int64ValueExact check, got: float32"),
+			expectedErr: fmt.Errorf("expected json.Number value for Int64Exact check, got: float32"),
 		},
 	}
 
