@@ -1,0 +1,50 @@
+---
+page_title: 'Plugin Development - Acceptance Testing: Known Values'
+description: >-
+    Custom Value Checks for use with Plan Checks.
+---
+
+# Custom Known Value Checks
+
+Custom known value checks can be created by implementing the [knownvalue.Check](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check) interface.
+
+```go
+type Check interface {
+	CheckValue(value any) error
+	String() string
+}
+```
+
+For example, a `StringValueContains` implementation could look as follows:
+
+```go
+var _ Check = StringValueContains{}
+
+type StringValueContains struct {
+	value string
+}
+
+func (v StringValueContains) CheckValue(other any) error {
+	otherVal, ok := other.(string)
+
+	if !ok {
+		return fmt.Errorf("expected string value for StringValueContains check, got: %T", other)
+	}
+
+	if !strings.Contains(v.value, otherVal) {
+		return fmt.Errorf("expected string %q to contain %q for StringValueContains check", otherVal, v.value)
+	}
+
+	return nil
+}
+
+func (v StringValueContains) String() string {
+	return v.value
+}
+
+func StringValueMatch(value string) StringValue {
+	return StringValueContains{
+		value: value,
+	}
+}
+```

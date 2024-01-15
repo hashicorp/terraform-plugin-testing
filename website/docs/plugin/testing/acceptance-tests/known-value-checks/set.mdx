@@ -1,0 +1,126 @@
+---
+page_title: 'Plugin Development - Acceptance Testing: Known Values'
+description: >-
+    Set Value Checks for use with Plan Checks.
+---
+
+# Set Known Value Checks
+
+The known value checks that are available for set values are:
+
+* [SetElementsExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/set#setelementsexact-check)
+* [SetValueExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/set#setvalueexact-check)
+* [SetValuePartialMatch](/terraform/plugin/testing/acceptance-tests/known-value-checks/set#setvaluepartialmatch-check)
+
+## `SetElementsExact` Check
+
+The [SetElementsExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetElementsExact) check tests that a resource attribute, or output value contains the specified number of elements.
+
+Example usage of [SetElementsExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetElementsExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_SetElements(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		// Provider definition omitted.
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					set_attribute = [
+						"value1",
+						"value2"
+					]
+				}
+				`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("set_attribute"),
+							knownvalue.SetElementsExact(2),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+## `SetValueExact` Check
+
+The [SetValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetValueExact) check tests that a resource attribute, or output value has an order-independent, matching collection of element values.
+
+Example usage of [SetValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetValueExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_Set(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+				// Provider definition omitted.
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					set_attribute = [
+						"value1",
+						"value2"
+					]
+				}
+				`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("set_attribute"),
+							knownvalue.SetValueExact([]knownvalue.Check{
+								knownvalue.StringValueExact("value2"),
+								knownvalue.StringValueExact("value1"),
+							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+## `SetValuePartialMatch` Check
+
+The [SetValuePartialMatch](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetValuePartialMatch) check tests that a resource attribute, or output value contains matching element values.
+
+Example usage of [SetValuePartialMatch](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetValuePartialMatch) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check. In this example, only the one element within the set is checked.
+
+```go
+func TestExpectKnownValue_CheckPlan_SetPartial(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		// Provider definition omitted.
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					set_attribute = [
+						"value1",
+						"value2"
+					]
+				}
+				`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("set_attribute"),
+							knownvalue.SetValuePartialMatch([]knownvalue.Check{
+								knownvalue.StringValueExact("value2"),
+							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```

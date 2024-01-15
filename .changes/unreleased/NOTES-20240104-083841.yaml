@@ -1,0 +1,6 @@
+kind: NOTES
+body: Numerical values in the plan are now represented as json.Number, not float64.
+  Custom plan checks relying upon float64 representation may need altering
+time: 2024-01-04T08:38:41.645745Z
+custom:
+  Issue: "248"

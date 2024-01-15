@@ -1,0 +1,128 @@
+---
+page_title: 'Plugin Development - Acceptance Testing: Known Values'
+description: >-
+    Map Value Checks for use with Plan Checks.
+---
+
+# Map Known Value Checks
+
+The known value checks that are available for map values are:
+
+* [MapElementsExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/map#mapelementsexact-check)
+* [MapValueExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/map#mapvalueexact-check)
+* [MapValuePartialMatch](/terraform/plugin/testing/acceptance-tests/known-value-checks/map#mapvaluepartialmatch-check)
+
+## `MapElementsExact` Check
+
+The [MapElementsExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#MapElementsExact) check tests that a resource attribute, or output value contains the specified number of elements.
+
+Example usage of [MapElementsExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#MapElementsExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_MapElements(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		// Provider definition omitted.
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					map_attribute = {
+						key1 = "value1"
+						key2 = "value2"
+					}
+				}
+				`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("map_attribute"),
+							knownvalue.MapElementsExact(2),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+## `MapValueExact` Check
+
+The [MapValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#MapValueExact) check tests that a resource attribute, or output value has a key-specified, matching collection of element values.
+
+Example usage of [MapValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#MapValueExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_Map(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		// Provider definition omitted.
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					map_attribute = {
+						key1 = "value1"
+						key2 = "value2"
+					}
+				}
+				`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("map_attribute"),
+							knownvalue.MapValueExact(map[string]knownvalue.Check{
+								"key1": knownvalue.StringValueExact("value1"),
+								"key2": knownvalue.StringValueExact("value2"),
+							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+## `MapValuePartialMatch` Check
+
+The [MapValuePartialMatch](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#MapValuePartialMatch) check tests that a resource attribute, or output value has matching element values for the specified keys.
+
+Example usage of [MapValuePartialMatch](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#MapValuePartialMatch) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+In this example, only the element associated with `key1` within the map is checked.
+
+```go
+func TestExpectKnownValue_CheckPlan_MapPartial(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		// Provider definition omitted.
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					map_attribute = {
+						key1 = "value1"
+						key2 = "value2"
+					}
+				}
+				`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("map_attribute"),
+							knownvalue.MapValuePartialMatch(map[string]knownvalue.Check{
+								"key1": knownvalue.StringValueExact("value1"),
+							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```

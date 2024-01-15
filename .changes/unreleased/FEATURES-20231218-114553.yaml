@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'plancheck: Added `ExpectKnownOutputValue` plan check, which asserts that a
+  given output value has a defined type, and value'
+time: 2023-12-18T11:45:53.272412Z
+custom:
+  Issue: "248"

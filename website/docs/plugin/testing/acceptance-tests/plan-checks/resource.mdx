@@ -9,11 +9,44 @@ description: >-
 
 The `terraform-plugin-testing` module provides a package [`plancheck`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck) with built-in managed resource, and data source plan checks for common use-cases:
 
-| Check                                                                                                                                                   | Description                                                                          |
-|---------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| [`plancheck.ExpectResourceAction(address, operation)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectResourceAction) | Asserts the given managed resource, or data source, has the specified operation for apply.            |
-| [`plancheck.ExpectUnknownValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownValue)          | Asserts the specified attribute at the given managed resource, or data source, has an unknown value.  |
-| [`plancheck.ExpectSensitiveValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectSensitiveValue)      | Asserts the specified attribute at the given managed resource, or data source, has a sensitive value. |
+| Check                                                                                                                                                   | Description                                                                                                       |
+|---------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| [`plancheck.ExpectKnownValue(address, path, value)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectKnownValue)       | Asserts the specified attribute at the given managed resource, or data source, has the specified type, and value. |
+| [`plancheck.ExpectResourceAction(address, operation)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectResourceAction) | Asserts the given managed resource, or data source, has the specified operation for apply.                        |
+| [`plancheck.ExpectSensitiveValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectSensitiveValue)      | Asserts the specified attribute at the given managed resource, or data source, has a sensitive value.             |
+| [`plancheck.ExpectUnknownValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectUnknownValue)          | Asserts the specified attribute at the given managed resource, or data source, has an unknown value.              |
+
+## Example using `plancheck.ExpectKnownValue`
+
+The [`plancheck.ExpectKnownValue(address, path, value)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectKnownValue) plan check provides a basis for asserting that a specific resource attribute has a known type, and value.
+
+Refer to [Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks) for details, and examples of the available [knownvalue.Check](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check) types that can be used with the `ExpectKnownValue` plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_String(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		    // Provider definition omitted.
+            Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					string_attribute = "str"
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("string_attribute"),
+							knownvalue.StringValueExact("str")),
+					},
+				},
+			},
+		},
+	})
+}
+```
 
 ## Examples using `plancheck.ExpectResourceAction`
 
