@@ -7,28 +7,26 @@ import (
 	"fmt"
 )
 
-var _ Check = NullValue{}
+var _ Check = nullExact{}
 
-// NullValue is a Check for asserting equality between the value supplied
-// to NullValueExact and the value passed to the CheckValue method.
-type NullValue struct{}
+type nullExact struct{}
 
 // CheckValue determines whether the passed value is of nil.
-func (v NullValue) CheckValue(other any) error {
+func (v nullExact) CheckValue(other any) error {
 	if other != nil {
-		return fmt.Errorf("expected value nil for NullValue check, got: %T", other)
+		return fmt.Errorf("expected value nil for NullExact check, got: %T", other)
 	}
 
 	return nil
 }
 
 // String returns the string representation of nil.
-func (v NullValue) String() string {
+func (v nullExact) String() string {
 	return "nil"
 }
 
-// NullValueExact returns a Check for asserting equality nil
+// NullExact returns a Check for asserting equality nil
 // and the value passed to the CheckValue method.
-func NullValueExact() NullValue {
-	return NullValue{}
+func NullExact() nullExact {
+	return nullExact{}
 }
