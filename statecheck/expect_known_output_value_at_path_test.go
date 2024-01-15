@@ -1442,14 +1442,16 @@ func TestExpectKnownOutputValueAtPath_CheckState_UnknownAttributeType(t *testing
 				State: &tfjson.State{
 					Values: &tfjson.StateValues{
 						Outputs: map[string]*tfjson.StateOutput{
-							"float32_output": {
-								Value: float32(123),
+							"obj": {
+								Value: map[string]any{
+									"float32_output": float32(123),
+								},
 							},
 						},
 					},
 				},
 			},
-			expectedErr: fmt.Errorf("expected json.Number value for Int64Exact check, got: float32"),
+			expectedErr: fmt.Errorf("error checking value for output at path: obj.float32_output, err: expected json.Number value for Int64Exact check, got: float32"),
 		},
 	}
 
@@ -1459,7 +1461,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_UnknownAttributeType(t *testing
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			e := statecheck.ExpectKnownOutputValueAtPath("float32_output", tfjsonpath.Path{}, testCase.knownValue)
+			e := statecheck.ExpectKnownOutputValueAtPath("obj", tfjsonpath.New("float32_output"), testCase.knownValue)
 
 			resp := statecheck.CheckStateResponse{}
 

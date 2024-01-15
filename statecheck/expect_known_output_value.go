@@ -56,7 +56,7 @@ func (e expectKnownOutputValue) CheckState(ctx context.Context, req CheckStateRe
 	}
 
 	if err := e.knownValue.CheckValue(result); err != nil {
-		resp.Error = err
+		resp.Error = fmt.Errorf("error checking value for output at path: %s, err: %s", e.outputAddress, err)
 
 		return
 	}

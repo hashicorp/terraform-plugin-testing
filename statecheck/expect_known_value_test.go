@@ -1294,7 +1294,7 @@ func TestExpectKnownValue_CheckState_UnknownAttributeType(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: fmt.Errorf("expected json.Number value for Int64Exact check, got: float32"),
+			expectedErr: fmt.Errorf("error checking value for attribute at path: example_resource.test.attribute, err: expected json.Number value for Int64Exact check, got: float32"),
 		},
 	}
 

@@ -1412,7 +1412,7 @@ func TestExpectKnownOutputValue_CheckState_UnknownAttributeType(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: fmt.Errorf("expected json.Number value for Int64Exact check, got: float32"),
+			expectedErr: fmt.Errorf("error checking value for output at path: float32_output, err: expected json.Number value for Int64Exact check, got: float32"),
 		},
 	}
 
