@@ -691,7 +691,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListElements(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("list_attribute"),
-							knownvalue.ListElementsExact(2),
+							knownvalue.ListSizeExact(2),
 						),
 					},
 				},
@@ -734,11 +734,11 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListElements_WrongNum(t *testing
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("list_attribute"),
-							knownvalue.ListElementsExact(3),
+							knownvalue.ListSizeExact(3),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.list_attribute, err: expected 3 elements for ListElementsExact check, got 2 elements"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.list_attribute, err: expected 3 elements for ListSizeExact check, got 2 elements"),
 			},
 		},
 	})
@@ -881,7 +881,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ListNestedBlockElements(t *testi
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("list_nested_block"),
-							knownvalue.ListElementsExact(2),
+							knownvalue.ListSizeExact(2),
 						),
 					},
 				},
@@ -1152,7 +1152,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_MapElements(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.MapElementsExact(2),
+							knownvalue.MapSizeExact(2),
 						),
 					},
 				},
@@ -1195,11 +1195,11 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_MapElements_WrongNum(t *testing.
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.MapElementsExact(3),
+							knownvalue.MapSizeExact(3),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.map_attribute, err: expected 3 elements for MapElementsExact check, got 2 elements"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.map_attribute, err: expected 3 elements for MapSizeExact check, got 2 elements"),
 			},
 		},
 	})
@@ -1516,7 +1516,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetElements(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("set_attribute"),
-							knownvalue.SetElementsExact(2),
+							knownvalue.SetSizeExact(2),
 						),
 					},
 				},
@@ -1662,7 +1662,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_SetNestedBlockElements(t *testin
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("set_nested_block"),
-							knownvalue.SetElementsExact(2),
+							knownvalue.SetSizeExact(2),
 						),
 					},
 				},

@@ -560,7 +560,7 @@ func TestExpectKnownOutputValue_CheckPlan_ListElements(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"list_output",
-							knownvalue.ListElementsExact(2),
+							knownvalue.ListSizeExact(2),
 						),
 					},
 				},
@@ -595,11 +595,11 @@ func TestExpectKnownOutputValue_CheckPlan_ListElements_WrongNum(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"list_output",
-							knownvalue.ListElementsExact(3),
+							knownvalue.ListSizeExact(3),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("error checking value for output at path: list_output, err: expected 3 elements for ListElementsExact check, got 2 elements"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: list_output, err: expected 3 elements for ListSizeExact check, got 2 elements"),
 			},
 		},
 	})
@@ -718,7 +718,7 @@ func TestExpectKnownOutputValue_CheckPlan_ListNestedBlockElements(t *testing.T) 
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"list_nested_block_output",
-							knownvalue.ListElementsExact(2),
+							knownvalue.ListSizeExact(2),
 						),
 					},
 				},
@@ -941,7 +941,7 @@ func TestExpectKnownOutputValue_CheckPlan_MapElements(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"map_output",
-							knownvalue.MapElementsExact(2),
+							knownvalue.MapSizeExact(2),
 						),
 					},
 				},
@@ -976,11 +976,11 @@ func TestExpectKnownOutputValue_CheckPlan_MapElements_WrongNum(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"map_output",
-							knownvalue.MapElementsExact(3),
+							knownvalue.MapSizeExact(3),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("error checking value for output at path: map_output, err: expected 3 elements for MapElementsExact check, got 2 elements"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: map_output, err: expected 3 elements for MapSizeExact check, got 2 elements"),
 			},
 		},
 	})
@@ -1241,7 +1241,7 @@ func TestExpectKnownOutputValue_CheckPlan_SetElements(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"set_output",
-							knownvalue.SetElementsExact(2),
+							knownvalue.SetSizeExact(2),
 						),
 					},
 				},
@@ -1363,7 +1363,7 @@ func TestExpectKnownOutputValue_CheckPlan_SetNestedBlockElements(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"set_nested_block_output",
-							knownvalue.SetElementsExact(2),
+							knownvalue.SetSizeExact(2),
 						),
 					},
 				},

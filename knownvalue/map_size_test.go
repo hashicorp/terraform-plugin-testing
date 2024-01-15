@@ -21,37 +21,37 @@ func TestMapElements_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			self:          knownvalue.MapElementsExact(0),
-			expectedError: fmt.Errorf("expected map[string]any value for MapElementsExact check, got: <nil>"),
+			self:          knownvalue.MapSizeExact(0),
+			expectedError: fmt.Errorf("expected map[string]any value for MapSizeExact check, got: <nil>"),
 		},
 		"zero-other": {
-			self:  knownvalue.MapElementsExact(0),
+			self:  knownvalue.MapSizeExact(0),
 			other: map[string]any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
-			self:          knownvalue.MapElementsExact(3),
-			expectedError: fmt.Errorf("expected map[string]any value for MapElementsExact check, got: <nil>"),
+			self:          knownvalue.MapSizeExact(3),
+			expectedError: fmt.Errorf("expected map[string]any value for MapSizeExact check, got: <nil>"),
 		},
 		"wrong-type": {
-			self:          knownvalue.MapElementsExact(3),
+			self:          knownvalue.MapSizeExact(3),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected map[string]any value for MapElementsExact check, got: float64"),
+			expectedError: fmt.Errorf("expected map[string]any value for MapSizeExact check, got: float64"),
 		},
 		"empty": {
-			self:          knownvalue.MapElementsExact(3),
+			self:          knownvalue.MapSizeExact(3),
 			other:         map[string]any{},
-			expectedError: fmt.Errorf("expected 3 elements for MapElementsExact check, got 0 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for MapSizeExact check, got 0 elements"),
 		},
 		"wrong-length": {
-			self: knownvalue.MapElementsExact(3),
+			self: knownvalue.MapSizeExact(3),
 			other: map[string]any{
 				"one": int64(123),
 				"two": int64(456),
 			},
-			expectedError: fmt.Errorf("expected 3 elements for MapElementsExact check, got 2 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for MapSizeExact check, got 2 elements"),
 		},
 		"equal": {
-			self: knownvalue.MapElementsExact(3),
+			self: knownvalue.MapSizeExact(3),
 			other: map[string]any{
 				"one":   int64(123),
 				"two":   int64(456),
@@ -78,7 +78,7 @@ func TestMapElements_CheckValue(t *testing.T) {
 func TestMapElements_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.MapElementsExact(2).String()
+	got := knownvalue.MapSizeExact(2).String()
 
 	if diff := cmp.Diff(got, "2"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)

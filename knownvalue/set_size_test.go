@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 )
 
-func TestListElements_CheckValue(t *testing.T) {
+func TestSetElements_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
@@ -21,37 +21,37 @@ func TestListElements_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			self:          knownvalue.ListElementsExact(0),
-			expectedError: fmt.Errorf("expected []any value for ListElementsExact check, got: <nil>"),
+			self:          knownvalue.SetSizeExact(0),
+			expectedError: fmt.Errorf("expected []any value for SetElementExact check, got: <nil>"),
 		},
 		"zero-other": {
-			self:  knownvalue.ListElementsExact(0),
+			self:  knownvalue.SetSizeExact(0),
 			other: []any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
-			self:          knownvalue.ListElementsExact(3),
-			expectedError: fmt.Errorf("expected []any value for ListElementsExact check, got: <nil>"),
+			self:          knownvalue.SetSizeExact(3),
+			expectedError: fmt.Errorf("expected []any value for SetElementExact check, got: <nil>"),
 		},
 		"wrong-type": {
-			self:          knownvalue.ListElementsExact(3),
+			self:          knownvalue.SetSizeExact(3),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected []any value for ListElementsExact check, got: float64"),
+			expectedError: fmt.Errorf("expected []any value for SetElementExact check, got: float64"),
 		},
 		"empty": {
-			self:          knownvalue.ListElementsExact(3),
+			self:          knownvalue.SetSizeExact(3),
 			other:         []any{},
-			expectedError: fmt.Errorf("expected 3 elements for ListElementsExact check, got 0 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for SetElementExact check, got 0 elements"),
 		},
 		"wrong-length": {
-			self: knownvalue.ListElementsExact(3),
+			self: knownvalue.SetSizeExact(3),
 			other: []any{
 				int64(123),
 				int64(456),
 			},
-			expectedError: fmt.Errorf("expected 3 elements for ListElementsExact check, got 2 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for SetElementExact check, got 2 elements"),
 		},
 		"equal": {
-			self: knownvalue.ListElementsExact(3),
+			self: knownvalue.SetSizeExact(3),
 			other: []any{
 				int64(123),
 				int64(456),
@@ -75,10 +75,10 @@ func TestListElements_CheckValue(t *testing.T) {
 	}
 }
 
-func TestListElements_String(t *testing.T) {
+func TestSetElements_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.ListElementsExact(2).String()
+	got := knownvalue.SetSizeExact(2).String()
 
 	if diff := cmp.Diff(got, "2"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
