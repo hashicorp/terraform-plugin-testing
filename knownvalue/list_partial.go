@@ -10,19 +10,19 @@ import (
 	"strings"
 )
 
-var _ Check = listValuePartial{}
+var _ Check = listPartial{}
 
-type listValuePartial struct {
+type listPartial struct {
 	value map[int]Check
 }
 
 // CheckValue determines whether the passed value is of type []any, and
 // contains matching slice entries in the same sequence.
-func (v listValuePartial) CheckValue(other any) error {
+func (v listPartial) CheckValue(other any) error {
 	otherVal, ok := other.([]any)
 
 	if !ok {
-		return fmt.Errorf("expected []any value for ListValuePartial check, got: %T", other)
+		return fmt.Errorf("expected []any value for ListPartial check, got: %T", other)
 	}
 
 	var keys []int
@@ -37,7 +37,7 @@ func (v listValuePartial) CheckValue(other any) error {
 
 	for _, k := range keys {
 		if len(otherVal) <= k {
-			return fmt.Errorf("missing element index %d for ListValuePartial check", k)
+			return fmt.Errorf("missing element index %d for ListPartial check", k)
 		}
 
 		if err := v.value[k].CheckValue(otherVal[k]); err != nil {
@@ -49,7 +49,7 @@ func (v listValuePartial) CheckValue(other any) error {
 }
 
 // String returns the string representation of the value.
-func (v listValuePartial) String() string {
+func (v listPartial) String() string {
 	var b bytes.Buffer
 
 	b.WriteString("[")
@@ -77,13 +77,13 @@ func (v listValuePartial) String() string {
 	return b.String()
 }
 
-// ListValuePartial returns a Check for asserting partial equality between the
+// ListPartial returns a Check for asserting partial equality between the
 // supplied map[int]Check and the value passed to the CheckValue method. The
 // map keys represent the zero-ordered element indices within the list that is
 // being checked. Only the elements at the indices defined within the
 // supplied map[int]Check are checked.
-func ListValuePartial(value map[int]Check) listValuePartial {
-	return listValuePartial{
+func ListPartial(value map[int]Check) listPartial {
+	return listPartial{
 		value: value,
 	}
 }

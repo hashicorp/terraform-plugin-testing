@@ -22,44 +22,44 @@ func TestSetValuePartial_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			self:          knownvalue.SetValuePartial([]knownvalue.Check{}),
-			expectedError: fmt.Errorf("expected []any value for SetValuePartial check, got: <nil>"),
+			self:          knownvalue.SetPartial([]knownvalue.Check{}),
+			expectedError: fmt.Errorf("expected []any value for SetPartial check, got: <nil>"),
 		},
 		"zero-other": {
-			self:  knownvalue.SetValuePartial([]knownvalue.Check{}),
+			self:  knownvalue.SetPartial([]knownvalue.Check{}),
 			other: []any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
-			self: knownvalue.SetValuePartial([]knownvalue.Check{
-				knownvalue.Float64ValueExact(1.23),
-				knownvalue.Float64ValueExact(4.56),
-				knownvalue.Float64ValueExact(7.89),
+			self: knownvalue.SetPartial([]knownvalue.Check{
+				knownvalue.Float64Exact(1.23),
+				knownvalue.Float64Exact(4.56),
+				knownvalue.Float64Exact(7.89),
 			}),
-			expectedError: fmt.Errorf("expected []any value for SetValuePartial check, got: <nil>"),
+			expectedError: fmt.Errorf("expected []any value for SetPartial check, got: <nil>"),
 		},
 		"wrong-type": {
-			self: knownvalue.SetValuePartial([]knownvalue.Check{
-				knownvalue.Float64ValueExact(1.23),
-				knownvalue.Float64ValueExact(4.56),
-				knownvalue.Float64ValueExact(7.89),
+			self: knownvalue.SetPartial([]knownvalue.Check{
+				knownvalue.Float64Exact(1.23),
+				knownvalue.Float64Exact(4.56),
+				knownvalue.Float64Exact(7.89),
 			}),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected []any value for SetValuePartial check, got: float64"),
+			expectedError: fmt.Errorf("expected []any value for SetPartial check, got: float64"),
 		},
 		"equal-empty": {
-			self: knownvalue.SetValuePartial([]knownvalue.Check{
-				knownvalue.Float64ValueExact(1.23),
-				knownvalue.Float64ValueExact(4.56),
-				knownvalue.Float64ValueExact(7.89),
+			self: knownvalue.SetPartial([]knownvalue.Check{
+				knownvalue.Float64Exact(1.23),
+				knownvalue.Float64Exact(4.56),
+				knownvalue.Float64Exact(7.89),
 			}),
 			other:         []any{},
-			expectedError: fmt.Errorf("missing value 1.23 for SetValuePartial check"),
+			expectedError: fmt.Errorf("missing value 1.23 for SetPartial check"),
 		},
 		"not-equal": {
-			self: knownvalue.SetValuePartial([]knownvalue.Check{
-				knownvalue.Float64ValueExact(1.23),
-				knownvalue.Float64ValueExact(4.56),
-				knownvalue.Float64ValueExact(7.89),
+			self: knownvalue.SetPartial([]knownvalue.Check{
+				knownvalue.Float64Exact(1.23),
+				knownvalue.Float64Exact(4.56),
+				knownvalue.Float64Exact(7.89),
 			}),
 			other: []any{
 				json.Number("1.23"),
@@ -67,13 +67,13 @@ func TestSetValuePartial_CheckValue(t *testing.T) {
 				json.Number("6.54"),
 				json.Number("5.46"),
 			},
-			expectedError: fmt.Errorf("missing value 7.89 for SetValuePartial check"),
+			expectedError: fmt.Errorf("missing value 7.89 for SetPartial check"),
 		},
 		"equal-different-order": {
-			self: knownvalue.SetValuePartial([]knownvalue.Check{
-				knownvalue.Float64ValueExact(1.23),
-				knownvalue.Float64ValueExact(4.56),
-				knownvalue.Float64ValueExact(7.89),
+			self: knownvalue.SetPartial([]knownvalue.Check{
+				knownvalue.Float64Exact(1.23),
+				knownvalue.Float64Exact(4.56),
+				knownvalue.Float64Exact(7.89),
 			}),
 			other: []any{
 				json.Number("1.23"),
@@ -83,10 +83,10 @@ func TestSetValuePartial_CheckValue(t *testing.T) {
 			},
 		},
 		"equal-same-order": {
-			self: knownvalue.SetValuePartial([]knownvalue.Check{
-				knownvalue.Float64ValueExact(1.23),
-				knownvalue.Float64ValueExact(4.56),
-				knownvalue.Float64ValueExact(7.89),
+			self: knownvalue.SetPartial([]knownvalue.Check{
+				knownvalue.Float64Exact(1.23),
+				knownvalue.Float64Exact(4.56),
+				knownvalue.Float64Exact(7.89),
 			}),
 			other: []any{
 				json.Number("1.23"),
@@ -115,10 +115,10 @@ func TestSetValuePartial_CheckValue(t *testing.T) {
 func TestSetValuePartial_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.SetValuePartial([]knownvalue.Check{
-		knownvalue.Float64ValueExact(1.23),
-		knownvalue.Float64ValueExact(4.56),
-		knownvalue.Float64ValueExact(7.89),
+	got := knownvalue.SetPartial([]knownvalue.Check{
+		knownvalue.Float64Exact(1.23),
+		knownvalue.Float64Exact(4.56),
+		knownvalue.Float64Exact(7.89),
 	}).String()
 
 	if diff := cmp.Diff(got, "[1.23 4.56 7.89]"); diff != "" {

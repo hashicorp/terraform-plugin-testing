@@ -22,69 +22,69 @@ func TestSetValue_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			self:          knownvalue.SetValueExact([]knownvalue.Check{}),
-			expectedError: fmt.Errorf("expected []any value for SetValueExact check, got: <nil>"),
+			self:          knownvalue.SetExact([]knownvalue.Check{}),
+			expectedError: fmt.Errorf("expected []any value for SetExact check, got: <nil>"),
 		},
 		"zero-other": {
-			self:  knownvalue.SetValueExact([]knownvalue.Check{}),
+			self:  knownvalue.SetExact([]knownvalue.Check{}),
 			other: []any{}, // checking against the underlying value field zero-value
 		},
 		"nil": {
-			self: knownvalue.SetValueExact([]knownvalue.Check{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
+			self: knownvalue.SetExact([]knownvalue.Check{
+				knownvalue.Int64Exact(123),
+				knownvalue.Int64Exact(456),
+				knownvalue.Int64Exact(789),
 			}),
-			expectedError: fmt.Errorf("expected []any value for SetValueExact check, got: <nil>"),
+			expectedError: fmt.Errorf("expected []any value for SetExact check, got: <nil>"),
 		},
 		"wrong-type": {
-			self: knownvalue.SetValueExact([]knownvalue.Check{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
+			self: knownvalue.SetExact([]knownvalue.Check{
+				knownvalue.Int64Exact(123),
+				knownvalue.Int64Exact(456),
+				knownvalue.Int64Exact(789),
 			}),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected []any value for SetValueExact check, got: float64"),
+			expectedError: fmt.Errorf("expected []any value for SetExact check, got: float64"),
 		},
 		"empty": {
-			self: knownvalue.SetValueExact([]knownvalue.Check{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
+			self: knownvalue.SetExact([]knownvalue.Check{
+				knownvalue.Int64Exact(123),
+				knownvalue.Int64Exact(456),
+				knownvalue.Int64Exact(789),
 			}),
 			other:         []any{},
-			expectedError: fmt.Errorf("expected 3 elements for SetValueExact check, got 0 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for SetExact check, got 0 elements"),
 		},
 		"wrong-length": {
-			self: knownvalue.SetValueExact([]knownvalue.Check{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
+			self: knownvalue.SetExact([]knownvalue.Check{
+				knownvalue.Int64Exact(123),
+				knownvalue.Int64Exact(456),
+				knownvalue.Int64Exact(789),
 			}),
 			other: []any{
 				json.Number("123"),
 				json.Number("456"),
 			},
-			expectedError: fmt.Errorf("expected 3 elements for SetValueExact check, got 2 elements"),
+			expectedError: fmt.Errorf("expected 3 elements for SetExact check, got 2 elements"),
 		},
 		"not-equal": {
-			self: knownvalue.SetValueExact([]knownvalue.Check{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
+			self: knownvalue.SetExact([]knownvalue.Check{
+				knownvalue.Int64Exact(123),
+				knownvalue.Int64Exact(456),
+				knownvalue.Int64Exact(789),
 			}),
 			other: []any{
 				json.Number("123"),
 				json.Number("456"),
 				json.Number("654"),
 			},
-			expectedError: fmt.Errorf("missing value 789 for SetValueExact check"),
+			expectedError: fmt.Errorf("missing value 789 for SetExact check"),
 		},
 		"equal-different-order": {
-			self: knownvalue.SetValueExact([]knownvalue.Check{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
+			self: knownvalue.SetExact([]knownvalue.Check{
+				knownvalue.Int64Exact(123),
+				knownvalue.Int64Exact(456),
+				knownvalue.Int64Exact(789),
 			}),
 			other: []any{
 				json.Number("123"),
@@ -93,10 +93,10 @@ func TestSetValue_CheckValue(t *testing.T) {
 			},
 		},
 		"equal-same-order": {
-			self: knownvalue.SetValueExact([]knownvalue.Check{
-				knownvalue.Int64ValueExact(123),
-				knownvalue.Int64ValueExact(456),
-				knownvalue.Int64ValueExact(789),
+			self: knownvalue.SetExact([]knownvalue.Check{
+				knownvalue.Int64Exact(123),
+				knownvalue.Int64Exact(456),
+				knownvalue.Int64Exact(789),
 			}),
 			other: []any{
 				json.Number("123"),
@@ -124,10 +124,10 @@ func TestSetValue_CheckValue(t *testing.T) {
 func TestSetValue_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.SetValueExact([]knownvalue.Check{
-		knownvalue.Int64ValueExact(123),
-		knownvalue.Int64ValueExact(456),
-		knownvalue.Int64ValueExact(789),
+	got := knownvalue.SetExact([]knownvalue.Check{
+		knownvalue.Int64Exact(123),
+		knownvalue.Int64Exact(456),
+		knownvalue.Int64Exact(789),
 	}).String()
 
 	if diff := cmp.Diff(got, "[123 456 789]"); diff != "" {

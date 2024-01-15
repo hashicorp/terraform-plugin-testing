@@ -21,29 +21,29 @@ func TestStringValue_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			self:          knownvalue.StringValueExact(""),
-			expectedError: fmt.Errorf("expected string value for StringValueExact check, got: <nil>"),
+			self:          knownvalue.StringExact(""),
+			expectedError: fmt.Errorf("expected string value for StringExact check, got: <nil>"),
 		},
 		"zero-other": {
-			self:  knownvalue.StringValueExact(""),
+			self:  knownvalue.StringExact(""),
 			other: "", // checking against the underlying value field zero-value
 		},
 		"nil": {
-			self:          knownvalue.StringValueExact("str"),
-			expectedError: fmt.Errorf("expected string value for StringValueExact check, got: <nil>"),
+			self:          knownvalue.StringExact("str"),
+			expectedError: fmt.Errorf("expected string value for StringExact check, got: <nil>"),
 		},
 		"wrong-type": {
-			self:          knownvalue.StringValueExact("str"),
+			self:          knownvalue.StringExact("str"),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected string value for StringValueExact check, got: float64"),
+			expectedError: fmt.Errorf("expected string value for StringExact check, got: float64"),
 		},
 		"not-equal": {
-			self:          knownvalue.StringValueExact("str"),
+			self:          knownvalue.StringExact("str"),
 			other:         "rts",
-			expectedError: fmt.Errorf("expected value str for StringValueExact check, got: rts"),
+			expectedError: fmt.Errorf("expected value str for StringExact check, got: rts"),
 		},
 		"equal": {
-			self:  knownvalue.StringValueExact("str"),
+			self:  knownvalue.StringExact("str"),
 			other: "str",
 		},
 	}
@@ -66,7 +66,7 @@ func TestStringValue_CheckValue(t *testing.T) {
 func TestStringValue_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.StringValueExact("str").String()
+	got := knownvalue.StringExact("str").String()
 
 	if diff := cmp.Diff(got, "str"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
