@@ -31,8 +31,7 @@ func TestExpectKnownValue_CheckPlan_Map(t *testing.T) {
 						key1 = "value1"
 						key2 = "value2"
 					}
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
@@ -72,8 +71,7 @@ func TestExpectKnownValue_CheckPlan_MapPartial(t *testing.T) {
 						key1 = "value1"
 						key2 = "value2"
 					}
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
@@ -110,8 +108,7 @@ func TestExpectKnownValue_CheckPlan_MapElements(t *testing.T) {
 						key1 = "value1"
 						key2 = "value2"
 					}
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(

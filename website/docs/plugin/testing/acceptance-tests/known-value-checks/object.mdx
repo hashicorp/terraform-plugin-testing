@@ -30,8 +30,7 @@ func TestExpectKnownValue_CheckPlan_Object(t *testing.T) {
 						attr1 = "value1"
 						attr2 = "value2"
 					}
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
@@ -71,8 +70,7 @@ func TestExpectKnownValue_CheckPlan_ObjectPartial(t *testing.T) {
 						attr1 = "value1"
 						attr2 = "value2"
 					}
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(

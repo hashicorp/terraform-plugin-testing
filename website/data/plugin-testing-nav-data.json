@@ -111,10 +111,6 @@
             "path": "acceptance-tests/known-value-checks/number"
           },
           {
-            "title": "Null ",
-            "path": "acceptance-tests/known-value-checks/null"
-          },
-          {
             "title": "Object",
             "path": "acceptance-tests/known-value-checks/object"
           },

@@ -26,8 +26,7 @@ func TestExpectKnownValue_CheckPlan_Float64(t *testing.T) {
 			{
 				Config: `resource "test_resource" "one" {
 					float_attribute = 1.23
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(

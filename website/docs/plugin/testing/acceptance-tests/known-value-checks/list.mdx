@@ -23,7 +23,7 @@ func TestExpectKnownValue_CheckPlan_List(t *testing.T) {
 	t.Parallel()
 
 	resource.Test(t, resource.TestCase{
-				// Provider definition omitted.
+		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -31,8 +31,7 @@ func TestExpectKnownValue_CheckPlan_List(t *testing.T) {
 						"value1",
 						"value2"
 					]
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
@@ -70,8 +69,7 @@ func TestExpectKnownValue_CheckPlan_ListPartial(t *testing.T) {
 						"value1",
 						"value2"
 					]
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
@@ -108,8 +106,7 @@ func TestExpectKnownValue_CheckPlan_ListElements(t *testing.T) {
 						"value1",
 						"value2"
 					]
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(

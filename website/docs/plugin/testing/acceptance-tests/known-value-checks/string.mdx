@@ -26,8 +26,7 @@ func TestExpectKnownValue_CheckPlan_String(t *testing.T) {
 			{
 				Config: `resource "test_resource" "one" {
 					string_attribute = "str"
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(

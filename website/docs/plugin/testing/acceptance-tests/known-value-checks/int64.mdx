@@ -26,8 +26,7 @@ func TestExpectKnownValue_CheckPlan_Int64(t *testing.T) {
 			{
 				Config: `resource "test_resource" "one" {
 					int_attribute = 123
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
