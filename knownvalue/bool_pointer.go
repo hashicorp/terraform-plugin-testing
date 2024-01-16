@@ -28,7 +28,7 @@ func (v boolPointerExact) CheckValue(other any) error {
 	}
 
 	if otherVal != *v.value {
-		return fmt.Errorf("expected value %t for BoolExact check, got: %t", v.value, otherVal)
+		return fmt.Errorf("expected value %t for BoolExact check, got: %t", *v.value, otherVal)
 	}
 
 	return nil
