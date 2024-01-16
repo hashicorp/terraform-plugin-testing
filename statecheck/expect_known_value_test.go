@@ -100,6 +100,47 @@ func TestExpectKnownValue_CheckState_Bool(t *testing.T) {
 	})
 }
 
+func TestExpectKnownValue_CheckState_BoolPointer(t *testing.T) {
+	t.Parallel()
+
+	var testBool bool
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+				}
+				`,
+				ConfigStateChecks: r.ConfigStateChecks{
+					AlterValue(&testBool),
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("bool_attribute"),
+						knownvalue.BoolPointerExact(&testBool),
+					),
+				},
+			},
+		},
+	})
+}
+
+type mutate struct{}
+
+func (m mutate) CheckState(context.Context, statecheck.CheckStateRequest, *statecheck.CheckStateResponse) {
+}
+
+func AlterValue(b *bool) mutate {
+	*b = true
+
+	return mutate{}
+}
+
 func TestExpectKnownValue_CheckState_Bool_KnownValueWrongType(t *testing.T) {
 	t.Parallel()
 
