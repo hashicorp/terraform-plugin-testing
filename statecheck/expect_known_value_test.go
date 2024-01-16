@@ -103,7 +103,7 @@ func TestExpectKnownValue_CheckState_Bool(t *testing.T) {
 func TestExpectKnownValue_CheckState_BoolPointer(t *testing.T) {
 	t.Parallel()
 
-	var testBool bool
+	testBool := Pointer(false)
 
 	r.Test(t, r.TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -118,16 +118,20 @@ func TestExpectKnownValue_CheckState_BoolPointer(t *testing.T) {
 				}
 				`,
 				ConfigStateChecks: r.ConfigStateChecks{
-					AlterValue(&testBool),
+					AlterValue(testBool),
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.BoolPointerExact(&testBool),
+						knownvalue.BoolExact(*testBool),
 					),
 				},
 			},
 		},
 	})
+}
+
+func Pointer[T any](in T) *T {
+	return &in
 }
 
 type mutate struct{}
