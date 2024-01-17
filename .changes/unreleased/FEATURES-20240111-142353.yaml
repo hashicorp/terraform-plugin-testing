@@ -3,4 +3,4 @@ body: 'statecheck: Added `ExpectKnownOutputValueAtPath` plan check, which assert
   that a given output value at a specified path has a defined type, and value'
 time: 2024-01-11T14:23:53.633255Z
 custom:
-  Issue: "273"
+  Issue: "275"
