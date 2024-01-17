@@ -9,10 +9,50 @@ description: >-
 
 The `terraform-plugin-testing` module provides a package [`statecheck`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck) with built-in managed resource, and data source state checks for common use-cases:
 
-| Check                                                                                                                                                | Description                                                                                                       |
-|------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| [`statecheck.ExpectKnownValue(address, path, value)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue)  | Asserts the specified attribute at the given managed resource, or data source, has the specified type, and value. |
-| [`statecheck.ExpectSensitiveValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectSensitiveValue) | Asserts the specified attribute at the given managed resource, or data source, has a sensitive value.             |
+| Check                                                                                                                                                                        | Description                                                                                                                                                                              |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`statecheck.ExpectContains(addressOne, pathOne, addressTwo, pathTwo)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectContains)          | Asserts the specified attribute at the first given managed resource, or data source, contains the value specified by the attribute in the second given managed resource, or data source. |
+| [`statecheck.ExpectKnownValue(address, path, value)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue)                          | Asserts the specified attribute at the given managed resource, or data source, has the specified type, and value.                                                                        |
+| [`statecheck.ExpectMatchValues(addressOne, pathOne, addressTwo, pathTwo)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectMatchingValues) | Asserts the specified attributes at the given managed resources have matching values.                                                                                                    |
+| [`statecheck.ExpectNoValueExists(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectNoValueExists)                           | Asserts the specified attribute at the given managed resource, or data source, does not exist.                                                                                           |
+| [`statecheck.ExpectSensitiveValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectSensitiveValue)                         | Asserts the specified attribute at the given managed resource, or data source, has a sensitive value.                                                                                    |
+| [`statecheck.ExpectValueExists(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectValueExists)                               | Asserts the specified attribute at the given managed resource, or data source, exists.                                                                                                   |
+
+## Example using `statecheck.ExpectContains`
+
+The [`statecheck.ExpectContains(addressOne, pathOne, addressTwo, pathTwo)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectContains) state check provides a basis for asserting that the first resource attribute contains the value specified by the second resource attribute.
+
+```go
+func TestExpectContains_CheckState_Found(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					string_attribute = "value1"
+				}
+
+				resource "test_resource" "two" {
+					set_attribute = [
+						test_resource.one.string_attribute,
+						"value2"
+					]
+				}`,
+				ConfigStateChecks: r.ConfigStateChecks{
+					statecheck.ExpectContains(
+						"test_resource.two",
+						tfjsonpath.New("set_attribute"),
+						"test_resource.one",
+						tfjsonpath.New("string_attribute"),
+					),
+				},
+			},
+		},
+	})
+}
+```
 
 ## Example using `statecheck.ExpectKnownValue`
 
@@ -37,6 +77,68 @@ func TestExpectKnownValue_CheckState_Bool(t *testing.T) {
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
 						knownvalue.BoolExact(true),
+					),
+				},
+			},
+		},
+	})
+}
+```
+
+## Example using `statecheck.ExpectMatchingValues`
+
+The [`statecheck.ExpectMatchingValues(addressOne, pathOne, addressTwo, pathTwo)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectMatchingValues) state check provides a basis for asserting that the specified resource attributes have matching values.
+
+```go
+func TestExpectMatchingValues_CheckState_AttributeValuesEqual_Bool(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+				}
+
+				resource "test_resource" "two" {
+					bool_attribute = true
+				}`,
+				ConfigStateChecks: r.ConfigStateChecks{
+					statecheck.ExpectMatchingValues(
+						"test_resource.one",
+						tfjsonpath.New("bool_attribute"),
+						"test_resource.two",
+						tfjsonpath.New("bool_attribute"),
+					),
+				},
+			},
+		},
+	})
+}
+```
+
+## Example using `statecheck.ExpectNoValueExists`
+
+The [`statecheck.ExpectNoValueExists(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectNoValueExists) state check provides a basis for asserting that a specific resource attribute does not exist.
+
+```go
+func TestExpectNoValueExists_CheckState_AttributeNotFound(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+				}
+				`,
+				ConfigStateChecks: r.ConfigStateChecks{
+					statecheck.ExpectNoValueExists(
+						"test_resource.one",
+						tfjsonpath.New("does_not_exist"),
 					),
 				},
 			},
@@ -70,6 +172,34 @@ func Test_ExpectSensitiveValue_SensitiveStringAttribute(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectSensitiveValue("test_resource.one",
 						tfjsonpath.New("sensitive_string_attribute")),
+				},
+			},
+		},
+	})
+}
+```
+
+## Example using `statecheck.ExpectValueExists`
+
+The [`statecheck.ExpectValueExists(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectValueExists) state check provides a basis for asserting that a specific resource attribute exists.
+
+```go
+func TestExpectValueExists_CheckState_AttributeFound(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+				}
+				`,
+				ConfigStateChecks: r.ConfigStateChecks{
+					statecheck.ExpectValueExists(
+						"test_resource.one",
+						tfjsonpath.New("bool_attribute"),
+					),
 				},
 			},
 		},
