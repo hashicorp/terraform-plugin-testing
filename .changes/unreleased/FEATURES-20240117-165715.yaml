@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'statecheck: Added `ExpectNoValueExists` built-in state check, which asserts
+  that a given attribute does not exist'
+time: 2024-01-17T16:57:15.53079Z
+custom:
+  Issue: "276"
