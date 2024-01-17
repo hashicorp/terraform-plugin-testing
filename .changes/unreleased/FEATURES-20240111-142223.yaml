@@ -3,4 +3,4 @@ body: 'statecheck: Added `ExpectKnownValue` state check, which asserts that a gi
   resource attribute has a defined type, and value'
 time: 2024-01-11T14:22:23.072321Z
 custom:
-  Issue: "273"
+  Issue: "275"
