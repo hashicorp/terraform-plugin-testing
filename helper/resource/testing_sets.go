@@ -57,6 +57,17 @@ const (
 // If the values map is not granular enough, it is possible to match an element
 // you were not intending to in the set. Provide the most complete mapping of
 // attributes possible to be sure the unique element exists.
+//
+// Deprecated: State checks have been superseded by ConfigStateChecks.
+// Use the built-in statecheck.ExpectKnownValue state check in combination
+// with knownvalue.SetExact or knownvalue.SetPartial instead.
+// TestCheckTypeSetElemNestedAttrs function will be removed in the next major version.
+//
+// [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
+// [SetExact]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetExact
+// [SetPartial]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetPartial
+// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
+// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string) TestCheckFunc {
 	return func(s *terraform.State) error {
 		is, err := primaryInstanceState(s, name)
@@ -129,6 +140,20 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 // If the values map is not granular enough, it is possible to match an element
 // you were not intending to in the set. Provide the most complete mapping of
 // attributes possible to be sure the unique element exists.
+//
+// Deprecated: State checks have been superseded by ConfigStateChecks.
+// Use the built-in statecheck.ExpectKnownValue state check, can be used in combination
+// with knownvalue.ListExact, knownvalue.ListPartial, knownvalue.SetExact, or
+// knownvalue.SetPartial, with nested custom knownvalue.Check instead.
+// TestMatchTypeSetElemNestedAttrs function will be removed in the next major version.
+//
+// [ListExact]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListExact
+// [ListPartial]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListPartial
+// [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
+// [SetExact]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetExact
+// [SetPartial]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetPartial
+// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
+// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 func TestMatchTypeSetElemNestedAttrs(name, attr string, values map[string]*regexp.Regexp) TestCheckFunc {
 	return func(s *terraform.State) error {
 		is, err := primaryInstanceState(s, name)
@@ -200,6 +225,17 @@ func TestMatchTypeSetElemNestedAttrs(name, attr string, values map[string]*regex
 //   - Boolean: "false" or "true".
 //   - Float/Integer: Stringified number, such as "1.2" or "123".
 //   - String: No conversion necessary.
+//
+// Deprecated: State checks have been superseded by ConfigStateChecks.
+// Use the built-in statecheck.ExpectKnownValue state check in combination
+// with knownvalue.SetExact or knownvalue.SetPartial instead.
+// TestCheckTypeSetElemAttr function will be removed in the next major version.
+//
+// [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
+// [SetExact]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetExact
+// [SetPartial]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetPartial
+// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
+// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 func TestCheckTypeSetElemAttr(name, attr, value string) TestCheckFunc {
 	return func(s *terraform.State) error {
 		is, err := primaryInstanceState(s, name)
@@ -242,6 +278,14 @@ func TestCheckTypeSetElemAttr(name, attr, value string) TestCheckFunc {
 // attribute. Use the sentinel value '*' to replace the element indexing into
 // a list or set. The sentinel value can be used for each list or set index, if
 // there are multiple lists or sets in the attribute path.
+//
+// Deprecated: State checks have been superseded by ConfigStateChecks.
+// Use the built-in statecheck.ExpectContains state check instead.
+// TestCheckTypeSetElemAttrPair function will be removed in the next major version.
+//
+// [ExpectContains]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectContains
+// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
+// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 func TestCheckTypeSetElemAttrPair(nameFirst, keyFirst, nameSecond, keySecond string) TestCheckFunc {
 	return func(s *terraform.State) error {
 		isFirst, err := primaryInstanceState(s, nameFirst)
