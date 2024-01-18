@@ -46,7 +46,7 @@ func TestExpectKnownOutputValue_CheckPlan_OutputNotFound(t *testing.T) {
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("bool_not_found - Output not found in plan OutputChanges"),
+				ExpectError: regexp.MustCompile("bool_not_found - Output not found in plan"),
 			},
 		},
 	})
@@ -72,11 +72,10 @@ func TestExpectKnownOutputValue_CheckPlan_AttributeValueNull(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"bool_output",
-							knownvalue.BoolExact(true),
+							knownvalue.NullExact(),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("value is null for output at path: bool_output"),
 			},
 		},
 	})
@@ -1486,7 +1485,7 @@ func TestExpectKnownOutputValue_CheckPlan_UnknownAttributeType(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: fmt.Errorf("unrecognised output type: float32, known value type is knownvalue.int64Exact\n\nThis is an error in plancheck.ExpectKnownOutputValue.\nPlease report this to the maintainers."),
+			expectedErr: fmt.Errorf("error checking value for output at path: float32_output, err: expected json.Number value for Int64Exact check, got: float32"),
 		},
 	}
 

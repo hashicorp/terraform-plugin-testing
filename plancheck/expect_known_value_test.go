@@ -44,7 +44,7 @@ func TestExpectKnownValue_CheckPlan_ResourceNotFound(t *testing.T) {
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("test_resource.two - Resource not found in plan ResourceChanges"),
+				ExpectError: regexp.MustCompile("test_resource.two - Resource not found in plan"),
 			},
 		},
 	})
@@ -67,11 +67,10 @@ func TestExpectKnownValue_CheckPlan_AttributeValueNull(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.BoolExact(true),
+							knownvalue.NullExact(),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("value is null for attribute at path: test_resource.one.bool_attribute"),
 			},
 		},
 	})
@@ -1372,7 +1371,7 @@ func TestExpectKnownValue_CheckPlan_UnknownAttributeType(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: fmt.Errorf("unrecognised attribute type: float32, known value type is knownvalue.int64Exact\n\nThis is an error in plancheck.ExpectKnownValue.\nPlease report this to the maintainers."),
+			expectedErr: fmt.Errorf("error checking value for attribute at path: example_resource.test.attribute, err: expected json.Number value for Int64Exact check, got: float32"),
 		},
 	}
 
