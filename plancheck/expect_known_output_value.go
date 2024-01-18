@@ -6,7 +6,6 @@ package plancheck
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	tfjson "github.com/hashicorp/terraform-json"
 
@@ -26,6 +25,10 @@ type expectKnownOutputValue struct {
 func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequest, resp *CheckPlanResponse) {
 	var change *tfjson.Change
 
+	if req.Plan == nil {
+		resp.Error = fmt.Errorf("plan is nil")
+	}
+
 	for address, oc := range req.Plan.OutputChanges {
 		if e.outputAddress == address {
 			change = oc
@@ -35,7 +38,7 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 	}
 
 	if change == nil {
-		resp.Error = fmt.Errorf("%s - Output not found in plan OutputChanges", e.outputAddress)
+		resp.Error = fmt.Errorf("%s - Output not found in plan", e.outputAddress)
 
 		return
 	}
@@ -48,27 +51,8 @@ func (e expectKnownOutputValue) CheckPlan(ctx context.Context, req CheckPlanRequ
 		return
 	}
 
-	if result == nil {
-		resp.Error = fmt.Errorf("value is null for output at path: %s", e.outputAddress)
-
-		return
-	}
-
-	switch reflect.TypeOf(result).Kind() {
-	case reflect.Bool,
-		reflect.Map,
-		reflect.Slice,
-		reflect.String:
-		if err := e.knownValue.CheckValue(result); err != nil {
-			resp.Error = fmt.Errorf("error checking value for output at path: %s, err: %s", e.outputAddress, err)
-
-			return
-		}
-	default:
-		errorStr := fmt.Sprintf("unrecognised output type: %T, known value type is %T", result, e.knownValue)
-		errorStr += "\n\nThis is an error in plancheck.ExpectKnownOutputValue.\nPlease report this to the maintainers."
-
-		resp.Error = fmt.Errorf(errorStr)
+	if err := e.knownValue.CheckValue(result); err != nil {
+		resp.Error = fmt.Errorf("error checking value for output at path: %s, err: %s", e.outputAddress, err)
 
 		return
 	}
