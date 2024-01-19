@@ -67,6 +67,110 @@ func (e expectKnownValue) CheckState(ctx context.Context, req CheckStateRequest,
 
 // ExpectKnownValue returns a state check that asserts that the specified attribute at the given resource
 // has a known type and value.
+//
+// The following is an example of using ExpectKnownValue.
+//
+//	package example_test
+//
+//	import (
+//		"testing"
+//
+//		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+//		"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+//		"github.com/hashicorp/terraform-plugin-testing/statecheck"
+//		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+//	)
+//
+//	func TestExpectKnownValue_CheckState_Bool(t *testing.T) {
+//		t.Parallel()
+//
+//		resource.Test(t, resource.TestCase{
+//			// Provider definition omitted.
+//			Steps: []resource.TestStep{
+//				{
+//					Config: `resource "test_resource" "one" {
+//		          bool_attribute = true
+//		        }
+//		        `,
+//					ConfigStateChecks: resource.ConfigStateChecks{
+//						statecheck.ExpectKnownValue(
+//							"test_resource.one",
+//							tfjsonpath.New("bool_attribute"),
+//							knownvalue.BoolExact(true),
+//						),
+//					},
+//				},
+//			},
+//		})
+//	}
+//
+// The following is an example of using ExpectKnownValue in combination
+// with a custom knownvalue.Check.
+//
+//	package example_test
+//
+//	import (
+//		"fmt"
+//		"strings"
+//		"testing"
+//
+//		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+//		"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+//		"github.com/hashicorp/terraform-plugin-testing/statecheck"
+//		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+//	)
+//
+//	func TestExpectKnownValue_CheckState_String_Custom(t *testing.T) {
+//		t.Parallel()
+//
+//		resource.Test(t, resource.TestCase{
+//			// Provider definition omitted.
+//			Steps: []resource.TestStep{
+//				{
+//					Config: `resource "test_resource" "one" {
+//		           string_attribute = "string"
+//		         }
+//		         `,
+//					ConfigStateChecks: resource.ConfigStateChecks{
+//						statecheck.ExpectKnownValue(
+//							"test_resource.one",
+//							tfjsonpath.New("string_attribute"),
+//							StringContains("tri")),
+//					},
+//				},
+//			},
+//		})
+//	}
+//
+//	var _ knownvalue.Check = stringContains{}
+//
+//	type stringContains struct {
+//		value string
+//	}
+//
+//	func (v stringContains) CheckValue(other any) error {
+//		otherVal, ok := other.(string)
+//
+//		if !ok {
+//			return fmt.Errorf("expected string value for StringContains check, got: %T", other)
+//		}
+//
+//		if !strings.Contains(otherVal, v.value) {
+//			return fmt.Errorf("expected string %q to contain %q for StringContains check", otherVal, v.value)
+//		}
+//
+//		return nil
+//	}
+//
+//	func (v stringContains) String() string {
+//		return v.value
+//	}
+//
+//	func StringContains(value string) stringContains {
+//		return stringContains{
+//			value: value,
+//		}
+//	}
 func ExpectKnownValue(resourceAddress string, attributePath tfjsonpath.Path, knownValue knownvalue.Check) StateCheck {
 	return expectKnownValue{
 		resourceAddress: resourceAddress,

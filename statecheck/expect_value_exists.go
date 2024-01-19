@@ -59,8 +59,42 @@ func (e expectValueExists) CheckState(ctx context.Context, req CheckStateRequest
 	}
 }
 
-// ExpectValueExists returns a state check that asserts that the specified attribute at the given resource
-// does not exist.
+// ExpectValueExists returns a state check that asserts that the specified
+// attribute at the given resource exists.
+//
+// The following is an example of using ExpectValueExists.
+//
+//	package example_test
+//
+//	import (
+//		"testing"
+//
+//		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+//		"github.com/hashicorp/terraform-plugin-testing/statecheck"
+//		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+//	)
+//
+//	func TestExpectValueExists_CheckState_AttributeFound(t *testing.T) {
+//		t.Parallel()
+//
+//		resource.Test(t, resource.TestCase{
+//			// Provider definition omitted.
+//			Steps: []resource.TestStep{
+//				{
+//					Config: `resource "test_resource" "one" {
+//		          bool_attribute = true
+//		        }
+//		        `,
+//					ConfigStateChecks: resource.ConfigStateChecks{
+//						statecheck.ExpectValueExists(
+//							"test_resource.one",
+//							tfjsonpath.New("bool_attribute"),
+//						),
+//					},
+//				},
+//			},
+//		})
+//	}
 func ExpectValueExists(resourceAddress string, attributePath tfjsonpath.Path) StateCheck {
 	return expectValueExists{
 		resourceAddress: resourceAddress,

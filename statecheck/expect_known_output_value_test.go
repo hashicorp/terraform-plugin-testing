@@ -1331,6 +1331,35 @@ func TestExpectKnownOutputValue_CheckState_String(t *testing.T) {
 	})
 }
 
+func TestExpectKnownOutputValue_CheckState_String_Custom(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					string_attribute = "string"
+				}
+
+				output string_output {
+					value = test_resource.one.string_attribute
+				}
+				`,
+				ConfigStateChecks: r.ConfigStateChecks{
+					statecheck.ExpectKnownOutputValue(
+						"string_output",
+						StringContains("str")),
+				},
+			},
+		},
+	})
+}
+
 func TestExpectKnownOutputValue_CheckState_String_KnownValueWrongType(t *testing.T) {
 	t.Parallel()
 

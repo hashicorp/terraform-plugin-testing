@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/big"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -1165,6 +1166,45 @@ func TestExpectKnownValue_CheckState_SetNestedBlock(t *testing.T) {
 	})
 }
 
+func TestExpectKnownValue_CheckState_SetNestedBlock_Custom(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					set_nested_block {
+						set_nested_block_attribute = "string"
+					}
+					set_nested_block {
+						set_nested_block_attribute = "girts"
+					}
+				}
+				`,
+				ConfigStateChecks: r.ConfigStateChecks{
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("set_nested_block"),
+						knownvalue.SetExact([]knownvalue.Check{
+							knownvalue.MapExact(map[string]knownvalue.Check{
+								"set_nested_block_attribute": StringContains("str"),
+							}),
+							knownvalue.MapExact(map[string]knownvalue.Check{
+								"set_nested_block_attribute": StringContains("rts"),
+							}),
+						}),
+					),
+				},
+			},
+		},
+	})
+}
+
 func TestExpectKnownValue_CheckState_SetNestedBlockPartial(t *testing.T) {
 	t.Parallel()
 
@@ -1257,6 +1297,62 @@ func TestExpectKnownValue_CheckState_String(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestExpectKnownValue_CheckState_String_Custom(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					string_attribute = "string"
+				}
+				`,
+				ConfigStateChecks: r.ConfigStateChecks{
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("string_attribute"),
+						StringContains("tri")),
+				},
+			},
+		},
+	})
+}
+
+var _ knownvalue.Check = stringContains{}
+
+type stringContains struct {
+	value string
+}
+
+func (v stringContains) CheckValue(other any) error {
+	otherVal, ok := other.(string)
+
+	if !ok {
+		return fmt.Errorf("expected string value for StringContains check, got: %T", other)
+	}
+
+	if !strings.Contains(otherVal, v.value) {
+		return fmt.Errorf("expected string %q to contain %q for StringContains check", otherVal, v.value)
+	}
+
+	return nil
+}
+
+func (v stringContains) String() string {
+	return v.value
+}
+
+func StringContains(value string) stringContains {
+	return stringContains{
+		value: value,
+	}
 }
 
 func TestExpectKnownValue_CheckState_String_KnownValueWrongType(t *testing.T) {

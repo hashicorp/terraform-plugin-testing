@@ -63,6 +63,48 @@ const (
 // with knownvalue.SetExact or knownvalue.SetPartial instead.
 // TestCheckTypeSetElemNestedAttrs function will be removed in the next major version.
 //
+// The following is an example of using statecheck.ExpectKnownValue in combination
+// with knownvalue.SetPartial to replicate the behaviour of TestCheckTypeSetElemNestedAttrs.
+//
+//	package example_test
+//
+//	import (
+//		"testing"
+//
+//		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+//		"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+//		"github.com/hashicorp/terraform-plugin-testing/statecheck"
+//		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+//	)
+//
+//	func TestExpectKnownValue_CheckState_SetPartial(t *testing.T) {
+//		t.Parallel()
+//
+//		resource.Test(t, resource.TestCase{
+//			// Provider definition omitted.
+//			Steps: []resource.TestStep{
+//				{
+//					Config: `resource "test_resource" "one" {
+//						set_attribute = [
+//							"value1",
+//							"value2"
+//						]
+//					}
+//					`,
+//					ConfigStateChecks: resource.ConfigStateChecks{
+//						statecheck.ExpectKnownValue(
+//							"test_resource.one",
+//							tfjsonpath.New("set_attribute"),
+//							knownvalue.SetPartial([]knownvalue.Check{
+//								knownvalue.StringExact("value2"),
+//							}),
+//						),
+//					},
+//				},
+//			},
+//		})
+//	}
+//
 // [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
 // [SetExact]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetExact
 // [SetPartial]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetPartial
@@ -146,6 +188,88 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 // with knownvalue.ListExact, knownvalue.ListPartial, knownvalue.SetExact, or
 // knownvalue.SetPartial, with nested custom knownvalue.Check instead.
 // TestMatchTypeSetElemNestedAttrs function will be removed in the next major version.
+//
+// The following is an example of using statecheck.ExpectKnownValue in combination
+// with knownvalue.SetExact, with a nested custom knownvalue.Check to replicate
+// the behaviour of TestCheckTypeSetElemAttr.
+//
+//	package example_test
+//
+//	import (
+//		"fmt"
+//		"strings"
+//		"testing"
+//
+//		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+//		"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+//		"github.com/hashicorp/terraform-plugin-testing/statecheck"
+//		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+//	)
+//
+//	func TestExpectKnownValue_CheckState_SetNestedBlock_Custom(t *testing.T) {
+//		t.Parallel()
+//
+//		resource.Test(t, resource.TestCase{
+//			// Provider definition omitted.
+//			Steps: []resource.TestStep{
+//				{
+//					Config: `resource "test_resource" "one" {
+//						set_nested_block {
+//							set_nested_block_attribute = "string"
+//						}
+//						set_nested_block {
+//							set_nested_block_attribute = "girts"
+//						}
+//					}
+//					`,
+//					ConfigStateChecks: resource.ConfigStateChecks{
+//						statecheck.ExpectKnownValue(
+//							"test_resource.one",
+//							tfjsonpath.New("set_nested_block"),
+//							knownvalue.SetExact([]knownvalue.Check{
+//								knownvalue.MapExact(map[string]knownvalue.Check{
+//									"set_nested_block_attribute": StringContains("str"),
+//								}),
+//								knownvalue.MapExact(map[string]knownvalue.Check{
+//									"set_nested_block_attribute": StringContains("rts"),
+//								}),
+//							}),
+//						),
+//					},
+//				},
+//			},
+//		})
+//	}
+//
+//	var _ knownvalue.Check = stringContains{}
+//
+//	type stringContains struct {
+//		value string
+//	}
+//
+//	func (v stringContains) CheckValue(other any) error {
+//		otherVal, ok := other.(string)
+//
+//		if !ok {
+//			return fmt.Errorf("expected string value for StringContains check, got: %T", other)
+//		}
+//
+//		if !strings.Contains(otherVal, v.value) {
+//			return fmt.Errorf("expected string %q to contain %q for StringContains check", otherVal, v.value)
+//		}
+//
+//		return nil
+//	}
+//
+//	func (v stringContains) String() string {
+//		return v.value
+//	}
+//
+//	func StringContains(value string) stringContains {
+//		return stringContains{
+//			value: value,
+//		}
+//	}
 //
 // [ListExact]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListExact
 // [ListPartial]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListPartial
@@ -231,6 +355,49 @@ func TestMatchTypeSetElemNestedAttrs(name, attr string, values map[string]*regex
 // with knownvalue.SetExact or knownvalue.SetPartial instead.
 // TestCheckTypeSetElemAttr function will be removed in the next major version.
 //
+// The following is an example of using statecheck.ExpectKnownValue in combination
+// with knownvalue.SetExact to replicate the behaviour of TestCheckTypeSetElemAttr.
+//
+//	package example_test
+//
+//	import (
+//		"testing"
+//
+//		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+//		"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+//		"github.com/hashicorp/terraform-plugin-testing/statecheck"
+//		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+//	)
+//
+//	func TestExpectKnownValue_CheckState_Set(t *testing.T) {
+//		t.Parallel()
+//
+//		resource.Test(t, resource.TestCase{
+//			// Provider definition omitted.
+//			Steps: []resource.TestStep{
+//				{
+//					Config: `resource "test_resource" "one" {
+//		          set_attribute = [
+//		            "value1",
+//		            "value2"
+//		          ]
+//		        }
+//		        `,
+//					ConfigStateChecks: resource.ConfigStateChecks{
+//						statecheck.ExpectKnownValue(
+//							"test_resource.one",
+//							tfjsonpath.New("set_attribute"),
+//							knownvalue.SetExact([]knownvalue.Check{
+//								knownvalue.StringExact("value2"),
+//								knownvalue.StringExact("value1"),
+//							}),
+//						),
+//					},
+//				},
+//			},
+//		})
+//	}
+//
 // [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
 // [SetExact]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetExact
 // [SetPartial]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetPartial
@@ -280,8 +447,52 @@ func TestCheckTypeSetElemAttr(name, attr, value string) TestCheckFunc {
 // there are multiple lists or sets in the attribute path.
 //
 // Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-in statecheck.ExpectContains state check instead.
+// Use the built-in statecheck.ExpectContains, or statecheck.ExpectMatchingValues
+// state checks instead.
 // TestCheckTypeSetElemAttrPair function will be removed in the next major version.
+//
+// The following is an example of using statecheck.ExpectContains to replicate
+// the behaviour of TestCheckTypeSetElemAttrPair.
+//
+//	package example_test
+//
+//	import (
+//		"testing"
+//
+//		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+//		"github.com/hashicorp/terraform-plugin-testing/statecheck"
+//		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+//	)
+//
+//	func TestExpectContains_CheckState_Found(t *testing.T) {
+//		t.Parallel()
+//
+//		resource.Test(t, resource.TestCase{
+//			// Provider definition omitted.
+//			Steps: []resource.TestStep{
+//				{
+//					Config: `resource "test_resource" "one" {
+//		          string_attribute = "value1"
+//		        }
+//
+//		        resource "test_resource" "two" {
+//		          set_attribute = [
+//		            test_resource.one.string_attribute,
+//		            "value2"
+//		          ]
+//		        }`,
+//					ConfigStateChecks: resource.ConfigStateChecks{
+//						statecheck.ExpectContains(
+//							"test_resource.two",
+//							tfjsonpath.New("set_attribute"),
+//							"test_resource.one",
+//							tfjsonpath.New("string_attribute"),
+//						),
+//					},
+//				},
+//			},
+//		})
+//	}
 //
 // [ExpectContains]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectContains
 // [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
