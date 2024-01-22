@@ -22,7 +22,7 @@ type expectSensitiveValue struct {
 
 // CheckState implements the state check logic.
 func (e expectSensitiveValue) CheckState(ctx context.Context, req CheckStateRequest, resp *CheckStateResponse) {
-	var rc *tfjson.StateResource
+	var resource *tfjson.StateResource
 
 	if req.State == nil {
 		resp.Error = fmt.Errorf("state is nil")
@@ -42,15 +42,15 @@ func (e expectSensitiveValue) CheckState(ctx context.Context, req CheckStateRequ
 		return
 	}
 
-	for _, resourceChange := range req.State.Values.RootModule.Resources {
-		if e.resourceAddress == resourceChange.Address {
-			rc = resourceChange
+	for _, r := range req.State.Values.RootModule.Resources {
+		if e.resourceAddress == r.Address {
+			resource = r
 
 			break
 		}
 	}
 
-	if rc == nil {
+	if resource == nil {
 		resp.Error = fmt.Errorf("%s - Resource not found in state", e.resourceAddress)
 
 		return
@@ -58,7 +58,7 @@ func (e expectSensitiveValue) CheckState(ctx context.Context, req CheckStateRequ
 
 	var data map[string]any
 
-	err := json.Unmarshal(rc.SensitiveValues, &data)
+	err := json.Unmarshal(resource.SensitiveValues, &data)
 
 	if err != nil {
 		resp.Error = fmt.Errorf("could not unmarshal SensitiveValues: %s", err)
