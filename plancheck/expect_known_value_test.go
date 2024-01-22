@@ -69,6 +69,46 @@ func TestExpectKnownValue_CheckPlan_AttributeValueNull(t *testing.T) {
 							tfjsonpath.New("bool_attribute"),
 							knownvalue.NullExact(),
 						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("float_attribute"),
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("int_attribute"),
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("list_attribute"),
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("list_nested_block"),
+							knownvalue.ListExact([]knownvalue.Check{}),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("map_attribute"),
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("set_attribute"),
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("set_nested_block"),
+							knownvalue.SetExact([]knownvalue.Check{}),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("string_attribute"),
+							knownvalue.NullExact(),
+						),
 					},
 				},
 			},

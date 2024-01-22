@@ -93,6 +93,46 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_AttributeValueNull(t *testing.T)
 							tfjsonpath.New("bool_attribute"),
 							knownvalue.NullExact(),
 						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("float_attribute"),
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("int_attribute"),
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("list_attribute"),
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("list_nested_block"),
+							knownvalue.ListExact([]knownvalue.Check{}),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("map_attribute"),
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("set_attribute"),
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("set_nested_block"),
+							knownvalue.SetExact([]knownvalue.Check{}),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("string_attribute"),
+							knownvalue.NullExact(),
+						),
 					},
 				},
 			},

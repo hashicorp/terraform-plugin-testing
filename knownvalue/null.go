@@ -11,7 +11,7 @@ var _ Check = nullExact{}
 
 type nullExact struct{}
 
-// CheckValue determines whether the passed value is of nil.
+// CheckValue determines whether the passed value is nil.
 func (v nullExact) CheckValue(other any) error {
 	if other != nil {
 		return fmt.Errorf("expected value nil for NullExact check, got: %T", other)
