@@ -60,40 +60,6 @@ func (e expectNoValueExists) CheckState(ctx context.Context, req CheckStateReque
 
 // ExpectNoValueExists returns a state check that asserts that the specified attribute at the given resource
 // does not exist.
-//
-// The following is an example of using ExpectNoValueExists.
-//
-//	package example_test
-//
-//	import (
-//		"testing"
-//
-//		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-//		"github.com/hashicorp/terraform-plugin-testing/statecheck"
-//		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
-//	)
-//
-//	func TestExpectNoValueExists_CheckState_AttributeNotFound(t *testing.T) {
-//		t.Parallel()
-//
-//		resource.Test(t, resource.TestCase{
-//			// Provider definition omitted.
-//			Steps: []resource.TestStep{
-//				{
-//					Config: `resource "test_resource" "one" {
-//		          bool_attribute = true
-//		        }
-//		        `,
-//					ConfigStateChecks: resource.ConfigStateChecks{
-//						statecheck.ExpectNoValueExists(
-//							"test_resource.one",
-//							tfjsonpath.New("does_not_exist"),
-//						),
-//					},
-//				},
-//			},
-//		})
-//	}
 func ExpectNoValueExists(resourceAddress string, attributePath tfjsonpath.Path) StateCheck {
 	return expectNoValueExists{
 		resourceAddress: resourceAddress,

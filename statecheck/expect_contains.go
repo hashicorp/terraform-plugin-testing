@@ -102,48 +102,6 @@ func (e expectContains) CheckState(ctx context.Context, req CheckStateRequest, r
 
 // ExpectContains returns a state check that asserts that the value of the second attribute is contained within the
 // value of the first attribute, allowing checking of whether a set contains a value identified by another attribute.
-//
-// The following is an example of using statecheck.ExpectContains.
-//
-//	package example_test
-//
-//	import (
-//		"testing"
-//
-//		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-//		"github.com/hashicorp/terraform-plugin-testing/statecheck"
-//		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
-//	)
-//
-//	func TestExpectContains_CheckState_Found(t *testing.T) {
-//		t.Parallel()
-//
-//		resource.Test(t, resource.TestCase{
-//			// Provider definition omitted.
-//			Steps: []resource.TestStep{
-//				{
-//					Config: `resource "test_resource" "one" {
-//		          string_attribute = "value1"
-//		        }
-//
-//		        resource "test_resource" "two" {
-//		          set_attribute = [
-//		            test_resource.one.string_attribute,
-//		            "value2"
-//		          ]
-//		        }`,
-//					ConfigStateChecks: resource.ConfigStateChecks{
-//						statecheck.ExpectContains(
-//							"test_resource.two",
-//							tfjsonpath.New("set_attribute"),
-//							"test_resource.one",
-//							tfjsonpath.New("string_attribute"),
-//						),
-//					},
-//				},
-//			},
-//		})
-//	}
 func ExpectContains(resourceAddressOne string, attributePathOne tfjsonpath.Path, resourceAddressTwo string, attributePathTwo tfjsonpath.Path) StateCheck {
 	return expectContains{
 		resourceAddressOne: resourceAddressOne,
