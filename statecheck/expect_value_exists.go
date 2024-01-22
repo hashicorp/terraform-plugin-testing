@@ -26,14 +26,20 @@ func (e expectValueExists) CheckState(ctx context.Context, req CheckStateRequest
 
 	if req.State == nil {
 		resp.Error = fmt.Errorf("state is nil")
+
+		return
 	}
 
 	if req.State.Values == nil {
 		resp.Error = fmt.Errorf("state does not contain any state values")
+
+		return
 	}
 
 	if req.State.Values.RootModule == nil {
 		resp.Error = fmt.Errorf("state does not contain a root module")
+
+		return
 	}
 
 	for _, resourceChange := range req.State.Values.RootModule.Resources {

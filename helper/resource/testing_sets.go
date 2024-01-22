@@ -241,36 +241,7 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 //		})
 //	}
 //
-//	var _ knownvalue.Check = stringContains{}
-//
-//	type stringContains struct {
-//		value string
-//	}
-//
-//	func (v stringContains) CheckValue(other any) error {
-//		otherVal, ok := other.(string)
-//
-//		if !ok {
-//			return fmt.Errorf("expected string value for StringContains check, got: %T", other)
-//		}
-//
-//		if !strings.Contains(otherVal, v.value) {
-//			return fmt.Errorf("expected string %q to contain %q for StringContains check", otherVal, v.value)
-//		}
-//
-//		return nil
-//	}
-//
-//	func (v stringContains) String() string {
-//		return v.value
-//	}
-//
-//	func StringContains(value string) stringContains {
-//		return stringContains{
-//			value: value,
-//		}
-//	}
-//
+// [Custom Known Value Checks]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 // [ListExact]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListExact
 // [ListPartial]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListPartial
 // [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue

@@ -1372,37 +1372,8 @@ func testCheckResourceAttr(is *terraform.InstanceState, name string, key string,
 //		})
 //	}
 //
-//	var _ knownvalue.Check = stringContains{}
-//
-//	type stringContains struct {
-//		value string
-//	}
-//
-//	func (v stringContains) CheckValue(other any) error {
-//		otherVal, ok := other.(string)
-//
-//		if !ok {
-//			return fmt.Errorf("expected string value for StringContains check, got: %T", other)
-//		}
-//
-//		if !strings.Contains(otherVal, v.value) {
-//			return fmt.Errorf("expected string %q to contain %q for StringContains check", otherVal, v.value)
-//		}
-//
-//		return nil
-//	}
-//
-//	func (v stringContains) String() string {
-//		return v.value
-//	}
-//
-//	func StringContains(value string) stringContains {
-//		return stringContains{
-//			value: value,
-//		}
-//	}
-//
 // [Check]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check
+// [Custom Known Value Checks]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 // [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
 // [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
 // [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
@@ -1487,37 +1458,8 @@ type CheckResourceAttrWithFunc func(value string) error
 //		})
 //	}
 //
-//	var _ knownvalue.Check = stringContains{}
-//
-//	type stringContains struct {
-//		value string
-//	}
-//
-//	func (v stringContains) CheckValue(other any) error {
-//		otherVal, ok := other.(string)
-//
-//		if !ok {
-//			return fmt.Errorf("expected string value for StringContains check, got: %T", other)
-//		}
-//
-//		if !strings.Contains(otherVal, v.value) {
-//			return fmt.Errorf("expected string %q to contain %q for StringContains check", otherVal, v.value)
-//		}
-//
-//		return nil
-//	}
-//
-//	func (v stringContains) String() string {
-//		return v.value
-//	}
-//
-//	func StringContains(value string) stringContains {
-//		return stringContains{
-//			value: value,
-//		}
-//	}
-//
 // [Check]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check
+// [Custom Known Value Checks]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 // [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
 // [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
 // [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
@@ -1765,37 +1707,8 @@ func testCheckNoResourceAttr(is *terraform.InstanceState, name string, key strin
 //		})
 //	}
 //
-//	var _ knownvalue.Check = stringContains{}
-//
-//	type stringContains struct {
-//		value string
-//	}
-//
-//	func (v stringContains) CheckValue(other any) error {
-//		otherVal, ok := other.(string)
-//
-//		if !ok {
-//			return fmt.Errorf("expected string value for StringContains check, got: %T", other)
-//		}
-//
-//		if !strings.Contains(otherVal, v.value) {
-//			return fmt.Errorf("expected string %q to contain %q for StringContains check", otherVal, v.value)
-//		}
-//
-//		return nil
-//	}
-//
-//	func (v stringContains) String() string {
-//		return v.value
-//	}
-//
-//	func StringContains(value string) stringContains {
-//		return stringContains{
-//			value: value,
-//		}
-//	}
-//
 // [Check]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check
+// [Custom Known Value Checks]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 // [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
 // [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
 // [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
@@ -2274,37 +2187,8 @@ func TestCheckOutput(name, value string) TestCheckFunc {
 //		})
 //	}
 //
-//	var _ knownvalue.Check = stringContains{}
-//
-//	type stringContains struct {
-//		value string
-//	}
-//
-//	func (v stringContains) CheckValue(other any) error {
-//		otherVal, ok := other.(string)
-//
-//		if !ok {
-//			return fmt.Errorf("expected string value for StringContains check, got: %T", other)
-//		}
-//
-//		if !strings.Contains(otherVal, v.value) {
-//			return fmt.Errorf("expected string %q to contain %q for StringContains check", otherVal, v.value)
-//		}
-//
-//		return nil
-//	}
-//
-//	func (v stringContains) String() string {
-//		return v.value
-//	}
-//
-//	func StringContains(value string) stringContains {
-//		return stringContains{
-//			value: value,
-//		}
-//	}
-//
 // [Check]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check
+// [Custom Known Value Checks]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 // [ExpectKnownOutputValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownOutputValue
 // [ExpectKnownOutputValueAtPath]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownOutputValueAtPath
 // [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
