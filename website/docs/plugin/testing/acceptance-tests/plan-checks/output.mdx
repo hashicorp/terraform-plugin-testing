@@ -112,6 +112,8 @@ func TestExpectKnownOutputValue_CheckPlan_Bool(t *testing.T) {
 
 ## `ExpectNullOutputValue` Plan Check
 
+~> **Note**: `ExpectNullOutputValue` is deprecated. Use [`ExpectKnownOutputValue`](/terraform/plugin/testing/acceptance-tests/plan-checks/output#expectknownoutputvalue-plan-check) with [`knownvalue.Null()`](/terraform/plugin/testing/acceptance-tests/known-value-checks#null) instead.
+
 The built-in [`plancheck.ExpectNullOutputValue(address)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectNullOutputValue) plan check determines whether an output at the specified address has a null value.
 
 ```go
@@ -151,6 +153,8 @@ func Test_ExpectNullOutputValue_StringAttribute_NullConfig(t *testing.T) {
 ```
 
 ## `ExpectNullOutputValueAtPath` Plan Check
+
+~> **Note**: `ExpectNullOutputValueAtPath` is deprecated. Use [`ExpectKnownOutputValueAtPath`](/terraform/plugin/testing/acceptance-tests/plan-checks/output#expectknownoutputvalueatpath-plan-check) with [`knownvalue.Null()`](/terraform/plugin/testing/acceptance-tests/known-value-checks#null) instead.
 
 The built-in [`plancheck.ExpectNullOutputValueAtPath(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectNullOutputValueAtPath) plan check determines whether an output at the specified address, and path has a null value.                  |
 
