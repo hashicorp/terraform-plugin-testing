@@ -25,7 +25,7 @@ type expectMatchingValues struct {
 
 // CheckState implements the state check logic.
 func (e expectMatchingValues) CheckState(ctx context.Context, req CheckStateRequest, resp *CheckStateResponse) {
-	var rcOne, rcTwo *tfjson.StateResource
+	var resourceOne, resourceTwo *tfjson.StateResource
 
 	if req.State == nil {
 		resp.Error = fmt.Errorf("state is nil")
@@ -45,21 +45,21 @@ func (e expectMatchingValues) CheckState(ctx context.Context, req CheckStateRequ
 		return
 	}
 
-	for _, resourceChange := range req.State.Values.RootModule.Resources {
-		if e.resourceAddressOne == resourceChange.Address {
-			rcOne = resourceChange
+	for _, r := range req.State.Values.RootModule.Resources {
+		if e.resourceAddressOne == r.Address {
+			resourceOne = r
 
 			break
 		}
 	}
 
-	if rcOne == nil {
+	if resourceOne == nil {
 		resp.Error = fmt.Errorf("%s - Resource not found in state", e.resourceAddressOne)
 
 		return
 	}
 
-	resultOne, err := tfjsonpath.Traverse(rcOne.AttributeValues, e.attributePathOne)
+	resultOne, err := tfjsonpath.Traverse(resourceOne.AttributeValues, e.attributePathOne)
 
 	if err != nil {
 		resp.Error = err
@@ -67,21 +67,21 @@ func (e expectMatchingValues) CheckState(ctx context.Context, req CheckStateRequ
 		return
 	}
 
-	for _, resourceChange := range req.State.Values.RootModule.Resources {
-		if e.resourceAddressTwo == resourceChange.Address {
-			rcTwo = resourceChange
+	for _, r := range req.State.Values.RootModule.Resources {
+		if e.resourceAddressTwo == r.Address {
+			resourceTwo = r
 
 			break
 		}
 	}
 
-	if rcTwo == nil {
+	if resourceTwo == nil {
 		resp.Error = fmt.Errorf("%s - Resource not found in state", e.resourceAddressTwo)
 
 		return
 	}
 
-	resultTwo, err := tfjsonpath.Traverse(rcTwo.AttributeValues, e.attributePathTwo)
+	resultTwo, err := tfjsonpath.Traverse(resourceTwo.AttributeValues, e.attributePathTwo)
 
 	if err != nil {
 		resp.Error = err

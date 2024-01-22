@@ -22,7 +22,7 @@ type expectNoValueExists struct {
 
 // CheckState implements the state check logic.
 func (e expectNoValueExists) CheckState(ctx context.Context, req CheckStateRequest, resp *CheckStateResponse) {
-	var rc *tfjson.StateResource
+	var resource *tfjson.StateResource
 
 	if req.State == nil {
 		resp.Error = fmt.Errorf("state is nil")
@@ -42,20 +42,20 @@ func (e expectNoValueExists) CheckState(ctx context.Context, req CheckStateReque
 		return
 	}
 
-	for _, resourceChange := range req.State.Values.RootModule.Resources {
-		if e.resourceAddress == resourceChange.Address {
-			rc = resourceChange
+	for _, r := range req.State.Values.RootModule.Resources {
+		if e.resourceAddress == r.Address {
+			resource = r
 
 			break
 		}
 	}
 
 	// Resource doesn't exist
-	if rc == nil {
+	if resource == nil {
 		return
 	}
 
-	_, err := tfjsonpath.Traverse(rc.AttributeValues, e.attributePath)
+	_, err := tfjsonpath.Traverse(resource.AttributeValues, e.attributePath)
 
 	if err == nil {
 		resp.Error = fmt.Errorf("attribute found at path: %s.%s", e.resourceAddress, e.attributePath.String())
