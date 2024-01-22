@@ -67,11 +67,67 @@ func TestExpectKnownOutputValue_CheckPlan_AttributeValueNull(t *testing.T) {
 				output bool_output {
 					value = test_resource.one.bool_attribute
 				}
+				output float_output {
+					value = test_resource.one.float_attribute
+				}
+				output int_output {
+					value = test_resource.one.int_attribute
+				}
+				output list_output {
+					value = test_resource.one.list_attribute
+				}
+				output list_nested_block_output {
+					value = test_resource.one.list_nested_block
+				}
+				output map_output {
+					value = test_resource.one.map_attribute
+				}
+				output set_output {
+					value = test_resource.one.set_attribute
+				}
+				output set_nested_block_output {
+					value = test_resource.one.set_nested_block
+				}
+				output string_output {
+					value = test_resource.one.string_attribute	
+				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"bool_output",
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"float_output",
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"int_output",
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"list_output",
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"list_nested_block_output",
+							knownvalue.ListExact([]knownvalue.Check{}),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"map_output",
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"set_output",
+							knownvalue.NullExact(),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"set_nested_block_output",
+							knownvalue.SetExact([]knownvalue.Check{}),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"string_output",
 							knownvalue.NullExact(),
 						),
 					},

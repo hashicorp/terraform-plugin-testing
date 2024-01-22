@@ -58,7 +58,7 @@ func TestNullValue_String(t *testing.T) {
 
 	got := knownvalue.NullExact().String()
 
-	if diff := cmp.Diff(got, "nil"); diff != "" {
+	if diff := cmp.Diff(got, "null"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
 	}
 }
