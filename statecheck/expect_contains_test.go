@@ -150,7 +150,7 @@ func TestExpectContains_CheckState_AttributeOneNotSet(t *testing.T) {
 						tfjsonpath.New("bool_attribute"),
 					),
 				},
-				ExpectError: regexp.MustCompile("test_resource.one.bool_attribute is not a set"),
+				ExpectError: regexp.MustCompile("test_resource.one.bool_attribute is not a collection"),
 			},
 		},
 	})

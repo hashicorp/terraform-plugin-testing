@@ -92,7 +92,7 @@ func (e expectContains) CheckState(ctx context.Context, req CheckStateRequest, r
 	resultOneCollection, ok := resultOne.([]any)
 
 	if !ok {
-		resp.Error = fmt.Errorf("%s.%s is not a set", e.resourceAddressOne, e.attributePathOne.String())
+		resp.Error = fmt.Errorf("%s.%s is not a collection", e.resourceAddressOne, e.attributePathOne.String())
 
 		return
 	}
