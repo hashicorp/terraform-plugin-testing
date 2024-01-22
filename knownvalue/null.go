@@ -20,9 +20,9 @@ func (v nullExact) CheckValue(other any) error {
 	return nil
 }
 
-// String returns the string representation of nil.
+// String returns the string representation of null.
 func (v nullExact) String() string {
-	return "nil"
+	return "null"
 }
 
 // NullExact returns a Check for asserting equality nil
