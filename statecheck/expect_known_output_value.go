@@ -27,10 +27,14 @@ func (e expectKnownOutputValue) CheckState(ctx context.Context, req CheckStateRe
 
 	if req.State == nil {
 		resp.Error = fmt.Errorf("state is nil")
+
+		return
 	}
 
 	if req.State.Values == nil {
 		resp.Error = fmt.Errorf("state does not contain any state values")
+
+		return
 	}
 
 	for address, oc := range req.State.Values.Outputs {

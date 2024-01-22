@@ -26,14 +26,20 @@ func (e expectSensitiveValue) CheckState(ctx context.Context, req CheckStateRequ
 
 	if req.State == nil {
 		resp.Error = fmt.Errorf("state is nil")
+
+		return
 	}
 
 	if req.State.Values == nil {
 		resp.Error = fmt.Errorf("state does not contain any state values")
+
+		return
 	}
 
 	if req.State.Values.RootModule == nil {
 		resp.Error = fmt.Errorf("state does not contain a root module")
+
+		return
 	}
 
 	for _, resourceChange := range req.State.Values.RootModule.Resources {
@@ -71,11 +77,13 @@ func (e expectSensitiveValue) CheckState(ctx context.Context, req CheckStateRequ
 	isSensitive, ok := result.(bool)
 	if !ok {
 		resp.Error = fmt.Errorf("invalid path: the path value cannot be asserted as bool")
+
 		return
 	}
 
 	if !isSensitive {
 		resp.Error = fmt.Errorf("attribute at path is not sensitive")
+
 		return
 	}
 }
