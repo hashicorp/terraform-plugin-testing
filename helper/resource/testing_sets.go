@@ -91,7 +91,7 @@ const (
 //						]
 //					}
 //					`,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("set_attribute"),
@@ -222,7 +222,7 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 //						}
 //					}
 //					`,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("set_nested_block"),
@@ -354,7 +354,7 @@ func TestMatchTypeSetElemNestedAttrs(name, attr string, values map[string]*regex
 //		          ]
 //		        }
 //		        `,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("set_attribute"),
@@ -452,7 +452,7 @@ func TestCheckTypeSetElemAttr(name, attr, value string) TestCheckFunc {
 //		            "value2"
 //		          ]
 //		        }`,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectContains(
 //							"test_resource.two",
 //							tfjsonpath.New("set_attribute"),

@@ -28,7 +28,7 @@ func TestExpectContains_CheckState_ResourceOneNotFound(t *testing.T) {
 				Config: `resource "test_resource" "one" {}
 				
 				resource "test_resource" "two" {}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectContains(
 						"does_not_exist_one",
 						tfjsonpath.New("bool_attribute"),
@@ -56,7 +56,7 @@ func TestExpectContains_CheckState_ResourceTwoNotFound(t *testing.T) {
 				Config: `resource "test_resource" "one" {}
 				
 				resource "test_resource" "two" {}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectContains(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
@@ -84,7 +84,7 @@ func TestExpectContains_CheckState_AttributeOneNotFound(t *testing.T) {
 				Config: `resource "test_resource" "one" {}
 				
 				resource "test_resource" "two" {}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectContains(
 						"test_resource.one",
 						tfjsonpath.New("does_not_exist_one"),
@@ -112,7 +112,7 @@ func TestExpectContains_CheckState_AttributeTwoNotFound(t *testing.T) {
 				Config: `resource "test_resource" "one" {}
 				
 				resource "test_resource" "two" {}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectContains(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
@@ -142,7 +142,7 @@ func TestExpectContains_CheckState_AttributeOneNotSet(t *testing.T) {
 				}
 				
 				resource "test_resource" "two" {}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectContains(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
@@ -178,7 +178,7 @@ func TestExpectContains_CheckState_NotFound(t *testing.T) {
 						"value2"
 					]
 				}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectContains(
 						"test_resource.two",
 						tfjsonpath.New("set_attribute"),
@@ -213,7 +213,7 @@ func TestExpectContains_CheckState_Found(t *testing.T) {
 						"value2"
 					]
 				}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectContains(
 						"test_resource.two",
 						tfjsonpath.New("set_attribute"),

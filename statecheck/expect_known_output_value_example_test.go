@@ -27,10 +27,10 @@ func ExampleExpectKnownOutputValue() {
 		          value = test_resource.one.bool_attribute
 		        }
 		        `,
-				ConfigStateChecks: resource.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"bool_output",
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 			},

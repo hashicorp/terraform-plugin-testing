@@ -23,7 +23,7 @@ func ExampleExpectNoValueExists() {
 		          bool_attribute = true
 		        }
 		        `,
-				ConfigStateChecks: resource.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectNoValueExists(
 						"test_resource.one",
 						tfjsonpath.New("does_not_exist"),

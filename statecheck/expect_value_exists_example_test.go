@@ -23,7 +23,7 @@ func ExampleExpectValueExists() {
 		          bool_attribute = true
 		        }
 		        `,
-				ConfigStateChecks: resource.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectValueExists(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),

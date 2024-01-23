@@ -158,12 +158,12 @@ func TestExpectKnownValue_CheckState_BoolPointer(t *testing.T) {
 					bool_attribute = true
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					AlterValue(testBool),
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.BoolExact(*testBool),
+						knownvalue.Bool(*testBool),
 					),
 				},
 			},
@@ -1226,7 +1226,7 @@ func TestExpectKnownValue_CheckState_SetNestedBlock_Custom(t *testing.T) {
 					}
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("set_nested_block"),
@@ -1354,7 +1354,7 @@ func TestExpectKnownValue_CheckState_String_Custom(t *testing.T) {
 					string_attribute = "string"
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("string_attribute"),

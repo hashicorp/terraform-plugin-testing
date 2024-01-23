@@ -1425,7 +1425,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_String_Custom(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("string_attribute"),

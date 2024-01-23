@@ -29,7 +29,7 @@ func ExampleExpectContains() {
 		            "value2"
 		          ]
 		        }`,
-				ConfigStateChecks: resource.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectContains(
 						"test_resource.two",
 						tfjsonpath.New("set_attribute"),

@@ -29,7 +29,7 @@ func TestExpectValueExists_CheckState_ResourceNotFound(t *testing.T) {
 					bool_attribute = true
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectValueExists(
 						"does_not_exist",
 						tfjsonpath.New("bool_attribute"),
@@ -56,7 +56,7 @@ func TestExpectValueExists_CheckState_AttributeNotFound(t *testing.T) {
 					bool_attribute = true
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectValueExists(
 						"test_resource.one",
 						tfjsonpath.New("does_not_exist"),
@@ -83,7 +83,7 @@ func TestExpectValueExists_CheckState_AttributeFound(t *testing.T) {
 					bool_attribute = true
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectValueExists(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),

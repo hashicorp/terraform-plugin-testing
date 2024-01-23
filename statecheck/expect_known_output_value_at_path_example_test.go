@@ -28,11 +28,11 @@ func ExampleExpectKnownOutputValueAtPath() {
 		          value = test_resource.one
 		        }
 		        `,
-				ConfigStateChecks: resource.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 			},

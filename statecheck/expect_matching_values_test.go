@@ -28,7 +28,7 @@ func TestExpectMatchingValues_CheckState_ResourceOneNotFound(t *testing.T) {
 				Config: `resource "test_resource" "one" {}
 				
 				resource "test_resource" "two" {}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectMatchingValues(
 						"does_not_exist_one",
 						tfjsonpath.New("bool_attribute"),
@@ -56,7 +56,7 @@ func TestExpectMatchingValues_CheckState_ResourceTwoNotFound(t *testing.T) {
 				Config: `resource "test_resource" "one" {}
 				
 				resource "test_resource" "two" {}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectMatchingValues(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
@@ -84,7 +84,7 @@ func TestExpectMatchingValues_CheckState_AttributeOneNotFound(t *testing.T) {
 				Config: `resource "test_resource" "one" {}
 				
 				resource "test_resource" "two" {}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectMatchingValues(
 						"test_resource.one",
 						tfjsonpath.New("does_not_exist_one"),
@@ -112,7 +112,7 @@ func TestExpectMatchingValues_CheckState_AttributeTwoNotFound(t *testing.T) {
 				Config: `resource "test_resource" "one" {}
 				
 				resource "test_resource" "two" {}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectMatchingValues(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
@@ -142,7 +142,7 @@ func TestExpectMatchingValues_CheckState_AttributeValuesNotEqualNil(t *testing.T
 				}
 				
 				resource "test_resource" "two" {}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectMatchingValues(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
@@ -174,7 +174,7 @@ func TestExpectMatchingValues_CheckState_AttributeValuesNotEqual(t *testing.T) {
 				resource "test_resource" "two" {
 					bool_attribute = false
 				}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectMatchingValues(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
@@ -206,7 +206,7 @@ func TestExpectMatchingValues_CheckState_AttributeValuesEqual_Bool(t *testing.T)
 				resource "test_resource" "two" {
 					bool_attribute = true
 				}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectMatchingValues(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
@@ -243,7 +243,7 @@ func TestExpectMatchingValues_CheckState_AttributeValuesEqual_List(t *testing.T)
 						"value2"
 					]
 				}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectMatchingValues(
 						"test_resource.one",
 						tfjsonpath.New("list_attribute"),

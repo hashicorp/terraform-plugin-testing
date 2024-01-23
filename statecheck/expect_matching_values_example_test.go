@@ -26,7 +26,7 @@ func ExampleExpectMatchingValues() {
 		        resource "test_resource" "two" {
 		          bool_attribute = true
 		        }`,
-				ConfigStateChecks: resource.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectMatchingValues(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),

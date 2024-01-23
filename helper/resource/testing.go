@@ -1083,7 +1083,7 @@ func ComposeAggregateTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 //		          bool_attribute = true
 //		        }
 //		        `,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectValueExists(
 //							"test_resource.one",
 //							tfjsonpath.New("bool_attribute"),
@@ -1226,11 +1226,11 @@ func testCheckResourceAttrSet(is *terraform.InstanceState, name string, key stri
 //		          bool_attribute = true
 //		        }
 //		        `,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("bool_attribute"),
-//							knownvalue.BoolExact(true),
+//							knownvalue.Bool(true),
 //						),
 //					},
 //				},
@@ -1357,7 +1357,7 @@ func testCheckResourceAttr(is *terraform.InstanceState, name string, key string,
 //		           string_attribute = "string"
 //		         }
 //		         `,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("string_attribute"),
@@ -1443,7 +1443,7 @@ type CheckResourceAttrWithFunc func(value string) error
 //		           string_attribute = "string"
 //		         }
 //		         `,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("string_attribute"),
@@ -1540,7 +1540,7 @@ func TestCheckResourceAttrWith(name, key string, checkValueFunc CheckResourceAtt
 //		          bool_attribute = true
 //		        }
 //		        `,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectNoValueExists(
 //							"test_resource.one",
 //							tfjsonpath.New("does_not_exist"),
@@ -1692,7 +1692,7 @@ func testCheckNoResourceAttr(is *terraform.InstanceState, name string, key strin
 //		           string_attribute = "string"
 //		         }
 //		         `,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("string_attribute"),
@@ -1794,12 +1794,12 @@ func testMatchResourceAttr(is *terraform.InstanceState, name string, key string,
 //		          bool_attribute = true
 //		        }
 //		        `,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						AlterValue(testBool),
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("bool_attribute"),
-//							knownvalue.BoolExact(*testBool),
+//							knownvalue.Bool(*testBool),
 //						),
 //					},
 //				},
@@ -1914,7 +1914,7 @@ func TestCheckModuleResourceAttrPtr(mp []string, name string, key string, value 
 //		        resource "test_resource" "two" {
 //		          bool_attribute = true
 //		        }`,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectMatchingValues(
 //							"test_resource.one",
 //							tfjsonpath.New("bool_attribute"),
@@ -2058,10 +2058,10 @@ func testCheckResourceAttrPair(isFirst *terraform.InstanceState, nameFirst strin
 //		          value = test_resource.one.bool_attribute
 //		        }
 //		        `,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownOutputValue(
 //							"bool_output",
-//							knownvalue.BoolExact(true),
+//							knownvalue.Bool(true),
 //						),
 //					},
 //				},
@@ -2098,11 +2098,11 @@ func testCheckResourceAttrPair(isFirst *terraform.InstanceState, nameFirst strin
 //		          value = test_resource.one
 //		        }
 //		        `,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownOutputValueAtPath(
 //							"test_resource_one_output",
 //							tfjsonpath.New("bool_attribute"),
-//							knownvalue.BoolExact(true),
+//							knownvalue.Bool(true),
 //						),
 //					},
 //				},
@@ -2172,7 +2172,7 @@ func TestCheckOutput(name, value string) TestCheckFunc {
 //							value = test_resource.one
 //						}
 //						`,
-//					ConfigStateChecks: resource.ConfigStateChecks{
+//					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownOutputValueAtPath(
 //							"test_resource_one_output",
 //							tfjsonpath.New("string_attribute"),

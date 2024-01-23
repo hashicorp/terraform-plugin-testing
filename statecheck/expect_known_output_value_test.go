@@ -1350,7 +1350,7 @@ func TestExpectKnownOutputValue_CheckState_String_Custom(t *testing.T) {
 					value = test_resource.one.string_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"string_output",
 						StringContains("str")),
