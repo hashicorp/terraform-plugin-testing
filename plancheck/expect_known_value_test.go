@@ -40,7 +40,7 @@ func TestExpectKnownValue_CheckPlan_ResourceNotFound(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.two",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.BoolExact(true),
+							knownvalue.Bool(true),
 						),
 					},
 				},
@@ -67,22 +67,22 @@ func TestExpectKnownValue_CheckPlan_AttributeValueNull(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.NullExact(),
+							knownvalue.Null(),
 						),
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("float_attribute"),
-							knownvalue.NullExact(),
+							knownvalue.Null(),
 						),
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("int_attribute"),
-							knownvalue.NullExact(),
+							knownvalue.Null(),
 						),
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("list_attribute"),
-							knownvalue.NullExact(),
+							knownvalue.Null(),
 						),
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
@@ -92,12 +92,12 @@ func TestExpectKnownValue_CheckPlan_AttributeValueNull(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("map_attribute"),
-							knownvalue.NullExact(),
+							knownvalue.Null(),
 						),
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("set_attribute"),
-							knownvalue.NullExact(),
+							knownvalue.Null(),
 						),
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
@@ -107,7 +107,7 @@ func TestExpectKnownValue_CheckPlan_AttributeValueNull(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("string_attribute"),
-							knownvalue.NullExact(),
+							knownvalue.Null(),
 						),
 					},
 				},
@@ -136,7 +136,7 @@ func TestExpectKnownValue_CheckPlan_Bool(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.BoolExact(true),
+							knownvalue.Bool(true),
 						),
 					},
 				},
@@ -195,11 +195,11 @@ func TestExpectKnownValue_CheckPlan_Bool_KnownValueWrongValue(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.BoolExact(false),
+							knownvalue.Bool(false),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("error checking value for attribute at path: test_resource.one.bool_attribute, err: expected value false for BoolExact check, got: true"),
+				ExpectError: regexp.MustCompile("error checking value for attribute at path: test_resource.one.bool_attribute, err: expected value false for Bool check, got: true"),
 			},
 		},
 	})
@@ -1349,10 +1349,10 @@ func TestExpectKnownValue_CheckPlan_String_KnownValueWrongType(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("string_attribute"),
-							knownvalue.BoolExact(true)),
+							knownvalue.Bool(true)),
 					},
 				},
-				ExpectError: regexp.MustCompile("error checking value for attribute at path: test_resource.one.string_attribute, err: expected bool value for BoolExact check, got: string"),
+				ExpectError: regexp.MustCompile("error checking value for attribute at path: test_resource.one.string_attribute, err: expected bool value for Bool check, got: string"),
 			},
 		},
 	})

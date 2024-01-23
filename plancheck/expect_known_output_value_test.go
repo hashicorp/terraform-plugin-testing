@@ -42,7 +42,7 @@ func TestExpectKnownOutputValue_CheckPlan_OutputNotFound(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"bool_not_found",
-							knownvalue.BoolExact(true),
+							knownvalue.Bool(true),
 						),
 					},
 				},
@@ -96,19 +96,19 @@ func TestExpectKnownOutputValue_CheckPlan_AttributeValueNull(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"bool_output",
-							knownvalue.NullExact(),
+							knownvalue.Null(),
 						),
 						plancheck.ExpectKnownOutputValue(
 							"float_output",
-							knownvalue.NullExact(),
+							knownvalue.Null(),
 						),
 						plancheck.ExpectKnownOutputValue(
 							"int_output",
-							knownvalue.NullExact(),
+							knownvalue.Null(),
 						),
 						plancheck.ExpectKnownOutputValue(
 							"list_output",
-							knownvalue.NullExact(),
+							knownvalue.Null(),
 						),
 						plancheck.ExpectKnownOutputValue(
 							"list_nested_block_output",
@@ -116,11 +116,11 @@ func TestExpectKnownOutputValue_CheckPlan_AttributeValueNull(t *testing.T) {
 						),
 						plancheck.ExpectKnownOutputValue(
 							"map_output",
-							knownvalue.NullExact(),
+							knownvalue.Null(),
 						),
 						plancheck.ExpectKnownOutputValue(
 							"set_output",
-							knownvalue.NullExact(),
+							knownvalue.Null(),
 						),
 						plancheck.ExpectKnownOutputValue(
 							"set_nested_block_output",
@@ -128,7 +128,7 @@ func TestExpectKnownOutputValue_CheckPlan_AttributeValueNull(t *testing.T) {
 						),
 						plancheck.ExpectKnownOutputValue(
 							"string_output",
-							knownvalue.NullExact(),
+							knownvalue.Null(),
 						),
 					},
 				},
@@ -160,7 +160,7 @@ func TestExpectKnownOutputValue_CheckPlan_Bool(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"bool_output",
-							knownvalue.BoolExact(true),
+							knownvalue.Bool(true),
 						),
 					},
 				},
@@ -225,11 +225,11 @@ func TestExpectKnownOutputValue_CheckPlan_Bool_KnownValueWrongValue(t *testing.T
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"bool_output",
-							knownvalue.BoolExact(false),
+							knownvalue.Bool(false),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("error checking value for output at path: bool_output, err: expected value false for BoolExact check, got: true"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: bool_output, err: expected value false for Bool check, got: true"),
 			},
 		},
 	})
@@ -1481,10 +1481,10 @@ func TestExpectKnownOutputValue_CheckPlan_String_KnownValueWrongType(t *testing.
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
 							"string_output",
-							knownvalue.BoolExact(true)),
+							knownvalue.Bool(true)),
 					},
 				},
-				ExpectError: regexp.MustCompile("error checking value for output at path: string_output, err: expected bool value for BoolExact check, got: string"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: string_output, err: expected bool value for Bool check, got: string"),
 			},
 		},
 	})

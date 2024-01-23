@@ -41,7 +41,7 @@ func TestExpectKnownOutputValue_CheckState_OutputNotFound(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"bool_not_found",
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 				ExpectError: regexp.MustCompile("bool_not_found - Output not found in state"),
@@ -73,7 +73,7 @@ func TestExpectKnownOutputValue_CheckState_AttributeValueNull(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"bool_output",
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 				ExpectError: regexp.MustCompile("bool_output - Output not found in state"),
@@ -104,7 +104,7 @@ func TestExpectKnownOutputValue_CheckState_Bool(t *testing.T) {
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"bool_output",
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -165,10 +165,10 @@ func TestExpectKnownOutputValue_CheckState_Bool_KnownValueWrongValue(t *testing.
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"bool_output",
-						knownvalue.BoolExact(false),
+						knownvalue.Bool(false),
 					),
 				},
-				ExpectError: regexp.MustCompile("expected value false for BoolExact check, got: true"),
+				ExpectError: regexp.MustCompile("expected value false for Bool check, got: true"),
 			},
 		},
 	})
@@ -1353,9 +1353,9 @@ func TestExpectKnownOutputValue_CheckState_String_KnownValueWrongType(t *testing
 				ConfigStateChecks: r.ConfigStateChecks{
 					statecheck.ExpectKnownOutputValue(
 						"string_output",
-						knownvalue.BoolExact(true)),
+						knownvalue.Bool(true)),
 				},
-				ExpectError: regexp.MustCompile("expected bool value for BoolExact check, got: string"),
+				ExpectError: regexp.MustCompile("expected bool value for Bool check, got: string"),
 			},
 		},
 	})

@@ -114,7 +114,7 @@ func TestExpectKnownValue_CheckState_Bool(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 			},

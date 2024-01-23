@@ -40,7 +40,7 @@ func TestExpectKnownValue_CheckState_ResourceNotFound(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"test_resource.two",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 				ExpectError: regexp.MustCompile("test_resource.two - Resource not found in state"),
@@ -65,22 +65,22 @@ func TestExpectKnownValue_CheckState_AttributeValueNull(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("float_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("int_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("list_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
@@ -90,12 +90,12 @@ func TestExpectKnownValue_CheckState_AttributeValueNull(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("map_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("set_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
@@ -105,7 +105,7 @@ func TestExpectKnownValue_CheckState_AttributeValueNull(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("string_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 				},
 			},
@@ -132,7 +132,7 @@ func TestExpectKnownValue_CheckState_Bool(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -187,10 +187,10 @@ func TestExpectKnownValue_CheckState_Bool_KnownValueWrongValue(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.BoolExact(false),
+						knownvalue.Bool(false),
 					),
 				},
-				ExpectError: regexp.MustCompile("expected value false for BoolExact check, got: true"),
+				ExpectError: regexp.MustCompile("expected value false for Bool check, got: true"),
 			},
 		},
 	})
@@ -1273,9 +1273,9 @@ func TestExpectKnownValue_CheckState_String_KnownValueWrongType(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("string_attribute"),
-						knownvalue.BoolExact(true)),
+						knownvalue.Bool(true)),
 				},
-				ExpectError: regexp.MustCompile("expected bool value for BoolExact check, got: string"),
+				ExpectError: regexp.MustCompile("expected bool value for Bool check, got: string"),
 			},
 		},
 	})

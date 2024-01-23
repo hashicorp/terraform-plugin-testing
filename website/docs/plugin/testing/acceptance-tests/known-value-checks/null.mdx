@@ -8,13 +8,13 @@ description: >-
 
 The known value checks that are available for null values are:
 
-* [NullExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/null#nullexact-check)
+* [Null](/terraform/plugin/testing/acceptance-tests/known-value-checks/null#null-check)
 
-## `NullExact` Check
+## `Null` Check
 
-The [NullExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NullExact) check tests that a resource attribute, or output value has an exactly matching null value.
+The [Null](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Null) check tests that a resource attribute, or output value has an exactly matching null value.
 
-Example usage of [NullExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NullExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/state-checks/resource) state check.
+Example usage of [Null](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Null) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/state-checks/resource) state check.
 
 ```go
 func TestExpectKnownValue_CheckState_AttributeValueNull(t *testing.T) {
@@ -29,7 +29,7 @@ func TestExpectKnownValue_CheckState_AttributeValueNull(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 				},
 			},

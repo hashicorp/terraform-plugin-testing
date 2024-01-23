@@ -20,7 +20,7 @@ Example uses in the testing module include:
 The known value check types are implemented within the `terraform-plugin-testing` module in the [`knownvalue` package](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue). Known value checks are instantiated by calling the relevant constructor function.
 
 ```go
-knownvalue.BoolExact(true)
+knownvalue.Bool(true)
 ```
 
 For known value checks that represent collections, or objects, nesting of known value checks can be used to define a "composite" known value check for use in asserting against a resource attribute, or output value that contains other values.
