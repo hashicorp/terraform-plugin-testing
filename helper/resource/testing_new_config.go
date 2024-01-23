@@ -205,6 +205,26 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				}
 			}
 		}
+
+		// Run state checks
+		if len(step.ConfigStateChecks) > 0 {
+			var state *tfjson.State
+
+			err = runProviderCommand(ctx, t, func() error {
+				var err error
+				state, err = wd.State(ctx)
+				return err
+			}, wd, providers)
+
+			if err != nil {
+				return fmt.Errorf("Error retrieving post-apply, post-refresh state: %w", err)
+			}
+
+			err = runStateChecks(ctx, t, state, step.ConfigStateChecks)
+			if err != nil {
+				return fmt.Errorf("Post-apply refresh state check(s) failed:\n%w", err)
+			}
+		}
 	}
 
 	// Test for perpetual diffs by performing a plan, a refresh, and another plan
@@ -310,26 +330,6 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		err = runPlanChecks(ctx, t, plan, step.ConfigPlanChecks.PostApplyPostRefresh)
 		if err != nil {
 			return fmt.Errorf("Post-apply refresh plan check(s) failed:\n%w", err)
-		}
-	}
-
-	// Run post-apply, post-refresh state checks
-	if len(step.ConfigStateChecks) > 0 {
-		var state *tfjson.State
-
-		err = runProviderCommand(ctx, t, func() error {
-			var err error
-			state, err = wd.State(ctx)
-			return err
-		}, wd, providers)
-
-		if err != nil {
-			return fmt.Errorf("Error retrieving post-apply, post-refresh state: %w", err)
-		}
-
-		err = runStateChecks(ctx, t, state, step.ConfigStateChecks)
-		if err != nil {
-			return fmt.Errorf("Post-apply refresh state check(s) failed:\n%w", err)
 		}
 	}
 

@@ -46,10 +46,10 @@ func TestExpectKnownOutputValue_CheckState_Bool(t *testing.T) {
 					value = test_resource.one.bool_attribute
 				}
 				`,
-				ConfigStateChecks: resource.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"bool_output",
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -91,11 +91,11 @@ func TestExpectKnownOutputValueAtPath_CheckState_Bool(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: resource.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 			},

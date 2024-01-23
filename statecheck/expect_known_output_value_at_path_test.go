@@ -39,11 +39,11 @@ func TestExpectKnownOutputValueAtPath_CheckState_ResourceNotFound(t *testing.T) 
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_two_output",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 				ExpectError: regexp.MustCompile("test_resource_two_output - Output not found in state"),
@@ -69,26 +69,26 @@ func TestExpectKnownOutputValueAtPath_CheckState_AttributeValueNull(t *testing.T
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("float_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("int_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("list_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
@@ -98,12 +98,12 @@ func TestExpectKnownOutputValueAtPath_CheckState_AttributeValueNull(t *testing.T
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("map_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("set_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
@@ -113,7 +113,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_AttributeValueNull(t *testing.T
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("string_attribute"),
-						knownvalue.NullExact(),
+						knownvalue.Null(),
 					),
 				},
 			},
@@ -140,11 +140,11 @@ func TestExpectKnownOutputValueAtPath_CheckState_Bool(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -171,7 +171,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Bool_KnownValueWrongType(t *tes
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("bool_attribute"),
@@ -203,14 +203,14 @@ func TestExpectKnownOutputValueAtPath_CheckState_Bool_KnownValueWrongValue(t *te
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.BoolExact(false),
+						knownvalue.Bool(false),
 					),
 				},
-				ExpectError: regexp.MustCompile("expected value false for BoolExact check, got: true"),
+				ExpectError: regexp.MustCompile("expected value false for Bool check, got: true"),
 			},
 		},
 	})
@@ -235,7 +235,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Float64(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("float_attribute"),
@@ -267,7 +267,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Float64_KnownValueWrongType(t *
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("float_attribute"),
@@ -299,7 +299,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Float64_KnownValueWrongValue(t 
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("float_attribute"),
@@ -331,7 +331,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Int64(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("int_attribute"),
@@ -362,7 +362,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Int64_KnownValueWrongValue(t *t
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("int_attribute"),
@@ -397,7 +397,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_List(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("list_attribute"),
@@ -434,7 +434,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_List_KnownValueWrongType(t *tes
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("list_attribute"),
@@ -469,7 +469,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_List_KnownValueWrongValue(t *te
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("list_attribute"),
@@ -507,7 +507,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_ListPartial(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("list_attribute"),
@@ -545,7 +545,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_ListPartial_KnownValueWrongValu
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("list_attribute"),
@@ -582,7 +582,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_ListElements(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("list_attribute"),
@@ -616,7 +616,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_ListElements_WrongNum(t *testin
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("list_attribute"),
@@ -653,7 +653,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_ListNestedBlock(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("list_nested_block"),
@@ -696,7 +696,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_ListNestedBlockPartial(t *testi
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("list_nested_block"),
@@ -736,7 +736,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_ListNestedBlockElements(t *test
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("list_nested_block"),
@@ -770,7 +770,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Map(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("map_attribute"),
@@ -807,7 +807,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Map_KnownValueWrongType(t *test
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("map_attribute"),
@@ -842,7 +842,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Map_KnownValueWrongValue(t *tes
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("map_attribute"),
@@ -880,7 +880,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_MapPartial(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("map_attribute"),
@@ -916,7 +916,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_MapPartial_KnownValueWrongValue
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("map_attribute"),
@@ -953,7 +953,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_MapElements(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("map_attribute"),
@@ -987,7 +987,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_MapElements_WrongNum(t *testing
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("map_attribute"),
@@ -1025,7 +1025,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Number(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("int_attribute"),
@@ -1062,7 +1062,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Number_KnownValueWrongValue(t *
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("int_attribute"),
@@ -1097,7 +1097,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Set(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("set_attribute"),
@@ -1134,7 +1134,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Set_KnownValueWrongValue(t *tes
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("set_attribute"),
@@ -1172,7 +1172,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_SetPartial(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("set_attribute"),
@@ -1208,7 +1208,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_SetPartial_KnownValueWrongValue
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("set_attribute"),
@@ -1245,7 +1245,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_SetElements(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("set_attribute"),
@@ -1281,7 +1281,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_SetNestedBlock(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("set_nested_block"),
@@ -1324,7 +1324,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_SetNestedBlockPartial(t *testin
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("set_nested_block"),
@@ -1364,7 +1364,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_SetNestedBlockElements(t *testi
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("set_nested_block"),
@@ -1395,7 +1395,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_String(t *testing.T) {
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("string_attribute"),
@@ -1455,13 +1455,13 @@ func TestExpectKnownOutputValueAtPath_CheckState_String_KnownValueWrongType(t *t
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("string_attribute"),
-						knownvalue.BoolExact(true)),
+						knownvalue.Bool(true)),
 				},
-				ExpectError: regexp.MustCompile("expected bool value for BoolExact check, got: string"),
+				ExpectError: regexp.MustCompile("expected bool value for Bool check, got: string"),
 			},
 		},
 	})
@@ -1486,7 +1486,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_String_KnownValueWrongValue(t *
 					value = test_resource.one
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
 						tfjsonpath.New("string_attribute"),

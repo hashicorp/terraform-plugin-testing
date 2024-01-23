@@ -21,19 +21,19 @@ func TestNullValue_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			self: knownvalue.NullExact(),
+			self: knownvalue.Null(),
 		},
 		"zero-other": {
-			self:  knownvalue.NullExact(),
+			self:  knownvalue.Null(),
 			other: nil, // checking against the underlying value field zero-value
 		},
 		"not-nil": {
-			self:          knownvalue.NullExact(),
+			self:          knownvalue.Null(),
 			other:         false,
-			expectedError: fmt.Errorf("expected value nil for NullExact check, got: bool"),
+			expectedError: fmt.Errorf("expected value nil for Null check, got: bool"),
 		},
 		"equal": {
-			self:  knownvalue.NullExact(),
+			self:  knownvalue.Null(),
 			other: nil,
 		},
 	}
@@ -56,7 +56,7 @@ func TestNullValue_CheckValue(t *testing.T) {
 func TestNullValue_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.NullExact().String()
+	got := knownvalue.Null().String()
 
 	if diff := cmp.Diff(got, "null"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)

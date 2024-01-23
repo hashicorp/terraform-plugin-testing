@@ -93,11 +93,11 @@ func TestExpectKnownValue_CheckState_Bool(t *testing.T) {
 					bool_attribute = true
 				}
 				`,
-				ConfigStateChecks: resource.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -221,7 +221,7 @@ func Test_ExpectSensitiveValue_SensitiveStringAttribute(t *testing.T) {
 					sensitive_string_attribute = "test"
 				}
 				`,
-				ConfigStateChecks: resource.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectSensitiveValue("test_resource.one",
 						tfjsonpath.New("sensitive_string_attribute")),
 				},

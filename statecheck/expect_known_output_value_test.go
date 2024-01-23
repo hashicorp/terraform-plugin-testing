@@ -38,10 +38,10 @@ func TestExpectKnownOutputValue_CheckState_OutputNotFound(t *testing.T) {
 					value = test_resource.one.bool_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"bool_not_found",
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 				ExpectError: regexp.MustCompile("bool_not_found - Output not found in state"),
@@ -70,10 +70,10 @@ func TestExpectKnownOutputValue_CheckState_AttributeValueNull(t *testing.T) {
 					value = test_resource.one.bool_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"bool_output",
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 				ExpectError: regexp.MustCompile("bool_output - Output not found in state"),
@@ -101,10 +101,10 @@ func TestExpectKnownOutputValue_CheckState_Bool(t *testing.T) {
 					value = test_resource.one.bool_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"bool_output",
-						knownvalue.BoolExact(true),
+						knownvalue.Bool(true),
 					),
 				},
 			},
@@ -131,7 +131,7 @@ func TestExpectKnownOutputValue_CheckState_Bool_KnownValueWrongType(t *testing.T
 					value = test_resource.one.bool_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"bool_output",
 						knownvalue.Float64Exact(1.23),
@@ -162,13 +162,13 @@ func TestExpectKnownOutputValue_CheckState_Bool_KnownValueWrongValue(t *testing.
 					value = test_resource.one.bool_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"bool_output",
-						knownvalue.BoolExact(false),
+						knownvalue.Bool(false),
 					),
 				},
-				ExpectError: regexp.MustCompile("expected value false for BoolExact check, got: true"),
+				ExpectError: regexp.MustCompile("expected value false for Bool check, got: true"),
 			},
 		},
 	})
@@ -193,7 +193,7 @@ func TestExpectKnownOutputValue_CheckState_Float64(t *testing.T) {
 					value = test_resource.one.float_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"float64_output",
 						knownvalue.Float64Exact(1.23),
@@ -224,7 +224,7 @@ func TestExpectKnownOutputValue_CheckState_Float64_KnownValueWrongType(t *testin
 					value = test_resource.one.float_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"float64_output",
 						knownvalue.StringExact("str"),
@@ -255,7 +255,7 @@ func TestExpectKnownOutputValue_CheckState_Float64_KnownValueWrongValue(t *testi
 					value = test_resource.one.float_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"float64_output",
 						knownvalue.Float64Exact(3.21),
@@ -286,7 +286,7 @@ func TestExpectKnownOutputValue_CheckState_Int64(t *testing.T) {
 					value = test_resource.one.int_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"int64_output",
 						knownvalue.Int64Exact(123),
@@ -316,7 +316,7 @@ func TestExpectKnownOutputValue_CheckState_Int64_KnownValueWrongValue(t *testing
 					value = test_resource.one.int_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"int64_output",
 						knownvalue.Int64Exact(321),
@@ -350,7 +350,7 @@ func TestExpectKnownOutputValue_CheckState_List(t *testing.T) {
 					value = test_resource.one.list_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"list_output",
 						knownvalue.ListExact([]knownvalue.Check{
@@ -386,7 +386,7 @@ func TestExpectKnownOutputValue_CheckState_List_KnownValueWrongType(t *testing.T
 					value = test_resource.one.list_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"list_output",
 						knownvalue.MapExact(map[string]knownvalue.Check{}),
@@ -420,7 +420,7 @@ func TestExpectKnownOutputValue_CheckState_List_KnownValueWrongValue(t *testing.
 					value = test_resource.one.list_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"list_output",
 						knownvalue.ListExact([]knownvalue.Check{
@@ -457,7 +457,7 @@ func TestExpectKnownOutputValue_CheckState_ListPartial(t *testing.T) {
 					value = test_resource.one.list_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"list_output",
 						knownvalue.ListPartial(map[int]knownvalue.Check{
@@ -494,7 +494,7 @@ func TestExpectKnownOutputValue_CheckState_ListPartial_KnownValueWrongValue(t *t
 					value = test_resource.one.list_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"list_output",
 						knownvalue.ListPartial(map[int]knownvalue.Check{
@@ -530,7 +530,7 @@ func TestExpectKnownOutputValue_CheckState_ListElements(t *testing.T) {
 					value = test_resource.one.list_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"list_output",
 						knownvalue.ListSizeExact(2),
@@ -563,7 +563,7 @@ func TestExpectKnownOutputValue_CheckState_ListElements_WrongNum(t *testing.T) {
 					value = test_resource.one.list_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"list_output",
 						knownvalue.ListSizeExact(3),
@@ -599,7 +599,7 @@ func TestExpectKnownOutputValue_CheckState_ListNestedBlock(t *testing.T) {
 					value = test_resource.one.list_nested_block
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"list_nested_block_output",
 						knownvalue.ListExact([]knownvalue.Check{
@@ -641,7 +641,7 @@ func TestExpectKnownOutputValue_CheckState_ListNestedBlockPartial(t *testing.T) 
 					value = test_resource.one.list_nested_block
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"list_nested_block_output",
 						knownvalue.ListPartial(map[int]knownvalue.Check{
@@ -680,7 +680,7 @@ func TestExpectKnownOutputValue_CheckState_ListNestedBlockElements(t *testing.T)
 					value = test_resource.one.list_nested_block
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"list_nested_block_output",
 						knownvalue.ListSizeExact(2),
@@ -713,7 +713,7 @@ func TestExpectKnownOutputValue_CheckState_Map(t *testing.T) {
 					value = test_resource.one.map_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"map_output",
 						knownvalue.MapExact(map[string]knownvalue.Check{
@@ -749,7 +749,7 @@ func TestExpectKnownOutputValue_CheckState_Map_KnownValueWrongType(t *testing.T)
 					value = test_resource.one.map_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"map_output",
 						knownvalue.ListExact([]knownvalue.Check{}),
@@ -783,7 +783,7 @@ func TestExpectKnownOutputValue_CheckState_Map_KnownValueWrongValue(t *testing.T
 					value = test_resource.one.map_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"map_output",
 						knownvalue.MapExact(map[string]knownvalue.Check{
@@ -820,7 +820,7 @@ func TestExpectKnownOutputValue_CheckState_MapPartial(t *testing.T) {
 					value = test_resource.one.map_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"map_output",
 						knownvalue.MapPartial(map[string]knownvalue.Check{
@@ -855,7 +855,7 @@ func TestExpectKnownOutputValue_CheckState_MapPartial_KnownValueWrongValue(t *te
 					value = test_resource.one.map_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"map_output",
 						knownvalue.MapPartial(map[string]knownvalue.Check{
@@ -891,7 +891,7 @@ func TestExpectKnownOutputValue_CheckState_MapElements(t *testing.T) {
 					value = test_resource.one.map_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"map_output",
 						knownvalue.MapSizeExact(2),
@@ -924,7 +924,7 @@ func TestExpectKnownOutputValue_CheckState_MapElements_WrongNum(t *testing.T) {
 					value = test_resource.one.map_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"map_output",
 						knownvalue.MapSizeExact(3),
@@ -961,7 +961,7 @@ func TestExpectKnownOutputValue_CheckState_Number(t *testing.T) {
 					value = test_resource.one.int_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"int64_output",
 						knownvalue.NumberExact(f),
@@ -997,7 +997,7 @@ func TestExpectKnownOutputValue_CheckState_Number_KnownValueWrongValue(t *testin
 					value = test_resource.one.int_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"int64_output",
 						knownvalue.NumberExact(f),
@@ -1031,7 +1031,7 @@ func TestExpectKnownOutputValue_CheckState_Set(t *testing.T) {
 					value = test_resource.one.set_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"set_output",
 						knownvalue.SetExact([]knownvalue.Check{
@@ -1067,7 +1067,7 @@ func TestExpectKnownOutputValue_CheckState_Set_KnownValueWrongValue(t *testing.T
 					value = test_resource.one.set_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"set_output",
 						knownvalue.SetExact([]knownvalue.Check{
@@ -1104,7 +1104,7 @@ func TestExpectKnownOutputValue_CheckState_SetPartial(t *testing.T) {
 					value = test_resource.one.set_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"set_output",
 						knownvalue.SetPartial([]knownvalue.Check{
@@ -1139,7 +1139,7 @@ func TestExpectKnownOutputValue_CheckState_SetPartial_KnownValueWrongValue(t *te
 					value = test_resource.one.set_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"set_output",
 						knownvalue.SetPartial([]knownvalue.Check{
@@ -1175,7 +1175,7 @@ func TestExpectKnownOutputValue_CheckState_SetElements(t *testing.T) {
 					value = test_resource.one.set_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"set_output",
 						knownvalue.SetSizeExact(2),
@@ -1210,7 +1210,7 @@ func TestExpectKnownOutputValue_CheckState_SetNestedBlock(t *testing.T) {
 					value = test_resource.one.set_nested_block
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"set_nested_block_output",
 						knownvalue.SetExact([]knownvalue.Check{
@@ -1252,7 +1252,7 @@ func TestExpectKnownOutputValue_CheckState_SetNestedBlockPartial(t *testing.T) {
 					value = test_resource.one.set_nested_block
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"set_nested_block_output",
 						knownvalue.SetPartial([]knownvalue.Check{
@@ -1291,7 +1291,7 @@ func TestExpectKnownOutputValue_CheckState_SetNestedBlockElements(t *testing.T) 
 					value = test_resource.one.set_nested_block
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"set_nested_block_output",
 						knownvalue.SetSizeExact(2),
@@ -1321,7 +1321,7 @@ func TestExpectKnownOutputValue_CheckState_String(t *testing.T) {
 					value = test_resource.one.string_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"string_output",
 						knownvalue.StringExact("str")),
@@ -1379,12 +1379,12 @@ func TestExpectKnownOutputValue_CheckState_String_KnownValueWrongType(t *testing
 					value = test_resource.one.string_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"string_output",
-						knownvalue.BoolExact(true)),
+						knownvalue.Bool(true)),
 				},
-				ExpectError: regexp.MustCompile("expected bool value for BoolExact check, got: string"),
+				ExpectError: regexp.MustCompile("expected bool value for Bool check, got: string"),
 			},
 		},
 	})
@@ -1409,7 +1409,7 @@ func TestExpectKnownOutputValue_CheckState_String_KnownValueWrongValue(t *testin
 					value = test_resource.one.string_attribute
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
 						"string_output",
 						knownvalue.StringExact("rts")),

@@ -21,29 +21,29 @@ func TestBoolValue_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			self:          knownvalue.BoolExact(false),
-			expectedError: fmt.Errorf("expected bool value for BoolExact check, got: <nil>"),
+			self:          knownvalue.Bool(false),
+			expectedError: fmt.Errorf("expected bool value for Bool check, got: <nil>"),
 		},
 		"zero-other": {
-			self:  knownvalue.BoolExact(false),
+			self:  knownvalue.Bool(false),
 			other: false, // checking against the underlying value field zero-value
 		},
 		"nil": {
-			self:          knownvalue.BoolExact(false),
-			expectedError: fmt.Errorf("expected bool value for BoolExact check, got: <nil>"),
+			self:          knownvalue.Bool(false),
+			expectedError: fmt.Errorf("expected bool value for Bool check, got: <nil>"),
 		},
 		"wrong-type": {
-			self:          knownvalue.BoolExact(true),
+			self:          knownvalue.Bool(true),
 			other:         1.23,
-			expectedError: fmt.Errorf("expected bool value for BoolExact check, got: float64"),
+			expectedError: fmt.Errorf("expected bool value for Bool check, got: float64"),
 		},
 		"not-equal": {
-			self:          knownvalue.BoolExact(true),
+			self:          knownvalue.Bool(true),
 			other:         false,
-			expectedError: fmt.Errorf("expected value true for BoolExact check, got: false"),
+			expectedError: fmt.Errorf("expected value true for Bool check, got: false"),
 		},
 		"equal": {
-			self:  knownvalue.BoolExact(true),
+			self:  knownvalue.Bool(true),
 			other: true,
 		},
 	}
@@ -66,7 +66,7 @@ func TestBoolValue_CheckValue(t *testing.T) {
 func TestBoolValue_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.BoolExact(true).String()
+	got := knownvalue.Bool(true).String()
 
 	if diff := cmp.Diff(got, "true"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
