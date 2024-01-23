@@ -25,7 +25,7 @@ func TestExpectKnownValue_CheckState_AttributeValueNull(t *testing.T) {
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {}`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),

@@ -36,7 +36,7 @@ func Test_ExpectSensitiveValue_SensitiveStringAttribute(t *testing.T) {
 					sensitive_string_attribute = "test"
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectSensitiveValue("test_resource.one",
 						tfjsonpath.New("sensitive_string_attribute")),
 				},
@@ -64,7 +64,7 @@ func Test_ExpectSensitiveValue_SensitiveListAttribute(t *testing.T) {
 					sensitive_list_attribute = ["value1"]
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectSensitiveValue("test_resource.one",
 						tfjsonpath.New("sensitive_list_attribute")),
 				},
@@ -92,7 +92,7 @@ func Test_ExpectSensitiveValue_SensitiveSetAttribute(t *testing.T) {
 					sensitive_set_attribute = ["value1"]
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectSensitiveValue("test_resource.one",
 						tfjsonpath.New("sensitive_set_attribute")),
 				},
@@ -122,7 +122,7 @@ func Test_ExpectSensitiveValue_SensitiveMapAttribute(t *testing.T) {
 					}
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectSensitiveValue("test_resource.one",
 						tfjsonpath.New("sensitive_map_attribute")),
 				},
@@ -153,7 +153,7 @@ func Test_ExpectSensitiveValue_ListNestedBlock_SensitiveAttribute(t *testing.T) 
 					}
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectSensitiveValue("test_resource.one",
 						tfjsonpath.New("list_nested_block_sensitive_attribute").AtSliceIndex(0).
 							AtMapKey("sensitive_list_nested_block_attribute")),
@@ -185,7 +185,7 @@ func Test_ExpectSensitiveValue_SetNestedBlock_SensitiveAttribute(t *testing.T) {
 					}
 				}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectSensitiveValue("test_resource.one",
 						tfjsonpath.New("set_nested_block_sensitive_attribute")),
 				},
@@ -211,7 +211,7 @@ func Test_ExpectSensitiveValue_ExpectError_ResourceNotFound(t *testing.T) {
 				Config: `
 				resource "test_resource" "one" {}
 				`,
-				ConfigStateChecks: r.ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectSensitiveValue("test_resource.two", tfjsonpath.New("set_attribute")),
 				},
 				ExpectError: regexp.MustCompile(`test_resource.two - Resource not found in state`),

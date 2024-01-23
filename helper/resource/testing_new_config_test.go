@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
@@ -764,7 +765,7 @@ func Test_ConfigStateChecks_Called(t *testing.T) {
 		Steps: []TestStep{
 			{
 				Config: `resource "test_resource" "test" {}`,
-				ConfigStateChecks: ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					spy1,
 					spy2,
 				},
@@ -831,7 +832,7 @@ func Test_ConfigStateChecks_Errors(t *testing.T) {
 		Steps: []TestStep{
 			{
 				Config: `resource "test_resource" "test" {}`,
-				ConfigStateChecks: ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					spy1,
 					spy2,
 					spy3,

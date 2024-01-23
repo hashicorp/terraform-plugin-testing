@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -468,7 +469,7 @@ func TestTestStepValidate(t *testing.T) {
 		},
 		"configstatechecks-not-config-mode": {
 			testStep: TestStep{
-				ConfigStateChecks: ConfigStateChecks{
+				ConfigStateChecks: []statecheck.StateCheck{
 					&stateCheckSpy{},
 				},
 				RefreshState: true,
