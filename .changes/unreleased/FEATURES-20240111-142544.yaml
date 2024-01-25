@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'statecheck: Added `ExpectSensitiveValue` built-in state check, which asserts
+  that a given attribute has a sensitive value'
+time: 2024-01-11T14:25:44.598583Z
+custom:
+  Issue: "275"

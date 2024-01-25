@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -465,6 +466,16 @@ func TestTestStepValidate(t *testing.T) {
 			},
 			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
 			expectedError:           errors.New("TestStep ConfigPlanChecks.PostApplyPostRefresh must only be specified with Config"),
+		},
+		"configstatechecks-not-config-mode": {
+			testStep: TestStep{
+				ConfigStateChecks: []statecheck.StateCheck{
+					&stateCheckSpy{},
+				},
+				RefreshState: true,
+			},
+			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
+			expectedError:           errors.New("TestStep ConfigStateChecks must only be specified with Config"),
 		},
 		"refreshplanchecks-postrefresh-not-refresh-mode": {
 			testStep: TestStep{

@@ -8,13 +8,13 @@ description: >-
 
 The known value checks that are available for number values are:
 
-* [NumberValueExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/number#numbervalueexact-check)
+* [NumberExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/number#numberexact-check)
 
-## `NumberValueExact` Check
+## `NumberExact` Check
 
-The [NumberValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NumberValueExact) check tests that a resource attribute, or output value has an exactly matching number value.
+The [NumberExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NumberExact) check tests that a resource attribute, or output value has an exactly matching number value.
 
-Example usage of [NumberValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NumberValueExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+Example usage of [NumberExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NumberExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
 
 ```go
 func TestExpectKnownValue_CheckPlan_Number(t *testing.T) {
@@ -32,14 +32,13 @@ func TestExpectKnownValue_CheckPlan_Number(t *testing.T) {
 			{
 				Config: `resource "test_resource" "one" {
 					number_attribute = 123
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("number_attribute"),
-							knownvalue.NumberValueExact(num),
+							knownvalue.NumberExact(num),
 						),
 					},
 				},

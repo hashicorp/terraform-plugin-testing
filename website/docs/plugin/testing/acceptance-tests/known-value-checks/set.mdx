@@ -8,18 +8,18 @@ description: >-
 
 The known value checks that are available for set values are:
 
-* [SetElementsExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/set#setelementsexact-check)
-* [SetValueExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/set#setvalueexact-check)
-* [SetValuePartialMatch](/terraform/plugin/testing/acceptance-tests/known-value-checks/set#setvaluepartialmatch-check)
+* [SetExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/set#setexact-check)
+* [SetPartial](/terraform/plugin/testing/acceptance-tests/known-value-checks/set#setpartial-check)
+* [SetSizeExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/set#setsizeexact-check)
 
-## `SetElementsExact` Check
+## `SetExact` Check
 
-The [SetElementsExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetElementsExact) check tests that a resource attribute, or output value contains the specified number of elements.
+The [SetExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetExact) check tests that a resource attribute, or output value has an order-independent, matching collection of element values.
 
-Example usage of [SetElementsExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetElementsExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+Example usage of [SetExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
 
 ```go
-func TestExpectKnownValue_CheckPlan_SetElements(t *testing.T) {
+func TestExpectKnownValue_CheckPlan_Set(t *testing.T) {
 	t.Parallel()
 
 	resource.Test(t, resource.TestCase{
@@ -31,52 +31,15 @@ func TestExpectKnownValue_CheckPlan_SetElements(t *testing.T) {
 						"value1",
 						"value2"
 					]
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("set_attribute"),
-							knownvalue.SetElementsExact(2),
-						),
-					},
-				},
-			},
-		},
-	})
-}
-```
-
-## `SetValueExact` Check
-
-The [SetValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetValueExact) check tests that a resource attribute, or output value has an order-independent, matching collection of element values.
-
-Example usage of [SetValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetValueExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
-
-```go
-func TestExpectKnownValue_CheckPlan_Set(t *testing.T) {
-	t.Parallel()
-
-	resource.Test(t, resource.TestCase{
-				// Provider definition omitted.
-		Steps: []resource.TestStep{
-			{
-				Config: `resource "test_resource" "one" {
-					set_attribute = [
-						"value1",
-						"value2"
-					]
-				}
-				`,
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownValue(
-							"test_resource.one",
-							tfjsonpath.New("set_attribute"),
-							knownvalue.SetValueExact([]knownvalue.Check{
-								knownvalue.StringValueExact("value2"),
-								knownvalue.StringValueExact("value1"),
+							knownvalue.SetExact([]knownvalue.Check{
+								knownvalue.StringExact("value2"),
+								knownvalue.StringExact("value1"),
 							}),
 						),
 					},
@@ -87,11 +50,11 @@ func TestExpectKnownValue_CheckPlan_Set(t *testing.T) {
 }
 ```
 
-## `SetValuePartialMatch` Check
+## `SetPartial` Check
 
-The [SetValuePartialMatch](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetValuePartialMatch) check tests that a resource attribute, or output value contains matching element values.
+The [SetPartial](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetPartial) check tests that a resource attribute, or output value contains matching element values.
 
-Example usage of [SetValuePartialMatch](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetValuePartialMatch) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check. In this example, only the one element within the set is checked.
+Example usage of [SetPartial](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetPartial) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check. In this example, only the one element within the set is checked.
 
 ```go
 func TestExpectKnownValue_CheckPlan_SetPartial(t *testing.T) {
@@ -106,16 +69,50 @@ func TestExpectKnownValue_CheckPlan_SetPartial(t *testing.T) {
 						"value1",
 						"value2"
 					]
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("set_attribute"),
-							knownvalue.SetValuePartialMatch([]knownvalue.Check{
-								knownvalue.StringValueExact("value2"),
+							knownvalue.SetPartial([]knownvalue.Check{
+								knownvalue.StringExact("value2"),
 							}),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+```
+
+## `SetSizeExact` Check
+
+The [SetSizeExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetSizeExact) check tests that a resource attribute, or output value contains the specified number of elements.
+
+Example usage of [SetSizeExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetSizeExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+
+```go
+func TestExpectKnownValue_CheckPlan_SetElements(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		// Provider definition omitted.
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					set_attribute = [
+						"value1",
+						"value2"
+					]
+				}`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("set_attribute"),
+							knownvalue.SetSizeExact(2),
 						),
 					},
 				},

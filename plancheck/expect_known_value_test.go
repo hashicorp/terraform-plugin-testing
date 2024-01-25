@@ -40,11 +40,11 @@ func TestExpectKnownValue_CheckPlan_ResourceNotFound(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.two",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.BoolExact(true),
+							knownvalue.Bool(true),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("test_resource.two - Resource not found in plan ResourceChanges"),
+				ExpectError: regexp.MustCompile("test_resource.two - Resource not found in plan"),
 			},
 		},
 	})
@@ -67,11 +67,50 @@ func TestExpectKnownValue_CheckPlan_AttributeValueNull(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.BoolExact(true),
+							knownvalue.Null(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("float_attribute"),
+							knownvalue.Null(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("int_attribute"),
+							knownvalue.Null(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("list_attribute"),
+							knownvalue.Null(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("list_nested_block"),
+							knownvalue.ListExact([]knownvalue.Check{}),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("map_attribute"),
+							knownvalue.Null(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("set_attribute"),
+							knownvalue.Null(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("set_nested_block"),
+							knownvalue.SetExact([]knownvalue.Check{}),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("string_attribute"),
+							knownvalue.Null(),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("value is null for attribute at path: test_resource.one.bool_attribute"),
 			},
 		},
 	})
@@ -97,7 +136,7 @@ func TestExpectKnownValue_CheckPlan_Bool(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.BoolExact(true),
+							knownvalue.Bool(true),
 						),
 					},
 				},
@@ -156,11 +195,11 @@ func TestExpectKnownValue_CheckPlan_Bool_KnownValueWrongValue(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.BoolExact(false),
+							knownvalue.Bool(false),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("error checking value for attribute at path: test_resource.one.bool_attribute, err: expected value false for BoolExact check, got: true"),
+				ExpectError: regexp.MustCompile("error checking value for attribute at path: test_resource.one.bool_attribute, err: expected value false for Bool check, got: true"),
 			},
 		},
 	})
@@ -1310,10 +1349,10 @@ func TestExpectKnownValue_CheckPlan_String_KnownValueWrongType(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("string_attribute"),
-							knownvalue.BoolExact(true)),
+							knownvalue.Bool(true)),
 					},
 				},
-				ExpectError: regexp.MustCompile("error checking value for attribute at path: test_resource.one.string_attribute, err: expected bool value for BoolExact check, got: string"),
+				ExpectError: regexp.MustCompile("error checking value for attribute at path: test_resource.one.string_attribute, err: expected bool value for Bool check, got: string"),
 			},
 		},
 	})
@@ -1372,7 +1411,7 @@ func TestExpectKnownValue_CheckPlan_UnknownAttributeType(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: fmt.Errorf("unrecognised attribute type: float32, known value type is knownvalue.int64Exact\n\nThis is an error in plancheck.ExpectKnownValue.\nPlease report this to the maintainers."),
+			expectedErr: fmt.Errorf("error checking value for attribute at path: example_resource.test.attribute, err: expected json.Number value for Int64Exact check, got: float32"),
 		},
 	}
 

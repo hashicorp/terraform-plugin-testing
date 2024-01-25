@@ -1,0 +1,78 @@
+---
+page_title: 'Plugin Development - Acceptance Testing: State Checks'
+description: >-
+  State Checks are test assertions that can inspect state during a TestStep. The testing module
+  provides built-in Managed Resource and Data Source State Checks for common use-cases.
+---
+
+# Resource State Checks
+
+The `terraform-plugin-testing` module provides a package [`statecheck`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck) with built-in managed resource, and data source state checks for common use-cases:
+
+| Check                                                                                                                                                | Description                                                                                                       |
+|------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| [`statecheck.ExpectKnownValue(address, path, value)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue)  | Asserts the specified attribute at the given managed resource, or data source, has the specified type, and value. |
+| [`statecheck.ExpectSensitiveValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectSensitiveValue) | Asserts the specified attribute at the given managed resource, or data source, has a sensitive value.             |
+
+## Example using `statecheck.ExpectKnownValue`
+
+The [`statecheck.ExpectKnownValue(address, path, value)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue) state check provides a basis for asserting that a specific resource attribute has a known type, and value.
+
+Refer to [Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks) for details, and examples of the available [knownvalue.Check](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check) types that can be used with the `ExpectKnownValue` state check.
+
+```go
+func TestExpectKnownValue_CheckState_Bool(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+				}
+				`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("bool_attribute"),
+						knownvalue.Bool(true),
+					),
+				},
+			},
+		},
+	})
+}
+```
+
+## Example using `statecheck.ExpectSensitiveValue`
+
+The [`statecheck.ExpectSensitiveValue(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectSensitiveValue) state check provides a basis for asserting that a specific resource attribute is marked as sensitive.
+
+-> **Note:** In this example, a [TerraformVersionCheck](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#TerraformVersionCheck) is being used to prevent execution of this test prior to Terraform version `1.4.6` (refer to the release notes for Terraform [v1.4.6](https://github.com/hashicorp/terraform/releases/tag/v1.4.6)).
+
+```go
+func Test_ExpectSensitiveValue_SensitiveStringAttribute(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_4_6), // StateResource.SensitiveValues
+		},
+		// Provider definition omitted.
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {
+					sensitive_string_attribute = "test"
+				}
+				`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectSensitiveValue("test_resource.one",
+						tfjsonpath.New("sensitive_string_attribute")),
+				},
+			},
+		},
+	})
+}
+```

@@ -8,13 +8,13 @@ description: >-
 
 The known value checks that are available for string values are:
 
-* [StringValueExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/string#stringvalueexact-check)
+* [StringExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/string#stringexact-check)
 
-## `StringValueExact` Check
+## `StringExact` Check
 
-The [StringValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#StringValueExact) check tests that a resource attribute, or output value has an exactly matching string value.
+The [StringExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#StringExact) check tests that a resource attribute, or output value has an exactly matching string value.
 
-Example usage of [StringValueExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#StringValueExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+Example usage of [StringExact](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#StringExact) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
 
 ```go
 func TestExpectKnownValue_CheckPlan_String(t *testing.T) {
@@ -26,14 +26,13 @@ func TestExpectKnownValue_CheckPlan_String(t *testing.T) {
 			{
 				Config: `resource "test_resource" "one" {
 					string_attribute = "str"
-				}
-				`,
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("string_attribute"),
-							knownvalue.StringValueExact("str")),
+							knownvalue.StringExact("str")),
 					},
 				},
 			},

@@ -1,0 +1,7 @@
+kind: NOTES
+body: 'plancheck: Deprecated `ExpectNullOutputValue` and `ExpectNullOutputValueAtPath`.
+  Use `ExpectKnownOutputValue` and `ExpectKnownOutputValueAtPath` with 
+  `knownvalue.NullExact` instead'
+time: 2024-01-22T08:26:28.053303Z
+custom:
+  Issue: "275"

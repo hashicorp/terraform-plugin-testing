@@ -52,11 +52,11 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_ResourceNotFound(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_two_output",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.BoolExact(true),
+							knownvalue.Bool(true),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("test_resource_two_output - Output not found in plan OutputChanges"),
+				ExpectError: regexp.MustCompile("test_resource_two_output - Output not found in plan"),
 			},
 		},
 	})
@@ -91,11 +91,50 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_AttributeValueNull(t *testing.T)
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.BoolExact(true),
+							knownvalue.Null(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("float_attribute"),
+							knownvalue.Null(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("int_attribute"),
+							knownvalue.Null(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("list_attribute"),
+							knownvalue.Null(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("list_nested_block"),
+							knownvalue.ListExact([]knownvalue.Check{}),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("map_attribute"),
+							knownvalue.Null(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("set_attribute"),
+							knownvalue.Null(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("set_nested_block"),
+							knownvalue.SetExact([]knownvalue.Check{}),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("string_attribute"),
+							knownvalue.Null(),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("value is null for output at path: test_resource_one_output.bool_attribute"),
 			},
 		},
 	})
@@ -132,7 +171,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Bool(t *testing.T) {
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.BoolExact(true),
+							knownvalue.Bool(true),
 						),
 					},
 				},
@@ -213,11 +252,11 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_Bool_KnownValueWrongValue(t *tes
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("bool_attribute"),
-							knownvalue.BoolExact(false),
+							knownvalue.Bool(false),
 						),
 					},
 				},
-				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.bool_attribute, err: expected value false for BoolExact check, got: true"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.bool_attribute, err: expected value false for Bool check, got: true"),
 			},
 		},
 	})
@@ -1741,10 +1780,10 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_String_KnownValueWrongType(t *te
 						plancheck.ExpectKnownOutputValueAtPath(
 							"test_resource_one_output",
 							tfjsonpath.New("string_attribute"),
-							knownvalue.BoolExact(true)),
+							knownvalue.Bool(true)),
 					},
 				},
-				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.string_attribute, err: expected bool value for BoolExact check, got: string"),
+				ExpectError: regexp.MustCompile("error checking value for output at path: test_resource_one_output.string_attribute, err: expected bool value for Bool check, got: string"),
 			},
 		},
 	})
@@ -1809,7 +1848,7 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_UnknownAttributeType(t *testing.
 					},
 				},
 			},
-			expectedErr: fmt.Errorf("unrecognised output type: float32, known value type is knownvalue.int64Exact\n\nThis is an error in plancheck.ExpectKnownOutputValueAtPath.\nPlease report this to the maintainers."),
+			expectedErr: fmt.Errorf("error checking value for output at path: float32_output., err: expected json.Number value for Int64Exact check, got: float32"),
 		},
 	}
 

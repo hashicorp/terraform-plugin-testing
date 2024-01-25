@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'statecheck: Added `ExpectKnownValue` state check, which asserts that a given
+  resource attribute has a defined type, and value'
+time: 2024-01-11T14:22:23.072321Z
+custom:
+  Issue: "275"
