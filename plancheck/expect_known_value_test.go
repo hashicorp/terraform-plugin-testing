@@ -116,6 +116,88 @@ func TestExpectKnownValue_CheckPlan_AttributeValueNull(t *testing.T) {
 	})
 }
 
+func TestExpectKnownValue_CheckPlan_AttributeValueNotNull(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+					float_attribute = 1.23
+					int_attribute = 123
+					list_attribute = ["value1", "value2"]
+					list_nested_block {
+						list_nested_block_attribute = "str"	
+					}
+					map_attribute = {
+						key1 = "value1"		
+					}	
+					set_attribute = ["value1", "value2"]		
+					set_nested_block {		
+						set_nested_block_attribute = "str"	
+					}
+					string_attribute = "str"
+				}`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("bool_attribute"),
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("float_attribute"),
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("int_attribute"),
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("list_attribute"),
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("list_nested_block"),
+							knownvalue.ListSizeExact(1),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("map_attribute"),
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("set_attribute"),
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("set_nested_block"),
+							knownvalue.SetSizeExact(1),
+						),
+						plancheck.ExpectKnownValue(
+							"test_resource.one",
+							tfjsonpath.New("string_attribute"),
+							knownvalue.NotNull(),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+
 func TestExpectKnownValue_CheckPlan_Bool(t *testing.T) {
 	t.Parallel()
 

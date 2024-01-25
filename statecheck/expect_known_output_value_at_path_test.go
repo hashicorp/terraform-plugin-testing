@@ -121,6 +121,91 @@ func TestExpectKnownOutputValueAtPath_CheckState_AttributeValueNull(t *testing.T
 	})
 }
 
+func TestExpectKnownOutputValueAtPath_CheckState_AttributeValueNotNull(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+					float_attribute = 1.23
+					int_attribute = 123
+					list_attribute = ["value1", "value2"]
+					list_nested_block {
+						list_nested_block_attribute = "str"	
+					}
+					map_attribute = {
+						key1 = "value1"		
+					}	
+					set_attribute = ["value1", "value2"]		
+					set_nested_block {		
+						set_nested_block_attribute = "str"	
+					}
+					string_attribute = "str"
+				}
+
+				output test_resource_one_output {
+					value = test_resource.one
+				}
+				`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownOutputValueAtPath(
+						"test_resource_one_output",
+						tfjsonpath.New("bool_attribute"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownOutputValueAtPath(
+						"test_resource_one_output",
+						tfjsonpath.New("float_attribute"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownOutputValueAtPath(
+						"test_resource_one_output",
+						tfjsonpath.New("int_attribute"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownOutputValueAtPath(
+						"test_resource_one_output",
+						tfjsonpath.New("list_attribute"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownOutputValueAtPath(
+						"test_resource_one_output",
+						tfjsonpath.New("list_nested_block"),
+						knownvalue.ListSizeExact(1),
+					),
+					statecheck.ExpectKnownOutputValueAtPath(
+						"test_resource_one_output",
+						tfjsonpath.New("map_attribute"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownOutputValueAtPath(
+						"test_resource_one_output",
+						tfjsonpath.New("set_attribute"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownOutputValueAtPath(
+						"test_resource_one_output",
+						tfjsonpath.New("set_nested_block"),
+						knownvalue.SetSizeExact(1),
+					),
+					statecheck.ExpectKnownOutputValueAtPath(
+						"test_resource_one_output",
+						tfjsonpath.New("string_attribute"),
+						knownvalue.NotNull(),
+					),
+				},
+			},
+		},
+	})
+}
+
 func TestExpectKnownOutputValueAtPath_CheckState_Bool(t *testing.T) {
 	t.Parallel()
 

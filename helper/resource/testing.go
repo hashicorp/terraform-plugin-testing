@@ -1056,10 +1056,10 @@ func ComposeAggregateTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 // the special .# or .% key syntax for those situations instead.
 //
 // Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-in statecheck.ExpectValueExists state check instead.
+// Use the built-in statecheck.KnownValue state check with knownvalue.NotNull instead.
 // TestCheckResourceAttrSet function will be removed in the next major version.
 //
-// The following is an example of using statecheck.ExpectValueExists
+// The following is an example of using statecheck.ExpectKnownValue with knownvalue.NotNull
 // to replicate the behaviour of TestCheckResourceAttrSet.
 //
 //	package example_test
@@ -1072,7 +1072,7 @@ func ComposeAggregateTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 //		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 //	)
 //
-//	func TestExpectValueExists_CheckState_AttributeFound(t *testing.T) {
+//	func TestExpectKnownValue_CheckState_AttributeFound(t *testing.T) {
 //		t.Parallel()
 //
 //		resource.Test(t, resource.TestCase{
@@ -1084,9 +1084,10 @@ func ComposeAggregateTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 //		        }
 //		        `,
 //					ConfigStateChecks: []statecheck.StateCheck{
-//						statecheck.ExpectValueExists(
+//						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("bool_attribute"),
+//							knownvalue.NotNull(),
 //						),
 //					},
 //				},
@@ -1094,7 +1095,8 @@ func ComposeAggregateTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 //		})
 //	}
 //
-// [ExpectValueExists]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectValueExists
+// [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
+// [NotNull]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NotNull
 // [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
 // [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 func TestCheckResourceAttrSet(name, key string) TestCheckFunc {

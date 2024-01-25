@@ -36,15 +36,17 @@ knownvalue.ListExact([]knownvalue.Check{
 
 The following table shows the correspondence between [knownvalue.Check](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check) types, and attributes.
 
-| Known Value Check Type                                                                              | Framework Attribute Type  | SDKv2 Attribute Type |
-|-----------------------------------------------------------------------------------------------------|---------------------------|----------------------|
-| [Bool Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/bool)       | `schema.BoolAttribute`    | `schema.TypeBool`    |
-| [Float64 Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/float64) | `schema.Float64Attribute` | `schema.TypeFloat`   |
-| [Int64 Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/int64)     | `schema.Int64Attribute`   | `schema.TypeInt`     |
-| [List Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/list)       | `schema.ListAttribute`    | `schema.TypeList`    |
-| [Map Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/map)         | `schema.MapAttribute`     | `schema.TypeMap`     |
-| [Number Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/number)   | `schema.NumberAttribute`  | N/A                  |
-| [Object Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/object)   | `schema.ObjectAttribute`  | N/A                  |
-| [Set Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/set)         | `schema.SetAttribute`     | `schema.TypeSet`     |
-| [String Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/string)   | `schema.StringAttribute`  | `schema.TypeString`  |
+| Known Value Check Type                                                                               | Framework Attribute Type  | SDKv2 Attribute Type |
+|------------------------------------------------------------------------------------------------------|---------------------------|----------------------|
+| [Bool Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/bool)        | `schema.BoolAttribute`    | `schema.TypeBool`    |
+| [Float64 Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/float64)  | `schema.Float64Attribute` | `schema.TypeFloat`   |
+| [Int64 Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/int64)      | `schema.Int64Attribute`   | `schema.TypeInt`     |
+| [List Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/list)        | `schema.ListAttribute`    | `schema.TypeList`    |
+| [Map Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/map)          | `schema.MapAttribute`     | `schema.TypeMap`     |
+| [NotNull Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/not-null) | All                       | All                  |
+| [Null Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/null)        | All                       | All                  |
+| [Number Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/number)    | `schema.NumberAttribute`  | N/A                  |
+| [Object Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/object)    | `schema.ObjectAttribute`  | N/A                  |
+| [Set Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/set)          | `schema.SetAttribute`     | `schema.TypeSet`     |
+| [String Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks/string)    | `schema.StringAttribute`  | `schema.TypeString`  |
 

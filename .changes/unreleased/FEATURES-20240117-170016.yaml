@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'statecheck: Added `ExpectValueExists` built-in state check, which asserts that
-  a given attribute exists'
-time: 2024-01-17T17:00:16.411155Z
-custom:
-  Issue: "276"
