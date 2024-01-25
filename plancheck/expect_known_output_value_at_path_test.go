@@ -149,6 +149,13 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_AttributeValueNotNull(t *testing
 				return testProvider(), nil
 			},
 		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
