@@ -1,7 +1,0 @@
-kind: FEATURES
-body: 'statecheck: Added `ExpectContains` built-in state check, which asserts that
-  the value of the first given attribute contains the value of the second given 
-  attribute'
-time: 2024-01-17T17:03:46.555777Z
-custom:
-  Issue: "276"

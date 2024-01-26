@@ -418,56 +418,12 @@ func TestCheckTypeSetElemAttr(name, attr, value string) TestCheckFunc {
 // there are multiple lists or sets in the attribute path.
 //
 // Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-in statecheck.ExpectContains, or statecheck.ExpectMatchingValues
-// state checks instead.
-// TestCheckTypeSetElemAttrPair function will be removed in the next major version.
+// TestCheckTypeSetElemAttrPair has been deprecated without replacement. Please
+// use the GitHub issue [Deprecation of Built-In TestCheckFunc Implementations for Checking Pairs of Values]
+// to indicate if you have a use-case for a built-in ConfigStateChecks state check
+// function that would replicate the behaviour of TestCheckTypeSetElemAttrPair.
 //
-// The following is an example of using statecheck.ExpectContains to replicate
-// the behaviour of TestCheckTypeSetElemAttrPair.
-//
-//	package example_test
-//
-//	import (
-//		"testing"
-//
-//		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-//		"github.com/hashicorp/terraform-plugin-testing/statecheck"
-//		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
-//	)
-//
-//	func TestExpectContains_CheckState_Found(t *testing.T) {
-//		t.Parallel()
-//
-//		resource.Test(t, resource.TestCase{
-//			// Provider definition omitted.
-//			Steps: []resource.TestStep{
-//				{
-//					Config: `resource "test_resource" "one" {
-//		          string_attribute = "value1"
-//		        }
-//
-//		        resource "test_resource" "two" {
-//		          set_attribute = [
-//		            test_resource.one.string_attribute,
-//		            "value2"
-//		          ]
-//		        }`,
-//					ConfigStateChecks: []statecheck.StateCheck{
-//						statecheck.ExpectContains(
-//							"test_resource.two",
-//							tfjsonpath.New("set_attribute"),
-//							"test_resource.one",
-//							tfjsonpath.New("string_attribute"),
-//						),
-//					},
-//				},
-//			},
-//		})
-//	}
-//
-// [ExpectContains]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectContains
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
+// [Deprecation of Built-In TestCheckFunc Implementations for Checking Pairs of Values](https://github.com/hashicorp/terraform-plugin-testing/issues/282)
 func TestCheckTypeSetElemAttrPair(nameFirst, keyFirst, nameSecond, keySecond string) TestCheckFunc {
 	return func(s *terraform.State) error {
 		isFirst, err := primaryInstanceState(s, nameFirst)

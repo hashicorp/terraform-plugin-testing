@@ -11,57 +11,10 @@ The `terraform-plugin-testing` module provides a package [`statecheck`](https://
 
 | Check                                                                                                                       | Description                                                                                                                                                                              |
 |-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [`ExpectContains`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#expectcontains-state-check)             | Asserts the specified attribute at the first given managed resource, or data source, contains the value specified by the attribute in the second given managed resource, or data source. |
 | [`ExpectKnownValue`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#expectknownvalue-state-check)         | Asserts the specified attribute at the given managed resource, or data source, has the specified type, and value.                                                                        |
 | [`ExpectMatchingValues`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#expectmatchingvalues-state-check) | Asserts the specified attributes at the given managed resources have matching values.                                                                                                    |
 | [`ExpectNoValueExists`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#expectnovalueexists-state-check)   | Asserts the specified attribute at the given managed resource, or data source, does not exist.                                                                                           |
 | [`ExpectSensitiveValue`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#expectsensitivevalue-state-check) | Asserts the specified attribute at the given managed resource, or data source, has a sensitive value.                                                                                    |
-
-## `ExpectContains` State Check
-
-The [`statecheck.ExpectContains(addressOne, pathOne, addressTwo, pathTwo)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectContains) state check provides a basis for asserting that the first specified resource attribute contains the value specified by the second resource attribute.
-
-```go
-package example_test
-
-import (
-	"testing"
-
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/statecheck"
-	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
-)
-
-func TestExpectContains_CheckState_Found(t *testing.T) {
-	t.Parallel()
-
-	resource.Test(t, resource.TestCase{
-		// Provider definition omitted.
-		Steps: []resource.TestStep{
-			{
-				Config: `resource "test_resource" "one" {
-					string_attribute = "value1"
-				}
-
-				resource "test_resource" "two" {
-					set_attribute = [
-						test_resource.one.string_attribute,
-						"value2"
-					]
-				}`,
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectContains(
-						"test_resource.two",
-						tfjsonpath.New("set_attribute"),
-						"test_resource.one",
-						tfjsonpath.New("string_attribute"),
-					),
-				},
-			},
-		},
-	})
-}
-```
 
 ## `ExpectKnownValue` State Check
 
