@@ -12,6 +12,7 @@ import (
 )
 
 func ExampleExpectKnownOutputValue() {
+	// A typical test would accept *testing.T as a function parameter, for instance `func TestSomething(t *testing.T) { ... }`.
 	t := &testing.T{}
 	t.Parallel()
 

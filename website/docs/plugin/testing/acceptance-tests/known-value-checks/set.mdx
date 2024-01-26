@@ -26,17 +26,13 @@ func TestExpectKnownValue_CheckPlan_Set(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "test_resource" "one" {
-					set_attribute = [
-						"value1",
-						"value2"
-					]
-				}`,
+        	    // Example resource containing a computed set attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
-							tfjsonpath.New("set_attribute"),
+							tfjsonpath.New("computed_attribute"),
 							knownvalue.SetExact([]knownvalue.Check{
 								knownvalue.StringExact("value2"),
 								knownvalue.StringExact("value1"),
@@ -64,17 +60,13 @@ func TestExpectKnownValue_CheckPlan_SetPartial(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "test_resource" "one" {
-					set_attribute = [
-						"value1",
-						"value2"
-					]
-				}`,
+        	    // Example resource containing a computed set attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
-							tfjsonpath.New("set_attribute"),
+							tfjsonpath.New("computed_attribute"),
 							knownvalue.SetPartial([]knownvalue.Check{
 								knownvalue.StringExact("value2"),
 							}),
@@ -101,17 +93,13 @@ func TestExpectKnownValue_CheckPlan_SetElements(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "test_resource" "one" {
-					set_attribute = [
-						"value1",
-						"value2"
-					]
-				}`,
+        	    // Example resource containing a computed set attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
-							tfjsonpath.New("set_attribute"),
+							tfjsonpath.New("computed_attribute"),
 							knownvalue.SetSizeExact(2),
 						),
 					},

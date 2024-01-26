@@ -559,11 +559,8 @@ type TestStep struct {
 	//
 	// If this is nil, no check is done on this step.
 	//
-	// Deprecated: State checks have been superseded by ConfigStateChecks.
+	// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
 	// This field will be removed in the next major version.
-	//
-	// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-	// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 	Check TestCheckFunc
 
 	// Destroy will create a destroy plan if set to true.
@@ -598,10 +595,7 @@ type TestStep struct {
 	RefreshPlanChecks RefreshPlanChecks
 
 	// ConfigStateChecks allow assertions to be made against the state file during a Config (apply) test using a state check.
-	// Custom state checks can be created by implementing the [StateCheck] interface, or by using a StateCheck implementation from the provided [statecheck] package
-	//
-	// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-	// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
+	// Custom state checks can be created by implementing the [statecheck.StateCheck] interface, or by using a StateCheck implementation from the provided [statecheck] package.
 	ConfigStateChecks []statecheck.StateCheck
 
 	// PlanOnly can be set to only run `plan` with this configuration, and not
@@ -967,11 +961,8 @@ func testResource(c TestStep, state *terraform.State) (*terraform.ResourceState,
 // ComposeTestCheckFunc returns immediately on the first TestCheckFunc error.
 // To aggregrate all errors, use ComposeAggregateTestCheckFunc instead.
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
 // This function will be removed in the next major version.
-//
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 func ComposeTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 	return func(s *terraform.State) error {
 		for i, f := range fs {
@@ -993,11 +984,8 @@ func ComposeTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 // Unlike ComposeTestCheckFunc, ComposeAggergateTestCheckFunc runs _all_ of the
 // TestCheckFuncs and aggregates failures.
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
 // This function will be removed in the next major version.
-//
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 func ComposeAggregateTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 	return func(s *terraform.State) error {
 		var result []error
@@ -1055,11 +1043,11 @@ func ComposeAggregateTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 // attribute directly is not supported. Use TestCheckResourceAttr with
 // the special .# or .% key syntax for those situations instead.
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-in statecheck.KnownValue state check with knownvalue.NotNull instead.
-// TestCheckResourceAttrSet function will be removed in the next major version.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
+// Use the built-in [ExpectKnownValue] state check with the [knownvalue.NotNull] known value type
+// instead. TestCheckResourceAttrSet function will be removed in the next major version.
 //
-// The following is an example of using statecheck.ExpectKnownValue with knownvalue.NotNull
+// The following is an example of using [ExpectKnownValue] with [knownvalue.NotNull]
 // to replicate the behaviour of TestCheckResourceAttrSet.
 //
 //	package example_test
@@ -1068,6 +1056,7 @@ func ComposeAggregateTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 //		"testing"
 //
 //		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+//		"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 //		"github.com/hashicorp/terraform-plugin-testing/statecheck"
 //		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 //	)
@@ -1079,14 +1068,12 @@ func ComposeAggregateTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					Config: `resource "test_resource" "one" {
-//		          bool_attribute = true
-//		        }
-//		        `,
+//					// Example resource containing a computed attribute named "computed_attribute"
+//					Config: `resource "test_resource" "one" {}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
-//							tfjsonpath.New("bool_attribute"),
+//							tfjsonpath.New("computed_attribute"),
 //							knownvalue.NotNull(),
 //						),
 //					},
@@ -1094,11 +1081,6 @@ func ComposeAggregateTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 //			},
 //		})
 //	}
-//
-// [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
-// [NotNull]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NotNull
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 func TestCheckResourceAttrSet(name, key string) TestCheckFunc {
 	return checkIfIndexesIntoTypeSet(key, func(s *terraform.State) error {
 		is, err := primaryInstanceState(s, name)
@@ -1199,11 +1181,11 @@ func testCheckResourceAttrSet(is *terraform.InstanceState, name string, key stri
 //   - Float/Integer: Stringified number, such as "1.2" or "123".
 //   - String: No conversion necessary.
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-in statecheck.ExpectKnownValue state check instead.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
+// Use the built-in [statecheck.ExpectKnownValue] state check instead.
 // TestCheckResourceAttr function will be removed in the next major version.
 //
-// The following is an example of using statecheck.ExpectKnownValue
+// The following is an example of using [statecheck.ExpectKnownValue]
 // to replicate the behaviour of TestCheckResourceAttr.
 //
 //	package example_test
@@ -1224,14 +1206,12 @@ func testCheckResourceAttrSet(is *terraform.InstanceState, name string, key stri
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					Config: `resource "test_resource" "one" {
-//		          bool_attribute = true
-//		        }
-//		        `,
+//					// Example resource containing a computed boolean attribute named "computed_attribute"
+//					Config: `resource "test_resource" "one" {}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
-//							tfjsonpath.New("bool_attribute"),
+//							tfjsonpath.New("computed_attribute"),
 //							knownvalue.Bool(true),
 //						),
 //					},
@@ -1239,10 +1219,6 @@ func testCheckResourceAttrSet(is *terraform.InstanceState, name string, key stri
 //			},
 //		})
 //	}
-//
-// [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 func TestCheckResourceAttr(name, key, value string) TestCheckFunc {
 	return checkIfIndexesIntoTypeSet(key, func(s *terraform.State) error {
 		is, err := primaryInstanceState(s, name)
@@ -1327,23 +1303,20 @@ func testCheckResourceAttr(is *terraform.InstanceState, name string, key string,
 //
 // When this function returns an error, TestCheckResourceAttrWith will fail the check.
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-int statecheck.ExpectKnownValue state check in combination
-// with a custom knownvalue.Check instead.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
+// Use the built-int [statecheck.ExpectKnownValue] state check in combination
+// with a [custom] [knownvalue.Check] instead.
 // CheckResourceAttrWithFunc will be removed in the next major version.
 //
-// The following is an example of using statecheck.ExpectKnownValue in combination
-// with a custom knownvalue.Check to replicate the behaviour of TestCheckResourceAttrWith.
+// The following is an example of using [statecheck.ExpectKnownValue] in combination
+// with a [custom] [knownvalue.Check] to replicate the behaviour of TestCheckResourceAttrWith.
 //
 //	package example_test
 //
 //	import (
-//		"fmt"
-//		"strings"
 //		"testing"
 //
 //		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-//		"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 //		"github.com/hashicorp/terraform-plugin-testing/statecheck"
 //		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 //	)
@@ -1355,14 +1328,12 @@ func testCheckResourceAttr(is *terraform.InstanceState, name string, key string,
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					Config: `resource "test_resource" "one" {
-//		           string_attribute = "string"
-//		         }
-//		         `,
+//					// Example resource containing a computed string attribute named "computed_attribute"
+//					Config: `resource "test_resource" "one" {}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
-//							tfjsonpath.New("string_attribute"),
+//							tfjsonpath.New("computed_attribute"),
 //							StringContains("tri")),
 //					},
 //				},
@@ -1370,11 +1341,7 @@ func testCheckResourceAttr(is *terraform.InstanceState, name string, key string,
 //		})
 //	}
 //
-// [Check]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check
-// [Custom Known Value Checks]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
-// [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
+// [custom]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 type CheckResourceAttrWithFunc func(value string) error
 
 // TestCheckResourceAttrWith ensures a value stored in state for the
@@ -1413,23 +1380,20 @@ type CheckResourceAttrWithFunc func(value string) error
 // if it was found in the state. The function must return an error for the
 // check to fail, or `nil` to succeed.
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-int statecheck.ExpectKnownValue state check in combination
-// with a custom knownvalue.Check instead.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
+// Use the built-int [statecheck.ExpectKnownValue] state check in combination
+// with a [custom] [knownvalue.Check] instead.
 // TestCheckResourceAttrWith function will be removed in the next major version.
 //
-// The following is an example of using statecheck.ExpectKnownValue in combination
-// with a custom knownvalue.Check to replicate the behaviour of TestCheckResourceAttrWith.
+// The following is an example of using [statecheck.ExpectKnownValue] in combination
+// with a [custom] [knownvalue.Check] to replicate the behaviour of TestCheckResourceAttrWith.
 //
 //	package example_test
 //
 //	import (
-//		"fmt"
-//		"strings"
 //		"testing"
 //
 //		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-//		"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 //		"github.com/hashicorp/terraform-plugin-testing/statecheck"
 //		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 //	)
@@ -1441,14 +1405,12 @@ type CheckResourceAttrWithFunc func(value string) error
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					Config: `resource "test_resource" "one" {
-//		           string_attribute = "string"
-//		         }
-//		         `,
+//					// Example resource containing a computed string attribute named "computed_attribute"
+//					Config: `resource "test_resource" "one" {}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
-//							tfjsonpath.New("string_attribute"),
+//							tfjsonpath.New("computed_attribute"),
 //							StringContains("tri")),
 //					},
 //				},
@@ -1456,11 +1418,7 @@ type CheckResourceAttrWithFunc func(value string) error
 //		})
 //	}
 //
-// [Check]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check
-// [Custom Known Value Checks]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
-// [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
+// [custom]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 func TestCheckResourceAttrWith(name, key string, checkValueFunc CheckResourceAttrWithFunc) TestCheckFunc {
 	return checkIfIndexesIntoTypeSet(key, func(s *terraform.State) error {
 		is, err := primaryInstanceState(s, name)
@@ -1514,11 +1472,11 @@ func TestCheckResourceAttrWith(name, key string, checkValueFunc CheckResourceAtt
 // attribute directly is not supported. Use TestCheckResourceAttr with
 // the special .# or .% key syntax for those situations instead.
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-in statecheck.ExpectNoValueExists instead.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
+// Use the built-in [statecheck.ExpectNoValueExists] instead.
 // TestCheckNoResourceAttr function will be removed in the next major version.
 //
-// The following is an example of using statecheck.ExpectNoValueExists to
+// The following is an example of using [statecheck.ExpectNoValueExists] to
 // replicate the behaviour of TestCheckNoResourceAttr.
 //
 //	package example_test
@@ -1538,10 +1496,8 @@ func TestCheckResourceAttrWith(name, key string, checkValueFunc CheckResourceAtt
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					Config: `resource "test_resource" "one" {
-//		          bool_attribute = true
-//		        }
-//		        `,
+//					// Example resource which does not contain an attribute named "does_not_exist"
+//					Config: `resource "test_resource" "one" {}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectNoValueExists(
 //							"test_resource.one",
@@ -1552,10 +1508,6 @@ func TestCheckResourceAttrWith(name, key string, checkValueFunc CheckResourceAtt
 //			},
 //		})
 //	}
-//
-// [ExpectNoValueExists]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectNoValueExists
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 func TestCheckNoResourceAttr(name, key string) TestCheckFunc {
 	return checkIfIndexesIntoTypeSet(key, func(s *terraform.State) error {
 		is, err := primaryInstanceState(s, name)
@@ -1661,24 +1613,21 @@ func testCheckNoResourceAttr(is *terraform.InstanceState, name string, key strin
 // regular expression is supported by the Go regular expression handlers during
 // compilation.
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-in statecheck.ExpectKnownValue state check in combination
-// with a custom knownvalue.Check instead.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
+// Use the built-in [statecheck.ExpectKnownValue] state check in combination
+// with a [custom] [knownvalue.Check] instead.
 // TestMatchResourceAttr function will be removed in the next major version.
 //
-// The following is an example of using statecheck.ExpectKnownValue
-// in combination with a custom knownvalue.Check to replicate the behaviour of
+// The following is an example of using [statecheck.ExpectKnownValue]
+// in combination with a [custom] [knownvalue.Check] to replicate the behaviour of
 // TestMatchResourceAttr.
 //
 //	package example_test
 //
 //	import (
-//		"fmt"
-//		"strings"
 //		"testing"
 //
 //		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-//		"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 //		"github.com/hashicorp/terraform-plugin-testing/statecheck"
 //		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 //	)
@@ -1690,14 +1639,12 @@ func testCheckNoResourceAttr(is *terraform.InstanceState, name string, key strin
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					Config: `resource "test_resource" "one" {
-//		           string_attribute = "string"
-//		         }
-//		         `,
+//					// Example resource containing a computed string attribute named "computed_attribute"
+//					Config: `resource "test_resource" "one" {}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
-//							tfjsonpath.New("string_attribute"),
+//							tfjsonpath.New("computed_attribute"),
 //							StringContains("tri")),
 //					},
 //				},
@@ -1705,11 +1652,7 @@ func testCheckNoResourceAttr(is *terraform.InstanceState, name string, key strin
 //		})
 //	}
 //
-// [Check]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check
-// [Custom Known Value Checks]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
-// [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
+// [custom]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 func TestMatchResourceAttr(name, key string, r *regexp.Regexp) TestCheckFunc {
 	return checkIfIndexesIntoTypeSet(key, func(s *terraform.State) error {
 		is, err := primaryInstanceState(s, name)
@@ -1763,12 +1706,12 @@ func testMatchResourceAttr(is *terraform.InstanceState, name string, key string,
 // Refer to the TestCheckResourceAttr documentation for more information about
 // setting the name, key, and value parameters.
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-in statecheck.ExpectKnownValue state check in combination
-// with types implementing knownvalue.Check instead.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
+// Use the built-in [statecheck.ExpectKnownValue] state check in combination
+// with types implementing [knownvalue.Check] instead.
 // TestCheckResourceAttrPtr function will be removed in the next major version.
 //
-// The following is an example of using statecheck.ExpectKnownValue
+// The following is an example of using [statecheck.ExpectKnownValue]
 // to replicate the behaviour of TestCheckResourceAttrPtr.
 //
 //	package example_test
@@ -1792,15 +1735,13 @@ func testMatchResourceAttr(is *terraform.InstanceState, name string, key string,
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					Config: `resource "test_resource" "one" {
-//		          bool_attribute = true
-//		        }
-//		        `,
+//					// Example resource containing a computed boolean attribute named "computed_attribute"
+//					Config: `resource "test_resource" "one" {}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						AlterValue(testBool),
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
-//							tfjsonpath.New("bool_attribute"),
+//							tfjsonpath.New("computed_attribute"),
 //							knownvalue.Bool(*testBool),
 //						),
 //					},
@@ -1823,11 +1764,6 @@ func testMatchResourceAttr(is *terraform.InstanceState, name string, key string,
 //
 //		return mutate{}
 //	}
-//
-// [Check]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check
-// [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 func TestCheckResourceAttrPtr(name string, key string, value *string) TestCheckFunc {
 	return func(s *terraform.State) error {
 		return TestCheckResourceAttr(name, key, *value)(s)
@@ -1884,10 +1820,10 @@ func TestCheckModuleResourceAttrPtr(mp []string, name string, key string, value 
 //   - .#: Number of elements in list or set.
 //   - .%: Number of elements in map.
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
 // TestCheckResourceAttrPair has been deprecated without replacement. Please
 // use the GitHub issue [Deprecation of Built-In TestCheckFunc Implementations for Checking Pairs of Values]
-// to indicate if you have a use-case for a built-in ConfigStateChecks state check
+// to indicate if you have a use-case for a built-in [TestStep.ConfigStateChecks] state check
 // function that would replicate the behaviour of TestCheckResourceAttrPair.
 //
 // [Deprecation of Built-In TestCheckFunc Implementations for Checking Pairs of Values]: https://github.com/hashicorp/terraform-plugin-testing/issues/282
@@ -1986,12 +1922,12 @@ func testCheckResourceAttrPair(isFirst *terraform.InstanceState, nameFirst strin
 
 // TestCheckOutput checks an output in the Terraform configuration
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-in statecheck.ExpectKnownOutputValue, and
-// statecheck.ExpectKnownOutputValueAtPath state checks instead.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
+// Use the built-in [statecheck.ExpectKnownOutputValue], and
+// [statecheck.ExpectKnownOutputValueAtPath] state checks instead.
 // TestCheckOutput function will be removed in the next major version.
 //
-// The following is an example of using statecheck.ExpectKnownOutputValue
+// The following is an example of using [statecheck.ExpectKnownOutputValue]
 // to replicate the behaviour of TestCheckOutput.
 //
 //	package example_test
@@ -2011,17 +1947,15 @@ func testCheckResourceAttrPair(isFirst *terraform.InstanceState, nameFirst strin
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					Config: `resource "test_resource" "one" {
-//		          bool_attribute = true
-//		        }
+//					// Example resource containing a computed boolean attribute named "computed_attribute"
+//					Config: `resource "test_resource" "one" {}
 //
-//		        output bool_output {
-//		          value = test_resource.one.bool_attribute
-//		        }
-//		        `,
+//			        output computed_output {
+//			          value = test_resource.one.computed_attribute
+//			        }`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownOutputValue(
-//							"bool_output",
+//							"computed_output",
 //							knownvalue.Bool(true),
 //						),
 //					},
@@ -2051,18 +1985,17 @@ func testCheckResourceAttrPair(isFirst *terraform.InstanceState, nameFirst strin
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					Config: `resource "test_resource" "one" {
-//		          bool_attribute = true
-//		        }
+//					// Example resource containing a computed boolean attribute named "computed_attribute"
+//					Config: `resource "test_resource" "one" {}
 //
-//		        output test_resource_one_output {
-//		          value = test_resource.one
-//		        }
-//		        `,
+//			        output test_resource_one_output {
+//			          value = test_resource.one
+//			        }
+//			        `,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownOutputValueAtPath(
 //							"test_resource_one_output",
-//							tfjsonpath.New("bool_attribute"),
+//							tfjsonpath.New("computed_attribute"),
 //							knownvalue.Bool(true),
 //						),
 //					},
@@ -2070,11 +2003,6 @@ func testCheckResourceAttrPair(isFirst *terraform.InstanceState, nameFirst strin
 //			},
 //		})
 //	}
-//
-// [ExpectKnownOutputValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownOutputValue
-// [ExpectKnownOutputValueAtPath]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownOutputValueAtPath
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 func TestCheckOutput(name, value string) TestCheckFunc {
 	return func(s *terraform.State) error {
 		ms := s.RootModule()
@@ -2095,25 +2023,22 @@ func TestCheckOutput(name, value string) TestCheckFunc {
 	}
 }
 
-// Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-in statecheck.ExpectKnownOutputValue, and
-// statecheck.ExpectKnownOutputValueAtPath state checks, can be used in
-// combination with a custom knownvalue.Check instead.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
+// Use the built-in [statecheck.ExpectKnownOutputValue], and
+// [statecheck.ExpectKnownOutputValueAtPath] state checks, can be used in
+// combination with a [custom] [knownvalue.Check] instead.
 // TestMatchOutput function will be removed in the next major version.
 //
-// The following is an example of using statecheck.ExpectKnownOutputValueAtPath
-// in combination with a custom knownvalue.Check to replicate the behaviour of
+// The following is an example of using [statecheck.ExpectKnownOutputValueAtPath]
+// in combination with a [custom] [knownvalue.Check] to replicate the behaviour of
 // TestMatchOutput.
 //
 //	package example_test
 //
 //	import (
-//		"fmt"
-//		"strings"
 //		"testing"
 //
 //		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-//		"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 //		"github.com/hashicorp/terraform-plugin-testing/statecheck"
 //		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 //	)
@@ -2125,18 +2050,16 @@ func TestCheckOutput(name, value string) TestCheckFunc {
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					Config: `resource "test_resource" "one" {
-//							string_attribute = "string"
-//						}
+//					// Example resource containing a computed string attribute named "computed_attribute"
+//					Config: `resource "test_resource" "one" {}
 //
-//						output test_resource_one_output {
-//							value = test_resource.one
-//						}
-//						`,
+//							output test_resource_one_output {
+//								value = test_resource.one
+//							}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownOutputValueAtPath(
 //							"test_resource_one_output",
-//							tfjsonpath.New("string_attribute"),
+//							tfjsonpath.New("computed_attribute"),
 //							StringContains("str")),
 //					},
 //				},
@@ -2144,12 +2067,7 @@ func TestCheckOutput(name, value string) TestCheckFunc {
 //		})
 //	}
 //
-// [Check]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check
-// [Custom Known Value Checks]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
-// [ExpectKnownOutputValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownOutputValue
-// [ExpectKnownOutputValueAtPath]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownOutputValueAtPath
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
+// [custom]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 func TestMatchOutput(name string, r *regexp.Regexp) TestCheckFunc {
 	return func(s *terraform.State) error {
 		ms := s.RootModule()

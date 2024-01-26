@@ -38,17 +38,16 @@ func TestExpectKnownOutputValue_CheckState_Bool(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "test_resource" "one" {
-					bool_attribute = true
-				}
+            	// Example resource containing a computed boolean attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}
 
-				output bool_output {
-					value = test_resource.one.bool_attribute
+				output computed_output {
+					value = test_resource.one.computed_attribute
 				}
 				`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValue(
-						"bool_output",
+						"computed_output",
 						knownvalue.Bool(true),
 					),
 				},
@@ -58,11 +57,7 @@ func TestExpectKnownOutputValue_CheckState_Bool(t *testing.T) {
 }
 ```
 
-<<<<<<< HEAD
 ## `ExpectKnownOutputValueAtPath` State Check
-=======
-## Example using `statecheck.ExpectKnownOutputValueAtPath`
->>>>>>> origin/main
 
 The [`statecheck.ExpectKnownOutputValueAtPath(address, path, value)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownOutputValueAtPath) state check verifies that a specific output value at a defined path has a known type, and value.
 
@@ -87,9 +82,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Bool(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "test_resource" "one" {
-					bool_attribute = true
-				}
+            	// Example resource containing a computed boolean attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}
 
 				output test_resource_one_output {
 					value = test_resource.one
@@ -98,7 +92,7 @@ func TestExpectKnownOutputValueAtPath_CheckState_Bool(t *testing.T) {
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",
-						tfjsonpath.New("bool_attribute"),
+						tfjsonpath.New("computed_attribute"),
 						knownvalue.Bool(true),
 					),
 				},

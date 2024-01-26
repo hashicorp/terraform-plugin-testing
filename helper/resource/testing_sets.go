@@ -58,13 +58,13 @@ const (
 // you were not intending to in the set. Provide the most complete mapping of
 // attributes possible to be sure the unique element exists.
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-in statecheck.ExpectKnownValue state check in combination
-// with knownvalue.SetExact or knownvalue.SetPartial instead.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
+// Use the built-in [statecheck.ExpectKnownValue] state check in combination
+// with [knownvalue.SetExact] or [knownvalue.SetPartial] instead.
 // TestCheckTypeSetElemNestedAttrs function will be removed in the next major version.
 //
-// The following is an example of using statecheck.ExpectKnownValue in combination
-// with knownvalue.SetPartial to replicate the behaviour of TestCheckTypeSetElemNestedAttrs.
+// The following is an example of using [statecheck.ExpectKnownValue] in combination
+// with [knownvalue.SetPartial] to replicate the behaviour of TestCheckTypeSetElemNestedAttrs.
 //
 //	package example_test
 //
@@ -84,17 +84,12 @@ const (
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					Config: `resource "test_resource" "one" {
-//						set_attribute = [
-//							"value1",
-//							"value2"
-//						]
-//					}
-//					`,
+//					// Example resource containing a computed set attribute named "computed_attribute"
+//					Config: `resource "test_resource" "one" {}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
-//							tfjsonpath.New("set_attribute"),
+//							tfjsonpath.New("computed_attribute"),
 //							knownvalue.SetPartial([]knownvalue.Check{
 //								knownvalue.StringExact("value2"),
 //							}),
@@ -104,12 +99,6 @@ const (
 //			},
 //		})
 //	}
-//
-// [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
-// [SetExact]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetExact
-// [SetPartial]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetPartial
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string) TestCheckFunc {
 	return func(s *terraform.State) error {
 		is, err := primaryInstanceState(s, name)
@@ -183,21 +172,19 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 // you were not intending to in the set. Provide the most complete mapping of
 // attributes possible to be sure the unique element exists.
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-in statecheck.ExpectKnownValue state check, can be used in combination
-// with knownvalue.ListExact, knownvalue.ListPartial, knownvalue.SetExact, or
-// knownvalue.SetPartial, with nested custom knownvalue.Check instead.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
+// Use the built-in [statecheck.ExpectKnownValue] state check, can be used in combination
+// with [knownvalue.ListExact], [knownvalue.ListPartial], [knownvalue.SetExact], or
+// [knownvalue.SetPartial], with nested [custom] [knownvalue.Check] instead.
 // TestMatchTypeSetElemNestedAttrs function will be removed in the next major version.
 //
-// The following is an example of using statecheck.ExpectKnownValue in combination
-// with knownvalue.SetExact, with a nested custom knownvalue.Check to replicate
+// The following is an example of using [statecheck.ExpectKnownValue] in combination
+// with [knownvalue.SetExact], with a nested [custom] [knownvalue.Check] to replicate
 // the behaviour of TestCheckTypeSetElemAttr.
 //
 //	package example_test
 //
 //	import (
-//		"fmt"
-//		"strings"
 //		"testing"
 //
 //		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -213,25 +200,18 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					Config: `resource "test_resource" "one" {
-//						set_nested_block {
-//							set_nested_block_attribute = "string"
-//						}
-//						set_nested_block {
-//							set_nested_block_attribute = "girts"
-//						}
-//					}
-//					`,
+//					// Example resource containing a set nested block name "block" which contains a computed string attribute named "computed_attribute"
+//					Config: `resource "test_resource" "one" {}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
-//							tfjsonpath.New("set_nested_block"),
+//							tfjsonpath.New("block"),
 //							knownvalue.SetExact([]knownvalue.Check{
 //								knownvalue.MapExact(map[string]knownvalue.Check{
-//									"set_nested_block_attribute": StringContains("str"),
+//									"computed_attribute": StringContains("str"),
 //								}),
 //								knownvalue.MapExact(map[string]knownvalue.Check{
-//									"set_nested_block_attribute": StringContains("rts"),
+//									"computed_attribute": StringContains("rts"),
 //								}),
 //							}),
 //						),
@@ -241,14 +221,7 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 //		})
 //	}
 //
-// [Custom Known Value Checks]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
-// [ListExact]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListExact
-// [ListPartial]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#ListPartial
-// [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
-// [SetExact]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetExact
-// [SetPartial]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetPartial
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
+// [custom]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 func TestMatchTypeSetElemNestedAttrs(name, attr string, values map[string]*regexp.Regexp) TestCheckFunc {
 	return func(s *terraform.State) error {
 		is, err := primaryInstanceState(s, name)
@@ -321,13 +294,13 @@ func TestMatchTypeSetElemNestedAttrs(name, attr string, values map[string]*regex
 //   - Float/Integer: Stringified number, such as "1.2" or "123".
 //   - String: No conversion necessary.
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-in statecheck.ExpectKnownValue state check in combination
-// with knownvalue.SetExact or knownvalue.SetPartial instead.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
+// Use the built-in [statecheck.ExpectKnownValue] state check in combination
+// with [knownvalue.SetExact] or [knownvalue.SetPartial] instead.
 // TestCheckTypeSetElemAttr function will be removed in the next major version.
 //
-// The following is an example of using statecheck.ExpectKnownValue in combination
-// with knownvalue.SetExact to replicate the behaviour of TestCheckTypeSetElemAttr.
+// The following is an example of using [statecheck.ExpectKnownValue] in combination
+// with [knownvalue.SetExact] to replicate the behaviour of TestCheckTypeSetElemAttr.
 //
 //	package example_test
 //
@@ -347,17 +320,12 @@ func TestMatchTypeSetElemNestedAttrs(name, attr string, values map[string]*regex
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					Config: `resource "test_resource" "one" {
-//		          set_attribute = [
-//		            "value1",
-//		            "value2"
-//		          ]
-//		        }
-//		        `,
+//					// Example resource containing a computed set attribute named "computed_attribute"
+//					Config: `resource "test_resource" "one" {}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
-//							tfjsonpath.New("set_attribute"),
+//							tfjsonpath.New("computed_attribute"),
 //							knownvalue.SetExact([]knownvalue.Check{
 //								knownvalue.StringExact("value2"),
 //								knownvalue.StringExact("value1"),
@@ -368,12 +336,6 @@ func TestMatchTypeSetElemNestedAttrs(name, attr string, values map[string]*regex
 //			},
 //		})
 //	}
-//
-// [ExpectKnownValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectKnownValue
-// [SetExact]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetExact
-// [SetPartial]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#SetPartial
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
 func TestCheckTypeSetElemAttr(name, attr, value string) TestCheckFunc {
 	return func(s *terraform.State) error {
 		is, err := primaryInstanceState(s, name)
@@ -417,7 +379,7 @@ func TestCheckTypeSetElemAttr(name, attr, value string) TestCheckFunc {
 // a list or set. The sentinel value can be used for each list or set index, if
 // there are multiple lists or sets in the attribute path.
 //
-// Deprecated: State checks have been superseded by ConfigStateChecks.
+// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
 // TestCheckTypeSetElemAttrPair has been deprecated without replacement. Please
 // use the GitHub issue [Deprecation of Built-In TestCheckFunc Implementations for Checking Pairs of Values]
 // to indicate if you have a use-case for a built-in ConfigStateChecks state check
