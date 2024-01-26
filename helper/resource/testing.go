@@ -1885,53 +1885,12 @@ func TestCheckModuleResourceAttrPtr(mp []string, name string, key string, value 
 //   - .%: Number of elements in map.
 //
 // Deprecated: State checks have been superseded by ConfigStateChecks.
-// Use the built-in statecheck.ExpectMatchingValues state check instead.
-// TestCheckResourceAttrPair function will be removed in the next major version.
+// TestCheckResourceAttrPair has been deprecated without replacement. Please
+// use the GitHub issue [Deprecation of Built-In TestCheckFunc Implementations for Checking Pairs of Values]
+// to indicate if you have a use-case for a built-in ConfigStateChecks state check
+// function that would replicate the behaviour of TestCheckResourceAttrPair.
 //
-// The following is an example of using statecheck.ExpectMatchingValues
-// to replicate the behaviour of TestCheckResourceAttrPair.
-//
-//	package example_test
-//
-//	import (
-//		"testing"
-//
-//		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-//		"github.com/hashicorp/terraform-plugin-testing/statecheck"
-//		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
-//	)
-//
-//	func TestExpectMatchingValues_CheckState_AttributeValuesEqual_Bool(t *testing.T) {
-//		t.Parallel()
-//
-//		resource.Test(t, resource.TestCase{
-//			// Provider definition omitted.
-//
-//			Steps: []resource.TestStep{
-//				{
-//					Config: `resource "test_resource" "one" {
-//		          bool_attribute = true
-//		        }
-//
-//		        resource "test_resource" "two" {
-//		          bool_attribute = true
-//		        }`,
-//					ConfigStateChecks: []statecheck.StateCheck{
-//						statecheck.ExpectMatchingValues(
-//							"test_resource.one",
-//							tfjsonpath.New("bool_attribute"),
-//							"test_resource.two",
-//							tfjsonpath.New("bool_attribute"),
-//						),
-//					},
-//				},
-//			},
-//		})
-//	}
-//
-// [ExpectMatchingValues]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectMatchingValues
-// [StateCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#StateCheck
-// [statecheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck
+// [Deprecation of Built-In TestCheckFunc Implementations for Checking Pairs of Values]: https://github.com/hashicorp/terraform-plugin-testing/issues/282
 func TestCheckResourceAttrPair(nameFirst, keyFirst, nameSecond, keySecond string) TestCheckFunc {
 	return checkIfIndexesIntoTypeSetPair(keyFirst, keySecond, func(s *terraform.State) error {
 		isFirst, err := primaryInstanceState(s, nameFirst)

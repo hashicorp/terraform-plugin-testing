@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'statecheck: Added `ExpectMatchingValues built-in state check, which asserts
-  that the given attributes have matching values'
-time: 2024-01-17T16:59:25.504116Z
-custom:
-  Issue: "276"

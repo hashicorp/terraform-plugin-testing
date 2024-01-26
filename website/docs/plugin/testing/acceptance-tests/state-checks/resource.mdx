@@ -12,7 +12,6 @@ The `terraform-plugin-testing` module provides a package [`statecheck`](https://
 | Check                                                                                                                       | Description                                                                                                                                                                              |
 |-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`ExpectKnownValue`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#expectknownvalue-state-check)         | Asserts the specified attribute at the given managed resource, or data source, has the specified type, and value.                                                                        |
-| [`ExpectMatchingValues`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#expectmatchingvalues-state-check) | Asserts the specified attributes at the given managed resources have matching values.                                                                                                    |
 | [`ExpectNoValueExists`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#expectnovalueexists-state-check)   | Asserts the specified attribute at the given managed resource, or data source, does not exist.                                                                                           |
 | [`ExpectSensitiveValue`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#expectsensitivevalue-state-check) | Asserts the specified attribute at the given managed resource, or data source, has a sensitive value.                                                                                    |
 
@@ -50,50 +49,6 @@ func TestExpectKnownValue_CheckState_Bool(t *testing.T) {
 						"test_resource.one",
 						tfjsonpath.New("bool_attribute"),
 						knownvalue.Bool(true),
-					),
-				},
-			},
-		},
-	})
-}
-```
-
-## `ExpectMatchingValues` State Check
-
-The [`statecheck.ExpectMatchingValues(addressOne, pathOne, addressTwo, pathTwo)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectMatchingValues) state check provides a basis for asserting that the specified resource attributes have matching values.
-
-```go
-package example_test
-
-import (
-	"testing"
-
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/statecheck"
-	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
-)
-
-func TestExpectMatchingValues_CheckState_AttributeValuesEqual_Bool(t *testing.T) {
-	t.Parallel()
-
-	resource.Test(t, resource.TestCase{
-		// Provider definition omitted.
-
-		Steps: []resource.TestStep{
-			{
-				Config: `resource "test_resource" "one" {
-					bool_attribute = true
-				}
-
-				resource "test_resource" "two" {
-					bool_attribute = true
-				}`,
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectMatchingValues(
-						"test_resource.one",
-						tfjsonpath.New("bool_attribute"),
-						"test_resource.two",
-						tfjsonpath.New("bool_attribute"),
 					),
 				},
 			},
