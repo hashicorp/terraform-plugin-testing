@@ -12,7 +12,6 @@ The `terraform-plugin-testing` module provides a package [`statecheck`](https://
 | Check                                                                                                                       | Description                                                                                                                                                                              |
 |-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`ExpectKnownValue`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#expectknownvalue-state-check)         | Asserts the specified attribute at the given managed resource, or data source, has the specified type, and value.                                                                        |
-| [`ExpectNoValueExists`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#expectnovalueexists-state-check)   | Asserts the specified attribute at the given managed resource, or data source, does not exist.                                                                                           |
 | [`ExpectSensitiveValue`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#expectsensitivevalue-state-check) | Asserts the specified attribute at the given managed resource, or data source, has a sensitive value.                                                                                    |
 
 ## `ExpectKnownValue` State Check
@@ -47,42 +46,6 @@ func TestExpectKnownValue_CheckState_Bool(t *testing.T) {
 						"test_resource.one",
 						tfjsonpath.New("computed_attribute"),
 						knownvalue.Bool(true),
-					),
-				},
-			},
-		},
-	})
-}
-```
-
-## `ExpectNoValueExists` State Check
-
-The [`statecheck.ExpectNoValueExists(address, path)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/statecheck#ExpectNoValueExists) state check provides a basis for asserting that a specific resource attribute does not exist.
-
-```go
-package example_test
-
-import (
-	"testing"
-
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/statecheck"
-	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
-)
-
-func TestExpectNoValueExists_CheckState_AttributeNotFound(t *testing.T) {
-	t.Parallel()
-
-	resource.Test(t, resource.TestCase{
-		// Provider definition omitted.
-		Steps: []resource.TestStep{
-			{
-	            // Example resource that does not contain an attribute named "does_not_exist"
-				Config: `resource "test_resource" "one" {}`,
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectNoValueExists(
-						"test_resource.one",
-						tfjsonpath.New("does_not_exist"),
 					),
 				},
 			},

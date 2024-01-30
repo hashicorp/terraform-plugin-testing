@@ -1475,10 +1475,10 @@ func TestCheckResourceAttrWith(name, key string, checkValueFunc CheckResourceAtt
 // the special .# or .% key syntax for those situations instead.
 //
 // Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
-// Use the built-in [statecheck.ExpectNoValueExists] instead.
+// Use the built-in [statecheck.ExpectKnownValue] with [knownvalue.Null] instead.
 // TestCheckNoResourceAttr function will be removed in the next major version.
 //
-// The following is an example of using [statecheck.ExpectNoValueExists] to
+// The following is an example of using [statecheck.ExpectKnownValue] with [knownvalue.Null] to
 // replicate the behaviour of TestCheckNoResourceAttr.
 //
 //	package example_test
@@ -1491,19 +1491,20 @@ func TestCheckResourceAttrWith(name, key string, checkValueFunc CheckResourceAtt
 //		"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 //	)
 //
-//	func TestExpectNoValueExists_CheckState_AttributeNotFound(t *testing.T) {
+//	func TestExpectKnownValue_CheckState_AttributeNull(t *testing.T) {
 //		t.Parallel()
 //
 //		resource.Test(t, resource.TestCase{
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					// Example resource which does not contain an attribute named "does_not_exist"
+//					// Example resource containing a computed attribute named "computed_attribute" that has a null value
 //					Config: `resource "test_resource" "one" {}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
-//						statecheck.ExpectNoValueExists(
+//						statecheck.ExpectKnownValue(
 //							"test_resource.one",
-//							tfjsonpath.New("does_not_exist"),
+//							tfjsonpath.New("computed_attribute"),
+//							knownvalue.Null(),
 //						),
 //					},
 //				},
