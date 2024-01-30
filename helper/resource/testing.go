@@ -962,7 +962,8 @@ func testResource(c TestStep, state *terraform.State) (*terraform.ResourceState,
 // To aggregrate all errors, use ComposeAggregateTestCheckFunc instead.
 //
 // Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
-// This function will be removed in the next major version.
+// This function is unnecessary with ConfigStateChecks as all checks will be ran and therefore
+// this function will be removed in the next major version.
 func ComposeTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 	return func(s *terraform.State) error {
 		for i, f := range fs {
@@ -985,7 +986,8 @@ func ComposeTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 // TestCheckFuncs and aggregates failures.
 //
 // Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
-// This function will be removed in the next major version.
+// This function is unnecessary with ConfigStateChecks as all checks will be ran and therefore
+// this function will be removed in the next major version.
 func ComposeAggregateTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 	return func(s *terraform.State) error {
 		var result []error
