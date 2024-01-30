@@ -1307,11 +1307,11 @@ func testCheckResourceAttr(is *terraform.InstanceState, name string, key string,
 //
 // Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
 // Use the built-int [statecheck.ExpectKnownValue] state check in combination
-// with a [custom] [knownvalue.Check] instead.
+// with a [knownvalue.Check] instead.
 // CheckResourceAttrWithFunc will be removed in the next major version.
 //
 // The following is an example of using [statecheck.ExpectKnownValue] in combination
-// with a [custom] [knownvalue.Check] to replicate the behaviour of TestCheckResourceAttrWith.
+// with [knownvalue.StringRegularExpression] to replicate the behaviour of TestCheckResourceAttrWith.
 //
 //	package example_test
 //
@@ -1336,14 +1336,12 @@ func testCheckResourceAttr(is *terraform.InstanceState, name string, key string,
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("computed_attribute"),
-//							StringContains("tri")),
+//							knownvalue.StringRegularExpression(regexp.MustCompile("str")),
 //					},
 //				},
 //			},
 //		})
 //	}
-//
-// [custom]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 type CheckResourceAttrWithFunc func(value string) error
 
 // TestCheckResourceAttrWith ensures a value stored in state for the
@@ -1384,11 +1382,11 @@ type CheckResourceAttrWithFunc func(value string) error
 //
 // Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
 // Use the built-int [statecheck.ExpectKnownValue] state check in combination
-// with a [custom] [knownvalue.Check] instead.
+// with a [knownvalue.Check] instead.
 // TestCheckResourceAttrWith function will be removed in the next major version.
 //
 // The following is an example of using [statecheck.ExpectKnownValue] in combination
-// with a [custom] [knownvalue.Check] to replicate the behaviour of TestCheckResourceAttrWith.
+// with [knownvalue.StringRegularExpression] to replicate the behaviour of TestCheckResourceAttrWith.
 //
 //	package example_test
 //
@@ -1413,14 +1411,12 @@ type CheckResourceAttrWithFunc func(value string) error
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("computed_attribute"),
-//							StringContains("tri")),
+//							knownvalue.StringRegularExpression(regexp.MustCompile("str")),
 //					},
 //				},
 //			},
 //		})
 //	}
-//
-// [custom]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 func TestCheckResourceAttrWith(name, key string, checkValueFunc CheckResourceAttrWithFunc) TestCheckFunc {
 	return checkIfIndexesIntoTypeSet(key, func(s *terraform.State) error {
 		is, err := primaryInstanceState(s, name)
@@ -1618,11 +1614,11 @@ func testCheckNoResourceAttr(is *terraform.InstanceState, name string, key strin
 //
 // Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
 // Use the built-in [statecheck.ExpectKnownValue] state check in combination
-// with a [custom] [knownvalue.Check] instead.
+// with a [knownvalue.Check] instead.
 // TestMatchResourceAttr function will be removed in the next major version.
 //
 // The following is an example of using [statecheck.ExpectKnownValue]
-// in combination with a [custom] [knownvalue.Check] to replicate the behaviour of
+// in combination with [knownvalue.StringRegularExpression] to replicate the behaviour of
 // TestMatchResourceAttr.
 //
 //	package example_test
@@ -1648,14 +1644,12 @@ func testCheckNoResourceAttr(is *terraform.InstanceState, name string, key strin
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("computed_attribute"),
-//							StringContains("tri")),
+//							knownvalue.StringRegularExpression(regexp.MustCompile("str")),
 //					},
 //				},
 //			},
 //		})
 //	}
-//
-// [custom]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 func TestMatchResourceAttr(name, key string, r *regexp.Regexp) TestCheckFunc {
 	return checkIfIndexesIntoTypeSet(key, func(s *terraform.State) error {
 		is, err := primaryInstanceState(s, name)
@@ -2029,11 +2023,11 @@ func TestCheckOutput(name, value string) TestCheckFunc {
 // Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
 // Use the built-in [statecheck.ExpectKnownOutputValue], and
 // [statecheck.ExpectKnownOutputValueAtPath] state checks, can be used in
-// combination with a [custom] [knownvalue.Check] instead.
+// combination with a [knownvalue.Check] instead.
 // TestMatchOutput function will be removed in the next major version.
 //
 // The following is an example of using [statecheck.ExpectKnownOutputValueAtPath]
-// in combination with a [custom] [knownvalue.Check] to replicate the behaviour of
+// in combination with [knownvalue.StringRegularExpression] to replicate the behaviour of
 // TestMatchOutput.
 //
 //	package example_test
@@ -2063,14 +2057,12 @@ func TestCheckOutput(name, value string) TestCheckFunc {
 //						statecheck.ExpectKnownOutputValueAtPath(
 //							"test_resource_one_output",
 //							tfjsonpath.New("computed_attribute"),
-//							StringContains("str")),
+//							knownvalue.StringRegularExpression(regexp.MustCompile("str")),
 //					},
 //				},
 //			},
 //		})
 //	}
-//
-// [custom]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 func TestMatchOutput(name string, r *regexp.Regexp) TestCheckFunc {
 	return func(s *terraform.State) error {
 		ms := s.RootModule()

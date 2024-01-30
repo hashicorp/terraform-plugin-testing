@@ -175,11 +175,11 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 // Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
 // Use the built-in [statecheck.ExpectKnownValue] state check, can be used in combination
 // with [knownvalue.ListExact], [knownvalue.ListPartial], [knownvalue.SetExact], or
-// [knownvalue.SetPartial], with nested [custom] [knownvalue.Check] instead.
+// [knownvalue.SetPartial], with nested [knownvalue.Check] instead.
 // TestMatchTypeSetElemNestedAttrs function will be removed in the next major version.
 //
 // The following is an example of using [statecheck.ExpectKnownValue] in combination
-// with [knownvalue.SetExact], with a nested [custom] [knownvalue.Check] to replicate
+// with [knownvalue.SetExact], with a nested [knownvalue.StringRegularExpression] to replicate
 // the behaviour of TestCheckTypeSetElemAttr.
 //
 //	package example_test
@@ -208,10 +208,10 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 //							tfjsonpath.New("block"),
 //							knownvalue.SetExact([]knownvalue.Check{
 //								knownvalue.MapExact(map[string]knownvalue.Check{
-//									"computed_attribute": StringContains("str"),
+//									"computed_attribute": knownvalue.StringRegularExpression(regexp.MustCompile("str")),
 //								}),
 //								knownvalue.MapExact(map[string]knownvalue.Check{
-//									"computed_attribute": StringContains("rts"),
+//									"computed_attribute": knownvalue.StringRegularExpression(regexp.MustCompile("rts")),
 //								}),
 //							}),
 //						),
@@ -220,8 +220,6 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 //			},
 //		})
 //	}
-//
-// [custom]: https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/known-value-checks/custom
 func TestMatchTypeSetElemNestedAttrs(name, attr string, values map[string]*regexp.Regexp) TestCheckFunc {
 	return func(s *terraform.State) error {
 		is, err := primaryInstanceState(s, name)
