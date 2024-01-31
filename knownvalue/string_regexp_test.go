@@ -23,7 +23,7 @@ func TestStringRegularExpression_CheckValue(t *testing.T) {
 	}{
 		"zero-nil": {
 			self:          knownvalue.StringRegularExpression(regexp.MustCompile("")),
-			expectedError: fmt.Errorf("expected string value for StringExact check, got: <nil>"),
+			expectedError: fmt.Errorf("expected string value for StringRegularExpression check, got: <nil>"),
 		},
 		"zero-other": {
 			self:  knownvalue.StringRegularExpression(regexp.MustCompile("")),
