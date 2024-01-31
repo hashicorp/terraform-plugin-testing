@@ -33,27 +33,27 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 func TestExpectKnownOutputValue_CheckPlan_Bool(t *testing.T) {
 	t.Parallel()
 
-	resource.Test(t, resource.TestCase{
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_8_0),
+		},
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "test_resource" "one" {
-					bool_attribute = true
-				}
-
-				output bool_output {
-					value = test_resource.one.bool_attribute
-				}
-				`,
+				Config: `
+				output "test" {
+					value = provider::example::bool(true)
+				}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValue(
-							"bool_output",
+							"test",
 							knownvalue.Bool(true),
 						),
 					},
@@ -90,18 +90,21 @@ func TestExpectKnownOutputValue_CheckPlan_Bool(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "test_resource" "one" {
-					bool_attribute = true
-				}
+				// Example resource containing a computed boolean attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}
 
-				output bool_output {
-					value = test_resource.one.bool_attribute
+                // Generally, it is not necessary to use an output to test a resource attribute,
+                // the resource attribute should be tested directly instead. This is only shown as
+                // an example.
+				output test {
+					value = test_resource.one
 				}
 				`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectKnownOutputValue(
-							"bool_output",
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test",
+							tfjsonpath.New("computed_attribute"),
 							knownvalue.Bool(true),
 						),
 					},

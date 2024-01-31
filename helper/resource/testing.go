@@ -1935,12 +1935,16 @@ func testCheckResourceAttrPair(isFirst *terraform.InstanceState, nameFirst strin
 //		"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 //		"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 //		"github.com/hashicorp/terraform-plugin-testing/statecheck"
+//		"github.com/hashicorp/terraform-plugin-testing/tfversion"
 //	)
 //
 //	func TestExpectKnownOutputValue_CheckState_Bool(t *testing.T) {
 //		t.Parallel()
 //
 //		resource.Test(t, resource.TestCase{
+//			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+//				tfversion.SkipBelow(tfversion.Version1_8_0),
+//			},
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
