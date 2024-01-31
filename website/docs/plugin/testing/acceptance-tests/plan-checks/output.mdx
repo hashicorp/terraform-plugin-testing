@@ -68,6 +68,8 @@ func TestExpectKnownOutputValue_CheckPlan_Bool(t *testing.T) {
 
 The [`plancheck.ExpectKnownOutputValueAtPath(address, path, value)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectKnownOutputValueAtPath) plan check verifies that a specific output value at a defined path has a known type, and value.
 
+~> **Note**: Prior to Terraform v1.3.0 a planned output is marked as fully unknown if any attribute is unknown.
+
 Refer to [Known Value Checks](/terraform/plugin/testing/acceptance-tests/known-value-checks) for details, and examples of the available [knownvalue.Check](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#Check) types that can be used with the `ExpectKnownOutputValueAtPath` plan check.
 
 ```go
