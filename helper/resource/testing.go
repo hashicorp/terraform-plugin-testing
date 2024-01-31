@@ -1944,17 +1944,12 @@ func testCheckResourceAttrPair(isFirst *terraform.InstanceState, nameFirst strin
 //			// Provider definition omitted.
 //			Steps: []resource.TestStep{
 //				{
-//					// Example resource containing a computed boolean attribute named "computed_attribute"
-//					Config: `resource "test_resource" "one" {}
-//
-//			        output computed_output {
-//			          value = test_resource.one.computed_attribute
-//			        }`,
+//					// Example provider containing a provider-defined function named "bool"
+//					Config: `output "test" {
+//						value = provider::example::bool(true)
+//					}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
-//						statecheck.ExpectKnownOutputValue(
-//							"computed_output",
-//							knownvalue.Bool(true),
-//						),
+//						statecheck.ExpectKnownOutputValue("test", knownvalue.Bool(true)),
 //					},
 //				},
 //			},
@@ -1985,6 +1980,9 @@ func testCheckResourceAttrPair(isFirst *terraform.InstanceState, nameFirst strin
 //					// Example resource containing a computed boolean attribute named "computed_attribute"
 //					Config: `resource "test_resource" "one" {}
 //
+//					// Generally, it is not necessary to use an output to test a resource attribute,
+//					// the resource attribute should be tested directly instead. This is only shown as
+//					// an example.
 //			        output test_resource_one_output {
 //			          value = test_resource.one
 //			        }
@@ -2050,9 +2048,12 @@ func TestCheckOutput(name, value string) TestCheckFunc {
 //					// Example resource containing a computed string attribute named "computed_attribute"
 //					Config: `resource "test_resource" "one" {}
 //
-//							output test_resource_one_output {
-//								value = test_resource.one
-//							}`,
+//					// Generally, it is not necessary to use an output to test a resource attribute,
+//					// the resource attribute should be tested directly instead. This is only shown as
+//					// an example.
+//					output test_resource_one_output {
+//						value = test_resource.one
+//					}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownOutputValueAtPath(
 //							"test_resource_one_output",
