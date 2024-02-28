@@ -58,11 +58,6 @@ const (
 // you were not intending to in the set. Provide the most complete mapping of
 // attributes possible to be sure the unique element exists.
 //
-// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
-// Use the built-in [statecheck.ExpectKnownValue] state check in combination
-// with [knownvalue.SetExact] or [knownvalue.SetPartial] instead.
-// TestCheckTypeSetElemNestedAttrs function will be removed in the next major version.
-//
 // The following is an example of using [statecheck.ExpectKnownValue] in combination
 // with [knownvalue.SetPartial] to replicate the behaviour of TestCheckTypeSetElemNestedAttrs.
 //
@@ -171,12 +166,6 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 // If the values map is not granular enough, it is possible to match an element
 // you were not intending to in the set. Provide the most complete mapping of
 // attributes possible to be sure the unique element exists.
-//
-// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
-// Use the built-in [statecheck.ExpectKnownValue] state check, can be used in combination
-// with [knownvalue.ListExact], [knownvalue.ListPartial], [knownvalue.SetExact], or
-// [knownvalue.SetPartial], with nested [knownvalue.Check] instead.
-// TestMatchTypeSetElemNestedAttrs function will be removed in the next major version.
 //
 // The following is an example of using [statecheck.ExpectKnownValue] in combination
 // with [knownvalue.SetExact], with a nested [knownvalue.StringRegularExpression] to replicate
@@ -292,11 +281,6 @@ func TestMatchTypeSetElemNestedAttrs(name, attr string, values map[string]*regex
 //   - Float/Integer: Stringified number, such as "1.2" or "123".
 //   - String: No conversion necessary.
 //
-// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
-// Use the built-in [statecheck.ExpectKnownValue] state check in combination
-// with [knownvalue.SetExact] or [knownvalue.SetPartial] instead.
-// TestCheckTypeSetElemAttr function will be removed in the next major version.
-//
 // The following is an example of using [statecheck.ExpectKnownValue] in combination
 // with [knownvalue.SetExact] to replicate the behaviour of TestCheckTypeSetElemAttr.
 //
@@ -376,14 +360,6 @@ func TestCheckTypeSetElemAttr(name, attr, value string) TestCheckFunc {
 // attribute. Use the sentinel value '*' to replace the element indexing into
 // a list or set. The sentinel value can be used for each list or set index, if
 // there are multiple lists or sets in the attribute path.
-//
-// Deprecated: State checks using [TestStep.Check] have been superseded by [TestStep.ConfigStateChecks].
-// TestCheckTypeSetElemAttrPair has been deprecated without replacement. Please
-// use the GitHub issue [Deprecation of Built-In TestCheckFunc Implementations for Checking Pairs of Values]
-// to indicate if you have a use-case for a built-in ConfigStateChecks state check
-// function that would replicate the behaviour of TestCheckTypeSetElemAttrPair.
-//
-// [Deprecation of Built-In TestCheckFunc Implementations for Checking Pairs of Values](https://github.com/hashicorp/terraform-plugin-testing/issues/282)
 func TestCheckTypeSetElemAttrPair(nameFirst, keyFirst, nameSecond, keySecond string) TestCheckFunc {
 	return func(s *terraform.State) error {
 		isFirst, err := primaryInstanceState(s, nameFirst)
