@@ -28,9 +28,3 @@ type CheckStateResponse struct {
 	// to be reported as a test failure.
 	Error error
 }
-
-type CheckStateFunc func(context.Context, CheckStateRequest, *CheckStateResponse)
-
-func (f CheckStateFunc) CheckState(ctx context.Context, req CheckStateRequest, resp *CheckStateResponse) {
-	f(ctx, req, resp)
-}
