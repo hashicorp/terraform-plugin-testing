@@ -225,7 +225,7 @@ func TestExpectKnownOutputValue_CheckPlan_AttributeValueNotNull(t *testing.T) {
 						),
 						plancheck.ExpectKnownOutputValue(
 							"set_nested_block_output",
-							knownvalue.ListSizeExact(1),
+							knownvalue.SetSizeExact(1),
 						),
 						plancheck.ExpectKnownOutputValue(
 							"string_output",

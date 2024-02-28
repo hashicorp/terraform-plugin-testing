@@ -169,7 +169,7 @@ func TestExpectKnownOutputValue_CheckState_AttributeValueNotNull(t *testing.T) {
 					),
 					statecheck.ExpectKnownOutputValue(
 						"set_nested_block_output",
-						knownvalue.ListSizeExact(1),
+						knownvalue.SetSizeExact(1),
 					),
 					statecheck.ExpectKnownOutputValue(
 						"string_output",
