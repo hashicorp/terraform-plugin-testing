@@ -1,0 +1,7 @@
+kind: NOTES
+body: 'all: `ExpectKnownValue`, `ExpectKnownOutputValue` and `ExpectKnownOutputValueAtPath`
+  plan and state checks, along with the `knownvalue` package are experimental and may be 
+  altered or removed in a subsequent release'
+time: 2024-02-29T10:57:44.318605Z
+custom:
+  Issue: "276"
