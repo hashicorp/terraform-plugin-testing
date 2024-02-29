@@ -106,7 +106,7 @@ func TestExpectKnownValue_CheckState_Bool(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-            	// Example resource containing a computed boolean attribute named "computed_attribute"
+				// Example resource containing a computed boolean attribute named "computed_attribute"
 				Config: `resource "test_resource" "one" {}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(

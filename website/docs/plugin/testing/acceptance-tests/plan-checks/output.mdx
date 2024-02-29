@@ -96,10 +96,10 @@ func TestExpectKnownOutputValue_CheckPlan_Bool(t *testing.T) {
                 // Generally, it is not necessary to use an output to test a resource attribute,
                 // the resource attribute should be tested directly instead. This is only shown as
                 // an example.
-				output test {
-					value = test_resource.one
-				}
-				`,
+                output test {
+                    value = test_resource.one
+                }
+                `,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownOutputValueAtPath(

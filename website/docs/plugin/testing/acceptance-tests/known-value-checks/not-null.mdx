@@ -24,7 +24,7 @@ func TestExpectKnownValue_CheckState_AttributeValueNull(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []r.TestStep{
 			{
-        	    // Example resource containing a computed attribute named "computed_attribute"
+				// Example resource containing a computed attribute named "computed_attribute"
 				Config: `resource "test_resource" "one" {}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(

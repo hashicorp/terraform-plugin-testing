@@ -41,15 +41,13 @@ func TestExpectKnownValue_CheckPlan_String(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "test_resource" "one" {
-					string_attribute = "str"
-				}
-				`,
+				// Example resource containing a computed string attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
-							tfjsonpath.New("string_attribute"),
+							tfjsonpath.New("computed_attribute"),
 							knownvalue.StringExact("str")),
 					},
 				},
