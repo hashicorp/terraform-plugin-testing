@@ -27,16 +27,13 @@ func TestJSONConfig(t *testing.T) {
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{{
 			Config: `{"resource":{"tst_t":{"r1":{"s":"x1"}}}}`,
-			//nolint
-			Check: resource.TestCheckResourceAttr("tst_t.r1", "s", "x1"),
+			Check:  resource.TestCheckResourceAttr("tst_t.r1", "s", "x1"),
 		}, {
 			Config: `resource "tst_t" "r1" { s = "x2" }`,
-			//nolint
-			Check: resource.TestCheckResourceAttr("tst_t.r1", "s", "x2"),
+			Check:  resource.TestCheckResourceAttr("tst_t.r1", "s", "x2"),
 		}, {
 			Config: `{"resource":{"tst_t":{"r1":{"s":"x3"}}}}`,
-			//nolint
-			Check: resource.TestCheckResourceAttr("tst_t.r1", "s", "x3"),
+			Check:  resource.TestCheckResourceAttr("tst_t.r1", "s", "x3"),
 		}},
 	})
 }
