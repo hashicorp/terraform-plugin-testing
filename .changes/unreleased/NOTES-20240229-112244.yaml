@@ -1,0 +1,6 @@
+kind: NOTES
+body: 'plancheck: `ExpectKnownValue`, `ExpectKnownOutputValue` and `ExpectKnownOutputValueAtPath`
+  plan checks are considered experimental and may be altered or removed in a subsequent release'
+time: 2024-02-29T11:22:44.292647Z
+custom:
+  Issue: "276"

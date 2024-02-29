@@ -1877,10 +1877,10 @@ func testCheckResourceAttrPair(isFirst *terraform.InstanceState, nameFirst strin
 //					// Generally, it is not necessary to use an output to test a resource attribute,
 //					// the resource attribute should be tested directly instead. This is only shown as
 //					// an example.
-//			        output test_resource_one_output {
-//			          value = test_resource.one
-//			        }
-//			        `,
+//					output test_resource_one_output {
+//						value = test_resource.one
+//					}
+//					`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownOutputValueAtPath(
 //							"test_resource_one_output",
