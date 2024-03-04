@@ -168,7 +168,7 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 // attributes possible to be sure the unique element exists.
 //
 // The following is an example of using [statecheck.ExpectKnownValue] in combination
-// with [knownvalue.SetExact], with a nested [knownvalue.StringRegularExpression] to replicate
+// with [knownvalue.SetExact], with a nested [knownvalue.StringRegexp] to replicate
 // the behaviour of TestCheckTypeSetElemAttr.
 //
 //	package example_test
@@ -197,10 +197,10 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 //							tfjsonpath.New("block"),
 //							knownvalue.SetExact([]knownvalue.Check{
 //								knownvalue.MapExact(map[string]knownvalue.Check{
-//									"computed_attribute": knownvalue.StringRegularExpression(regexp.MustCompile("str")),
+//									"computed_attribute": knownvalue.StringRegexp(regexp.MustCompile("str")),
 //								}),
 //								knownvalue.MapExact(map[string]knownvalue.Check{
-//									"computed_attribute": knownvalue.StringRegularExpression(regexp.MustCompile("rts")),
+//									"computed_attribute": knownvalue.StringRegexp(regexp.MustCompile("rts")),
 //								}),
 //							}),
 //						),

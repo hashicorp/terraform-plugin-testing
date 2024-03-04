@@ -9,7 +9,7 @@ description: >-
 The known value checks that are available for string values are:
 
 * [StringExact](/terraform/plugin/testing/acceptance-tests/known-value-checks/string#stringexact-check)
-* [StringRegularExpression](/terraform/plugin/testing/acceptance-tests/known-value-checks/string#stringregularexpression-check)
+* [StringRegexp](/terraform/plugin/testing/acceptance-tests/known-value-checks/string#stringregexp-check)
 
 ## `StringExact` Check
 
@@ -41,14 +41,14 @@ func TestExpectKnownValue_CheckPlan_StringExact(t *testing.T) {
 }
 ```
 
-## `StringRegularExpression` Check
+## `StringRegexp` Check
 
-The [StringRegularExpression](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#StringRegularExpression) check tests that a resource attribute, or output value has a string value which matches the supplied regular expression.
+The [StringRegexp](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#StringRegexp) check tests that a resource attribute, or output value has a string value which matches the supplied regular expression.
 
-Example usage of [StringRegularExpression](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#StringRegularExpression) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
+Example usage of [StringRegexp](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#StringRegexp) in an [ExpectKnownValue](/terraform/plugin/testing/acceptance-tests/plan-checks/resource) plan check.
 
 ```go
-func TestExpectKnownValue_CheckPlan_StringRegularExpression(t *testing.T) {
+func TestExpectKnownValue_CheckPlan_StringRegexp(t *testing.T) {
 	t.Parallel()
 
 	resource.Test(t, resource.TestCase{
@@ -62,7 +62,7 @@ func TestExpectKnownValue_CheckPlan_StringRegularExpression(t *testing.T) {
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
 							tfjsonpath.New("computed_attribute"),
-							knownvalue.StringRegularExpression(regexp.MustCompile("str"))),
+							knownvalue.StringRegexp(regexp.MustCompile("str"))),
 					},
 				},
 			},

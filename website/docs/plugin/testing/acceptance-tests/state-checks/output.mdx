@@ -89,10 +89,22 @@ func TestExpectKnownOutputValueAtPath_CheckState_Bool(t *testing.T) {
                 // Generally, it is not necessary to use an output to test a resource attribute,
                 // the resource attribute should be tested directly instead. This is only shown as
                 // an example.
+                // Generally, it is not necessary to use an output to test a resource attribute,
+                // the resource attribute should be tested directly instead, by inspecting the
+                // value of the resource attribute. For instance:
+                //
+                // 		ConfigStateChecks: []statecheck.StateCheck{
+                //			statecheck.ExpectKnownValue(
+                //				"test_resource.one",
+                //				tfjsonpath.New("computed_attribute"),
+                //				knownvalue.Bool(true),
+                //			),
+                //		},
+                //
+                // This is only shown as an example.
 				output test_resource_one_output {
 					value = test_resource.one
-				}
-				`,
+				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownOutputValueAtPath(
 						"test_resource_one_output",

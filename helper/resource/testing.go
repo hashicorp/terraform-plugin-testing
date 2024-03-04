@@ -1287,7 +1287,7 @@ func testCheckResourceAttr(is *terraform.InstanceState, name string, key string,
 // When this function returns an error, TestCheckResourceAttrWith will fail the check.
 //
 // The following is an example of using [statecheck.ExpectKnownValue] in combination
-// with [knownvalue.StringRegularExpression] to replicate the behaviour of TestCheckResourceAttrWith.
+// with [knownvalue.StringRegexp] to replicate the behaviour of TestCheckResourceAttrWith.
 //
 //	package example_test
 //
@@ -1312,7 +1312,7 @@ func testCheckResourceAttr(is *terraform.InstanceState, name string, key string,
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("computed_attribute"),
-//							knownvalue.StringRegularExpression(regexp.MustCompile("str")),
+//							knownvalue.StringRegexp(regexp.MustCompile("str")),
 //					},
 //				},
 //			},
@@ -1357,7 +1357,7 @@ type CheckResourceAttrWithFunc func(value string) error
 // check to fail, or `nil` to succeed.
 //
 // The following is an example of using [statecheck.ExpectKnownValue] in combination
-// with [knownvalue.StringRegularExpression] to replicate the behaviour of TestCheckResourceAttrWith.
+// with [knownvalue.StringRegexp] to replicate the behaviour of TestCheckResourceAttrWith.
 //
 //	package example_test
 //
@@ -1382,7 +1382,7 @@ type CheckResourceAttrWithFunc func(value string) error
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("computed_attribute"),
-//							knownvalue.StringRegularExpression(regexp.MustCompile("str")),
+//							knownvalue.StringRegexp(regexp.MustCompile("str")),
 //					},
 //				},
 //			},
@@ -1580,7 +1580,7 @@ func testCheckNoResourceAttr(is *terraform.InstanceState, name string, key strin
 // compilation.
 //
 // The following is an example of using [statecheck.ExpectKnownValue]
-// in combination with [knownvalue.StringRegularExpression] to replicate the behaviour of
+// in combination with [knownvalue.StringRegexp] to replicate the behaviour of
 // TestMatchResourceAttr.
 //
 //	package example_test
@@ -1606,7 +1606,7 @@ func testCheckNoResourceAttr(is *terraform.InstanceState, name string, key strin
 //						statecheck.ExpectKnownValue(
 //							"test_resource.one",
 //							tfjsonpath.New("computed_attribute"),
-//							knownvalue.StringRegularExpression(regexp.MustCompile("str")),
+//							knownvalue.StringRegexp(regexp.MustCompile("str")),
 //					},
 //				},
 //			},
@@ -1875,12 +1875,21 @@ func testCheckResourceAttrPair(isFirst *terraform.InstanceState, nameFirst strin
 //					Config: `resource "test_resource" "one" {}
 //
 //					// Generally, it is not necessary to use an output to test a resource attribute,
-//					// the resource attribute should be tested directly instead. This is only shown as
-//					// an example.
+//					// the resource attribute should be tested directly instead, by inspecting the
+//					// value of the resource attribute. For instance:
+//					//
+//					// 		ConfigStateChecks: []statecheck.StateCheck{
+//					//			statecheck.ExpectKnownValue(
+//					//				"test_resource.one",
+//					//				tfjsonpath.New("computed_attribute"),
+//					//				knownvalue.Bool(true),
+//					//			),
+//					//		},
+//					//
+//					// This is only shown as an example.
 //					output test_resource_one_output {
 //						value = test_resource.one
-//					}
-//					`,
+//					}`,
 //					ConfigStateChecks: []statecheck.StateCheck{
 //						statecheck.ExpectKnownOutputValueAtPath(
 //							"test_resource_one_output",
@@ -1917,7 +1926,7 @@ func TestCheckOutput(name, value string) TestCheckFunc {
 // recommended for testing Computed attributes and attribute defaults.
 //
 // The following is an example of using [statecheck.ExpectKnownOutputValueAtPath]
-// in combination with [knownvalue.StringRegularExpression] to replicate the behaviour of
+// in combination with [knownvalue.StringRegexp] to replicate the behaviour of
 // TestMatchOutput.
 //
 //	package example_test
@@ -1941,8 +1950,18 @@ func TestCheckOutput(name, value string) TestCheckFunc {
 //					Config: `resource "test_resource" "one" {}
 //
 //					// Generally, it is not necessary to use an output to test a resource attribute,
-//					// the resource attribute should be tested directly instead. This is only shown as
-//					// an example.
+//					// the resource attribute should be tested directly instead, by inspecting the
+//					// value of the resource attribute. For instance:
+//					//
+//					// 		ConfigStateChecks: []statecheck.StateCheck{
+//					//			statecheck.ExpectKnownValue(
+//					//				"test_resource.one",
+//					//				tfjsonpath.New("computed_attribute"),
+//					//				knownvalue.StringRegexp(regexp.MustCompile("str")),
+//					//			),
+//					//		},
+//					//
+//					// This is only shown as an example.
 //					output test_resource_one_output {
 //						value = test_resource.one
 //					}`,
@@ -1950,7 +1969,8 @@ func TestCheckOutput(name, value string) TestCheckFunc {
 //						statecheck.ExpectKnownOutputValueAtPath(
 //							"test_resource_one_output",
 //							tfjsonpath.New("computed_attribute"),
-//							knownvalue.StringRegularExpression(regexp.MustCompile("str")),
+//							knownvalue.StringRegexp(regexp.MustCompile("str"),
+//						),
 //					},
 //				},
 //			},

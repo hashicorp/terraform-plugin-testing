@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 )
 
-func TestStringRegularExpression_CheckValue(t *testing.T) {
+func TestStringRegexp_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
@@ -22,29 +22,29 @@ func TestStringRegularExpression_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			self:          knownvalue.StringRegularExpression(regexp.MustCompile("")),
-			expectedError: fmt.Errorf("expected string value for StringRegularExpression check, got: <nil>"),
+			self:          knownvalue.StringRegexp(regexp.MustCompile("")),
+			expectedError: fmt.Errorf("expected string value for StringRegexp check, got: <nil>"),
 		},
 		"zero-other": {
-			self:  knownvalue.StringRegularExpression(regexp.MustCompile("")),
+			self:  knownvalue.StringRegexp(regexp.MustCompile("")),
 			other: "", // checking against the underlying value field zero-value
 		},
 		"nil": {
-			self:          knownvalue.StringRegularExpression(regexp.MustCompile("str")),
-			expectedError: fmt.Errorf("expected string value for StringRegularExpression check, got: <nil>"),
+			self:          knownvalue.StringRegexp(regexp.MustCompile("str")),
+			expectedError: fmt.Errorf("expected string value for StringRegexp check, got: <nil>"),
 		},
 		"wrong-type": {
-			self:          knownvalue.StringRegularExpression(regexp.MustCompile("str")),
+			self:          knownvalue.StringRegexp(regexp.MustCompile("str")),
 			other:         1.234,
-			expectedError: fmt.Errorf("expected string value for StringRegularExpression check, got: float64"),
+			expectedError: fmt.Errorf("expected string value for StringRegexp check, got: float64"),
 		},
 		"not-equal": {
-			self:          knownvalue.StringRegularExpression(regexp.MustCompile("str")),
+			self:          knownvalue.StringRegexp(regexp.MustCompile("str")),
 			other:         "rts",
-			expectedError: fmt.Errorf("expected regex match str for StringRegularExpression check, got: rts"),
+			expectedError: fmt.Errorf("expected regex match str for StringRegexp check, got: rts"),
 		},
 		"equal": {
-			self:  knownvalue.StringRegularExpression(regexp.MustCompile("str")),
+			self:  knownvalue.StringRegexp(regexp.MustCompile("str")),
 			other: "str",
 		},
 	}
@@ -64,10 +64,10 @@ func TestStringRegularExpression_CheckValue(t *testing.T) {
 	}
 }
 
-func TestStringRegularExpression_String(t *testing.T) {
+func TestStringRegexp_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.StringRegularExpression(regexp.MustCompile("^str[0-9a-z]")).String()
+	got := knownvalue.StringRegexp(regexp.MustCompile("^str[0-9a-z]")).String()
 
 	if diff := cmp.Diff(got, "^str[0-9a-z]"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
