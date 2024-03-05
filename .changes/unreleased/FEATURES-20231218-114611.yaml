@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'plancheck: Added `ExpectKnownOutputValueAtPath` plan check, which asserts that
-  a given output value at a specified path has a defined type, and value'
-time: 2023-12-18T11:46:11.58053Z
-custom:
-  Issue: "248"

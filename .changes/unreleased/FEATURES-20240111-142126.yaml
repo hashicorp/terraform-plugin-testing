@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'statecheck: Introduced new `statecheck` package with interface and built-in
-  state check functionality'
-time: 2024-01-11T14:21:26.261094Z
-custom:
-  Issue: "275"

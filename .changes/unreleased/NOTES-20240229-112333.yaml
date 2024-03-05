@@ -1,6 +1,0 @@
-kind: NOTES
-body: 'statecheck: `ExpectKnownValue`, `ExpectKnownOutputValue` and `ExpectKnownOutputValueAtPath`
-  state checks are considered experimental and may be altered or removed in a subsequent release'
-time: 2024-02-29T11:23:33.77075Z
-custom:
-  Issue: "276"

@@ -1,6 +1,0 @@
-kind: NOTES
-body: 'knownvalue: The `knownvalue` package is considered experimental and may
-  be altered or removed in a subsequent release'
-time: 2024-02-29T11:24:01.600093Z
-custom:
-  Issue: "276"

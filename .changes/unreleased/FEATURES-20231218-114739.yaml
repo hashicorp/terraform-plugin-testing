@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'knownvalue: Introduced new `knownvalue` package which contains types for working
-  with plan checks and state checks'
-time: 2023-12-18T11:47:39.059813Z
-custom:
-  Issue: "248"

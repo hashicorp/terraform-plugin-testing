@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'plancheck: Added `ExpectKnownValue` plan check, which asserts that a given
-  resource attribute has a defined type, and value'
-time: 2023-12-18T11:45:39.181954Z
-custom:
-  Issue: "248"
