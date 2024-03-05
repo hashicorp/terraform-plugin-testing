@@ -58,8 +58,11 @@ const (
 // you were not intending to in the set. Provide the most complete mapping of
 // attributes possible to be sure the unique element exists.
 //
-// The following is an example of using [statecheck.ExpectKnownValue] in combination
-// with [knownvalue.SetPartial] to replicate the behaviour of TestCheckTypeSetElemNestedAttrs.
+// An experimental interface exists to potentially replace the
+// TestCheckTypeSetElemNestedAttrs functionality in the future and feedback
+// would be appreciated. This example performs the same check as
+// TestCheckTypeSetElemNestedAttrs with that experimental interface, by using
+// [statecheck.ExpectKnownValue] in combination with [knownvalue.SetPartial]:
 //
 //	package example_test
 //
@@ -167,9 +170,16 @@ func TestCheckTypeSetElemNestedAttrs(name, attr string, values map[string]string
 // you were not intending to in the set. Provide the most complete mapping of
 // attributes possible to be sure the unique element exists.
 //
-// The following is an example of using [statecheck.ExpectKnownValue] in combination
-// with [knownvalue.SetExact], with a nested [knownvalue.StringRegexp] to replicate
-// the behaviour of TestCheckTypeSetElemAttr.
+// If the values map is not granular enough, it is possible to match an element
+// you were not intending to in the set. Provide the most complete mapping of
+// attributes possible to be sure the unique element exists.
+//
+// An experimental interface exists to potentially replace the
+// TestMatchTypeSetElemNestedAttrs functionality in the future and feedback
+// would be appreciated. This example performs the same check as
+// TestMatchTypeSetElemNestedAttrs with that experimental interface, by using
+// [statecheck.ExpectKnownValue] in combination with [knownvalue.SetExact],
+// with a nested [knownvalue.StringRegexp]:
 //
 //	package example_test
 //
@@ -281,8 +291,11 @@ func TestMatchTypeSetElemNestedAttrs(name, attr string, values map[string]*regex
 //   - Float/Integer: Stringified number, such as "1.2" or "123".
 //   - String: No conversion necessary.
 //
-// The following is an example of using [statecheck.ExpectKnownValue] in combination
-// with [knownvalue.SetExact] to replicate the behaviour of TestCheckTypeSetElemAttr.
+// An experimental interface exists to potentially replace the
+// TestCheckTypeSetElemAttr functionality in the future and feedback
+// would be appreciated. This example performs the same check as
+// TestCheckTypeSetElemAttr with that experimental interface, by using
+// [statecheck.ExpectKnownValue] in combination with [knownvalue.SetExact]:
 //
 //	package example_test
 //

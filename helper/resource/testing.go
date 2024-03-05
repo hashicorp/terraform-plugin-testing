@@ -1034,8 +1034,11 @@ func ComposeAggregateTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 // attribute directly is not supported. Use TestCheckResourceAttr with
 // the special .# or .% key syntax for those situations instead.
 //
-// The following is an example of using [ExpectKnownValue] with [knownvalue.NotNull]
-// to replicate the behaviour of TestCheckResourceAttrSet.
+// An experimental interface exists to potentially replace the
+// TestCheckResourceAttrSet functionality in the future and feedback
+// would be appreciated. This example performs the same check as
+// TestCheckResourceAttrSet with that experimental interface, by
+// using [ExpectKnownValue] with [knownvalue.NotNull]:
 //
 //	package example_test
 //
@@ -1168,8 +1171,11 @@ func testCheckResourceAttrSet(is *terraform.InstanceState, name string, key stri
 //   - Float/Integer: Stringified number, such as "1.2" or "123".
 //   - String: No conversion necessary.
 //
-// The following is an example of using [statecheck.ExpectKnownValue]
-// to replicate the behaviour of TestCheckResourceAttr.
+// An experimental interface exists to potentially replace the
+// TestCheckResourceAttr functionality in the future and feedback
+// would be appreciated. This example performs the same check as
+// TestCheckResourceAttr with that experimental interface, by
+// using [statecheck.ExpectKnownValue]:
 //
 //	package example_test
 //
@@ -1286,8 +1292,12 @@ func testCheckResourceAttr(is *terraform.InstanceState, name string, key string,
 //
 // When this function returns an error, TestCheckResourceAttrWith will fail the check.
 //
-// The following is an example of using [statecheck.ExpectKnownValue] in combination
-// with [knownvalue.StringRegexp] to replicate the behaviour of TestCheckResourceAttrWith.
+// An experimental interface exists to potentially replace the
+// CheckResourceAttrWithFunc functionality in the future and feedback
+// would be appreciated. This example performs the same check as
+// TestCheckResourceAttrWith with that experimental interface, by
+// using [statecheck.ExpectKnownValue] in combination with
+// [knownvalue.StringRegexp]:
 //
 //	package example_test
 //
@@ -1356,8 +1366,12 @@ type CheckResourceAttrWithFunc func(value string) error
 // if it was found in the state. The function must return an error for the
 // check to fail, or `nil` to succeed.
 //
-// The following is an example of using [statecheck.ExpectKnownValue] in combination
-// with [knownvalue.StringRegexp] to replicate the behaviour of TestCheckResourceAttrWith.
+// An experimental interface exists to potentially replace the
+// TestCheckResourceAttrWith functionality in the future and feedback
+// would be appreciated. This example performs the same check as
+// TestCheckResourceAttrWith with that experimental interface, by
+// using [statecheck.ExpectKnownValue] in combination with
+// [knownvalue.StringRegexp]:
 //
 //	package example_test
 //
@@ -1441,8 +1455,11 @@ func TestCheckResourceAttrWith(name, key string, checkValueFunc CheckResourceAtt
 // attribute directly is not supported. Use TestCheckResourceAttr with
 // the special .# or .% key syntax for those situations instead.
 //
-// The following is an example of using [statecheck.ExpectKnownValue] with [knownvalue.Null] to
-// replicate the behaviour of TestCheckNoResourceAttr.
+// An experimental interface exists to potentially replace the
+// TestCheckNoResourceAttr functionality in the future and feedback
+// would be appreciated. This example performs the same check as
+// TestCheckNoResourceAttr with that experimental interface, by
+// using [statecheck.ExpectKnownValue] with [knownvalue.Null]:
 //
 //	package example_test
 //
@@ -1579,9 +1596,12 @@ func testCheckNoResourceAttr(is *terraform.InstanceState, name string, key strin
 // regular expression is supported by the Go regular expression handlers during
 // compilation.
 //
-// The following is an example of using [statecheck.ExpectKnownValue]
-// in combination with [knownvalue.StringRegexp] to replicate the behaviour of
-// TestMatchResourceAttr.
+// An experimental interface exists to potentially replace the
+// TestMatchResourceAttr functionality in the future and feedback
+// would be appreciated. This example performs the same check as
+// TestMatchResourceAttr with that experimental interface, by
+// using [statecheck.ExpectKnownValue] in combination with
+// [knownvalue.StringRegexp]:
 //
 //	package example_test
 //
@@ -1814,8 +1834,11 @@ func testCheckResourceAttrPair(isFirst *terraform.InstanceState, nameFirst strin
 
 // TestCheckOutput checks an output in the Terraform configuration
 //
-// The following is an example of using [statecheck.ExpectKnownOutputValue]
-// to replicate the behaviour of TestCheckOutput.
+// An experimental interface exists to potentially replace the
+// TestCheckOutput functionality in the future and feedback
+// would be appreciated. This example performs the same check as
+// TestCheckOutput with that experimental interface, by
+// using [statecheck.ExpectKnownOutputValue]:
 //
 //	package example_test
 //
@@ -1850,8 +1873,11 @@ func testCheckResourceAttrPair(isFirst *terraform.InstanceState, nameFirst strin
 //		})
 //	}
 //
-// The following is an example of using [statecheck.ExpectKnownOutputValueAtPath]
-// to replicate the behaviour of TestCheckOutput.
+// An experimental interface exists to potentially replace the
+// TestCheckOutput functionality in the future and feedback
+// would be appreciated. This example performs the same check as
+// TestCheckOutput with that experimental interface, by using
+// [statecheck.ExpectKnownOutputValueAtPath]:
 //
 //	package example_test
 //
@@ -1925,9 +1951,12 @@ func TestCheckOutput(name, value string) TestCheckFunc {
 // stored in state for the given name. State value checking is only
 // recommended for testing Computed attributes and attribute defaults.
 //
-// The following is an example of using [statecheck.ExpectKnownOutputValueAtPath]
-// in combination with [knownvalue.StringRegexp] to replicate the behaviour of
-// TestMatchOutput.
+// An experimental interface exists to potentially replace the
+// TestMatchOutput functionality in the future and feedback
+// would be appreciated. This example performs the same check as
+// TestMatchOutput with that experimental interface, by using
+// [statecheck.ExpectKnownOutputValueAtPath] in combination with
+// [knownvalue.StringRegexp]:
 //
 //	package example_test
 //
