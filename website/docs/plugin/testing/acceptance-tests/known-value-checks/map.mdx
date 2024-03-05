@@ -26,17 +26,13 @@ func TestExpectKnownValue_CheckPlan_Map(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "test_resource" "one" {
-					map_attribute = {
-						key1 = "value1"
-						key2 = "value2"
-					}
-				}`,
+        	    // Example resource containing a computed map attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
-							tfjsonpath.New("map_attribute"),
+							tfjsonpath.New("computed_attribute"),
 							knownvalue.MapExact(map[string]knownvalue.Check{
 								"key1": knownvalue.StringExact("value1"),
 								"key2": knownvalue.StringExact("value2"),
@@ -66,17 +62,13 @@ func TestExpectKnownValue_CheckPlan_MapPartial(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "test_resource" "one" {
-					map_attribute = {
-						key1 = "value1"
-						key2 = "value2"
-					}
-				}`,
+        	    // Example resource containing a computed map attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
-							tfjsonpath.New("map_attribute"),
+							tfjsonpath.New("computed_attribute"),
 							knownvalue.MapPartial(map[string]knownvalue.Check{
 								"key1": knownvalue.StringExact("value1"),
 							}),
@@ -103,17 +95,13 @@ func TestExpectKnownValue_CheckPlan_MapElements(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "test_resource" "one" {
-					map_attribute = {
-						key1 = "value1"
-						key2 = "value2"
-					}
-				}`,
+        	    // Example resource containing a computed map attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
-							tfjsonpath.New("map_attribute"),
+							tfjsonpath.New("computed_attribute"),
 							knownvalue.MapSizeExact(2),
 						),
 					},

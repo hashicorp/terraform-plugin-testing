@@ -137,6 +137,107 @@ func TestExpectKnownOutputValue_CheckPlan_AttributeValueNull(t *testing.T) {
 	})
 }
 
+func TestExpectKnownOutputValue_CheckPlan_AttributeValueNotNull(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+					float_attribute = 1.23
+					int_attribute = 123
+					list_attribute = ["value1", "value2"]
+					list_nested_block {
+						list_nested_block_attribute = "str"	
+					}
+					map_attribute = {
+						key1 = "value1"		
+					}	
+					set_attribute = ["value1", "value2"]		
+					set_nested_block {		
+						set_nested_block_attribute = "str"	
+					}
+					string_attribute = "str"
+				}
+				output bool_output {
+					value = test_resource.one.bool_attribute
+				}
+				output float64_output {
+					value = test_resource.one.float_attribute
+				}	
+				output int64_output {	
+					value = test_resource.one.int_attribute
+				}
+				output list_output {
+					value = test_resource.one.list_attribute
+				}
+				output list_nested_block_output {
+					value = test_resource.one.list_nested_block
+				}
+				output map_output {
+					value = test_resource.one.map_attribute
+				}
+				output set_output {
+					value = test_resource.one.set_attribute
+				}
+				output set_nested_block_output {
+					value = test_resource.one.set_nested_block
+				}
+				output string_output {
+					value = test_resource.one.string_attribute
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownOutputValue(
+							"bool_output",
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"float64_output",
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"int64_output",
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"list_output",
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"list_nested_block_output",
+							knownvalue.ListSizeExact(1),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"map_output",
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"set_output",
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"set_nested_block_output",
+							knownvalue.SetSizeExact(1),
+						),
+						plancheck.ExpectKnownOutputValue(
+							"string_output",
+							knownvalue.NotNull(),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+
 func TestExpectKnownOutputValue_CheckPlan_Bool(t *testing.T) {
 	t.Parallel()
 

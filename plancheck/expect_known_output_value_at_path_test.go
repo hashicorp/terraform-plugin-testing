@@ -140,6 +140,100 @@ func TestExpectKnownOutputValueAtPath_CheckPlan_AttributeValueNull(t *testing.T)
 	})
 }
 
+func TestExpectKnownOutputValueAtPath_CheckPlan_AttributeValueNotNull(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+					float_attribute = 1.23
+					int_attribute = 123
+					list_attribute = ["value1", "value2"]
+					list_nested_block {
+						list_nested_block_attribute = "str"	
+					}
+					map_attribute = {
+						key1 = "value1"		
+					}	
+					set_attribute = ["value1", "value2"]		
+					set_nested_block {		
+						set_nested_block_attribute = "str"	
+					}
+					string_attribute = "str"
+				}
+
+				output test_resource_one_output {
+					value = test_resource.one
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("bool_attribute"),
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("float_attribute"),
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("int_attribute"),
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("list_attribute"),
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("list_nested_block"),
+							knownvalue.ListSizeExact(1),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("map_attribute"),
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("set_attribute"),
+							knownvalue.NotNull(),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("set_nested_block"),
+							knownvalue.SetSizeExact(1),
+						),
+						plancheck.ExpectKnownOutputValueAtPath(
+							"test_resource_one_output",
+							tfjsonpath.New("string_attribute"),
+							knownvalue.NotNull(),
+						),
+					},
+				},
+			},
+		},
+	})
+}
+
 func TestExpectKnownOutputValueAtPath_CheckPlan_Bool(t *testing.T) {
 	t.Parallel()
 

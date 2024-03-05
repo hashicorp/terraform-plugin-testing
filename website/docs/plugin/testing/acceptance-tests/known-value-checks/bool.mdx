@@ -24,14 +24,13 @@ func TestExpectKnownValue_CheckPlan_Bool(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "test_resource" "one" {
-					bool_attribute = true
-				}`,
+				// Example resource containing a computed boolean attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
-							tfjsonpath.New("bool_attribute"),
+							tfjsonpath.New("computed_attribute"),
 							knownvalue.Bool(true),
 						),
 					},

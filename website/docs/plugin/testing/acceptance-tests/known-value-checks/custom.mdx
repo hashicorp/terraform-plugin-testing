@@ -15,35 +15,35 @@ type Check interface {
 }
 ```
 
-For example, a `StringValueContains` implementation could look as follows:
+For example, a `StringContains` implementation could look as follows:
 
 ```go
-var _ Check = StringValueContains{}
+var _ knownvalue.Check = stringContains{}
 
-type StringValueContains struct {
+type stringContains struct {
 	value string
 }
 
-func (v StringValueContains) CheckValue(other any) error {
+func (v stringContains) CheckValue(other any) error {
 	otherVal, ok := other.(string)
 
 	if !ok {
-		return fmt.Errorf("expected string value for StringValueContains check, got: %T", other)
+		return fmt.Errorf("expected string value for StringContains check, got: %T", other)
 	}
 
-	if !strings.Contains(v.value, otherVal) {
-		return fmt.Errorf("expected string %q to contain %q for StringValueContains check", otherVal, v.value)
+	if !strings.Contains(otherVal, v.value) {
+		return fmt.Errorf("expected string %q to contain %q for StringContains check", otherVal, v.value)
 	}
 
 	return nil
 }
 
-func (v StringValueContains) String() string {
+func (v stringContains) String() string {
 	return v.value
 }
 
-func StringValueMatch(value string) StringValue {
-	return StringValueContains{
+func StringContains(value string) stringContains {
+	return stringContains{
 		value: value,
 	}
 }

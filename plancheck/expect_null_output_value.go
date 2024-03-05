@@ -65,11 +65,8 @@ func (e expectNullOutputValue) CheckPlan(ctx context.Context, req CheckPlanReque
 // values may differ. For example, terraform-plugin-sdk based providers may have less precise representations of null values, such
 // as marking whole maps as null rather than individual element values.
 //
-// Deprecated: Use ExpectKnownOutputValue with knownvalue.NullExact instead.
+// Deprecated: Use [plancheck.ExpectKnownOutputValue] with [knownvalue.Null] instead.
 // ExpectNullOutputValue will be removed in the next major version release.
-//
-// [ExpectKnownOutputValue]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#ExpectKnownOutputValue
-// [NullExact]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/knownvalue#NullExact
 func ExpectNullOutputValue(outputAddress string) PlanCheck {
 	return expectNullOutputValue{
 		outputAddress: outputAddress,

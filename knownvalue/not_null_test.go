@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 )
 
-func TestNullValue_CheckValue(t *testing.T) {
+func TestNotNullValue_CheckValue(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
@@ -21,16 +21,17 @@ func TestNullValue_CheckValue(t *testing.T) {
 		expectedError error
 	}{
 		"zero-nil": {
-			self: knownvalue.Null(),
+			self:          knownvalue.NotNull(),
+			expectedError: fmt.Errorf("expected non-nil value for NotNull check, got: <nil>"),
 		},
 		"not-nil": {
-			self:          knownvalue.Null(),
-			other:         false,
-			expectedError: fmt.Errorf("expected nil value for Null check, got: bool"),
+			self:          knownvalue.NotNull(),
+			other:         nil,
+			expectedError: fmt.Errorf("expected non-nil value for NotNull check, got: <nil>"),
 		},
 		"equal": {
-			self:  knownvalue.Null(),
-			other: nil,
+			self:  knownvalue.NotNull(),
+			other: true,
 		},
 	}
 
@@ -49,12 +50,12 @@ func TestNullValue_CheckValue(t *testing.T) {
 	}
 }
 
-func TestNullValue_String(t *testing.T) {
+func TestNotNullValue_String(t *testing.T) {
 	t.Parallel()
 
-	got := knownvalue.Null().String()
+	got := knownvalue.NotNull().String()
 
-	if diff := cmp.Diff(got, "null"); diff != "" {
+	if diff := cmp.Diff(got, "not-null"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
 	}
 }

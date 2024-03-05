@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/big"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -100,12 +101,92 @@ func TestExpectKnownValue_CheckState_AttributeValueNull(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("set_nested_block"),
-						knownvalue.ListExact([]knownvalue.Check{}),
+						knownvalue.SetExact([]knownvalue.Check{}),
 					),
 					statecheck.ExpectKnownValue(
 						"test_resource.one",
 						tfjsonpath.New("string_attribute"),
 						knownvalue.Null(),
+					),
+				},
+			},
+		},
+	})
+}
+
+func TestExpectKnownValue_CheckState_AttributeValueNotNull(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+					float_attribute = 1.23
+					int_attribute = 123
+					list_attribute = ["value1", "value2"]
+					list_nested_block {
+						list_nested_block_attribute = "str"	
+					}
+					map_attribute = {
+						key1 = "value1"		
+					}	
+					set_attribute = ["value1", "value2"]		
+					set_nested_block {		
+						set_nested_block_attribute = "str"	
+					}
+					string_attribute = "str"
+				}`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("bool_attribute"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("float_attribute"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("int_attribute"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("list_attribute"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("list_nested_block"),
+						knownvalue.ListSizeExact(1),
+					),
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("map_attribute"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("set_attribute"),
+						knownvalue.NotNull(),
+					),
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("set_nested_block"),
+						knownvalue.SetSizeExact(1),
+					),
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("string_attribute"),
+						knownvalue.NotNull(),
 					),
 				},
 			},
@@ -1160,6 +1241,45 @@ func TestExpectKnownValue_CheckState_SetNestedBlock(t *testing.T) {
 	})
 }
 
+func TestExpectKnownValue_CheckState_SetNestedBlock_Custom(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					set_nested_block {
+						set_nested_block_attribute = "string"
+					}
+					set_nested_block {
+						set_nested_block_attribute = "girts"
+					}
+				}
+				`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("set_nested_block"),
+						knownvalue.SetExact([]knownvalue.Check{
+							knownvalue.MapExact(map[string]knownvalue.Check{
+								"set_nested_block_attribute": StringContains("str"),
+							}),
+							knownvalue.MapExact(map[string]knownvalue.Check{
+								"set_nested_block_attribute": StringContains("rts"),
+							}),
+						}),
+					),
+				},
+			},
+		},
+	})
+}
+
 func TestExpectKnownValue_CheckState_SetNestedBlockPartial(t *testing.T) {
 	t.Parallel()
 
@@ -1252,6 +1372,62 @@ func TestExpectKnownValue_CheckState_String(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestExpectKnownValue_CheckState_String_Custom(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					string_attribute = "string"
+				}
+				`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"test_resource.one",
+						tfjsonpath.New("string_attribute"),
+						StringContains("tri")),
+				},
+			},
+		},
+	})
+}
+
+var _ knownvalue.Check = stringContains{}
+
+type stringContains struct {
+	value string
+}
+
+func (v stringContains) CheckValue(other any) error {
+	otherVal, ok := other.(string)
+
+	if !ok {
+		return fmt.Errorf("expected string value for StringContains check, got: %T", other)
+	}
+
+	if !strings.Contains(otherVal, v.value) {
+		return fmt.Errorf("expected string %q to contain %q for StringContains check", otherVal, v.value)
+	}
+
+	return nil
+}
+
+func (v stringContains) String() string {
+	return v.value
+}
+
+func StringContains(value string) stringContains {
+	return stringContains{
+		value: value,
+	}
 }
 
 func TestExpectKnownValue_CheckState_String_KnownValueWrongType(t *testing.T) {
@@ -1371,6 +1547,12 @@ func testProvider() *schema.Provider {
 			"test_resource": {
 				CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 					d.SetId("test")
+
+					err := d.Set("string_computed_attribute", "computed")
+					if err != nil {
+						return diag.Errorf("error setting string_computed_attribute: %s", err)
+					}
+
 					return nil
 				},
 				UpdateContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
@@ -1442,6 +1624,10 @@ func testProvider() *schema.Provider {
 					},
 					"string_attribute": {
 						Optional: true,
+						Type:     schema.TypeString,
+					},
+					"string_computed_attribute": {
+						Computed: true,
 						Type:     schema.TypeString,
 					},
 				},

@@ -25,17 +25,13 @@ func TestExpectKnownValue_CheckPlan_Object(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "test_resource" "one" {
-					object_attribute = {
-						attr1 = "value1"
-						attr2 = "value2"
-					}
-				}`,
+        	    // Example resource containing a computed object attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
-							tfjsonpath.New("object_attribute"),
+							tfjsonpath.New("computed_attribute"),
 							knownvalue.ObjectExact(map[string]knownvalue.Check{
 								"attr1": knownvalue.StringExact("value1"),
 								"attr2": knownvalue.StringExact("value2"),
@@ -65,17 +61,13 @@ func TestExpectKnownValue_CheckPlan_ObjectPartial(t *testing.T) {
 		// Provider definition omitted.
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "test_resource" "one" {
-					object_attribute = {
-						attr1 = "value1"
-						attr2 = "value2"
-					}
-				}`,
+        	    // Example resource containing a computed object attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
 							"test_resource.one",
-							tfjsonpath.New("object_attribute"),
+							tfjsonpath.New("computed_attribute"),
 							knownvalue.ObjectPartial(map[string]knownvalue.Check{
 								"attr1": knownvalue.StringExact("value1"),
 							}),

@@ -60,7 +60,8 @@ func (e expectKnownOutputValueAtPath) CheckPlan(ctx context.Context, req CheckPl
 }
 
 // ExpectKnownOutputValueAtPath returns a plan check that asserts that the specified output at the given path
-// has a known type and value.
+// has a known type and value. Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+// if any attribute is unknown.
 func ExpectKnownOutputValueAtPath(outputAddress string, outputPath tfjsonpath.Path, knownValue knownvalue.Check) PlanCheck {
 	return expectKnownOutputValueAtPath{
 		outputAddress: outputAddress,
