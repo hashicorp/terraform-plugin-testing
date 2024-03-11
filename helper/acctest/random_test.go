@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"net/netip"
 	"regexp"
+	"slices"
 	"testing"
 
 	"golang.org/x/crypto/ssh"
@@ -30,6 +31,10 @@ func TestRandIpAddress(t *testing.T) {
 		expectedErr string
 	}{
 		{
+			s:        "0.0.0.0/0",
+			expected: regexp.MustCompile(`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`),
+		},
+		{
 			s:        "1.1.1.1/32",
 			expected: regexp.MustCompile(`^1\.1\.1\.1$`),
 		},
@@ -38,8 +43,8 @@ func TestRandIpAddress(t *testing.T) {
 			expected: regexp.MustCompile(`^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$`),
 		},
 		{
-			s:           "0.0.0.0/0",
-			expectedErr: "CIDR range is too large: 32",
+			s:        "10.0.0.0/15",
+			expected: regexp.MustCompile(`^10\.[01]\.\d{1,3}\.\d{1,3}$`),
 		},
 		{
 			s:        "449d:e5f1:14b1:ddf3:8525:7e9e:4a0d:4a82/128",
@@ -48,10 +53,6 @@ func TestRandIpAddress(t *testing.T) {
 		{
 			s:        "2001:db8::/112",
 			expected: regexp.MustCompile(`^2001:db8::[[:xdigit:]]{1,4}$`),
-		},
-		{
-			s:           "2001:db8::/64",
-			expectedErr: "CIDR range is too large: 64",
 		},
 		{
 			s:           "abcdefg",
@@ -134,6 +135,76 @@ func TestRandSSHKeyPair(t *testing.T) {
 
 			if rsaPrivateKey.N.BitLen() != 1024 {
 				t.Errorf("expected 1024 bit SSH private key, got: %d", rsaPrivateKey.N.BitLen())
+			}
+		})
+	}
+}
+
+func TestInverseMask(t *testing.T) {
+	type testCase struct {
+		prefixLen int
+		byteLen   int
+		expected  []byte
+	}
+
+	testCases := map[string]testCase{
+		"0-bit_ipv4": {
+			prefixLen: 0,
+			byteLen:   4,
+			expected:  []byte{255, 255, 255, 255},
+		},
+		"7-bit_ipv4": {
+			prefixLen: 7,
+			byteLen:   4,
+			expected:  []byte{1, 255, 255, 255},
+		},
+		"8-bit_ipv4": {
+			prefixLen: 8,
+			byteLen:   4,
+			expected:  []byte{0, 255, 255, 255},
+		},
+		"9-bit_ipv4": {
+			prefixLen: 9,
+			byteLen:   4,
+			expected:  []byte{0, 127, 255, 255},
+		},
+		"27-bit_ipv4": {
+			prefixLen: 27,
+			byteLen:   4,
+			expected:  []byte{0, 0, 0, 31},
+		},
+		"32-bit_ipv4": {
+			prefixLen: 32,
+			byteLen:   4,
+			expected:  []byte{0, 0, 0, 0},
+		},
+		"32-bit_ipv6": {
+			prefixLen: 32,
+			byteLen:   16,
+			expected:  []byte{0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
+		},
+		"64-bit_ipv6": {
+			prefixLen: 64,
+			byteLen:   16,
+			expected:  []byte{0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255},
+		},
+		"128-bit_ipv6": {
+			prefixLen: 128,
+			byteLen:   16,
+			expected:  []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+	}
+
+	for tName, tCase := range testCases {
+		tName, tCase := tName, tCase
+		t.Run(tName, func(t *testing.T) {
+			result, err := inverseMask(tCase.prefixLen, tCase.byteLen)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if slices.Compare(tCase.expected, result) != 0 {
+				t.Fatalf("expected %v, got %v", tCase.expected, result)
 			}
 		})
 	}
