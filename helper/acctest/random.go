@@ -133,7 +133,7 @@ func RandIpAddress(s string) (string, error) {
 	}
 
 	// base address as byte slice
-	prefixBytes, err := prefix.Addr().MarshalBinary()
+	prefixBytes, err := prefix.Masked().Addr().MarshalBinary()
 	if err != nil {
 		return "", err
 	}
@@ -156,7 +156,10 @@ func RandIpAddress(s string) (string, error) {
 		resultBytes[i] = (resultBytes[i] & inverseMaskBytes[i]) + prefixBytes[i]
 	}
 
-	result, _ := netip.AddrFromSlice(resultBytes)
+	result, ok := netip.AddrFromSlice(resultBytes)
+	if !ok {
+		return "", fmt.Errorf("unable to create random address from bytes: %#v", resultBytes)
+	}
 
 	return result.String(), nil
 }

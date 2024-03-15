@@ -141,6 +141,8 @@ func TestRandSSHKeyPair(t *testing.T) {
 }
 
 func TestInverseMask(t *testing.T) {
+	t.Parallel()
+
 	type testCase struct {
 		prefixLen int
 		byteLen   int
@@ -198,6 +200,8 @@ func TestInverseMask(t *testing.T) {
 	for tName, tCase := range testCases {
 		tName, tCase := tName, tCase
 		t.Run(tName, func(t *testing.T) {
+			t.Parallel()
+
 			result, err := inverseMask(tCase.prefixLen, tCase.byteLen)
 			if err != nil {
 				t.Fatal(err)
