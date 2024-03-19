@@ -15,16 +15,16 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/go-version"
 	tfjson "github.com/hashicorp/terraform-json"
-	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func runPostTestDestroy(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, providers *providerFactories, statePreDestroy *terraform.State) error {
+func runPostTestDestroy(ctx context.Context, t testingiface.T, c TestCase, wd *plugintest.WorkingDir, providers *providerFactories, statePreDestroy *terraform.State) error {
 	t.Helper()
 
 	err := runProviderCommand(ctx, t, func() error {
@@ -48,7 +48,7 @@ func runPostTestDestroy(ctx context.Context, t testing.T, c TestCase, wd *plugin
 	return nil
 }
 
-func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest.Helper) {
+func runNewTest(ctx context.Context, t testingiface.T, c TestCase, helper *plugintest.Helper) {
 	t.Helper()
 
 	wd := helper.RequireNewWorkingDir(ctx, t, c.WorkingDir)
@@ -461,7 +461,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	}
 }
 
-func getState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir) (*terraform.State, error) {
+func getState(ctx context.Context, t testingiface.T, wd *plugintest.WorkingDir) (*terraform.State, error) {
 	t.Helper()
 
 	jsonState, err := wd.State(ctx)
@@ -501,7 +501,7 @@ func planIsEmpty(plan *tfjson.Plan, tfVersion *version.Version) bool {
 	return true
 }
 
-func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, r *terraform.ResourceState, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
+func testIDRefresh(ctx context.Context, t testingiface.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, r *terraform.ResourceState, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
 	t.Helper()
 
 	// Build the state. The state is just the resource with an ID. There
@@ -643,7 +643,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 	return nil
 }
 
-func copyWorkingDir(ctx context.Context, t testing.T, stepNumber int, wd *plugintest.WorkingDir) {
+func copyWorkingDir(ctx context.Context, t testingiface.T, stepNumber int, wd *plugintest.WorkingDir) {
 	if os.Getenv(plugintest.EnvTfAccPersistWorkingDir) == "" {
 		return
 	}

@@ -14,8 +14,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	testinginterface "github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
@@ -28,25 +28,21 @@ func init() {
 func TestParallelTest(t *testing.T) {
 	t.Parallel()
 
-	mt := new(mockT)
-
-	ParallelTest(mt, TestCase{
-		IsUnitTest: true,
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return &schema.Provider{}, nil
+	testingiface.ExpectParallel(t, func(mockT *testingiface.MockT) {
+		ParallelTest(mockT, TestCase{
+			IsUnitTest: true,
+			ProviderFactories: map[string]func() (*schema.Provider, error){
+				"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+					return &schema.Provider{}, nil
+				},
 			},
-		},
-		Steps: []TestStep{
-			{
-				Config: "# not empty",
+			Steps: []TestStep{
+				{
+					Config: "# not empty",
+				},
 			},
-		},
+		})
 	})
-
-	if !mt.ParallelCalled {
-		t.Fatal("Parallel() not called")
-	}
 }
 
 func TestComposeAggregateTestCheckFunc(t *testing.T) {
@@ -129,21 +125,6 @@ func TestComposeTestCheckFunc(t *testing.T) {
 			t.Fatalf("Case %d bad: %s", i, err)
 		}
 	}
-}
-
-// mockT implements TestT for testing
-type mockT struct {
-	testinginterface.RuntimeT
-
-	ParallelCalled bool
-}
-
-func (t *mockT) Parallel() {
-	t.ParallelCalled = true
-}
-
-func (t *mockT) Name() string {
-	return "MockedName"
 }
 
 func TestTest_Main(t *testing.T) {

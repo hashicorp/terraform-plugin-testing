@@ -8,10 +8,10 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
@@ -111,8 +111,8 @@ func TestTestStep_ImportStateVerifyIdentifierAttribute(t *testing.T) {
 func TestTestStep_ImportStateVerifyIdentifierAttribute_Error(t *testing.T) {
 	t.Parallel()
 
-	plugintest.TestExpectTFatal(t, func() {
-		Test(&mockT{}, TestCase{
+	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
+		Test(mockT, TestCase{
 			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 				tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
 			},

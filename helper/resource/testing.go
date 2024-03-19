@@ -15,8 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mitchellh/go-testing-interface"
-
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 
@@ -31,6 +29,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/addrs"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 )
 
 // flagSweep is a flag available when running tests on the command line. It
@@ -808,7 +807,7 @@ type RefreshPlanChecks struct {
 // tests to occur against the same resource or service (e.g. random naming).
 //
 // Test() function requirements and documentation also apply to this function.
-func ParallelTest(t testing.T, c TestCase) {
+func ParallelTest(t testingiface.T, c TestCase) {
 	t.Helper()
 	t.Parallel()
 	Test(t, c)
@@ -845,7 +844,7 @@ func ParallelTest(t testing.T, c TestCase) {
 //
 // Refer to the Env prefixed constants for additional details about these
 // environment variables, and others, that control testing functionality.
-func Test(t testing.T, c TestCase) {
+func Test(t testingiface.T, c TestCase) {
 	t.Helper()
 
 	ctx := context.Background()
@@ -929,7 +928,7 @@ func Test(t testing.T, c TestCase) {
 // have any external dependencies.
 //
 // Test() function requirements and documentation also apply to this function.
-func UnitTest(t testing.T, c TestCase) {
+func UnitTest(t testingiface.T, c TestCase) {
 	t.Helper()
 
 	c.IsUnitTest = true
