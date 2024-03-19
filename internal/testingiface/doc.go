@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package testingiface provides wrapper types compatible with the Go standard
 // library [testing] package. These wrappers are necessary for implementing
 // [testing] package helpers, since the Go standard library implementation is
