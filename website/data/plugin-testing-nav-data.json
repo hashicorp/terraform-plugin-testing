@@ -125,6 +125,10 @@
           {
             "title": "String",
             "path": "acceptance-tests/known-value-checks/string"
+          },
+          {
+            "title": "Tuple",
+            "path": "acceptance-tests/known-value-checks/tuple"
           }
         ]
       },

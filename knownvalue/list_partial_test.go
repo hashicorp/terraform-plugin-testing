@@ -125,7 +125,7 @@ func TestListValuePartial_CheckValue(t *testing.T) {
 	}
 }
 
-func TestListValuePartialPartial_String(t *testing.T) {
+func TestListValuePartial_String(t *testing.T) {
 	t.Parallel()
 
 	got := knownvalue.ListPartial(map[int]knownvalue.Check{
