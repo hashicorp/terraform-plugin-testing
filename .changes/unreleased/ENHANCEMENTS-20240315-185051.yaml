@@ -1,5 +1,5 @@
 kind: ENHANCEMENTS
-body: 'acctest: Improve scope of IPv4/IPv6 random address generation'
+body: 'helper/acctest: Improve scope of IPv4/IPv6 random address generation in RandIpAddress()'
 time: 2024-03-15T18:50:51.668365-04:00
 custom:
   Issue: "305"
