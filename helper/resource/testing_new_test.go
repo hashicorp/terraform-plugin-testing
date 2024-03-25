@@ -141,6 +141,21 @@ func TestShimState(t *testing.T) {
       "list_of_bool": {
         "sensitive": false,
         "value": [true, false, true]
+      },
+      "tuple_one": {
+        "sensitive": false,
+        "value": [true, 1.23, "hello world"],
+		"type": ["tuple", ["bool", "number", "string"]]
+      },
+      "tuple_two": {
+        "sensitive": false,
+        "value": ["hello world", true, 1.23],
+		"type": ["tuple", ["string", "bool", "number"]]
+      },
+      "tuple_three": {
+        "sensitive": false,
+        "value": [1.23, "hello world", true],
+		"type": ["tuple", ["number", "string", "bool"]]
       }
     },
     "root_module": {}
@@ -195,6 +210,27 @@ func TestShimState(t *testing.T) {
 								Type: "list",
 								Value: []interface{}{
 									true, false, true,
+								},
+								Sensitive: false,
+							},
+							"tuple_one": {
+								Type: "list",
+								Value: []interface{}{
+									true, json.Number("1.23"), "hello world",
+								},
+								Sensitive: false,
+							},
+							"tuple_two": {
+								Type: "list",
+								Value: []interface{}{
+									"hello world", true, json.Number("1.23"),
+								},
+								Sensitive: false,
+							},
+							"tuple_three": {
+								Type: "list",
+								Value: []interface{}{
+									json.Number("1.23"), "hello world", true,
 								},
 								Sensitive: false,
 							},
