@@ -123,7 +123,7 @@ func TestTuplePartial_CheckValue(t *testing.T) {
 	}
 }
 
-func TestTuplePartialPartial_String(t *testing.T) {
+func TestTuplePartial_String(t *testing.T) {
 	t.Parallel()
 
 	got := knownvalue.TuplePartial(map[int]knownvalue.Check{
