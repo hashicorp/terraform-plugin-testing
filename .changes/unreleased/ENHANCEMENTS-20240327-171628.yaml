@@ -1,0 +1,6 @@
+kind: ENHANCEMENTS
+body: 'tfversion: Ensured semantically equivalent Terraform CLI prerelease versions
+  are considered equal to patch versions in `SkipBelow`'
+time: 2024-03-27T17:16:28.49466-04:00
+custom:
+  Issue: "303"
