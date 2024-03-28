@@ -11,9 +11,9 @@ import (
 )
 
 // SkipBelow will skip (pass) the test if the Terraform CLI
-// version is below the given version. For example, if given
-// version.Must(version.NewVersion("0.15.0")), then 0.14.x or
-// any other prior minor versions will skip the test.
+// version is exclusively below the given version. For example, if given
+// version.Must(version.NewVersion("1.8.0")), then 1.7.x or
+// any other prior versions will skip the test.
 //
 // Prereleases of Terraform CLI (whether alpha, beta, or rc) are considered
 // equal to a given patch version. For example, if given
