@@ -7,12 +7,12 @@ import (
 	"context"
 
 	"github.com/hashicorp/go-version"
-	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func runTFVersionChecks(ctx context.Context, t testing.T, terraformVersion *version.Version, terraformVersionChecks []tfversion.TerraformVersionCheck) {
+func runTFVersionChecks(ctx context.Context, t testingiface.T, terraformVersion *version.Version, terraformVersionChecks []tfversion.TerraformVersionCheck) {
 	t.Helper()
 
 	for _, tfVersionCheck := range terraformVersionChecks {

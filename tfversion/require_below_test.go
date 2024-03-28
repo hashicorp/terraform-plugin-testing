@@ -10,10 +10,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
-
-	testinginterface "github.com/mitchellh/go-testing-interface"
 )
 
 func Test_RequireBelow(t *testing.T) { //nolint:paralleltest
@@ -22,9 +22,7 @@ func Test_RequireBelow(t *testing.T) { //nolint:paralleltest
 
 	r.UnitTest(t, r.TestCase{
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
-				return nil, nil
-			},
+			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.RequireBelow(version.Must(version.NewVersion("1.3.0"))),
@@ -46,12 +44,10 @@ func Test_RequireBelow_Error(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.4.0")
 
-	plugintest.TestExpectTFatal(t, func() {
-		r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
+	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
+		r.UnitTest(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
-					return nil, nil
-				},
+				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
 			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 				tfversion.RequireBelow(version.Must(version.NewVersion("1.3.0"))),

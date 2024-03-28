@@ -8,11 +8,11 @@ import (
 	"errors"
 
 	tfjson "github.com/hashicorp/terraform-json"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/mitchellh/go-testing-interface"
 )
 
-func runPlanChecks(ctx context.Context, t testing.T, plan *tfjson.Plan, planChecks []plancheck.PlanCheck) error {
+func runPlanChecks(ctx context.Context, t testingiface.T, plan *tfjson.Plan, planChecks []plancheck.PlanCheck) error {
 	t.Helper()
 
 	var result []error

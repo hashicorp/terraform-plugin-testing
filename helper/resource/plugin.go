@@ -17,10 +17,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 )
 
 // protov5ProviderFactory is a function which is called to start a protocol
@@ -113,7 +113,7 @@ type providerFactories struct {
 	protov6 protov6ProviderFactories
 }
 
-func runProviderCommand(ctx context.Context, t testing.T, f func() error, wd *plugintest.WorkingDir, factories *providerFactories) error {
+func runProviderCommand(ctx context.Context, t testingiface.T, f func() error, wd *plugintest.WorkingDir, factories *providerFactories) error {
 	// don't point to this as a test failure location
 	// point to whatever called it
 	t.Helper()

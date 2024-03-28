@@ -15,9 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
@@ -344,8 +344,8 @@ func TestTest_TestCase_ExternalProvidersAndProviderFactories_NonHashiCorpNamespa
 func TestTest_TestCase_ExternalProviders_Error(t *testing.T) {
 	t.Parallel()
 
-	plugintest.TestExpectTFatal(t, func() {
-		Test(&mockT{}, TestCase{
+	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
+		Test(mockT, TestCase{
 			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 				tfversion.SkipBelow(tfversion.Version0_13_0), // ExternalProvider.Source
 			},
@@ -366,7 +366,7 @@ func TestTest_TestCase_ExternalProviders_Error(t *testing.T) {
 func TestTest_TestCase_ProtoV5ProviderFactories(t *testing.T) {
 	t.Parallel()
 
-	Test(&mockT{}, TestCase{
+	Test(t, TestCase{
 		ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
 			"test": providerserver.NewProtov5ProviderServer(testprovider.Protov5Provider{}),
 		},
@@ -381,8 +381,8 @@ func TestTest_TestCase_ProtoV5ProviderFactories(t *testing.T) {
 func TestTest_TestCase_ProtoV5ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
-	plugintest.TestExpectTFatal(t, func() {
-		Test(&mockT{}, TestCase{
+	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
+		Test(mockT, TestCase{
 			ProtoV5ProviderFactories: map[string]func() (tfprotov5.ProviderServer, error){
 				"test": func() (tfprotov5.ProviderServer, error) { //nolint:unparam // required signature
 					return nil, fmt.Errorf("test")
@@ -400,7 +400,7 @@ func TestTest_TestCase_ProtoV5ProviderFactories_Error(t *testing.T) {
 func TestTest_TestCase_ProtoV6ProviderFactories(t *testing.T) {
 	t.Parallel()
 
-	Test(&mockT{}, TestCase{
+	Test(t, TestCase{
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},
@@ -415,8 +415,8 @@ func TestTest_TestCase_ProtoV6ProviderFactories(t *testing.T) {
 func TestTest_TestCase_ProtoV6ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
-	plugintest.TestExpectTFatal(t, func() {
-		Test(&mockT{}, TestCase{
+	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
+		Test(mockT, TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
 					return nil, fmt.Errorf("test")
@@ -434,7 +434,7 @@ func TestTest_TestCase_ProtoV6ProviderFactories_Error(t *testing.T) {
 func TestTest_TestCase_ProviderFactories(t *testing.T) {
 	t.Parallel()
 
-	Test(&mockT{}, TestCase{
+	Test(t, TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return &schema.Provider{}, nil
@@ -451,8 +451,8 @@ func TestTest_TestCase_ProviderFactories(t *testing.T) {
 func TestTest_TestCase_ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
-	plugintest.TestExpectTFatal(t, func() {
-		Test(&mockT{}, TestCase{
+	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
+		Test(mockT, TestCase{
 			ProviderFactories: map[string]func() (*schema.Provider, error){
 				"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 					return nil, fmt.Errorf("test")
@@ -470,7 +470,7 @@ func TestTest_TestCase_ProviderFactories_Error(t *testing.T) {
 func TestTest_TestCase_Providers(t *testing.T) {
 	t.Parallel()
 
-	Test(&mockT{}, TestCase{
+	Test(t, TestCase{
 		Providers: map[string]*schema.Provider{
 			"test": {},
 		},
