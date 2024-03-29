@@ -18,7 +18,7 @@ import (
 	testinginterface "github.com/mitchellh/go-testing-interface"
 )
 
-func Test_RequireAbove(t *testing.T) { //nolint:paralleltest
+func Test_RequireAbove_Equal(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
@@ -41,7 +41,30 @@ func Test_RequireAbove(t *testing.T) { //nolint:paralleltest
 	})
 }
 
-func Test_RequireAbove_Error(t *testing.T) { //nolint:paralleltest
+func Test_RequireAbove_Higher(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
+	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.1")
+
+	r.UnitTest(t, r.TestCase{
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(testprovider.Provider{}),
+		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.RequireAbove(version.Must(version.NewVersion("1.1.0"))),
+		},
+		Steps: []r.TestStep{
+			{
+				//nullable argument only available in TF v1.1.0+
+				Config: `variable "a" {
+  					nullable = true
+					default  = "hello"
+				}`,
+			},
+		},
+	})
+}
+
+func Test_RequireAbove_Lower(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.0.7")
 
@@ -80,6 +103,25 @@ func Test_RequireAbove_Prerelease_EqualCoreVersion(t *testing.T) { //nolint:para
 		},
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.RequireAbove(version.Must(version.NewVersion("1.8.0"))),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `//non-empty config`,
+			},
+		},
+	})
+}
+
+func Test_RequireAbove_Prerelease_EqualPrerelease(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
+	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.8.0-rc1")
+
+	r.UnitTest(t, r.TestCase{
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(testprovider.Provider{}),
+		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.RequireAbove(version.Must(version.NewVersion("1.8.0-rc1"))),
 		},
 		Steps: []r.TestStep{
 			{
