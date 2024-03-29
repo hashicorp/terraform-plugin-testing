@@ -13,11 +13,19 @@ The Terraform CLI version is determined by the binary selected by the [`TF_ACC_T
 
 A **version check** will either return an error and fail the associated test, return a skip message and pass the associated test immediately by skipping, or it will return nothing and allow the associated test to run.
 
+Terraform CLI prerelease versions include a `-alphaYYYYMMDD`, `-beta#`, or `rc#` (release candidate) suffix for a minor version with `0` patch version. For example, `1.8.0-rc1`. Prereleases of Terraform are considered semantically equivalent to the associated minor version since prereleases are when any new features are introduced.
+
 ## Built-in Version Checks and Variables
 
 The `terraform-plugin-testing` module provides a package [`tfversion`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion) with built-in version checks for common use-cases. There are three types of version checks: Skip Checks, Require Checks, and Collection Checks.
 
-## Version Variables
+<Tip>
+
+Built-in version checks handle prereleases of a minor version as semantically equivalent to given minor versions. For example, if the test includes `tfversion.SkipBelow(tfversion.Version1_8_0)` and the running Terraform CLI version is `1.8.0-rc1`, the test will run, not skip. This is intended to enable prerelease testing of new features.
+
+</Tip>
+
+### Version Variables
 
 The built-in checks in the `tfversion` package typically require the use of the [`github.com/hashicorp/go-version`](https://pkg.go.dev/github.com/hashicorp/go-version) module [`version.Version`](https://pkg.go.dev/github.com/hashicorp/go-version#Version) type. To simplify provider testing implementations, the `tfversion` package provides [built-in variables](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#pkg-variables) for common use case versions, such as each released minor and major Terraform version. These follow the pattern of `Version{MAJOR}_{MINOR}_{PATCH}` with the major, minor, and patch version numbers, such as `Version1_2_0`.
 
@@ -27,8 +35,8 @@ Skip Version Checks will pass the associated test by skipping and provide a skip
 
 | Check                                                                                                                                             | Description                                                                                                   |
 |---------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| [`tfversion.SkipAbove(maximumVersion)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#SkipAbove)                     | Skips the test if the Terraform CLI version is above the given maximum.                                       |
-| [`tfversion.SkipBelow(minimumVersion)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#SkipBelow)                     | Skips the test if the Terraform CLI version is below the given minimum.                                       |
+| [`tfversion.SkipAbove(maximumVersion)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#SkipAbove)                     | Skips the test if the Terraform CLI version is exclusively above the given maximum.                                       |
+| [`tfversion.SkipBelow(minimumVersion)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#SkipBelow)                     | Skips the test if the Terraform CLI version is exclusively below the given minimum.                                       |
 | [`tfversion.SkipBetween(minimumVersion, maximumVersion)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#SkipBetween) | Skips the test if the Terraform CLI version is between the given minimum (inclusive) and maximum (exclusive). |
 | [`tfversion.SkipIf(version)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#SkipIf)                                  | Skips the test if the Terraform CLI version matches the given version.                                        |
 
@@ -77,8 +85,8 @@ Require Version Checks will raise an error and fail the associated test if the d
 
 | Check                                                                                                                                                   | Description                                                                                                   |
 |---------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| [`tfversion.RequireAbove(minimumVersion)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#RequireAbove)                     | Fails the test if the Terraform CLI version is below the given maximum.                                       |
-| [`tfversion.RequireBelow(maximumVersion)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#RequireBelow)                     | Fails the test if the Terraform CLI version is above the given minimum.                                       |
+| [`tfversion.RequireAbove(minimumVersion)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#RequireAbove)                     | Fails the test if the Terraform CLI version is exclusively below the given minimum.                                       |
+| [`tfversion.RequireBelow(maximumVersion)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#RequireBelow)                     | Fails the test if the Terraform CLI version is inclusively above the given maximum.                                       |
 | [`tfversion.RequireBetween(minimumVersion, maximumVersion)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#RequireBetween) | Fails the test if the Terraform CLI version is outside the given minimum (exclusive) and maximum (inclusive). |
 | [`tfversion.RequireNot(version)`](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/tfversion#RequireNot)                                | Fails the test if the Terraform CLI version matches the given version.                                        |
 

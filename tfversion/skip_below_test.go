@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func Test_SkipBelow_SkipTest(t *testing.T) { //nolint:paralleltest
+func Test_SkipBelow_Lower(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.0.7")
 
@@ -40,9 +40,32 @@ func Test_SkipBelow_SkipTest(t *testing.T) { //nolint:paralleltest
 	})
 }
 
-func Test_SkipBelow_RunTest(t *testing.T) { //nolint:paralleltest
+func Test_SkipBelow_Equal(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
+
+	r.UnitTest(t, r.TestCase{
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(testprovider.Provider{}),
+		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.1.0"))),
+		},
+		Steps: []r.TestStep{
+			{
+				//nullable argument only available in TF v1.1.0+
+				Config: `variable "a" {
+  					nullable = true
+					default  = "hello"
+				}`,
+			},
+		},
+	})
+}
+
+func Test_SkipBelow_Higher(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
+	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.1")
 
 	r.UnitTest(t, r.TestCase{
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
@@ -79,6 +102,25 @@ func Test_SkipBelow_Prerelease_EqualCoreVersion(t *testing.T) { //nolint:paralle
 		},
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(version.Must(version.NewVersion("1.8.0"))),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `//non-empty config`,
+			},
+		},
+	})
+}
+
+func Test_SkipBelow_Prerelease_EqualPrerelease(t *testing.T) { //nolint:paralleltest
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
+	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.8.0-rc1")
+
+	r.UnitTest(t, r.TestCase{
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(testprovider.Provider{}),
+		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(version.Must(version.NewVersion("1.8.0-rc1"))),
 		},
 		Steps: []r.TestStep{
 			{
