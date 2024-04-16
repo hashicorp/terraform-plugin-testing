@@ -23,7 +23,7 @@ jobs:
       - run: go mod download
       - uses: golangci/golangci-lint-action@3cfe3a4abbb849e10058ce4af15d205b6da42804 # v4.0.0
   test:
-    name: test (Go ${{ matrix.go-version }} / TF ${{ matrix.terraform }}
+    name: test (Go ${{ matrix.go-version }} / TF ${{ matrix.terraform }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
