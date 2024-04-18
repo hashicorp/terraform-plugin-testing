@@ -42,12 +42,12 @@ jobs:
       - run: go test -coverprofile=coverage.out ./...
         env:
           TF_ACC: "1"
-      # Remove .* suffix, if it exists, from the terraform version
-      - id: tf_version
+      - name: Remove wildcard suffix from TF version
+        id: tf_version
         run: |
-          version="${{ matrix.terraform }}"
+          orginal_version="${{ matrix.terraform }}"
           wildcard=".*"
-          echo "version=$(${version%"$wildcard"})" >> "$GITHUB_OUTPUT"
+          echo "version=${orginal_version%"$wildcard"}" >> "$GITHUB_OUTPUT"
       - run: go tool cover -html=coverage.out -o coverage.html
       - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
