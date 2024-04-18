@@ -42,8 +42,14 @@ jobs:
       - run: go test -coverprofile=coverage.out ./...
         env:
           TF_ACC: "1"
+      # Remove .* suffix, if it exists, from the terraform version
+      - id: tf_version
+        run:
+          version="${{ matrix.terraform }}"
+          wildcard=".*"
+          echo "version=$(echo ${version%$wildcard})" >> "$GITHUB_OUTPUT"
       - run: go tool cover -html=coverage.out -o coverage.html
       - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
-          name: go-${{ matrix.go-version }}-terraform-${{ matrix.terraform }}-coverage
+          name: go-${{ matrix.go-version }}-terraform-${{ steps.tf_version.outputs.version }}-coverage
           path: coverage.html
