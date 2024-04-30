@@ -70,7 +70,7 @@ func TestCompareValueContains_CheckState_Map_ValuesSame(t *testing.T) {
 				resource "test_resource" "two" {
 					map_attribute = {
 						"a": "str2",
-						"b": resource.test_resource.one.string_attribute,
+						"b": test_resource.one.string_attribute,
 					}
 				}
 				`,
@@ -105,8 +105,8 @@ func TestCompareValueContains_CheckState_Map_ValuesDiffer_SameError(t *testing.T
 
 				resource "test_resource" "two" {
 					map_attribute = {
-						"a": resource.test_resource.one.string_attribute,
-						"b": resource.test_resource.one.string_attribute,
+						"a": test_resource.one.string_attribute,
+						"b": test_resource.one.string_attribute,
 					}
 				}
 				`,
@@ -142,7 +142,7 @@ func TestCompareValueContains_CheckState_Map_ValuesDiffer(t *testing.T) {
 
 				resource "test_resource" "two" {
 					map_attribute = {
-						"a": resource.test_resource.one.string_attribute,
+						"a": test_resource.one.string_attribute,
 						"b": "str2",
 					}
 				}
@@ -216,7 +216,7 @@ func TestCompareValueContains_CheckState_Set_ValuesSame(t *testing.T) {
 				resource "test_resource" "two" {
 					set_attribute = [
 						"str2",
-						resource.test_resource.one.string_attribute
+						test_resource.one.string_attribute
 					]
 				}
 				`,
@@ -251,8 +251,8 @@ func TestCompareValueContains_CheckState_Set_ValuesDiffer_SameError(t *testing.T
 
 				resource "test_resource" "two" {
 					set_attribute = [
-						resource.test_resource.one.string_attribute,
-						resource.test_resource.one.string_attribute,
+						test_resource.one.string_attribute,
+						test_resource.one.string_attribute,
 					]
 				}
 				`,
@@ -288,7 +288,7 @@ func TestCompareValueContains_CheckState_Set_ValuesDiffer(t *testing.T) {
 
 				resource "test_resource" "two" {
 					set_attribute = [
-						resource.test_resource.one.string_attribute,
+						test_resource.one.string_attribute,
 						"str2"
 					]
 				}
