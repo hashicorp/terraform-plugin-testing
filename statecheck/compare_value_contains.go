@@ -139,6 +139,9 @@ func (e *compareValueContains) CheckState(ctx context.Context, req CheckStateReq
 	resp.Error = fmt.Errorf("expected []any or map[string]any value for CompareValueContains check, got: %T", resultOne)
 }
 
+// CompareValueContains returns a state check that compares the values in state for the list, map, object
+// or set defined by the first given resource address and path with the value in state for the second
+// given resource address and path using the supplied value comparer.
 func CompareValueContains(resourceAddressOne string, attributePathOne tfjsonpath.Path, resourceAddressTwo string, attributePathTwo tfjsonpath.Path, comparer compare.ValueComparer) StateCheck {
 	return &compareValueContains{
 		resourceAddressOne: resourceAddressOne,

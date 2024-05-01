@@ -105,7 +105,8 @@ func (e *compareValue) CheckState(ctx context.Context, req CheckStateRequest, re
 	}
 }
 
-// CompareValue returns a state check that compares sequential values retrieved from state.
+// CompareValue returns a state check that compares values retrieved from state using the
+// supplied value comparer.
 func CompareValue(comparer compare.ValueComparer) *compareValue {
 	return &compareValue{
 		comparer: comparer,

@@ -98,6 +98,8 @@ func (e *compareValuePairs) CheckState(ctx context.Context, req CheckStateReques
 	}
 }
 
+// CompareValuePairs returns a state check that compares the value in state for the first given resource address and
+// path with the value in state for the second given resource address and path using the supplied value comparer.
 func CompareValuePairs(resourceAddressOne string, attributePathOne tfjsonpath.Path, resourceAddressTwo string, attributePathTwo tfjsonpath.Path, comparer compare.ValueComparer) StateCheck {
 	return &compareValuePairs{
 		resourceAddressOne: resourceAddressOne,
