@@ -38,7 +38,7 @@ func TestValuesSame_CompareValues(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			err := compare.ValuesSame{}.CompareValues(testCase.in...)
+			err := compare.ValuesSame().CompareValues(testCase.in...)
 
 			if diff := cmp.Diff(err, testCase.expectedError, equateErrorMessage); diff != "" {
 				t.Errorf("unexpected difference: %s", diff)

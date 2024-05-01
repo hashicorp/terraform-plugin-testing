@@ -5,9 +5,13 @@ package compare
 
 import "fmt"
 
-type ValuesDifferAll struct{}
+var _ ValueComparer = valuesDifferAll{}
 
-func (v ValuesDifferAll) CompareValues(values ...any) error {
+type valuesDifferAll struct{}
+
+// CompareValues determines whether each value in the supplied values
+// is unique.
+func (v valuesDifferAll) CompareValues(values ...any) error {
 	vals := map[any]struct{}{}
 
 	for i := 0; i < len(values); i++ {
@@ -19,4 +23,10 @@ func (v ValuesDifferAll) CompareValues(values ...any) error {
 	}
 
 	return nil
+}
+
+// ValuesDifferAll returns a ValueComparer for asserting that each value in the
+// values supplied to the CompareValues method is unique.
+func ValuesDifferAll() valuesDifferAll {
+	return valuesDifferAll{}
 }

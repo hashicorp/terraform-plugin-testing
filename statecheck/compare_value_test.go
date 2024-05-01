@@ -18,7 +18,7 @@ import (
 func TestCompareValue_CheckState_Bool_ValuesSame_ValueDiffersError(t *testing.T) {
 	t.Parallel()
 
-	boolValuesDiffer := statecheck.CompareValue(compare.ValuesSame{})
+	boolValuesDiffer := statecheck.CompareValue(compare.ValuesSame())
 
 	r.Test(t, r.TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -71,7 +71,7 @@ func TestCompareValue_CheckState_Bool_ValuesSame_ValueDiffersError(t *testing.T)
 func TestCompareValue_CheckState_Bool_ValuesSame(t *testing.T) {
 	t.Parallel()
 
-	boolValuesDiffer := statecheck.CompareValue(compare.ValuesSame{})
+	boolValuesDiffer := statecheck.CompareValue(compare.ValuesSame())
 
 	r.Test(t, r.TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -111,7 +111,7 @@ func TestCompareValue_CheckState_Bool_ValuesSame(t *testing.T) {
 func TestCompareValue_CheckState_Bool_ValuesSameAny_ValueDiffersError(t *testing.T) {
 	t.Parallel()
 
-	boolValuesDiffer := statecheck.CompareValue(compare.ValuesSameAny{})
+	boolValuesDiffer := statecheck.CompareValue(compare.ValuesSameAny())
 
 	r.Test(t, r.TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -152,7 +152,7 @@ func TestCompareValue_CheckState_Bool_ValuesSameAny_ValueDiffersError(t *testing
 func TestCompareValue_CheckState_Bool_ValuesSameAny(t *testing.T) {
 	t.Parallel()
 
-	boolValuesDiffer := statecheck.CompareValue(compare.ValuesSameAny{})
+	boolValuesDiffer := statecheck.CompareValue(compare.ValuesSameAny())
 
 	r.Test(t, r.TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -204,7 +204,7 @@ func TestCompareValue_CheckState_Bool_ValuesSameAny(t *testing.T) {
 func TestCompareValue_CheckState_Bool_ValuesDiffer_ValueSameError(t *testing.T) {
 	t.Parallel()
 
-	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDiffer{})
+	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	r.Test(t, r.TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -257,7 +257,7 @@ func TestCompareValue_CheckState_Bool_ValuesDiffer_ValueSameError(t *testing.T) 
 func TestCompareValue_CheckState_Bool_ValuesDiffer(t *testing.T) {
 	t.Parallel()
 
-	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDiffer{})
+	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	r.Test(t, r.TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -309,7 +309,7 @@ func TestCompareValue_CheckState_Bool_ValuesDiffer(t *testing.T) {
 func TestCompareValue_CheckState_Bool_ValuesDifferAll_ValuesSameError(t *testing.T) {
 	t.Parallel()
 
-	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDifferAll{})
+	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDifferAll())
 
 	r.Test(t, r.TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -362,7 +362,7 @@ func TestCompareValue_CheckState_Bool_ValuesDifferAll_ValuesSameError(t *testing
 func TestCompareValue_CheckState_Bool_ValuesDifferAll(t *testing.T) {
 	t.Parallel()
 
-	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDifferAll{})
+	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDifferAll())
 
 	r.Test(t, r.TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -402,7 +402,7 @@ func TestCompareValue_CheckState_Bool_ValuesDifferAll(t *testing.T) {
 func TestCompareValue_CheckState_Bool_ValuesDifferAny_ValuesSameError(t *testing.T) {
 	t.Parallel()
 
-	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDifferAny{})
+	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDifferAny())
 
 	r.Test(t, r.TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
@@ -443,7 +443,7 @@ func TestCompareValue_CheckState_Bool_ValuesDifferAny_ValuesSameError(t *testing
 func TestCompareValue_CheckState_Bool_ValuesDifferAny(t *testing.T) {
 	t.Parallel()
 
-	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDifferAny{})
+	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDifferAny())
 
 	r.Test(t, r.TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){

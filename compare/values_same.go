@@ -5,9 +5,13 @@ package compare
 
 import "fmt"
 
-type ValuesSame struct{}
+var _ ValueComparer = valuesSame{}
 
-func (v ValuesSame) CompareValues(values ...any) error {
+type valuesSame struct{}
+
+// CompareValues determines whether each value in the sequence of the supplied values
+// is the same as the preceding value.
+func (v valuesSame) CompareValues(values ...any) error {
 	for i := 1; i < len(values); i++ {
 		if values[i-1] != values[i] {
 			return fmt.Errorf("expected values to be the same, but they differ: %v != %v", values[i-1], values[i])
@@ -15,4 +19,10 @@ func (v ValuesSame) CompareValues(values ...any) error {
 	}
 
 	return nil
+}
+
+// ValuesSame returns a ValueComparer for asserting that each value in the sequence of
+// the values supplied to the CompareValues method is the same as the preceding value.
+func ValuesSame() valuesSame {
+	return valuesSame{}
 }

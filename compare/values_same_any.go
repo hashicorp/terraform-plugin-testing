@@ -5,9 +5,13 @@ package compare
 
 import "fmt"
 
-type ValuesSameAny struct{}
+var _ ValueComparer = valuesSameAny{}
 
-func (v ValuesSameAny) CompareValues(values ...any) error {
+type valuesSameAny struct{}
+
+// CompareValues determines whether any value in the supplied values
+// matches any other value.
+func (v valuesSameAny) CompareValues(values ...any) error {
 	if len(values) < 2 {
 		return nil
 	}
@@ -23,4 +27,10 @@ func (v ValuesSameAny) CompareValues(values ...any) error {
 	}
 
 	return nil
+}
+
+// ValuesSameAny returns a ValueComparer for asserting whether any value in the
+// values supplied to the CompareValues method is the same as any other value.
+func ValuesSameAny() valuesSameAny {
+	return valuesSameAny{}
 }
