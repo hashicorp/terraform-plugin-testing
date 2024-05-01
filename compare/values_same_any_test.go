@@ -26,8 +26,24 @@ func TestValuesSameAny_CompareValues(t *testing.T) {
 		"non-sequential-matching-values": {
 			in: []any{"str", "other_str", "str"},
 		},
-		"non-matching-values": {
+		"non-matching-values-string": {
 			in:            []any{"str", "other_str", "another_str"},
+			expectedError: fmt.Errorf("expected at least two values to be the same, but all values differ"),
+		},
+		"non-matching-values-slice": {
+			in: []any{
+				[]any{"str"},
+				[]any{"other_str"},
+				[]any{"another_str"},
+			},
+			expectedError: fmt.Errorf("expected at least two values to be the same, but all values differ"),
+		},
+		"non-matching-values-map": {
+			in: []any{
+				map[string]any{"a": "str"},
+				map[string]any{"a": "other_str"},
+				map[string]any{"a": "another_str"},
+			},
 			expectedError: fmt.Errorf("expected at least two values to be the same, but all values differ"),
 		},
 	}

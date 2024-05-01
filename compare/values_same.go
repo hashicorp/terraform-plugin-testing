@@ -3,7 +3,10 @@
 
 package compare
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+)
 
 var _ ValueComparer = valuesSame{}
 
@@ -13,7 +16,7 @@ type valuesSame struct{}
 // is the same as the preceding value.
 func (v valuesSame) CompareValues(values ...any) error {
 	for i := 1; i < len(values); i++ {
-		if values[i-1] != values[i] {
+		if !reflect.DeepEqual(values[i-1], values[i]) {
 			return fmt.Errorf("expected values to be the same, but they differ: %v != %v", values[i-1], values[i])
 		}
 	}

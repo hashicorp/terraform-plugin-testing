@@ -3,7 +3,10 @@
 
 package compare
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+)
 
 var _ ValueComparer = valuesSameAny{}
 
@@ -16,17 +19,15 @@ func (v valuesSameAny) CompareValues(values ...any) error {
 		return nil
 	}
 
-	vals := map[any]struct{}{}
-
 	for i := 0; i < len(values); i++ {
-		vals[values[i]] = struct{}{}
+		for j := i + 1; j < len(values); j++ {
+			if reflect.DeepEqual(values[i], values[j]) {
+				return nil
+			}
+		}
 	}
 
-	if len(vals) == len(values) {
-		return fmt.Errorf("expected at least two values to be the same, but all values differ")
-	}
-
-	return nil
+	return fmt.Errorf("expected at least two values to be the same, but all values differ")
 }
 
 // ValuesSameAny returns a ValueComparer for asserting whether any value in the

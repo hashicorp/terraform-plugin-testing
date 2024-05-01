@@ -23,12 +23,33 @@ func TestValuesDifferAny_CompareValues(t *testing.T) {
 		"single-value": {
 			in: []any{"str"},
 		},
-		"non-matching-sequential-values": {
+		"non-matching-sequential-values-string": {
 			in: []any{"str", "other_str", "str"},
 		},
-		"matching-values": {
-			in:            []any{"str", "str", "str"},
+		"non-matching-sequential-values-slice": {
+			in: []any{
+				[]any{"str"},
+				[]any{"other_str"},
+				[]any{"str"},
+			},
+		},
+		"matching-values-string": {
+			in:            []any{"str", "str"},
 			expectedError: fmt.Errorf("expected values to differ, but value is duplicated: str"),
+		},
+		"matching-values-slice": {
+			in: []any{
+				[]any{"str"},
+				[]any{"str"},
+			},
+			expectedError: fmt.Errorf("expected values to differ, but value is duplicated: [str]"),
+		},
+		"matching-values-map": {
+			in: []any{
+				map[string]any{"a": "str"},
+				map[string]any{"a": "str"},
+			},
+			expectedError: fmt.Errorf("expected values to differ, but value is duplicated: map[a:str]"),
 		},
 	}
 

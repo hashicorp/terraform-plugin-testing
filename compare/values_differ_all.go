@@ -3,7 +3,10 @@
 
 package compare
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+)
 
 var _ ValueComparer = valuesDifferAll{}
 
@@ -12,14 +15,12 @@ type valuesDifferAll struct{}
 // CompareValues determines whether each value in the supplied values
 // is unique.
 func (v valuesDifferAll) CompareValues(values ...any) error {
-	vals := map[any]struct{}{}
-
 	for i := 0; i < len(values); i++ {
-		if _, ok := vals[values[i]]; ok {
-			return fmt.Errorf("expected values to differ, but value is duplicated: %v", values[i])
+		for j := i + 1; j < len(values); j++ {
+			if reflect.DeepEqual(values[i], values[j]) {
+				return fmt.Errorf("expected values to differ, but value is duplicated: %v", values[i])
+			}
 		}
-
-		vals[values[i]] = struct{}{}
 	}
 
 	return nil

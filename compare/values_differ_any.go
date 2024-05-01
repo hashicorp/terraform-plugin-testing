@@ -3,7 +3,10 @@
 
 package compare
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+)
 
 var _ ValueComparer = valuesDifferAny{}
 
@@ -16,21 +19,18 @@ func (v valuesDifferAny) CompareValues(values ...any) error {
 		return nil
 	}
 
-	vals := map[any]int{}
+	var val any
 
 	for i := 0; i < len(values); i++ {
-		vals[values[i]]++
-	}
-
-	if len(vals) < 2 {
-		for k, v := range vals {
-			if v > 1 {
-				return fmt.Errorf("expected values to differ, but value is duplicated: %v", k)
+		val = values[i]
+		for j := 1; j < len(values); j++ {
+			if !reflect.DeepEqual(values[i], values[j]) {
+				return nil
 			}
 		}
 	}
 
-	return nil
+	return fmt.Errorf("expected values to differ, but value is duplicated: %v", val)
 }
 
 // ValuesDifferAny returns a ValueComparer for asserting that any value in the
