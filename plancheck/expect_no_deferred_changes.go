@@ -30,9 +30,18 @@ func (e expectNoDeferredChanges) CheckPlan(ctx context.Context, req CheckPlanReq
 	}
 
 	resp.Error = errors.Join(result...)
+	if resp.Error != nil {
+		return
+	}
+
+	if !req.Plan.Complete {
+		resp.Error = errors.New("expected plan to be marked as complete, but complete was \"false\", indicating that at least one more plan/apply round is needed to converge.")
+		return
+	}
 }
 
-// TODO: doc
+// ExpectNoDeferredChanges returns a plan check that asserts that there are no deffered changes
+// for any resources in the plan.
 func ExpectNoDeferredChanges() PlanCheck {
 	return expectNoDeferredChanges{}
 }

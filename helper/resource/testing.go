@@ -17,7 +17,6 @@ import (
 
 	"github.com/mitchellh/go-testing-interface"
 
-	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 
@@ -442,6 +441,10 @@ type TestCase struct {
 	// set to "1", to persist any working directory files. Otherwise, this directory is
 	// automatically cleaned up at the end of the TestCase.
 	WorkingDir string
+
+	// AdditionalCLIOptions allows an intentionally limited set of options to be passed
+	// to the Terraform CLI when executing test steps.
+	AdditionalCLIOptions *AdditionalCLIOptions
 }
 
 // ExternalProvider holds information about third-party providers that should
@@ -777,17 +780,6 @@ type TestStep struct {
 	// for performing import testing where the prior TestStep configuration
 	// contained a provider outside the one under test.
 	ExternalProviders map[string]ExternalProvider
-
-	// TODO: doc
-	AdditionalCLIFlags AdditionalCLIFlags
-}
-
-// TODO: doc
-type AdditionalCLIFlags struct {
-	// TODO: doc
-	Apply []tfexec.ApplyOption
-	// TODO: doc
-	Plan []tfexec.PlanOption
 }
 
 // ConfigPlanChecks defines the different points in a Config TestStep when plan checks can be run.

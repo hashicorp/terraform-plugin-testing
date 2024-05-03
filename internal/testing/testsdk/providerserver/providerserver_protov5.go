@@ -36,6 +36,20 @@ type Protov5ProviderServer struct {
 	Provider provider.Protov5Provider
 }
 
+// CallFunction implements tfprotov5.ProviderServer.
+func (s Protov5ProviderServer) CallFunction(ctx context.Context, req *tfprotov5.CallFunctionRequest) (*tfprotov5.CallFunctionResponse, error) {
+	return &tfprotov5.CallFunctionResponse{}, nil
+}
+
+// GetFunctions implements tfprotov5.ProviderServer.
+func (s Protov5ProviderServer) GetFunctions(ctx context.Context, req *tfprotov5.GetFunctionsRequest) (*tfprotov5.GetFunctionsResponse, error) {
+	return &tfprotov5.GetFunctionsResponse{}, nil
+}
+
+func (s Protov5ProviderServer) MoveResourceState(ctx context.Context, req *tfprotov5.MoveResourceStateRequest) (*tfprotov5.MoveResourceStateResponse, error) {
+	return &tfprotov5.MoveResourceStateResponse{}, nil
+}
+
 func (s Protov5ProviderServer) GetMetadata(ctx context.Context, request *tfprotov5.GetMetadataRequest) (*tfprotov5.GetMetadataResponse, error) {
 	return &tfprotov5.GetMetadataResponse{}, nil
 }
