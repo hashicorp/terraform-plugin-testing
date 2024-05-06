@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/logutils v1.0.0
 	github.com/hashicorp/terraform-exec v0.20.1-0.20240501214311-a1abb29f777f
 	github.com/hashicorp/terraform-json v0.21.1-0.20240502194054-3b8a921d9133
-	github.com/hashicorp/terraform-plugin-go v0.22.3-0.20240503133000-f7070c19a38c
+	github.com/hashicorp/terraform-plugin-go v0.23.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.33.0
 	github.com/mitchellh/go-testing-interface v1.14.1
