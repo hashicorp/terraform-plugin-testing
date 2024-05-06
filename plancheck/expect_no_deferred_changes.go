@@ -40,7 +40,7 @@ func (e expectNoDeferredChanges) CheckPlan(ctx context.Context, req CheckPlanReq
 	}
 }
 
-// ExpectNoDeferredChanges returns a plan check that asserts that there are no deffered changes
+// ExpectNoDeferredChanges returns a plan check that asserts that there are no deferred changes
 // for any resources in the plan.
 func ExpectNoDeferredChanges() PlanCheck {
 	return expectNoDeferredChanges{}
