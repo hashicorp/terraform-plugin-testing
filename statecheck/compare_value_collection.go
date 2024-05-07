@@ -137,6 +137,7 @@ func (e *compareValueCollection) CheckState(ctx context.Context, req CheckStateR
 	// Verify resultOne is a collection.
 	switch t := resultOne.(type) {
 	case []any, map[string]any:
+		// Collection found.
 	default:
 		var pathStr string
 
