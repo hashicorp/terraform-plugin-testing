@@ -134,6 +134,21 @@ func (e *compareValueCollection) CheckState(ctx context.Context, req CheckStateR
 		return
 	}
 
+	// Verify resultOne is a collection.
+	switch t := resultOne.(type) {
+	case []any, map[string]any:
+	default:
+		var pathStr string
+
+		for _, v := range e.collectionPath {
+			pathStr += fmt.Sprintf(".%s", v.String())
+		}
+
+		resp.Error = fmt.Errorf("%s%s is not a collection type: %T", e.resourceAddressOne, pathStr, t)
+
+		return
+	}
+
 	var results []any
 
 	results, err = walkCollectionPath(resultOne, e.collectionPath[1:], results)
