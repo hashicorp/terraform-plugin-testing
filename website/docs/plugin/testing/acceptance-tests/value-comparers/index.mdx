@@ -1,0 +1,132 @@
+---
+page_title: 'Plugin Development - Acceptance Testing: Value Comparers'
+description: >-
+    How to use value comparers in the testing module.
+    Value comparers define a comparison for a resource attribute, or output value for use in State Checks.
+---
+
+# Value Comparers
+
+Value Comparers are for use in conjunction with [State Checks](/terraform/plugin/testing/acceptance-tests/state-checks), which leverage the [terraform-json](https://pkg.go.dev/github.com/hashicorp/terraform-json) representation of Terraform state.
+
+## Usage
+
+Example uses in the testing module include:
+
+- The [`CompareValue()`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#comparevalue-state-check), [`CompareValueCollection()`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#comparevaluecollection-state-check) and [`CompareValuePairs()`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#comparevaluepairs-state-check) [built-in state checks](/terraform/plugin/testing/acceptance-tests/state-checks) use value comparers  for comparing specific resource attribute, or output values.
+
+## Using a Value Comparer
+
+The value comparer types are implemented within the `terraform-plugin-testing` module in the [`compare` package](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/compare). Value comparers are instantiated by calling the relevant constructor function.
+
+```go
+compare.ValuesDiffer()
+```
+
+The value comparer types implement the [`ValueComparer` interface](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/compare#ValueComparer). The `CompareValues()` method accepts a variadic argument of type `any`, which allows for comparison of arbitrary data structures.
+
+## Values Differ Comparer Type
+
+The [ValuesDiffer](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/compare#ValuesDiffer) value comparer verifies that each value in the sequence of values supplied to the `CompareValues()` method differs from the preceding value.
+
+Example usage of [ValuesDiffer](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/compare#ValuesDiffer) in a [CompareValue](/terraform/plugin/testing/acceptance-tests/state-checks/resource#comparevalue-state-check) state check.
+
+```go
+package example_test
+
+import (
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/hashicorp/terraform-plugin-testing/compare"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+)
+
+func TestCompareValue_CheckState_ValuesDiffer(t *testing.T) {
+	t.Parallel()
+
+	compareValuesDiffer := statecheck.CompareValue(compare.ValuesDiffer())
+
+	resource.Test(t, resource.TestCase{
+		// Provider definition omitted.
+		Steps: []resource.TestStep{
+			{
+				// Example resource containing a computed attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					compareValuesDiffer.AddStateValue(
+						"test_resource.one",
+						tfjsonpath.New("computed_attribute"),
+					),
+				},
+			},
+			{
+				// Example resource containing a computed attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					compareValuesDiffer.AddStateValue(
+						"test_resource.one",
+						tfjsonpath.New("computed_attribute"),
+					),
+				},
+			},
+		},
+	})
+}
+```
+
+## Values Same Comparer Type
+
+The [ValuesSame](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/compare#ValuesSame) value comparer verifies that each value in the sequence of values supplied to the `CompareValues()` method is the same as the preceding value.
+
+Example usage of [ValuesSame](https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/compare#ValuesSame) in a [CompareValue](/terraform/plugin/testing/acceptance-tests/state-checks/resource#comparevalue-state-check) state check.
+
+```go
+package example_test
+
+import (
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/hashicorp/terraform-plugin-testing/compare"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+)
+
+func TestCompareValue_CheckState_ValuesSame(t *testing.T) {
+	t.Parallel()
+
+	compareValuesSame := statecheck.CompareValue(compare.ValuesSame())
+
+	resource.Test(t, resource.TestCase{
+		// Provider definition omitted.
+		Steps: []resource.TestStep{
+			{
+				// Example resource containing a computed attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					compareValuesSame.AddStateValue(
+						"test_resource.one",
+						tfjsonpath.New("computed_attribute"),
+					),
+				},
+			},
+			{
+				// Example resource containing a computed attribute named "computed_attribute"
+				Config: `resource "test_resource" "one" {}`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					compareValuesSame.AddStateValue(
+						"test_resource.one",
+						tfjsonpath.New("computed_attribute"),
+					),
+				},
+			},
+		},
+	})
+}
+```

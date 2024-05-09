@@ -133,6 +133,15 @@
         ]
       },
       {
+        "title": "Value Comparers",
+        "routes": [
+          {
+            "title": "Overview",
+            "path": "acceptance-tests/value-comparers"
+          }
+        ]
+      },
+      {
         "title": "Sweepers",
         "path": "acceptance-tests/sweepers"
       },
