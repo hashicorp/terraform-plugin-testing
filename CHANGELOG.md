@@ -1,3 +1,22 @@
+## 1.8.0 (May 17, 2024)
+
+FEATURES:
+
+* plancheck: Added  `ExpectDeferredChange` and `ExpectNoDeferredChanges` checks for experimental deferred action support. ([#331](https://github.com/hashicorp/terraform-plugin-testing/issues/331))
+* tfversion: Added `SkipIfNotPrerelease` version check for testing experimental features of prerelease Terraform builds. ([#331](https://github.com/hashicorp/terraform-plugin-testing/issues/331))
+
+ENHANCEMENTS:
+
+* helper/acctest: Improve scope of IPv4/IPv6 random address generation in RandIpAddress() ([#305](https://github.com/hashicorp/terraform-plugin-testing/issues/305))
+* knownvalue: Add `TupleExact`, `TuplePartial` and `TupleSizeExact` checks for dynamic value testing. ([#312](https://github.com/hashicorp/terraform-plugin-testing/issues/312))
+* tfversion: Ensured Terraform CLI prerelease versions are considered semantically equal to patch versions in built-in checks to match the Terraform CLI versioning policy ([#303](https://github.com/hashicorp/terraform-plugin-testing/issues/303))
+* helper/resource: Added `(TestCase).AdditionalCLIOptions` with `AllowDeferral` option for plan and apply commands. ([#331](https://github.com/hashicorp/terraform-plugin-testing/issues/331))
+
+BUG FIXES:
+
+* helper/resource: Fix panic in output state shimming when a tuple is present. ([#310](https://github.com/hashicorp/terraform-plugin-testing/issues/310))
+* tfversion: Fixed `RequireBelow` ignoring equal versioning to fail a test ([#303](https://github.com/hashicorp/terraform-plugin-testing/issues/303))
+
 ## 1.7.0 (March 05, 2024)
 
 NOTES:
