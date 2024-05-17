@@ -1,6 +1,0 @@
-kind: ENHANCEMENTS
-body: 'knownvalue: Add `TupleExact`, `TuplePartial` and `TupleSizeExact` checks for
-  dynamic value testing.'
-time: 2024-03-25T12:05:39.777695-04:00
-custom:
-  Issue: "312"

@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'tfversion: Added `SkipIfNotPrerelease` version check for testing experimental
-  features of prerelease Terraform builds.'
-time: 2024-05-03T16:18:02.132794-04:00
-custom:
-  Issue: "331"
