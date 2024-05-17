@@ -34,7 +34,12 @@ func (e expectNoDeferredChanges) CheckPlan(ctx context.Context, req CheckPlanReq
 		return
 	}
 
-	if !req.Plan.Complete {
+	if req.Plan.Complete == nil {
+		resp.Error = errors.New("expected plan to be marked as complete, but complete field was not set in plan (nil). This indicates that the plan was created with a version of Terraform older than 1.8, which does not support the complete field.")
+		return
+	}
+
+	if !*req.Plan.Complete {
 		resp.Error = errors.New("expected plan to be marked as complete, but complete was \"false\", indicating that at least one more plan/apply round is needed to converge.")
 		return
 	}
