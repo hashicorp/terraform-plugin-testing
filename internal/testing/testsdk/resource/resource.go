@@ -55,6 +55,7 @@ type PlanChangeRequest struct {
 }
 
 type PlanChangeResponse struct {
+	Deferred        *tfprotov6.Deferred
 	Diagnostics     []*tfprotov6.Diagnostic
 	PlannedState    tftypes.Value
 	RequiresReplace []*tftypes.AttributePath
