@@ -58,6 +58,18 @@ type ProviderServer struct {
 	Provider provider.Provider
 }
 
+func (s ProviderServer) CallFunction(ctx context.Context, req *tfprotov6.CallFunctionRequest) (*tfprotov6.CallFunctionResponse, error) {
+	return &tfprotov6.CallFunctionResponse{}, nil
+}
+
+func (s ProviderServer) GetFunctions(ctx context.Context, req *tfprotov6.GetFunctionsRequest) (*tfprotov6.GetFunctionsResponse, error) {
+	return &tfprotov6.GetFunctionsResponse{}, nil
+}
+
+func (s ProviderServer) MoveResourceState(ctx context.Context, req *tfprotov6.MoveResourceStateRequest) (*tfprotov6.MoveResourceStateResponse, error) {
+	return &tfprotov6.MoveResourceStateResponse{}, nil
+}
+
 func (s ProviderServer) GetMetadata(ctx context.Context, request *tfprotov6.GetMetadataRequest) (*tfprotov6.GetMetadataResponse, error) {
 	resp := &tfprotov6.GetMetadataResponse{
 		ServerCapabilities: &tfprotov6.ServerCapabilities{
@@ -448,6 +460,7 @@ func (s ProviderServer) PlanResourceChange(ctx context.Context, req *tfprotov6.P
 
 	resp.Diagnostics = planResp.Diagnostics
 	resp.RequiresReplace = planResp.RequiresReplace
+	resp.Deferred = planResp.Deferred
 
 	if len(resp.Diagnostics) > 0 {
 		return resp, nil

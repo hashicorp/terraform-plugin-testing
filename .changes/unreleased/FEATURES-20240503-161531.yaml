@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'plancheck: Added  `ExpectDeferredChange` and `ExpectNoDeferredChanges` checks
+  for experimental deferred action support.'
+time: 2024-05-03T16:15:31.03438-04:00
+custom:
+  Issue: "331"
