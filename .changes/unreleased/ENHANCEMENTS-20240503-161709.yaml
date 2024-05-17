@@ -1,6 +1,0 @@
-kind: ENHANCEMENTS
-body: 'helper/resource: Added `(TestCase).AdditionalCLIOptions` with `AllowDeferral`
-  option for plan and apply commands.'
-time: 2024-05-03T16:17:09.64792-04:00
-custom:
-  Issue: "331"
