@@ -1,6 +1,5 @@
-# Copyright (c) HashiCorp, Inc.
-# SPDX-License-Identifier: MPL-2.0
-
+# DO NOT EDIT - This GitHub Workflow is managed by automation
+# https://github.com/hashicorp/terraform-devex-repos
 changesDir: .changes
 unreleasedDir: unreleased
 changelogPath: CHANGELOG.md
