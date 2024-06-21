@@ -1,6 +1,4 @@
-# Copyright (c) HashiCorp, Inc.
-# SPDX-License-Identifier: MPL-2.0
-
+version: 2
 project_name: terraform-plugin-testing
 builds:
   - skip: true
