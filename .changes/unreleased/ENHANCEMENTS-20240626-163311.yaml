@@ -1,0 +1,5 @@
+kind: ENHANCEMENTS
+body: 'knownvalue: Add `Float32Exact` check for `float32` value testing.'
+time: 2024-06-26T16:33:11.495969-04:00
+custom:
+  Issue: "356"
