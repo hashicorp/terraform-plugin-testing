@@ -1,0 +1,5 @@
+kind: ENHANCEMENTS
+body: 'knownvalue: Add `Int32Exact` check for int32 value testing.'
+time: 2024-06-26T16:32:40.387821-04:00
+custom:
+  Issue: "356"
