@@ -87,8 +87,16 @@
             "path": "acceptance-tests/known-value-checks/custom"
           },
           {
+            "title": "Float32",
+            "path": "acceptance-tests/known-value-checks/float32"
+          },
+          {
             "title": "Float64",
             "path": "acceptance-tests/known-value-checks/float64"
+          },
+          {
+            "title": "Int32",
+            "path": "acceptance-tests/known-value-checks/int32"
           },
           {
             "title": "Int64",
