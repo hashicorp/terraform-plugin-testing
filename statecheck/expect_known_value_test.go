@@ -1622,6 +1622,26 @@ func testProvider() *schema.Provider {
 							},
 						},
 					},
+					"set_nested_nested_block": {
+						Type:     schema.TypeSet,
+						Optional: true,
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"set_nested_block": {
+									Type:     schema.TypeSet,
+									Optional: true,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"set_nested_block_attribute": {
+												Type:     schema.TypeString,
+												Optional: true,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 					"string_attribute": {
 						Optional: true,
 						Type:     schema.TypeString,
