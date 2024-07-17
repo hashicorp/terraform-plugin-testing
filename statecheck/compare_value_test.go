@@ -15,7 +15,33 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-func TestCompareValue_CheckState_Bool_ValuesSame_ValueDiffersError(t *testing.T) {
+func TestCompareValue_CheckState_NoStateValues(t *testing.T) {
+	t.Parallel()
+
+	boolValuesDiffer := statecheck.CompareValue(compare.ValuesSame())
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					bool_attribute = true
+				}
+				`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					boolValuesDiffer,
+				},
+				ExpectError: regexp.MustCompile(`resource addresses index out of bounds: 0`),
+			},
+		},
+	})
+}
+
+func TestCompareValue_CheckState_ValuesSame_ValueDiffersError(t *testing.T) {
 	t.Parallel()
 
 	boolValuesDiffer := statecheck.CompareValue(compare.ValuesSame())
@@ -68,7 +94,7 @@ func TestCompareValue_CheckState_Bool_ValuesSame_ValueDiffersError(t *testing.T)
 	})
 }
 
-func TestCompareValue_CheckState_Bool_ValuesSame(t *testing.T) {
+func TestCompareValue_CheckState_ValuesSame(t *testing.T) {
 	t.Parallel()
 
 	boolValuesDiffer := statecheck.CompareValue(compare.ValuesSame())
@@ -108,7 +134,7 @@ func TestCompareValue_CheckState_Bool_ValuesSame(t *testing.T) {
 	})
 }
 
-func TestCompareValue_CheckState_Bool_ValuesDiffer_ValueSameError(t *testing.T) {
+func TestCompareValue_CheckState_ValuesDiffer_ValueSameError(t *testing.T) {
 	t.Parallel()
 
 	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDiffer())
@@ -161,7 +187,7 @@ func TestCompareValue_CheckState_Bool_ValuesDiffer_ValueSameError(t *testing.T) 
 	})
 }
 
-func TestCompareValue_CheckState_Bool_ValuesDiffer(t *testing.T) {
+func TestCompareValue_CheckState_ValuesDiffer(t *testing.T) {
 	t.Parallel()
 
 	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDiffer())
