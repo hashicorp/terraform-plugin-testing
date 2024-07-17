@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 func TestCompareValueCollection_CheckState_Bool_Error_NotCollection(t *testing.T) {
@@ -1660,7 +1661,9 @@ func TestCompareValueCollection_CheckState_ListNestedAttribute_ValuesSame(t *tes
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // Nested attributes only available in protocol version 6
+		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{
 				Resources: map[string]testprovider.Resource{
@@ -1733,7 +1736,9 @@ func TestCompareValueCollection_CheckState_ListNestedAttribute_ValuesSame_ErrorD
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // Nested attributes only available in protocol version 6
+		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{
 				Resources: map[string]testprovider.Resource{
@@ -1807,7 +1812,9 @@ func TestCompareValueCollection_CheckState_DoubleListNestedAttribute_ValuesSame(
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // Nested attributes only available in protocol version 6
+		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{
 				Resources: map[string]testprovider.Resource{
@@ -1894,7 +1901,9 @@ func TestCompareValueCollection_CheckState_DoubleListNestedAttribute_ValuesSame_
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // Nested attributes only available in protocol version 6
+		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{
 				Resources: map[string]testprovider.Resource{
