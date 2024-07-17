@@ -33,6 +33,7 @@ func TestCompareValue_CheckState_NoStateValues(t *testing.T) {
 				}
 				`,
 				ConfigStateChecks: []statecheck.StateCheck{
+					// No state values have been added
 					boolValuesDiffer,
 				},
 				ExpectError: regexp.MustCompile(`resource addresses index out of bounds: 0`),

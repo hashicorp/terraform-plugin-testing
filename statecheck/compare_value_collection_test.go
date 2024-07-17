@@ -7,10 +7,15 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-plugin-testing/compare"
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
@@ -157,6 +162,44 @@ func TestCompareValueCollection_CheckState_List_ValuesSame_ErrorDiffer(t *testin
 					),
 				},
 				ExpectError: regexp.MustCompile("expected values to be the same, but they differ: str2 != str\nexpected values to be the same, but they differ: str3 != str"),
+			},
+		},
+	})
+}
+
+func TestCompareValueCollection_CheckState_EmptyCollectionPath(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					string_attribute = "str"
+				}
+
+				resource "test_resource" "two" {
+					list_attribute = [
+						"str2",
+						"str",
+					]
+				}
+				`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.CompareValueCollection(
+						"test_resource.two",
+						// Empty path is invalid
+						[]tfjsonpath.Path{},
+						"test_resource.one",
+						tfjsonpath.New("string_attribute"),
+						compare.ValuesSame(),
+					),
+				},
+				ExpectError: regexp.MustCompile("test_resource.two - No collection path was provided"),
 			},
 		},
 	})
@@ -1608,6 +1651,328 @@ func TestCompareValueCollection_CheckState_String_Error_NotCollection(t *testing
 					),
 				},
 				ExpectError: regexp.MustCompile("test_resource.two.string_attribute is not a collection type: string"),
+			},
+		},
+	})
+}
+
+func TestCompareValueCollection_CheckState_ListNestedAttribute_ValuesSame(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"test_resource": {
+						SchemaResponse: &resource.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "str_attr",
+											Type:     tftypes.String,
+											Optional: true,
+										},
+										{
+											Name: "nested_attr",
+											NestedType: &tfprotov6.SchemaObject{
+												Attributes: []*tfprotov6.SchemaAttribute{
+													{
+														Name:     "str_attr",
+														Type:     tftypes.String,
+														Optional: true,
+													},
+												},
+												Nesting: tfprotov6.SchemaObjectNestingModeList,
+											},
+											Optional: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					str_attr = "str2"
+				}
+				resource "test_resource" "two" {
+					nested_attr = [
+						{
+							str_attr = "str1"
+						},
+						{
+							str_attr = "str2"
+						}
+					]
+				}
+				`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.CompareValueCollection(
+						"test_resource.two",
+						[]tfjsonpath.Path{
+							tfjsonpath.New("nested_attr"),
+							tfjsonpath.New("str_attr"),
+						},
+						"test_resource.one",
+						tfjsonpath.New("str_attr"),
+						compare.ValuesSame(),
+					),
+				},
+			},
+		},
+	})
+}
+
+func TestCompareValueCollection_CheckState_ListNestedAttribute_ValuesSame_ErrorDiff(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"test_resource": {
+						SchemaResponse: &resource.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "str_attr",
+											Type:     tftypes.String,
+											Optional: true,
+										},
+										{
+											Name: "nested_attr",
+											NestedType: &tfprotov6.SchemaObject{
+												Attributes: []*tfprotov6.SchemaAttribute{
+													{
+														Name:     "str_attr",
+														Type:     tftypes.String,
+														Optional: true,
+													},
+												},
+												Nesting: tfprotov6.SchemaObjectNestingModeList,
+											},
+											Optional: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					str_attr = "str1"
+				}
+				resource "test_resource" "two" {
+					nested_attr = [
+						{
+							str_attr = "str2"
+						},
+						{
+							str_attr = "str3"
+						}
+					]
+				}
+				`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.CompareValueCollection(
+						"test_resource.two",
+						[]tfjsonpath.Path{
+							tfjsonpath.New("nested_attr"),
+							tfjsonpath.New("str_attr"),
+						},
+						"test_resource.one",
+						tfjsonpath.New("str_attr"),
+						compare.ValuesSame(),
+					),
+				},
+				ExpectError: regexp.MustCompile("expected values to be the same, but they differ: str2 != str1\nexpected values to be the same, but they differ: str3 != str1"),
+			},
+		},
+	})
+}
+
+func TestCompareValueCollection_CheckState_DoubleListNestedAttribute_ValuesSame(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"test_resource": {
+						SchemaResponse: &resource.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "str_attr",
+											Type:     tftypes.String,
+											Optional: true,
+										},
+										{
+											Name: "nested_attr",
+											NestedType: &tfprotov6.SchemaObject{
+												Attributes: []*tfprotov6.SchemaAttribute{
+													{
+														Name: "double_nested_attr",
+														NestedType: &tfprotov6.SchemaObject{
+															Attributes: []*tfprotov6.SchemaAttribute{
+																{
+																	Name:     "str_attr",
+																	Type:     tftypes.String,
+																	Optional: true,
+																},
+															},
+															Nesting: tfprotov6.SchemaObjectNestingModeSingle,
+														},
+														Optional: true,
+													},
+												},
+												Nesting: tfprotov6.SchemaObjectNestingModeList,
+											},
+											Optional: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					str_attr = "str2"
+				}
+				resource "test_resource" "two" {
+					nested_attr = [
+						{
+							double_nested_attr = {
+								str_attr = "str1"
+							}
+						},
+						{
+							double_nested_attr = {
+								str_attr = "str2"
+							}
+						}
+					]
+				}
+				`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.CompareValueCollection(
+						"test_resource.two",
+						[]tfjsonpath.Path{
+							tfjsonpath.New("nested_attr"),
+							tfjsonpath.New("double_nested_attr"),
+							tfjsonpath.New("str_attr"),
+						},
+						"test_resource.one",
+						tfjsonpath.New("str_attr"),
+						compare.ValuesSame(),
+					),
+				},
+			},
+		},
+	})
+}
+
+func TestCompareValueCollection_CheckState_DoubleListNestedAttribute_ValuesSame_ErrorDiff(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"test_resource": {
+						SchemaResponse: &resource.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "str_attr",
+											Type:     tftypes.String,
+											Optional: true,
+										},
+										{
+											Name: "nested_attr",
+											NestedType: &tfprotov6.SchemaObject{
+												Attributes: []*tfprotov6.SchemaAttribute{
+													{
+														Name: "double_nested_attr",
+														NestedType: &tfprotov6.SchemaObject{
+															Attributes: []*tfprotov6.SchemaAttribute{
+																{
+																	Name:     "str_attr",
+																	Type:     tftypes.String,
+																	Optional: true,
+																},
+															},
+															Nesting: tfprotov6.SchemaObjectNestingModeSingle,
+														},
+														Optional: true,
+													},
+												},
+												Nesting: tfprotov6.SchemaObjectNestingModeList,
+											},
+											Optional: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "test_resource" "one" {
+					str_attr = "str1"
+				}
+				resource "test_resource" "two" {
+					nested_attr = [
+						{
+							double_nested_attr = {
+								str_attr = "str2"
+							}
+						},
+						{
+							double_nested_attr = {
+								str_attr = "str3"
+							}
+						}
+					]
+				}
+				`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.CompareValueCollection(
+						"test_resource.two",
+						[]tfjsonpath.Path{
+							tfjsonpath.New("nested_attr"),
+							tfjsonpath.New("double_nested_attr"),
+							tfjsonpath.New("str_attr"),
+						},
+						"test_resource.one",
+						tfjsonpath.New("str_attr"),
+						compare.ValuesSame(),
+					),
+				},
+				ExpectError: regexp.MustCompile("expected values to be the same, but they differ: str2 != str1\nexpected values to be the same, but they differ: str3 != str1"),
 			},
 		},
 	})

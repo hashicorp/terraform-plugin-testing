@@ -35,10 +35,6 @@ func walkCollectionPath(obj any, paths []tfjsonpath.Path, results []any) ([]any,
 				continue
 			}
 
-			if len(paths) == 0 {
-				break
-			}
-
 			x, err := tfjsonpath.Traverse(v, paths[0])
 
 			if err != nil {
@@ -66,11 +62,7 @@ func walkCollectionPath(obj any, paths []tfjsonpath.Path, results []any) ([]any,
 				continue
 			}
 
-			if len(paths) == 0 {
-				break
-			}
-
-			x, err := tfjsonpath.Traverse(t[key], paths[0])
+			x, err := tfjsonpath.Traverse(t, paths[0])
 
 			if err != nil {
 				return results, err
@@ -122,6 +114,12 @@ func (e *compareValueCollection) CheckState(ctx context.Context, req CheckStateR
 
 	if resourceOne == nil {
 		resp.Error = fmt.Errorf("%s - Resource not found in state", e.resourceAddressOne)
+
+		return
+	}
+
+	if len(e.collectionPath) == 0 {
+		resp.Error = fmt.Errorf("%s - No collection path was provided", e.resourceAddressOne)
 
 		return
 	}
