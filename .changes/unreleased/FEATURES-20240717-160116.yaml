@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'statecheck: Added `CompareValue` state check, which compares sequential values of the
+  specified attribute at the given managed resource, or data source, using the supplied value comparer.'
+time: 2024-07-17T16:01:16.194665-04:00
+custom:
+  Issue: "330"
