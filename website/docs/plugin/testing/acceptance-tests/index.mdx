@@ -17,11 +17,11 @@ or more configuration files, allowing multiple scenarios to be tested.
 
 Terraform acceptance tests use real Terraform configurations to exercise the
 code in real plan, apply, refresh, and destroy life cycles. When run from the
-root of a Terraform Provider codebase, Terraform’s testing framework compiles
+root of a Terraform Provider codebase, Terraform's testing framework compiles
 the current provider in-memory and executes the provided configuration in
 developer defined steps, creating infrastructure along the way. At the
 conclusion of all the steps, Terraform automatically destroys the
-infrastructure. It’s important to note that during development, it’s possible
+infrastructure. It's important to note that during development, it's possible
 for Terraform to leave orphaned or “dangling” resources behind, depending on the
 correctness of the code in development. The testing framework provides means to
 validate all resources are destroyed, alerting developers if any fail to
@@ -42,7 +42,7 @@ While the test framework provides a reasonable simulation of real-world usage, t
 
 Terraform follows many of the Go programming language conventions with regards
 to testing, with both acceptance tests and unit tests being placed in a file
-that matches the file under test, with an added `_test.go` suffix. Here’s an
+that matches the file under test, with an added `_test.go` suffix. Here's an
 example file structure:
 
 ```
@@ -302,6 +302,6 @@ This error indicates that the provider server could not connect to Terraform Cor
 Terraform relies heavily on acceptance tests to ensure we keep our promise of
 helping users safely and predictably create, change, and improve
 infrastructure. In our next section we detail how to create “Test Cases”,
-individual acceptance tests using Terraform’s testing framework, in order to
+individual acceptance tests using Terraform's testing framework, in order to
 build and verify real infrastructure. [Proceed to Test
 Cases](/terraform/plugin/testing/acceptance-tests/testcase)
