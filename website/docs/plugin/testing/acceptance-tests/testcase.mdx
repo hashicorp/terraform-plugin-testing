@@ -9,13 +9,13 @@ description: |-
 
 Acceptance tests are expressed in terms of **Test Cases**, each using one or
 more Terraform configurations designed to create a set of resources under test,
-and then verify the actual infrastructure created. Terraform’s `resource`
+and then verify the actual infrastructure created. Terraform's `resource`
 package offers a method `Test()`, accepting two parameters and acting as the
-entry point to Terraform’s acceptance test framework. The first parameter is the
-standard [\*testing.T struct from Golang’s Testing package][3], and the second is
+entry point to Terraform's acceptance test framework. The first parameter is the
+standard [\*testing.T struct from Golang's Testing package][3], and the second is
 [TestCase][1], a Go struct that developers use to setup the acceptance tests.
 
-Here’s an example acceptance test. Here the Provider is named `Example`, and the
+Here's an example acceptance test. Here the Provider is named `Example`, and the
 Resource under test is `Widget`. The parts of this test are explained below the
 example.
 
@@ -34,15 +34,15 @@ func TestAccExampleWidget_basic(t *testing.T) {
     Steps: []resource.TestStep{
       {
         Config: testAccExampleResource(rName),
-        Check: resource.ComposeTestCheckFunc(
-          testAccCheckExampleResourceExists("example_widget.foo", &widgetBefore),
-        ),
+        ConfigStateChecks: []statecheck.StateCheck{
+          stateCheckExampleResourceExists("example_widget.foo", &widgetBefore),
+        },
       },
       {
         Config: testAccExampleResource_removedPolicy(rName),
-        Check: resource.ComposeTestCheckFunc(
-          testAccCheckExampleResourceExists("example_widget.foo", &widgetAfter),
-        ),
+        ConfigStateChecks: []statecheck.StateCheck{
+          stateCheckExampleResourceExists("example_widget.foo", &widgetAfter),
+        },
       },
     },
   })
@@ -81,7 +81,7 @@ func TestAccExampleWidget_basic(t *testing.T) {
 The majority of acceptance tests will only invoke `resource.Test()` and exit. If
 at any point this method encounters an error, either in executing the provided
 Terraform configurations or subsequent developer defined checks, `Test()` will
-invoke the `t.Error` method of Go’s standard testing framework and the test will
+invoke the `t.Error` method of Go's standard testing framework and the test will
 fail. A failed test will not halt or otherwise interrupt any other tests
 currently running.
 
@@ -190,7 +190,7 @@ a configuration file for testing must be represented in this map or the test
 will fail during initialization.
 
 This map is most commonly constructed once in a common `init()` method of the
-Provider’s main test file, and includes an object of the current Provider type.
+Provider's main test file, and includes an object of the current Provider type.
 
 **Example usage:** (note the different files `widget_test.go` and `provider_test.go`)
 
@@ -326,15 +326,15 @@ func TestAccExampleWidget_basic(t *testing.T) {
     Steps: []resource.TestStep{
       {
         Config: testAccExampleResource(rName),
-        Check: resource.ComposeTestCheckFunc(
-          testAccCheckExampleResourceExists("example_widget.foo", &widgetBefore),
-        ),
+        ConfigStateChecks: []statecheck.StateCheck{
+          stateCheckExampleResourceExists("example_widget.foo", &widgetBefore),
+        },
       },
       {
         Config: testAccExampleResource_removedPolicy(rName),
-        Check: resource.ComposeTestCheckFunc(
-          testAccCheckExampleResourceExists("example_widget.foo", &widgetAfter),
-        ),
+        ConfigStateChecks: []statecheck.StateCheck{
+          stateCheckExampleResourceExists("example_widget.foo", &widgetAfter),
+        },
       },
     },
   })
@@ -346,7 +346,7 @@ func TestAccExampleWidget_basic(t *testing.T) {
 `TestCases` are used to verify the features of a given part of a plugin. Each
 case should represent a scenario of normal usage of the plugin, from simple
 creation to creating, adding, and removing specific properties. In the next
-Section [`TestSteps`][2], we’ll detail `Steps` portion of `TestCase` and see how
+Section [`TestSteps`][2], we'll detail `Steps` portion of `TestCase` and see how
 to create these scenarios by iterating on Terraform configurations.
 
 [1]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/helper/resource#TestCase
