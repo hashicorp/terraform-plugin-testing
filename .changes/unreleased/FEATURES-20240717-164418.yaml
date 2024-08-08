@@ -1,7 +1,0 @@
-kind: FEATURES
-body: 'statecheck: Added `CompareValuePairs` state check, which compares the
-  specified attributes at the given managed resources, or data sources, using
-  the supplied value comparer.'
-time: 2024-07-17T16:44:18.612874-04:00
-custom:
-  Issue: "330"

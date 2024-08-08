@@ -1,3 +1,17 @@
+## 1.10.0 (August 08, 2024)
+
+NOTES:
+
+* compare: The `compare` package is considered experimental and may be altered or removed in a subsequent release ([#330](https://github.com/hashicorp/terraform-plugin-testing/issues/330))
+* statecheck: `CompareValue`, `CompareValueCollection`, and `CompareValuePairs` state checks are considered experimental and may be altered or removed in a subsequent release. ([#330](https://github.com/hashicorp/terraform-plugin-testing/issues/330))
+
+FEATURES:
+
+* compare: Introduced new `compare` package, which contains interfaces and implementations for value comparisons in state checks. ([#330](https://github.com/hashicorp/terraform-plugin-testing/issues/330))
+* statecheck: Added `CompareValue` state check, which compares sequential values of the specified attribute at the given managed resource, or data source, using the supplied value comparer. ([#330](https://github.com/hashicorp/terraform-plugin-testing/issues/330))
+* statecheck: Added `CompareValueCollection` state check, which compares each item in the specified collection (e.g., list, set) attribute, with the second specified attribute at the given managed resources, or data sources, using the supplied value comparer. ([#330](https://github.com/hashicorp/terraform-plugin-testing/issues/330))
+* statecheck: Added `CompareValuePairs` state check, which compares the specified attributes at the given managed resources, or data sources, using the supplied value comparer. ([#330](https://github.com/hashicorp/terraform-plugin-testing/issues/330))
+
 ## 1.9.0 (July 09, 2024)
 
 ENHANCEMENTS:

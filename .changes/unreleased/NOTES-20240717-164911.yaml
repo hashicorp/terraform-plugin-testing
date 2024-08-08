@@ -1,7 +1,0 @@
-kind: NOTES
-body: 'statecheck: `CompareValue`, `CompareValueCollection`, and `CompareValuePairs`
-  state checks are considered experimental and may be altered or removed in a subsequent
-  release.'
-time: 2024-07-17T16:49:11.296585-04:00
-custom:
-  Issue: "330"

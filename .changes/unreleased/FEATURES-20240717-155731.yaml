@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'compare: Introduced new `compare` package, which contains interfaces and implementations
-  for value comparisons in state checks.'
-time: 2024-07-17T15:57:31.637692-04:00
-custom:
-  Issue: "330"

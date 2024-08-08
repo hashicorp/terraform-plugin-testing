@@ -1,6 +1,0 @@
-kind: NOTES
-body: 'compare: The `compare` package is considered experimental and may be altered
-  or removed in a subsequent release'
-time: 2024-07-17T15:58:10.435384-04:00
-custom:
-  Issue: "330"
