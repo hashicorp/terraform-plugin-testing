@@ -1,0 +1,7 @@
+kind: FEATURES
+body: 'statecheck: Added `CompareValueCollection` state check, which compares each item in
+  the specified collection (e.g., list, set) attribute, with the second specified
+  attribute at the given managed resources, or data sources, using the supplied value comparer.'
+time: 2024-07-17T16:03:31.77827-04:00
+custom:
+  Issue: "330"

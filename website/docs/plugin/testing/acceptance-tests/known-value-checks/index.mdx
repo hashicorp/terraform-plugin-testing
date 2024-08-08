@@ -2,18 +2,19 @@
 page_title: 'Plugin Development - Acceptance Testing: Known Values'
 description: >-
     How to use known values in the testing module.
-    Known values define an expected type, and value for a resource attribute, or output value in a Terraform plan for use in Plan Checks.
+    Known values define an expected type, and value for a resource attribute, or output value in a Terraform plan or state for use in Plan Checks or State Checks.
 ---
 
 # Known Value Checks
 
-Known Value Checks are for use in conjunction with [Plan Checks](/terraform/plugin/testing/acceptance-tests/plan-checks), which leverage the [terraform-json](https://pkg.go.dev/github.com/hashicorp/terraform-json) representation of a Terraform plan.
+Known Value Checks are for use in conjunction with [Plan Checks](/terraform/plugin/testing/acceptance-tests/plan-checks), and [State Checks](/terraform/plugin/testing/acceptance-tests/state-checks) which leverage the [terraform-json](https://pkg.go.dev/github.com/hashicorp/terraform-json) representation of a Terraform plan.
 
 ## Usage
 
 Example uses in the testing module include:
 
-- The [`ExpectknownValue()`](/terraform/plugin/testing/acceptance-tests/plan-checks/resource#example-using-plancheck-expectknownvalue), [`ExpectKnownOutputValue()`](/terraform/plugin/testing/acceptance-tests/plan-checks/output#example-using-plancheck-expectknownoutputvalue) and [`ExpectKnownOutputValueAtPath()`](/terraform/plugin/testing/acceptance-tests/plan-checks/output#example-using-plancheck-expectknownoutputvalueatpath) [built-in plan checks](/terraform/plugin/testing/acceptance-tests/plan-checks) use known value checks for asserting whether a specific resource attribute, or output value has a particular type, and value.
+- **Plan Checks**: The [`ExpectKnownValue()`](/terraform/plugin/testing/acceptance-tests/plan-checks/resource#expectknownvalue-plan-check), [`ExpectKnownOutputValue()`](/terraform/plugin/testing/acceptance-tests/plan-checks/output#expectknownoutputvalue-plan-check) and [`ExpectKnownOutputValueAtPath()`](/terraform/plugin/testing/acceptance-tests/plan-checks/output#expectknownoutputvalueatpath-plan-check) [built-in plan checks](/terraform/plugin/testing/acceptance-tests/plan-checks) use known value checks for asserting whether a specific resource attribute, or output value has a particular type, and value.
+- **State Checks**: The [`ExpectKnownValue()`](/terraform/plugin/testing/acceptance-tests/state-checks/resource#expectknownvalue-state-check), [`ExpectKnownOutputValue()`](/terraform/plugin/testing/acceptance-tests/state-checks/output#expectknownoutputvalue-state-check) and [`ExpectKnownOutputValueAtPath()`](/terraform/plugin/testing/acceptance-tests/state-checks/output#expectknownoutputvalueatpath-state-check) [built-in state checks](/terraform/plugin/testing/acceptance-tests/state-checks) use known value checks for asserting whether a specific resource attribute, or output value has a particular type, and value.
 
 ## Using a Known Value Check
 
