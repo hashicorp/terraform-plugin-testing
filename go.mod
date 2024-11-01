@@ -17,7 +17,7 @@ require (
 	github.com/hashicorp/terraform-json v0.23.0
 	github.com/hashicorp/terraform-plugin-go v0.25.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.34.0
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.35.0
 	github.com/mitchellh/go-testing-interface v1.14.1
 	github.com/zclconf/go-cty v1.15.0
 	golang.org/x/crypto v0.28.0
