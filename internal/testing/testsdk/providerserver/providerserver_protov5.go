@@ -69,10 +69,12 @@ func (s Protov5ProviderServer) GetProviderSchema(ctx context.Context, req *tfpro
 	s.Provider.Schema(ctx, providerReq, providerResp)
 
 	resp := &tfprotov5.GetProviderSchemaResponse{
-		DataSourceSchemas: map[string]*tfprotov5.Schema{},
-		Diagnostics:       providerResp.Diagnostics,
-		Provider:          providerResp.Schema,
-		ResourceSchemas:   map[string]*tfprotov5.Schema{},
+		DataSourceSchemas:        map[string]*tfprotov5.Schema{},
+		EphemeralResourceSchemas: map[string]*tfprotov5.Schema{},
+		Functions:                map[string]*tfprotov5.Function{},
+		Diagnostics:              providerResp.Diagnostics,
+		Provider:                 providerResp.Schema,
+		ResourceSchemas:          map[string]*tfprotov5.Schema{},
 		ServerCapabilities: &tfprotov5.ServerCapabilities{
 			PlanDestroy: true,
 		},
@@ -115,4 +117,20 @@ func (s Protov5ProviderServer) ValidateDataSourceConfig(ctx context.Context, req
 
 func (s Protov5ProviderServer) ValidateResourceTypeConfig(ctx context.Context, request *tfprotov5.ValidateResourceTypeConfigRequest) (*tfprotov5.ValidateResourceTypeConfigResponse, error) {
 	return &tfprotov5.ValidateResourceTypeConfigResponse{}, nil
+}
+
+func (s Protov5ProviderServer) OpenEphemeralResource(ctx context.Context, req *tfprotov5.OpenEphemeralResourceRequest) (*tfprotov5.OpenEphemeralResourceResponse, error) {
+	return &tfprotov5.OpenEphemeralResourceResponse{}, nil
+}
+
+func (s Protov5ProviderServer) RenewEphemeralResource(ctx context.Context, req *tfprotov5.RenewEphemeralResourceRequest) (*tfprotov5.RenewEphemeralResourceResponse, error) {
+	return &tfprotov5.RenewEphemeralResourceResponse{}, nil
+}
+
+func (s Protov5ProviderServer) CloseEphemeralResource(ctx context.Context, req *tfprotov5.CloseEphemeralResourceRequest) (*tfprotov5.CloseEphemeralResourceResponse, error) {
+	return &tfprotov5.CloseEphemeralResourceResponse{}, nil
+}
+
+func (s Protov5ProviderServer) ValidateEphemeralResourceConfig(ctx context.Context, req *tfprotov5.ValidateEphemeralResourceConfigRequest) (*tfprotov5.ValidateEphemeralResourceConfigResponse, error) {
+	return &tfprotov5.ValidateEphemeralResourceConfigResponse{}, nil
 }
