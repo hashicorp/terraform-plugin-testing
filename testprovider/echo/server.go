@@ -194,10 +194,66 @@ func (e *echoProviderServer) MoveResourceState(ctx context.Context, req *tfproto
 }
 
 func (e *echoProviderServer) PlanResourceChange(ctx context.Context, req *tfprotov6.PlanResourceChangeRequest) (*tfprotov6.PlanResourceChangeResponse, error) {
-	// Just return proposed new state, since echo_test doesn't need to modify the plan.
-	return &tfprotov6.PlanResourceChangeResponse{
-		PlannedState: req.ProposedNewState,
-	}, nil
+	resp := &tfprotov6.PlanResourceChangeResponse{}
+
+	if req.TypeName != "echo_test" {
+		resp.Diagnostics = []*tfprotov6.Diagnostic{
+			{
+				Severity: tfprotov6.DiagnosticSeverityError,
+				Summary:  "Unsupported Resource",
+				Detail:   fmt.Sprintf("PlanResourceChange was called for a resource type that is not supported by this provider: %q", req.TypeName),
+			},
+		}
+
+		return resp, nil
+	}
+
+	echoTestSchema := e.testResourceSchema()
+	priorState, diag := dynamicValueToValue(echoTestSchema, req.PriorState)
+	if diag != nil {
+		resp.Diagnostics = append(resp.Diagnostics, diag)
+
+		return resp, nil
+	}
+
+	proposedNewState, diag := dynamicValueToValue(echoTestSchema, req.ProposedNewState)
+	if diag != nil {
+		resp.Diagnostics = append(resp.Diagnostics, diag)
+
+		return resp, nil
+	}
+
+	// Destroying the resource, just return proposed new state (which is null)
+	if proposedNewState.IsNull() {
+		return &tfprotov6.PlanResourceChangeResponse{
+			PlannedState: req.ProposedNewState,
+		}, nil
+	}
+
+	// If we're updating and the provider config data hasn't changed, return prior state to indicate no diff
+	if priorState.Equal(tftypes.NewValue(echoTestSchema.ValueType(), map[string]tftypes.Value{"data": e.providerConfigData})) {
+		return &tfprotov6.PlanResourceChangeResponse{
+			PlannedState: req.PriorState,
+		}, nil
+	}
+
+	// If the provider config data has changed or we are creating, mark data as unknown in the plan.
+	//
+	// We can't set the proposed new state to the provider config data because it could change between plan/apply (provider config is ephemeral).
+	unknownVal := tftypes.NewValue(echoTestSchema.ValueType(), map[string]tftypes.Value{
+		"data": tftypes.NewValue(tftypes.DynamicPseudoType, tftypes.UnknownValue),
+	})
+
+	plannedState, diag := valuetoDynamicValue(echoTestSchema, unknownVal)
+	if diag != nil {
+		resp.Diagnostics = append(resp.Diagnostics, diag)
+
+		return resp, nil
+	}
+
+	resp.PlannedState = plannedState
+
+	return resp, nil
 }
 
 func (e *echoProviderServer) ReadDataSource(ctx context.Context, req *tfprotov6.ReadDataSourceRequest) (*tfprotov6.ReadDataSourceResponse, error) {
