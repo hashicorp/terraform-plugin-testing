@@ -3,7 +3,7 @@
 
 // Package echoprovider contains a protocol v6 Terraform provider that can be used to transfer data from
 // provider configuration to state via a managed resource. This is only meant for provider acceptance testing
-// of data that is not stored to state, such as an ephemeral resource.
+// of data that cannot be stored in Terraform artifacts (plan/state), such as an ephemeral resource.
 //
 // Example Usage:
 //

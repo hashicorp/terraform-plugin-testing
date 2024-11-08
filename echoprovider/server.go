@@ -11,18 +11,48 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
+// NewProviderServer returns the "echo" provider, which is a protocol v6 Terraform provider meant only to be used for testing
+// data which cannot be stored in Terraform artifacts (plan/state), such as an ephemeral resource. The "echo" provider can be included in
+// an acceptance test with the `(resource.TestCase).ProtoV6ProviderFactories` field, for example:
+//
+//	resource.UnitTest(t, resource.TestCase{
+//		// .. other TestCase fields
+//		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+//			"echo": echoprovider.NewProviderServer(),
+//		},
+//
+//		// .. TestSteps
+//	})
+//
+// The "echo" provider configuration accepts in a dynamic "data" attribute, which will be stored in the "echo" managed resource "data" attribute, for example:
+//
+//	// Ephemeral resource that is under test
+//	ephemeral "examplecloud_thing" "this" {
+//		name = "thing-one"
+//	}
+//
+//	provider "echo" {
+//		data = ephemeral.examplecloud_thing.this
+//	}
+//
+//	resource "echo" "test" {} // The `echo.test.data` attribute will contain the ephemeral data from `ephemeral.examplecloud_thing.this`
 func NewProviderServer() func() (tfprotov6.ProviderServer, error) {
 	return func() (tfprotov6.ProviderServer, error) {
 		return &echoProviderServer{}, nil
 	}
 }
 
+// echoProviderServer is a lightweight protocol version 6 provider server that saves data from the provider configuration (which is considered ephemeral)
+// and then stores that data into state during ApplyResourceChange.
+//
+// As provider configuration is ephemeral, it's possible for the data to change between plan and apply. As a result of this, during plan, this provider
+// will check if the provider config data is different than prior state, and if so, will set the PlannedState to contain an unknown value. If the prior state
+// matches the provider config data, the plan will not propose any changes.
 type echoProviderServer struct {
 	// The value of the "data" attribute during provider configuration. Will be directly echoed to the echo.data attribute.
 	providerConfigData tftypes.Value
 }
 
-// This is a special managed resource type that is not meant to be consumed in pracitioner configurations
 const echoResourceType = "echo"
 
 func (e *echoProviderServer) providerSchema() *tfprotov6.Schema {
@@ -37,7 +67,7 @@ func (e *echoProviderServer) providerSchema() *tfprotov6.Schema {
 					Type:            tftypes.DynamicPseudoType,
 					Description:     "Dynamic data to provide to the echo resource.",
 					DescriptionKind: tfprotov6.StringKindPlain,
-					Required:        true,
+					Optional:        true,
 				},
 			},
 		},
@@ -138,7 +168,7 @@ func (e *echoProviderServer) ConfigureProvider(ctx context.Context, req *tfproto
 	if !ok {
 		diag := &tfprotov6.Diagnostic{
 			Severity: tfprotov6.DiagnosticSeverityError,
-			Summary:  "Config data not found",
+			Summary:  `Attribute "data" not found in config`,
 		}
 		resp.Diagnostics = append(resp.Diagnostics, diag)
 		return resp, nil //nolint:nilerr // error via diagnostic, not gRPC
@@ -166,6 +196,8 @@ func (e *echoProviderServer) GetMetadata(ctx context.Context, req *tfprotov6.Get
 func (e *echoProviderServer) GetProviderSchema(ctx context.Context, req *tfprotov6.GetProviderSchemaRequest) (*tfprotov6.GetProviderSchemaResponse, error) {
 	return &tfprotov6.GetProviderSchemaResponse{
 		Provider: e.providerSchema(),
+		// MAINTAINER NOTE: This provider is only really built to support a single special resource type ("echo"). In the future, if we want
+		// to add more resource types to this provider, we'll likely need to refactor other RPCs in the provider server to handle that.
 		ResourceSchemas: map[string]*tfprotov6.Schema{
 			echoResourceType: e.testResourceSchema(),
 		},
