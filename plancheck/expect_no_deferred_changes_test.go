@@ -24,7 +24,7 @@ func Test_ExpectNoDeferredChange(t *testing.T) {
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_9_0),
-			tfversion.SkipIfNotPrerelease(),
+			tfversion.SkipIfNotAlpha(),
 		},
 		AdditionalCLIOptions: &r.AdditionalCLIOptions{
 			Plan:  r.PlanOptions{AllowDeferral: true},
@@ -72,7 +72,7 @@ func Test_ExpectNoDeferredChange_OneDeferral(t *testing.T) {
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_9_0),
-			tfversion.SkipIfNotPrerelease(),
+			tfversion.SkipIfNotAlpha(),
 		},
 		AdditionalCLIOptions: &r.AdditionalCLIOptions{
 			Plan:  r.PlanOptions{AllowDeferral: true},
@@ -124,7 +124,7 @@ func Test_ExpectNoDeferredChange_MultipleDeferrals(t *testing.T) {
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_9_0),
-			tfversion.SkipIfNotPrerelease(),
+			tfversion.SkipIfNotAlpha(),
 		},
 		AdditionalCLIOptions: &r.AdditionalCLIOptions{
 			Plan:  r.PlanOptions{AllowDeferral: true},
