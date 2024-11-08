@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package echo
+package echoprovider
 
 import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"

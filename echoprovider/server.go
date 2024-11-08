@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package echo
+package echoprovider
 
 import (
 	"context"
@@ -18,21 +18,24 @@ func NewProviderServer() func() (tfprotov6.ProviderServer, error) {
 }
 
 type echoProviderServer struct {
-	// The value of the "data" attribute during provider configuration. Will be directly echoed to the echo_test.data attribute.
+	// The value of the "data" attribute during provider configuration. Will be directly echoed to the echo.data attribute.
 	providerConfigData tftypes.Value
 }
+
+// This is a special managed resource type that is not meant to be consumed in pracitioner configurations
+const echoResourceType = "echo"
 
 func (e *echoProviderServer) providerSchema() *tfprotov6.Schema {
 	return &tfprotov6.Schema{
 		Block: &tfprotov6.SchemaBlock{
-			Description: "This provider is used to output the data attribute provided to the provider configuration into all resources instances of echo_test. " +
+			Description: "This provider is used to output the data attribute provided to the provider configuration into all resources instances of echo. " +
 				"This is only useful for testing ephemeral resources where the data isn't stored to state.",
 			DescriptionKind: tfprotov6.StringKindPlain,
 			Attributes: []*tfprotov6.SchemaAttribute{
 				{
 					Name:            "data",
 					Type:            tftypes.DynamicPseudoType,
-					Description:     "Dynamic data to provide to the echo_test resource.",
+					Description:     "Dynamic data to provide to the echo resource.",
 					DescriptionKind: tfprotov6.StringKindPlain,
 					Required:        true,
 				},
@@ -60,7 +63,7 @@ func (e *echoProviderServer) testResourceSchema() *tfprotov6.Schema {
 func (e *echoProviderServer) ApplyResourceChange(ctx context.Context, req *tfprotov6.ApplyResourceChangeRequest) (*tfprotov6.ApplyResourceChangeResponse, error) {
 	resp := &tfprotov6.ApplyResourceChangeResponse{}
 
-	if req.TypeName != "echo_test" {
+	if req.TypeName != echoResourceType {
 		resp.Diagnostics = []*tfprotov6.Diagnostic{
 			{
 				Severity: tfprotov6.DiagnosticSeverityError,
@@ -88,7 +91,7 @@ func (e *echoProviderServer) ApplyResourceChange(ctx context.Context, req *tfpro
 	}
 
 	// Take the provider config "data" attribute verbatim and put back into state. It shares the same type (DynamicPseudoType)
-	// as the echo_test "data" attribute.
+	// as the echo "data" attribute.
 	newVal := tftypes.NewValue(echoTestSchema.ValueType(), map[string]tftypes.Value{
 		"data": e.providerConfigData,
 	})
@@ -154,7 +157,7 @@ func (e *echoProviderServer) GetMetadata(ctx context.Context, req *tfprotov6.Get
 	return &tfprotov6.GetMetadataResponse{
 		Resources: []tfprotov6.ResourceMetadata{
 			{
-				TypeName: "echo_test",
+				TypeName: echoResourceType,
 			},
 		},
 	}, nil
@@ -164,7 +167,7 @@ func (e *echoProviderServer) GetProviderSchema(ctx context.Context, req *tfproto
 	return &tfprotov6.GetProviderSchemaResponse{
 		Provider: e.providerSchema(),
 		ResourceSchemas: map[string]*tfprotov6.Schema{
-			"echo_test": e.testResourceSchema(),
+			echoResourceType: e.testResourceSchema(),
 		},
 	}, nil
 }
@@ -196,7 +199,7 @@ func (e *echoProviderServer) MoveResourceState(ctx context.Context, req *tfproto
 func (e *echoProviderServer) PlanResourceChange(ctx context.Context, req *tfprotov6.PlanResourceChangeRequest) (*tfprotov6.PlanResourceChangeResponse, error) {
 	resp := &tfprotov6.PlanResourceChangeResponse{}
 
-	if req.TypeName != "echo_test" {
+	if req.TypeName != echoResourceType {
 		resp.Diagnostics = []*tfprotov6.Diagnostic{
 			{
 				Severity: tfprotov6.DiagnosticSeverityError,
@@ -274,7 +277,7 @@ func (e *echoProviderServer) StopProvider(ctx context.Context, req *tfprotov6.St
 func (e *echoProviderServer) UpgradeResourceState(ctx context.Context, req *tfprotov6.UpgradeResourceStateRequest) (*tfprotov6.UpgradeResourceStateResponse, error) {
 	resp := &tfprotov6.UpgradeResourceStateResponse{}
 
-	if req.TypeName != "echo_test" {
+	if req.TypeName != echoResourceType {
 		resp.Diagnostics = []*tfprotov6.Diagnostic{
 			{
 				Severity: tfprotov6.DiagnosticSeverityError,
@@ -302,7 +305,7 @@ func (e *echoProviderServer) UpgradeResourceState(ctx context.Context, req *tfpr
 			{
 				Severity: tfprotov6.DiagnosticSeverityError,
 				Summary:  "Unsupported Resource",
-				Detail:   "UpgradeResourceState was called for echo_test, which does not support multiple schema versions",
+				Detail:   "UpgradeResourceState was called for echo, which does not support multiple schema versions",
 			},
 		}
 
