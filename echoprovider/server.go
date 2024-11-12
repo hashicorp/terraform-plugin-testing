@@ -265,8 +265,10 @@ func (e *echoProviderServer) PlanResourceChange(ctx context.Context, req *tfprot
 		}, nil
 	}
 
-	// If we're updating and the provider config data hasn't changed, return prior state to indicate no diff
-	if priorState.Equal(tftypes.NewValue(echoTestSchema.ValueType(), map[string]tftypes.Value{"data": e.providerConfigData})) {
+	// If the echo resource has prior state, don't plan anything new as it's valid for the ephemeral data to change
+	// between operations and we don't want to produce constant diffs. This resource is only for testing data, which a
+	// single plan/apply should suffice.
+	if !priorState.IsNull() {
 		return &tfprotov6.PlanResourceChangeResponse{
 			PlannedState: req.PriorState,
 		}, nil

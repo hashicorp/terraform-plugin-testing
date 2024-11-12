@@ -49,15 +49,15 @@ func TestEchoProviderServer_primitive(t *testing.T) {
 				provider "echo" {
 					data = 200
 				}
-				resource "echo" "test_one" {}
+				resource "echo" "test_two" {}
 				`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownValue("echo.test_one", tfjsonpath.New("data")),
+						plancheck.ExpectUnknownValue("echo.test_two", tfjsonpath.New("data")),
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("echo.test_one", tfjsonpath.New("data"), knownvalue.Int64Exact(200)),
+					statecheck.ExpectKnownValue("echo.test_two", tfjsonpath.New("data"), knownvalue.Int64Exact(200)),
 				},
 			},
 			{
@@ -65,28 +65,15 @@ func TestEchoProviderServer_primitive(t *testing.T) {
 				provider "echo" {
 					data = true
 				}
-				resource "echo" "test_one" {}
+				resource "echo" "test_three" {}
 				`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownValue("echo.test_one", tfjsonpath.New("data")),
+						plancheck.ExpectUnknownValue("echo.test_three", tfjsonpath.New("data")),
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("echo.test_one", tfjsonpath.New("data"), knownvalue.Bool(true)),
-				},
-			},
-			{
-				Config: `
-				provider "echo" {
-					data = true
-				}
-				resource "echo" "test_one" {}
-				`,
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectEmptyPlan(),
-					},
+					statecheck.ExpectKnownValue("echo.test_three", tfjsonpath.New("data"), knownvalue.Bool(true)),
 				},
 			},
 		},
@@ -130,15 +117,15 @@ func TestEchoProviderServer_complex(t *testing.T) {
 				provider "echo" {
 					data = tomap({"key1": "hello", "key2": "world"})
 				}
-				resource "echo" "test_one" {}
+				resource "echo" "test_two" {}
 				`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownValue("echo.test_one", tfjsonpath.New("data")),
+						plancheck.ExpectUnknownValue("echo.test_two", tfjsonpath.New("data")),
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("echo.test_one", tfjsonpath.New("data"),
+					statecheck.ExpectKnownValue("echo.test_two", tfjsonpath.New("data"),
 						knownvalue.MapExact(map[string]knownvalue.Check{
 							"key1": knownvalue.StringExact("hello"),
 							"key2": knownvalue.StringExact("world"),
@@ -151,7 +138,7 @@ func TestEchoProviderServer_complex(t *testing.T) {
 				provider "echo" {
 					data = tomap({"key1": "hello", "key2": "world"})
 				}
-				resource "echo" "test_one" {}
+				resource "echo" "test_two" {}
 				`,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
@@ -186,19 +173,6 @@ func TestEchoProviderServer_null(t *testing.T) {
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue("echo.test_one", tfjsonpath.New("data"), knownvalue.Null()),
-				},
-			},
-			{
-				Config: `
-				provider "echo" {
-					data = null
-				}
-				resource "echo" "test_one" {}
-				`,
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectEmptyPlan(),
-					},
 				},
 			},
 		},

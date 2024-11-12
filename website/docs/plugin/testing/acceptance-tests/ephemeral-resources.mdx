@@ -135,7 +135,7 @@ After including both providers, our test step `Config` references the ephemeral 
 ```go
 func TestExampleCloudSecret(t *testing.T) {
   resource.UnitTest(t, resource.TestCase{
-    // .. test case setup from previous step
+    // .. test case setup
 
     Steps: []resource.TestStep{
       {
@@ -161,7 +161,7 @@ The `echo.test_krb` managed resource has a single computed `data` attribute, whi
 ```go
 func TestExampleCloudSecret(t *testing.T) {
   resource.UnitTest(t, resource.TestCase{
-    // .. test case setup from previous step
+    // .. test case setup
 
     Steps: []resource.TestStep{
       {
@@ -194,7 +194,7 @@ You can also reference the entire ephemeral resource instance for assertions, ra
 ```go
 func TestExampleCloudSecret(t *testing.T) {
   resource.UnitTest(t, resource.TestCase{
-    // .. test case setup from previous step
+    // .. test case setup
 
     Steps: []resource.TestStep{
       {
@@ -211,6 +211,61 @@ func TestExampleCloudSecret(t *testing.T) {
         `,
         ConfigStateChecks: []statecheck.StateCheck{
           statecheck.ExpectKnownValue("echo.test_krb", tfjsonpath.New("data").AtMapKey("name"), knownvalue.StringExact("example_kerberos_user")),
+        },
+      },
+    },
+  })
+}
+```
+
+### Caveats with `echo` provider
+
+Since data produced by an ephemeral resource is allowed to change between plan/apply operations, the `echo` resource has special handling to allow this data to be used in the `terraform-plugin-testing` Go module without producing confusing error messages:
+
+* During plan, if the `echo` resource is being created, the `data` attribute will always be marked as unknown.
+* During plan, if the `echo` resource already exists and is not being destroyed, prior state will always be fully preserved regardless of changes to the provider configuration. This essentially means an instance of the `echo` resource is immutable.
+* During refresh, the prior state of the `echo` resource is always returned, regardless of changes to the provider configuration.
+
+Due to this special handling, if multiple test steps are required for testing data, provider developers should create new instances of `echo` for each new test step, for example:
+
+```go
+func TestExampleCloudSecret(t *testing.T) {
+  resource.UnitTest(t, resource.TestCase{
+    // .. test case setup
+
+    Steps: []resource.TestStep{
+      {
+        Config: `
+        ephemeral "examplecloud_secret" "krb" {
+          name = "user_one"
+        }
+
+        provider "echo" {
+          data = ephemeral.examplecloud_secret.krb
+        }
+
+        # First test object -> 1
+        resource "echo" "test_krb_one" {}
+        `,
+        ConfigStateChecks: []statecheck.StateCheck{
+          statecheck.ExpectKnownValue("echo.test_krb_one", tfjsonpath.New("data").AtMapKey("name"), knownvalue.StringExact("user_one")),
+        },
+      },
+      {
+        Config: `
+        ephemeral "examplecloud_secret" "krb" {
+          name = "user_two"
+        }
+
+        provider "echo" {
+          data = ephemeral.examplecloud_secret.krb
+        }
+
+        # New test object -> 2
+        resource "echo" "test_krb_two" {}
+        `,
+        ConfigStateChecks: []statecheck.StateCheck{
+          statecheck.ExpectKnownValue("echo.test_krb_two", tfjsonpath.New("data").AtMapKey("name"), knownvalue.StringExact("user_two")),
         },
       },
     },
