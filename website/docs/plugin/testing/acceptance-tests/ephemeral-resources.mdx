@@ -14,9 +14,7 @@ Ephemeral resource support is in technical preview and offered without compatibi
 
 [Ephemeral Resources](/terraform/language/v1.10.x/resources/ephemeral) are an abstraction that allows Terraform to reference external data, similar to [data sources](/terraform/language/data-sources), without persisting that data to plan or state artifacts. The `terraform-plugin-testing` module exclusively uses Terraform plan and state artifacts for it's assertion-based test checks, like [plan checks](/terraform/plugin/testing/acceptance-tests/plan-checks) or [state checks](/terraform/plugin/testing/acceptance-tests/state-checks), which means that ephemeral resource data cannot be asserted using these methods alone.
 
-In addition to this, ephemeral resources have a different [lifecycle](/terraform/language/v1.10.x/resources/ephemeral#lifecycle) then resources or data sources and must be [referenced](/terraform/language/v1.10.x/resources/ephemeral#referencing-ephemeral-resources) as a dependency to a managed resource or data source to be invoked. This means for acceptance testing ephemeral resource logic, provider developers should use a real world example where the ephemeral resource would be referenced.
-
-The following is a test for a hypothetical `examplecloud_secret` ephemeral resource which is referenced by a provider configuration that has a single managed resource. For this test to pass, the ephemeral `examplecloud_secret` resource must return valid data, specifically a kerberos `username`, `password`, and `realm`, which are used to configure the `dns` provider and create a DNS record.
+The following is a test for a hypothetical `examplecloud_secret` ephemeral resource which is referenced by a provider configuration that has a single managed resource. For this test to pass, the ephemeral `examplecloud_secret` resource must return valid data, specifically a kerberos `username`, `password`, and `realm`, which are used to configure the `dns` provider and create a DNS record via the `dns_a_record_set` managed resource.
 
 ```go
 func TestExampleCloudSecret_DnsKerberos(t *testing.T) {
