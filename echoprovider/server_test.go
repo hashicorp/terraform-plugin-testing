@@ -233,3 +233,51 @@ func TestEchoProviderServer_unknown(t *testing.T) {
 		},
 	})
 }
+
+func TestEchoProviderServer_immutable(t *testing.T) {
+	t.Parallel()
+
+	resource.UnitTest(t, resource.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // echo provider is protocol version 6
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"echo": echoprovider.NewProviderServer(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: `
+				provider "echo" {
+					data = "original value"
+				}
+				resource "echo" "test_one" {}
+				`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("echo.test_one", tfjsonpath.New("data")),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("echo.test_one", tfjsonpath.New("data"), knownvalue.StringExact("original value")),
+				},
+			},
+			{
+				// Despite the provider config data changing the "echo.test_one" resource will never change as it's immutable.
+				Config: `
+				provider "echo" {
+					data = ["tuple", "of", "values"]
+				}
+				resource "echo" "test_one" {}
+				`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("echo.test_one", tfjsonpath.New("data"), knownvalue.StringExact("original value")),
+				},
+			},
+		},
+	})
+}
