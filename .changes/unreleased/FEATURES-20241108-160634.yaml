@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'tfversion: Added `SkipIfNotAlpha` version check for testing experimental features
+  of alpha Terraform builds.'
+time: 2024-11-08T16:06:34.662822-05:00
+custom:
+  Issue: "388"

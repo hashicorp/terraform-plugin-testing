@@ -24,7 +24,7 @@ func Test_ExpectDeferredChange_Reason_Match(t *testing.T) {
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_9_0),
-			tfversion.SkipIfNotPrerelease(),
+			tfversion.SkipIfNotAlpha(),
 		},
 		AdditionalCLIOptions: &r.AdditionalCLIOptions{
 			Plan:  r.PlanOptions{AllowDeferral: true},
@@ -75,7 +75,7 @@ func Test_ExpectDeferredChange_Reason_NoMatch(t *testing.T) {
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_9_0),
-			tfversion.SkipIfNotPrerelease(),
+			tfversion.SkipIfNotAlpha(),
 		},
 		AdditionalCLIOptions: &r.AdditionalCLIOptions{
 			Plan:  r.PlanOptions{AllowDeferral: true},
@@ -127,7 +127,7 @@ func Test_ExpectDeferredChange_NoDeferredChanges(t *testing.T) {
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_9_0),
-			tfversion.SkipIfNotPrerelease(),
+			tfversion.SkipIfNotAlpha(),
 		},
 		AdditionalCLIOptions: &r.AdditionalCLIOptions{
 			Plan:  r.PlanOptions{AllowDeferral: true},
