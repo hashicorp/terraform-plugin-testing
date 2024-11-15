@@ -262,7 +262,7 @@ func TestEchoProviderServer_immutable(t *testing.T) {
 				},
 			},
 			{
-				// Despite the provider config data changing the "echo.test_one" resource will never change as it's immutable.
+				// Despite the provider config data changing, the "echo.test_one" resource will never change as it's immutable.
 				Config: `
 				provider "echo" {
 					data = ["tuple", "of", "values"]
