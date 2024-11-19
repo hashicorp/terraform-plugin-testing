@@ -160,6 +160,10 @@
       {
         "title": "Terraform Configuration",
         "path": "acceptance-tests/configuration"
+      },
+      {
+        "title": "Ephemeral Resources",
+        "path": "acceptance-tests/ephemeral-resources"
       }
     ]
   },

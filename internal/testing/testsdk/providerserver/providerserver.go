@@ -58,20 +58,16 @@ type ProviderServer struct {
 	Provider provider.Provider
 }
 
-func (s ProviderServer) CallFunction(ctx context.Context, req *tfprotov6.CallFunctionRequest) (*tfprotov6.CallFunctionResponse, error) {
-	return &tfprotov6.CallFunctionResponse{}, nil
-}
-
-func (s ProviderServer) GetFunctions(ctx context.Context, req *tfprotov6.GetFunctionsRequest) (*tfprotov6.GetFunctionsResponse, error) {
-	return &tfprotov6.GetFunctionsResponse{}, nil
-}
-
 func (s ProviderServer) MoveResourceState(ctx context.Context, req *tfprotov6.MoveResourceStateRequest) (*tfprotov6.MoveResourceStateResponse, error) {
 	return &tfprotov6.MoveResourceStateResponse{}, nil
 }
 
 func (s ProviderServer) GetMetadata(ctx context.Context, request *tfprotov6.GetMetadataRequest) (*tfprotov6.GetMetadataResponse, error) {
 	resp := &tfprotov6.GetMetadataResponse{
+		// Functions and ephemeral resources not supported in this test SDK
+		Functions:          []tfprotov6.FunctionMetadata{},
+		EphemeralResources: []tfprotov6.EphemeralResourceMetadata{},
+
 		ServerCapabilities: &tfprotov6.ServerCapabilities{
 			GetProviderSchemaOptional: true,
 			PlanDestroy:               true,
@@ -252,6 +248,10 @@ func (s ProviderServer) GetProviderSchema(ctx context.Context, req *tfprotov6.Ge
 	s.Provider.Schema(ctx, providerReq, providerResp)
 
 	resp := &tfprotov6.GetProviderSchemaResponse{
+		// Functions and ephemeral resources not supported in this test SDK
+		Functions:                map[string]*tfprotov6.Function{},
+		EphemeralResourceSchemas: map[string]*tfprotov6.Schema{},
+
 		DataSourceSchemas: map[string]*tfprotov6.Schema{},
 		Diagnostics:       providerResp.Diagnostics,
 		Provider:          providerResp.Schema,
@@ -794,4 +794,30 @@ func (s ProviderServer) ValidateResourceConfig(ctx context.Context, req *tfproto
 	resp.Diagnostics = validateResp.Diagnostics
 
 	return resp, nil
+}
+
+// Functions are not currently implemented in this test SDK
+func (s ProviderServer) CallFunction(ctx context.Context, req *tfprotov6.CallFunctionRequest) (*tfprotov6.CallFunctionResponse, error) {
+	return &tfprotov6.CallFunctionResponse{}, nil
+}
+
+func (s ProviderServer) GetFunctions(ctx context.Context, req *tfprotov6.GetFunctionsRequest) (*tfprotov6.GetFunctionsResponse, error) {
+	return &tfprotov6.GetFunctionsResponse{}, nil
+}
+
+// Ephemeral resources are not currently implemented in this test SDK
+func (s ProviderServer) OpenEphemeralResource(ctx context.Context, req *tfprotov6.OpenEphemeralResourceRequest) (*tfprotov6.OpenEphemeralResourceResponse, error) {
+	return &tfprotov6.OpenEphemeralResourceResponse{}, nil
+}
+
+func (s ProviderServer) RenewEphemeralResource(ctx context.Context, req *tfprotov6.RenewEphemeralResourceRequest) (*tfprotov6.RenewEphemeralResourceResponse, error) {
+	return &tfprotov6.RenewEphemeralResourceResponse{}, nil
+}
+
+func (s ProviderServer) CloseEphemeralResource(ctx context.Context, req *tfprotov6.CloseEphemeralResourceRequest) (*tfprotov6.CloseEphemeralResourceResponse, error) {
+	return &tfprotov6.CloseEphemeralResourceResponse{}, nil
+}
+
+func (s ProviderServer) ValidateEphemeralResourceConfig(ctx context.Context, req *tfprotov6.ValidateEphemeralResourceConfigRequest) (*tfprotov6.ValidateEphemeralResourceConfigResponse, error) {
+	return &tfprotov6.ValidateEphemeralResourceConfigResponse{}, nil
 }
