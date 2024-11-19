@@ -39,7 +39,7 @@ jobs:
           terraform_version: ${{ matrix.terraform }}
           terraform_wrapper: false
       - run: go mod download
-      - run: go test -coverprofile=coverage.out ./...
+      - run: go test -v -coverprofile=coverage.out ./...
         env:
           TF_ACC: "1"
       - name: Remove wildcard suffix from TF version

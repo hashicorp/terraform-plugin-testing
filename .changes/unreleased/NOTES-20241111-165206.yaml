@@ -1,0 +1,6 @@
+kind: NOTES
+body: 'echoprovider: The `echoprovider` package is considered experimental and may
+  be altered or removed in a subsequent release'
+time: 2024-11-11T16:52:06.287978-05:00
+custom:
+  Issue: "389"
