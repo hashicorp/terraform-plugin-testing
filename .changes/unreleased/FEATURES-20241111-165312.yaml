@@ -1,6 +1,0 @@
-kind: FEATURES
-body: 'echoprovider: Introduced new `echoprovider` package, which contains a v6 Terraform
-  provider that can be used to test ephemeral resource data.'
-time: 2024-11-11T16:53:12.399802-05:00
-custom:
-  Issue: "389"

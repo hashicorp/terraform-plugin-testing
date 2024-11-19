@@ -1,3 +1,15 @@
+## 1.11.0 (November 19, 2024)
+
+NOTES:
+
+* all: This Go module has been updated to Go 1.22 per the [Go support policy](https://go.dev/doc/devel/release#policy). It is recommended to review the [Go 1.22 release notes](https://go.dev/doc/go1.22) before upgrading. Any consumers building on earlier Go versions may experience errors. ([#371](https://github.com/hashicorp/terraform-plugin-testing/issues/371))
+* echoprovider: The `echoprovider` package is considered experimental and may be altered or removed in a subsequent release ([#389](https://github.com/hashicorp/terraform-plugin-testing/issues/389))
+
+FEATURES:
+
+* tfversion: Added `SkipIfNotAlpha` version check for testing experimental features of alpha Terraform builds. ([#388](https://github.com/hashicorp/terraform-plugin-testing/issues/388))
+* echoprovider: Introduced new `echoprovider` package, which contains a v6 Terraform provider that can be used to test ephemeral resource data. ([#389](https://github.com/hashicorp/terraform-plugin-testing/issues/389))
+
 ## 1.10.0 (August 08, 2024)
 
 NOTES:
