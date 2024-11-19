@@ -45,9 +45,10 @@ func NewProviderServer() func() (tfprotov6.ProviderServer, error) {
 // echoProviderServer is a lightweight protocol version 6 provider server that saves data from the provider configuration (which is considered ephemeral)
 // and then stores that data into state during ApplyResourceChange.
 //
-// As provider configuration is ephemeral, it's possible for the data to change between plan and apply. As a result of this, during plan, this provider
-// will check if the provider config data is different than prior state, and if so, will set the PlannedState to contain an unknown value. If the prior state
-// matches the provider config data, the plan will not propose any changes.
+// As provider configuration is ephemeral, it's possible for the data to change between plan and apply. As a result of this, the echo provider
+// will never propose new changes after it has been created, making it immutable (during plan, echo will always use prior state for it's plan,
+// regardless of what the provider configuration is set to). This prevents the managed resource from continuously proposing new planned changes
+// if the ephemeral data changes.
 type echoProviderServer struct {
 	// The value of the "data" attribute during provider configuration. Will be directly echoed to the echo.data attribute.
 	providerConfigData tftypes.Value
@@ -274,7 +275,7 @@ func (e *echoProviderServer) PlanResourceChange(ctx context.Context, req *tfprot
 		}, nil
 	}
 
-	// If the provider config data has changed or we are creating, mark data as unknown in the plan.
+	// If we are creating, mark data as unknown in the plan.
 	//
 	// We can't set the proposed new state to the provider config data because it could change between plan/apply (provider config is ephemeral).
 	unknownVal := tftypes.NewValue(echoTestSchema.ValueType(), map[string]tftypes.Value{
