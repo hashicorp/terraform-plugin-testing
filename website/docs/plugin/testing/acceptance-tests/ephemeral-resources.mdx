@@ -39,8 +39,7 @@ func TestExampleCloudSecret_DnsKerberos(t *testing.T) {
           name = "example_kerberos_user"
         }
 
-        # The usage of this provider and managed resource will indicate to Terraform
-        # that the "ephemeral.examplecloud_secret.krb" resource is needed.
+        # Ephemeral data can be referenced in provider configuration
         provider "dns" {
           update {
             server = "ns.example.com"
@@ -52,7 +51,7 @@ func TestExampleCloudSecret_DnsKerberos(t *testing.T) {
           }
         }
 
-        # Successful creation of this resource indicates a success!
+        # If we can create this DNS record successfully, then the ephemeral resource returned valid data.
         resource "dns_a_record_set" "record_set" {
           zone = "example.com."
           addresses = [
