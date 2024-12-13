@@ -20,7 +20,10 @@ type Resource struct {
 	// defining only the response is very problematic.
 	PlanChangeFunc func(context.Context, resource.PlanChangeRequest, *resource.PlanChangeResponse)
 
-	ReadResponse           *resource.ReadResponse
+	ReadResponse *resource.ReadResponse
+	// Used for testing inconsistent refresh behavior, will take precedence over ReadResponse
+	ReadResourceFunc func(context.Context, resource.ReadRequest, *resource.ReadResponse)
+
 	SchemaResponse         *resource.SchemaResponse
 	UpdateResponse         *resource.UpdateResponse
 	UpgradeStateResponse   *resource.UpgradeStateResponse
@@ -54,6 +57,11 @@ func (r Resource) PlanChange(ctx context.Context, req resource.PlanChangeRequest
 }
 
 func (r Resource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	if r.ReadResourceFunc != nil {
+		r.ReadResourceFunc(ctx, req, resp)
+		return
+	}
+
 	if r.ReadResponse != nil {
 		resp.Diagnostics = r.ReadResponse.Diagnostics
 		resp.NewState = r.ReadResponse.NewState

@@ -4,6 +4,8 @@ go 1.22.0
 
 toolchain go1.22.7
 
+replace github.com/hashicorp/terraform-exec => /Users/austin.valle/code/terraform-exec
+
 require (
 	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320

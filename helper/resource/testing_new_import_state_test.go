@@ -4,7 +4,9 @@
 package resource
 
 import (
+	"context"
 	"fmt"
+	"math/rand"
 	"regexp"
 	"testing"
 
@@ -137,13 +139,34 @@ func TestTest_TestStep_ImportStateVerify(t *testing.T) {
 							NewState: tftypes.NewValue(
 								tftypes.Object{
 									AttributeTypes: map[string]tftypes.Type{
-										"id":    tftypes.String,
-										"other": tftypes.String,
+										"id":          tftypes.String,
+										"other":       tftypes.String,
+										"example_set": tftypes.Set{ElementType: tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}}},
 									},
 								},
 								map[string]tftypes.Value{
 									"id":    tftypes.NewValue(tftypes.String, "resource-test"),
 									"other": tftypes.NewValue(tftypes.String, "testvalue"),
+									"example_set": tftypes.NewValue(tftypes.Set{ElementType: tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}}}, []tftypes.Value{
+										tftypes.NewValue(
+											tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}},
+											map[string]tftypes.Value{
+												"attr": tftypes.NewValue(tftypes.String, "hello"),
+											},
+										),
+										tftypes.NewValue(
+											tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}},
+											map[string]tftypes.Value{
+												"attr": tftypes.NewValue(tftypes.String, "world"),
+											},
+										),
+										tftypes.NewValue(
+											tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}},
+											map[string]tftypes.Value{
+												"attr": tftypes.NewValue(tftypes.String, "!"),
+											},
+										),
+									}),
 								},
 							),
 						},
@@ -151,13 +174,34 @@ func TestTest_TestStep_ImportStateVerify(t *testing.T) {
 							State: tftypes.NewValue(
 								tftypes.Object{
 									AttributeTypes: map[string]tftypes.Type{
-										"id":    tftypes.String,
-										"other": tftypes.String,
+										"id":          tftypes.String,
+										"other":       tftypes.String,
+										"example_set": tftypes.Set{ElementType: tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}}},
 									},
 								},
 								map[string]tftypes.Value{
 									"id":    tftypes.NewValue(tftypes.String, "resource-test"),
 									"other": tftypes.NewValue(tftypes.String, "testvalue"),
+									"example_set": tftypes.NewValue(tftypes.Set{ElementType: tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}}}, []tftypes.Value{
+										tftypes.NewValue(
+											tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}},
+											map[string]tftypes.Value{
+												"attr": tftypes.NewValue(tftypes.String, "world"),
+											},
+										),
+										tftypes.NewValue(
+											tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}},
+											map[string]tftypes.Value{
+												"attr": tftypes.NewValue(tftypes.String, "hello"),
+											},
+										),
+										tftypes.NewValue(
+											tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}},
+											map[string]tftypes.Value{
+												"attr": tftypes.NewValue(tftypes.String, "!"),
+											},
+										),
+									}),
 								},
 							),
 						},
@@ -173,6 +217,11 @@ func TestTest_TestStep_ImportStateVerify(t *testing.T) {
 										{
 											Name:     "other",
 											Type:     tftypes.String,
+											Computed: true,
+										},
+										{
+											Name:     "example_set",
+											Type:     tftypes.Set{ElementType: tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}}},
 											Computed: true,
 										},
 									},
@@ -336,6 +385,138 @@ func TestTest_TestStep_ExpectError_ImportState(t *testing.T) {
 				ResourceName:  "test_resource.test",
 				ImportState:   true,
 				ExpectError:   regexp.MustCompile(`Error: Invalid Import ID`),
+			},
+		},
+	})
+}
+
+// https://github.com/hashicorp/terraform-plugin-testing/issues/327
+func TestTest_TestStep_ImportStateVerify_Sets_Should_Ignore_Order(t *testing.T) {
+	t.Parallel()
+
+	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_thing": {
+						CreateResponse: &resource.CreateResponse{
+							NewState: tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id":          tftypes.String,
+										"example_set": tftypes.Set{ElementType: tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}}},
+									},
+								},
+								map[string]tftypes.Value{
+									"id": tftypes.NewValue(tftypes.String, "abc123"),
+									"example_set": tftypes.NewValue(tftypes.Set{ElementType: tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}}}, []tftypes.Value{
+										tftypes.NewValue(
+											tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}},
+											map[string]tftypes.Value{
+												"attr": tftypes.NewValue(tftypes.String, "hello"),
+											},
+										),
+										tftypes.NewValue(
+											tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}},
+											map[string]tftypes.Value{
+												"attr": tftypes.NewValue(tftypes.String, "world"),
+											},
+										),
+										tftypes.NewValue(
+											tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}},
+											map[string]tftypes.Value{
+												"attr": tftypes.NewValue(tftypes.String, "!"),
+											},
+										),
+									}),
+								},
+							),
+						},
+						ReadResourceFunc: func(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+							setValue := []tftypes.Value{
+								tftypes.NewValue(
+									tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}},
+									map[string]tftypes.Value{
+										"attr": tftypes.NewValue(tftypes.String, "world"),
+									},
+								),
+								tftypes.NewValue(
+									tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}},
+									map[string]tftypes.Value{
+										"attr": tftypes.NewValue(tftypes.String, "hello"),
+									},
+								),
+								tftypes.NewValue(
+									tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}},
+									map[string]tftypes.Value{
+										"attr": tftypes.NewValue(tftypes.String, "!"),
+									},
+								),
+							}
+
+							rand.Shuffle(len(setValue), func(i, j int) { setValue[i], setValue[j] = setValue[j], setValue[i] })
+
+							resp.NewState = tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id":          tftypes.String,
+										"example_set": tftypes.Set{ElementType: tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}}},
+									},
+								},
+								map[string]tftypes.Value{
+									"id":          tftypes.NewValue(tftypes.String, "abc123"),
+									"example_set": tftypes.NewValue(tftypes.Set{ElementType: tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}}}, setValue),
+								},
+							)
+						},
+						ImportStateResponse: &resource.ImportStateResponse{
+							State: tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id":          tftypes.String,
+										"example_set": tftypes.Set{ElementType: tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}}},
+									},
+								},
+								map[string]tftypes.Value{
+									"id":          tftypes.NewValue(tftypes.String, "abc123"),
+									"example_set": tftypes.NewValue(tftypes.Set{ElementType: tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}}}, nil),
+								},
+							),
+						},
+						SchemaResponse: &resource.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "id",
+											Type:     tftypes.String,
+											Computed: true,
+										},
+										{
+											Name:     "example_set",
+											Type:     tftypes.Set{ElementType: tftypes.Object{AttributeTypes: map[string]tftypes.Type{"attr": tftypes.String}}},
+											Computed: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}),
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "examplecloud_thing" "test" {}`,
+			},
+			{
+				ResourceName:              "examplecloud_thing.test",
+				ImportState:               true,
+				ImportStateVerify:         true,
+				PreventPostDestroyRefresh: true,
 			},
 		},
 	})

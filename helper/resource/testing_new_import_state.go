@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/mitchellh/go-testing-interface"
 
+	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -41,6 +42,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	// get state from check sequence
 	var state *terraform.State
+	var rawState *tfjson.State
 	var err error
 
 	err = runProviderCommand(ctx, t, func() error {
@@ -48,10 +50,26 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		if err != nil {
 			return err
 		}
+		rawState, err = wd.State(ctx)
+		if err != nil {
+			return err
+		}
 		return nil
 	}, wd, providers)
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
+	}
+
+	var providerSchemas *tfjson.ProviderSchemas
+	err = runProviderCommand(ctx, t, func() error {
+		providerSchemas, err = wd.Schemas(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}, wd, providers)
+	if err != nil {
+		t.Fatalf("Error getting provider schemas: %s", err)
 	}
 
 	// Determine the ID to import
@@ -137,11 +155,13 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	var importState *terraform.State
+	var rawImportState *tfjson.State
 	err = runProviderCommand(ctx, t, func() error {
 		importState, err = getState(ctx, t, importWd)
 		if err != nil {
 			return err
 		}
+		rawImportState, err = importWd.State(ctx)
 		return nil
 	}, importWd, providers)
 	if err != nil {
@@ -296,7 +316,24 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 				}
 			}
 
+			// TODO: Putting the comparison outside of the if statement for now
+			err = importStateVerify(ctx, t, step, rawState, rawImportState, providerSchemas)
+			if err != nil {
+				return fmt.Errorf("ImportStateVerify attributes not equivalent. %s", err.Error())
+			}
+
 			if !reflect.DeepEqual(actual, expected) {
+				// TODO: eventually I think the logic should live here, for the least aggressive change to existing behavior... Only compare detailed if the test was going to fail anyways.
+				// This also means we can ignore trying to create a nice diff like the reflection comparison :)
+				//
+				// If the shimmed values do not match, it's still possible they may match based off a more detailed comparison
+				// For example, sets may be in different order:
+				// - https://github.com/hashicorp/terraform-plugin-testing/issues/327
+				// err = importStateVerify(ctx, t, step, rawState, rawImportState, providerSchemas)
+				// if err == nil {
+				// 	continue
+				// }
+
 				// Determine only the different attributes
 				// go-cmp tries to show surrounding identical map key/value for
 				// context of differences, which may be confusing.
