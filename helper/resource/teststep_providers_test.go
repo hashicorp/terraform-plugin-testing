@@ -29,6 +29,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
@@ -1946,8 +1947,8 @@ func TestTest_TestStep_ExternalProviders_DifferentVersions(t *testing.T) {
 func TestTest_TestStep_ExternalProviders_Error(t *testing.T) {
 	t.Parallel()
 
-	plugintest.TestExpectTFatal(t, func() {
-		Test(&mockT{}, TestCase{
+	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
+		Test(mockT, TestCase{
 			Steps: []TestStep{
 				{
 					Config: "# not empty",
@@ -2334,7 +2335,7 @@ func extractResourceAttr(resourceName string, attributeName string, attributeVal
 func TestTest_TestStep_ProtoV5ProviderFactories(t *testing.T) {
 	t.Parallel()
 
-	UnitTest(&mockT{}, TestCase{
+	UnitTest(t, TestCase{
 		Steps: []TestStep{
 			{
 				Config: "# not empty",
@@ -2349,8 +2350,8 @@ func TestTest_TestStep_ProtoV5ProviderFactories(t *testing.T) {
 func TestTest_TestStep_ProtoV5ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
-	plugintest.TestExpectTFatal(t, func() {
-		UnitTest(&mockT{}, TestCase{
+	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
+		UnitTest(mockT, TestCase{
 			Steps: []TestStep{
 				{
 					Config: "# not empty",
@@ -2368,7 +2369,7 @@ func TestTest_TestStep_ProtoV5ProviderFactories_Error(t *testing.T) {
 func TestTest_TestStep_ProtoV6ProviderFactories(t *testing.T) {
 	t.Parallel()
 
-	UnitTest(&mockT{}, TestCase{
+	UnitTest(t, TestCase{
 		Steps: []TestStep{
 			{
 				Config: "# not empty",
@@ -2383,8 +2384,8 @@ func TestTest_TestStep_ProtoV6ProviderFactories(t *testing.T) {
 func TestTest_TestStep_ProtoV6ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
-	plugintest.TestExpectTFatal(t, func() {
-		UnitTest(&mockT{}, TestCase{
+	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
+		UnitTest(mockT, TestCase{
 			Steps: []TestStep{
 				{
 					Config: "# not empty",
@@ -2465,7 +2466,7 @@ func TestTest_TestStep_ProtoV6ProviderFactories_To_ExternalProviders(t *testing.
 func TestTest_TestStep_ProviderFactories(t *testing.T) {
 	t.Parallel()
 
-	UnitTest(&mockT{}, TestCase{
+	UnitTest(t, TestCase{
 		Steps: []TestStep{
 			{
 				Config: "# not empty",
@@ -2482,8 +2483,8 @@ func TestTest_TestStep_ProviderFactories(t *testing.T) {
 func TestTest_TestStep_ProviderFactories_Error(t *testing.T) {
 	t.Parallel()
 
-	plugintest.TestExpectTFatal(t, func() {
-		UnitTest(&mockT{}, TestCase{
+	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
+		UnitTest(mockT, TestCase{
 			Steps: []TestStep{
 				{
 					Config: "# not empty",
