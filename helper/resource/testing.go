@@ -15,8 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mitchellh/go-testing-interface"
-
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 
@@ -31,6 +29,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/addrs"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	testing "github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 )
 
 // flagSweep is a flag available when running tests on the command line. It

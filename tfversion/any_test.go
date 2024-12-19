@@ -8,10 +8,9 @@ import (
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
-	testinginterface "github.com/mitchellh/go-testing-interface"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
@@ -73,8 +72,8 @@ func Test_Any_Error(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
-	plugintest.TestExpectTFatal(t, func() {
-		r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
+	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
+		r.UnitTest(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
 					return nil, nil

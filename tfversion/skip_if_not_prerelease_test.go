@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
-	testinginterface "github.com/mitchellh/go-testing-interface"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 )
 
 func Test_SkipIfNotPrerelease_SkipTest_Stable(t *testing.T) { //nolint:paralleltest
@@ -41,18 +41,20 @@ func Test_SkipIfNotPrerelease_RunTest_Alpha(t *testing.T) { //nolint:paralleltes
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.9.0-alpha20240501")
 
-	r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
-		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"test": providerserver.NewProviderServer(testprovider.Provider{}),
-		},
-		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipIfNotPrerelease(),
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `//non-empty config`,
+	testingiface.ExpectSkip(t, func(mockT *testingiface.MockT) {
+		r.UnitTest(mockT, r.TestCase{
+			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
-		},
+			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+				tfversion.SkipIfNotPrerelease(),
+			},
+			Steps: []r.TestStep{
+				{
+					Config: `//non-empty config`,
+				},
+			},
+		})
 	})
 }
 
@@ -60,35 +62,39 @@ func Test_SkipIfNotPrerelease_RunTest_Beta1(t *testing.T) { //nolint:paralleltes
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.8.0-beta1")
 
-	r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
-		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"test": providerserver.NewProviderServer(testprovider.Provider{}),
-		},
-		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipIfNotPrerelease(),
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `//non-empty config`,
+	testingiface.ExpectSkip(t, func(mockT *testingiface.MockT) {
+		r.UnitTest(mockT, r.TestCase{
+			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
-		},
+			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+				tfversion.SkipIfNotPrerelease(),
+			},
+			Steps: []r.TestStep{
+				{
+					Config: `//non-empty config`,
+				},
+			},
+		})
 	})
 }
 func Test_SkipIfNotPrerelease_RunTest_RC(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.8.0-rc2")
 
-	r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
-		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"test": providerserver.NewProviderServer(testprovider.Provider{}),
-		},
-		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipIfNotPrerelease(),
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `//non-empty config`,
+	testingiface.ExpectSkip(t, func(mockT *testingiface.MockT) {
+		r.UnitTest(mockT, r.TestCase{
+			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
-		},
+			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+				tfversion.SkipIfNotPrerelease(),
+			},
+			Steps: []r.TestStep{
+				{
+					Config: `//non-empty config`,
+				},
+			},
+		})
 	})
 }

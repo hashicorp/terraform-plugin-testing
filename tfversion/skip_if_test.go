@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
-	testinginterface "github.com/mitchellh/go-testing-interface"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 )
 
 func Test_SkipIf_SkipTest(t *testing.T) { //nolint:paralleltest
@@ -42,18 +42,20 @@ func Test_SkipIf_RunTest(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
-	r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
-		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"test": providerserver.NewProviderServer(testprovider.Provider{}),
-		},
-		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipIf(version.Must(version.NewVersion("1.2.0"))),
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `//non-empty config`,
+	testingiface.ExpectSkip(t, func(mockT *testingiface.MockT) {
+		r.UnitTest(mockT, r.TestCase{
+			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
-		},
+			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+				tfversion.SkipIf(version.Must(version.NewVersion("1.2.0"))),
+			},
+			Steps: []r.TestStep{
+				{
+					Config: `//non-empty config`,
+				},
+			},
+		})
 	})
 }
 
