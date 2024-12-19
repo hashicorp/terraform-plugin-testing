@@ -8,12 +8,12 @@ import (
 	"errors"
 
 	tfjson "github.com/hashicorp/terraform-json"
-	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 )
 
-func runStateChecks(ctx context.Context, t testing.T, state *tfjson.State, stateChecks []statecheck.StateCheck) error {
+func runStateChecks(ctx context.Context, t testingiface.T, state *tfjson.State, stateChecks []statecheck.StateCheck) error {
 	t.Helper()
 
 	var result []error
