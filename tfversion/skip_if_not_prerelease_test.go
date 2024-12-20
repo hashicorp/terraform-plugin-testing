@@ -22,7 +22,7 @@ func Test_SkipIfNotPrerelease_SkipTest_Stable(t *testing.T) { //nolint:parallelt
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.8.0")
 
 	testingiface.ExpectSkip(t, func(mockT *testinginterface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
 					return nil, nil
@@ -45,7 +45,7 @@ func Test_SkipIfNotPrerelease_RunTest_Alpha(t *testing.T) { //nolint:paralleltes
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.9.0-alpha20240501")
 
 	testingiface.ExpectPass(t, func(mockT *testinginterface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -66,7 +66,7 @@ func Test_SkipIfNotPrerelease_RunTest_Beta1(t *testing.T) { //nolint:paralleltes
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.8.0-beta1")
 
 	testingiface.ExpectPass(t, func(mockT *testinginterface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -86,7 +86,7 @@ func Test_SkipIfNotPrerelease_RunTest_RC(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.8.0-rc2")
 
 	testingiface.ExpectPass(t, func(mockT *testinginterface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},

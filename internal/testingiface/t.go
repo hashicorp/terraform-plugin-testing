@@ -36,7 +36,7 @@ type T interface {
 	// Excluded to match the prior github.com/mitchellh/go-testing-interface.T
 	// interface for complete backwards compatibility. It is relatively safe to
 	// introduce if necessary in the future though.
-	// Run(name string, f func(*testing.T)) bool
+	Run(name string, f func(T)) bool
 
 	Setenv(key string, value string)
 	Skip(args ...any)

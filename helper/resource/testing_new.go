@@ -143,317 +143,332 @@ func runNewTest(ctx context.Context, t testingiface.T, c TestCase, helper *plugi
 
 		stepNumber = stepIndex + 1 // 1-based indexing for humans
 
-		configRequest := teststep.PrepareConfigurationRequest{
-			Directory: step.ConfigDirectory,
-			File:      step.ConfigFile,
-			Raw:       step.Config,
-			TestStepConfigRequest: config.TestStepConfigRequest{
-				StepNumber: stepNumber,
-				TestName:   t.Name(),
-			},
-		}.Exec()
-
-		cfg := teststep.Configuration(configRequest)
-
-		ctx = logging.TestStepNumberContext(ctx, stepNumber)
-
-		logging.HelperResourceDebug(ctx, "Starting TestStep")
-
-		if step.PreConfig != nil {
-			logging.HelperResourceDebug(ctx, "Calling TestStep PreConfig")
-			step.PreConfig()
-			logging.HelperResourceDebug(ctx, "Called TestStep PreConfig")
+		var testMode string
+		if step.ImportState {
+			testMode = "import mode"
+		} else if step.RefreshState {
+			testMode = "refresh mode"
+		} else {
+			testMode = "lifecycle mode"
 		}
 
-		if step.SkipFunc != nil {
-			logging.HelperResourceDebug(ctx, "Calling TestStep SkipFunc")
+		stepDescription := fmt.Sprintf("step %d %s", stepNumber, testMode)
+		t.Run(stepDescription, func(t testingiface.T) {
 
-			skip, err := step.SkipFunc()
-			if err != nil {
-				logging.HelperResourceError(ctx,
-					"Error calling TestStep SkipFunc",
-					map[string]interface{}{logging.KeyError: err},
-				)
-				t.Fatalf("Error calling TestStep SkipFunc: %s", err.Error())
-			}
-
-			logging.HelperResourceDebug(ctx, "Called TestStep SkipFunc")
-
-			if skip {
-				t.Logf("Skipping step %d/%d due to SkipFunc", stepNumber, len(c.Steps))
-				logging.HelperResourceWarn(ctx, "Skipping TestStep due to SkipFunc")
-				continue
-			}
-		}
-
-		if cfg != nil && !step.Destroy && len(step.Taint) > 0 {
-			err := testStepTaint(ctx, step, wd)
-
-			if err != nil {
-				logging.HelperResourceError(ctx,
-					"TestStep error tainting resources",
-					map[string]interface{}{logging.KeyError: err},
-				)
-				t.Fatalf("TestStep %d/%d error tainting resources: %s", stepNumber, len(c.Steps), err)
-			}
-		}
-
-		hasProviders, err := step.hasProviders(ctx, stepIndex, t.Name())
-
-		if err != nil {
-			logging.HelperResourceError(ctx,
-				"TestStep error checking for providers",
-				map[string]interface{}{logging.KeyError: err},
-			)
-			t.Fatalf("TestStep %d/%d error checking for providers: %s", stepNumber, len(c.Steps), err)
-		}
-
-		if hasProviders {
-			providers = &providerFactories{
-				legacy:  sdkProviderFactories(c.ProviderFactories).merge(step.ProviderFactories),
-				protov5: protov5ProviderFactories(c.ProtoV5ProviderFactories).merge(step.ProtoV5ProviderFactories),
-				protov6: protov6ProviderFactories(c.ProtoV6ProviderFactories).merge(step.ProtoV6ProviderFactories),
-			}
-
-			var hasProviderBlock bool
-
-			if cfg != nil {
-				hasProviderBlock, err = cfg.HasProviderBlock(ctx)
-
-				if err != nil {
-					logging.HelperResourceError(ctx,
-						"TestStep error determining whether configuration contains provider block",
-						map[string]interface{}{logging.KeyError: err},
-					)
-					t.Fatalf("TestStep %d/%d error determining whether configuration contains provider block: %s", stepNumber, len(c.Steps), err)
-				}
-			}
-
-			var testStepConfig teststep.Config
-
-			rawCfg, err := step.providerConfig(ctx, hasProviderBlock, helper.TerraformVersion())
-
-			if err != nil {
-				logging.HelperResourceError(ctx,
-					"TestStep error generating provider configuration",
-					map[string]interface{}{logging.KeyError: err},
-				)
-				t.Fatalf("TestStep %d/%d error generating provider configuration: %s", stepNumber, len(c.Steps), err)
-			}
-
-			// Return value from step.providerConfig() is assigned to Raw as this was previously being
-			// passed to wd.SetConfig() directly when the second argument to wd.SetConfig() accepted a
-			// configuration string.
-			confRequest := teststep.PrepareConfigurationRequest{
+			configRequest := teststep.PrepareConfigurationRequest{
 				Directory: step.ConfigDirectory,
 				File:      step.ConfigFile,
-				Raw:       rawCfg,
+				Raw:       step.Config,
 				TestStepConfigRequest: config.TestStepConfigRequest{
-					StepNumber: stepIndex + 1,
+					StepNumber: stepNumber,
 					TestName:   t.Name(),
 				},
 			}.Exec()
 
-			testStepConfig = teststep.Configuration(confRequest)
+			cfg := teststep.Configuration(configRequest)
 
-			err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
+			ctx = logging.TestStepNumberContext(ctx, stepNumber)
 
-			if err != nil {
-				logging.HelperResourceError(ctx,
-					"TestStep error setting provider configuration",
-					map[string]interface{}{logging.KeyError: err},
-				)
-				t.Fatalf("TestStep %d/%d error setting test provider configuration: %s", stepNumber, len(c.Steps), err)
+			logging.HelperResourceDebug(ctx, "Starting TestStep")
+
+			if step.PreConfig != nil {
+				logging.HelperResourceDebug(ctx, "Calling TestStep PreConfig")
+				step.PreConfig()
+				logging.HelperResourceDebug(ctx, "Called TestStep PreConfig")
 			}
 
-			err = runProviderCommand(
-				ctx,
-				t,
-				func() error {
-					return wd.Init(ctx)
-				},
-				wd,
-				providers,
-			)
+			if step.SkipFunc != nil {
+				logging.HelperResourceDebug(ctx, "Calling TestStep SkipFunc")
+
+				skip, err := step.SkipFunc()
+				if err != nil {
+					logging.HelperResourceError(ctx,
+						"Error calling TestStep SkipFunc",
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("Error calling TestStep SkipFunc: %s", err.Error())
+				}
+
+				logging.HelperResourceDebug(ctx, "Called TestStep SkipFunc")
+
+				if skip {
+					t.Logf("Skipping step %d/%d due to SkipFunc", stepNumber, len(c.Steps))
+					logging.HelperResourceWarn(ctx, "Skipping TestStep due to SkipFunc")
+					return
+				}
+			}
+
+			if cfg != nil && !step.Destroy && len(step.Taint) > 0 {
+				err := testStepTaint(ctx, step, wd)
+
+				if err != nil {
+					logging.HelperResourceError(ctx,
+						"TestStep error tainting resources",
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("TestStep %d/%d error tainting resources: %s", stepNumber, len(c.Steps), err)
+				}
+			}
+
+			hasProviders, err := step.hasProviders(ctx, stepIndex, t.Name())
 
 			if err != nil {
 				logging.HelperResourceError(ctx,
-					"TestStep error running init",
+					"TestStep error checking for providers",
 					map[string]interface{}{logging.KeyError: err},
 				)
-				t.Fatalf("TestStep %d/%d running init: %s", stepNumber, len(c.Steps), err.Error())
+				t.Fatalf("TestStep %d/%d error checking for providers: %s", stepNumber, len(c.Steps), err)
+			}
+
+			if hasProviders {
+				providers = &providerFactories{
+					legacy:  sdkProviderFactories(c.ProviderFactories).merge(step.ProviderFactories),
+					protov5: protov5ProviderFactories(c.ProtoV5ProviderFactories).merge(step.ProtoV5ProviderFactories),
+					protov6: protov6ProviderFactories(c.ProtoV6ProviderFactories).merge(step.ProtoV6ProviderFactories),
+				}
+
+				var hasProviderBlock bool
+
+				if cfg != nil {
+					hasProviderBlock, err = cfg.HasProviderBlock(ctx)
+
+					if err != nil {
+						logging.HelperResourceError(ctx,
+							"TestStep error determining whether configuration contains provider block",
+							map[string]interface{}{logging.KeyError: err},
+						)
+						t.Fatalf("TestStep %d/%d error determining whether configuration contains provider block: %s", stepNumber, len(c.Steps), err)
+					}
+				}
+
+				var testStepConfig teststep.Config
+
+				rawCfg, err := step.providerConfig(ctx, hasProviderBlock, helper.TerraformVersion())
+
+				if err != nil {
+					logging.HelperResourceError(ctx,
+						"TestStep error generating provider configuration",
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("TestStep %d/%d error generating provider configuration: %s", stepNumber, len(c.Steps), err)
+				}
+
+				// Return value from step.providerConfig() is assigned to Raw as this was previously being
+				// passed to wd.SetConfig() directly when the second argument to wd.SetConfig() accepted a
+				// configuration string.
+				confRequest := teststep.PrepareConfigurationRequest{
+					Directory: step.ConfigDirectory,
+					File:      step.ConfigFile,
+					Raw:       rawCfg,
+					TestStepConfigRequest: config.TestStepConfigRequest{
+						StepNumber: stepIndex + 1,
+						TestName:   t.Name(),
+					},
+				}.Exec()
+
+				testStepConfig = teststep.Configuration(confRequest)
+
+				err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
+
+				if err != nil {
+					logging.HelperResourceError(ctx,
+						"TestStep error setting provider configuration",
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("TestStep %d/%d error setting test provider configuration: %s", stepNumber, len(c.Steps), err)
+				}
+
+				err = runProviderCommand(
+					ctx,
+					t,
+					func() error {
+						return wd.Init(ctx)
+					},
+					wd,
+					providers,
+				)
+
+				if err != nil {
+					logging.HelperResourceError(ctx,
+						"TestStep error running init",
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("TestStep %d/%d running init: %s", stepNumber, len(c.Steps), err.Error())
+					return
+				}
+			}
+
+			if step.ImportState {
+				logging.HelperResourceTrace(ctx, "TestStep is ImportState mode")
+
+				err := testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, providers, stepIndex)
+				if step.ExpectError != nil {
+					logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
+					if err == nil {
+						logging.HelperResourceError(ctx,
+							"Error running import: expected an error but got none",
+						)
+						t.Fatalf("Step %d/%d error running import: expected an error but got none", stepNumber, len(c.Steps))
+					}
+					if !step.ExpectError.MatchString(err.Error()) {
+						logging.HelperResourceError(ctx,
+							fmt.Sprintf("Error running import: expected an error with pattern (%s)", step.ExpectError.String()),
+							map[string]interface{}{logging.KeyError: err},
+						)
+						t.Fatalf("Step %d/%d error running import, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
+					}
+				} else {
+					t.Run("deep equal", func(t testingiface.T) {
+						if err != nil && c.ErrorCheck != nil {
+							logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
+							err = c.ErrorCheck(err)
+							logging.HelperResourceDebug(ctx, "Called TestCase ErrorCheck")
+						}
+						if err != nil {
+							logging.HelperResourceError(ctx,
+								"Error running import",
+								map[string]interface{}{logging.KeyError: err},
+							)
+							t.Fatalf("Step %d/%d error running import: %s", stepNumber, len(c.Steps), err)
+						}
+					})
+				}
+
+				logging.HelperResourceDebug(ctx, "Finished TestStep")
+
 				return
 			}
-		}
 
-		if step.ImportState {
-			logging.HelperResourceTrace(ctx, "TestStep is ImportState mode")
+			if step.RefreshState {
+				logging.HelperResourceTrace(ctx, "TestStep is RefreshState mode")
 
-			err := testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, providers, stepIndex)
-			if step.ExpectError != nil {
-				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
-				if err == nil {
-					logging.HelperResourceError(ctx,
-						"Error running import: expected an error but got none",
-					)
-					t.Fatalf("Step %d/%d error running import: expected an error but got none", stepNumber, len(c.Steps))
+				err := testStepNewRefreshState(ctx, t, wd, step, providers)
+				if step.ExpectError != nil {
+					logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
+					if err == nil {
+						logging.HelperResourceError(ctx,
+							"Error running refresh: expected an error but got none",
+						)
+						t.Fatalf("Step %d/%d error running refresh: expected an error but got none", stepNumber, len(c.Steps))
+					}
+					if !step.ExpectError.MatchString(err.Error()) {
+						logging.HelperResourceError(ctx,
+							fmt.Sprintf("Error running refresh: expected an error with pattern (%s)", step.ExpectError.String()),
+							map[string]interface{}{logging.KeyError: err},
+						)
+						t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
+					}
+				} else {
+					if err != nil && c.ErrorCheck != nil {
+						logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
+						err = c.ErrorCheck(err)
+						logging.HelperResourceDebug(ctx, "Called TestCase ErrorCheck")
+					}
+					if err != nil {
+						logging.HelperResourceError(ctx,
+							"Error running refresh",
+							map[string]interface{}{logging.KeyError: err},
+						)
+						t.Fatalf("Step %d/%d error running refresh: %s", stepNumber, len(c.Steps), err)
+					}
 				}
-				if !step.ExpectError.MatchString(err.Error()) {
-					logging.HelperResourceError(ctx,
-						fmt.Sprintf("Error running import: expected an error with pattern (%s)", step.ExpectError.String()),
-						map[string]interface{}{logging.KeyError: err},
-					)
-					t.Fatalf("Step %d/%d error running import, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
-				}
-			} else {
-				if err != nil && c.ErrorCheck != nil {
-					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
-					err = c.ErrorCheck(err)
-					logging.HelperResourceDebug(ctx, "Called TestCase ErrorCheck")
-				}
-				if err != nil {
-					logging.HelperResourceError(ctx,
-						"Error running import",
-						map[string]interface{}{logging.KeyError: err},
-					)
-					t.Fatalf("Step %d/%d error running import: %s", stepNumber, len(c.Steps), err)
-				}
+
+				logging.HelperResourceDebug(ctx, "Finished TestStep")
+
+				return
 			}
-
-			logging.HelperResourceDebug(ctx, "Finished TestStep")
-
-			continue
-		}
-
-		if step.RefreshState {
-			logging.HelperResourceTrace(ctx, "TestStep is RefreshState mode")
-
-			err := testStepNewRefreshState(ctx, t, wd, step, providers)
-			if step.ExpectError != nil {
-				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
-				if err == nil {
-					logging.HelperResourceError(ctx,
-						"Error running refresh: expected an error but got none",
-					)
-					t.Fatalf("Step %d/%d error running refresh: expected an error but got none", stepNumber, len(c.Steps))
-				}
-				if !step.ExpectError.MatchString(err.Error()) {
-					logging.HelperResourceError(ctx,
-						fmt.Sprintf("Error running refresh: expected an error with pattern (%s)", step.ExpectError.String()),
-						map[string]interface{}{logging.KeyError: err},
-					)
-					t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
-				}
-			} else {
-				if err != nil && c.ErrorCheck != nil {
-					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
-					err = c.ErrorCheck(err)
-					logging.HelperResourceDebug(ctx, "Called TestCase ErrorCheck")
-				}
-				if err != nil {
-					logging.HelperResourceError(ctx,
-						"Error running refresh",
-						map[string]interface{}{logging.KeyError: err},
-					)
-					t.Fatalf("Step %d/%d error running refresh: %s", stepNumber, len(c.Steps), err)
-				}
-			}
-
-			logging.HelperResourceDebug(ctx, "Finished TestStep")
-
-			continue
-		}
-
-		if cfg != nil {
-			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
-
-			err := testStepNewConfig(ctx, t, c, wd, step, providers, stepIndex, helper)
-			if step.ExpectError != nil {
-				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
-
-				if err == nil {
-					logging.HelperResourceError(ctx,
-						"Expected an error but got none",
-					)
-					t.Fatalf("Step %d/%d, expected an error but got none", stepNumber, len(c.Steps))
-				}
-				if !step.ExpectError.MatchString(err.Error()) {
-					logging.HelperResourceError(ctx,
-						fmt.Sprintf("Expected an error with pattern (%s)", step.ExpectError.String()),
-						map[string]interface{}{logging.KeyError: err},
-					)
-					t.Fatalf("Step %d/%d, expected an error with pattern, no match on: %s", stepNumber, len(c.Steps), err)
-				}
-			} else {
-				if err != nil && c.ErrorCheck != nil {
-					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
-
-					err = c.ErrorCheck(err)
-
-					logging.HelperResourceDebug(ctx, "Called TestCase ErrorCheck")
-				}
-				if err != nil {
-					logging.HelperResourceError(ctx,
-						"Unexpected error",
-						map[string]interface{}{logging.KeyError: err},
-					)
-					t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), err)
-				}
-			}
-
-			var hasTerraformBlock bool
-			var hasProviderBlock bool
 
 			if cfg != nil {
-				hasTerraformBlock, err = cfg.HasTerraformBlock(ctx)
+				logging.HelperResourceTrace(ctx, "TestStep is Config mode")
+
+				err := testStepNewConfig(ctx, t, c, wd, step, providers, stepIndex, helper)
+				if step.ExpectError != nil {
+					logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
+
+					if err == nil {
+						logging.HelperResourceError(ctx,
+							"Expected an error but got none",
+						)
+						t.Fatalf("Step %d/%d, expected an error but got none", stepNumber, len(c.Steps))
+					}
+					if !step.ExpectError.MatchString(err.Error()) {
+						logging.HelperResourceError(ctx,
+							fmt.Sprintf("Expected an error with pattern (%s)", step.ExpectError.String()),
+							map[string]interface{}{logging.KeyError: err},
+						)
+						t.Fatalf("Step %d/%d, expected an error with pattern, no match on: %s", stepNumber, len(c.Steps), err)
+					}
+				} else {
+					if err != nil && c.ErrorCheck != nil {
+						logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
+
+						err = c.ErrorCheck(err)
+
+						logging.HelperResourceDebug(ctx, "Called TestCase ErrorCheck")
+					}
+					if err != nil {
+						logging.HelperResourceError(ctx,
+							"Unexpected error",
+							map[string]interface{}{logging.KeyError: err},
+						)
+						t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), err)
+					}
+				}
+
+				var hasTerraformBlock bool
+				var hasProviderBlock bool
+
+				if cfg != nil {
+					hasTerraformBlock, err = cfg.HasTerraformBlock(ctx)
+
+					if err != nil {
+						logging.HelperResourceError(ctx,
+							"Error determining whether configuration contains terraform block",
+							map[string]interface{}{logging.KeyError: err},
+						)
+						t.Fatalf("Error determining whether configuration contains terraform block: %s", err)
+					}
+
+					hasProviderBlock, err = cfg.HasProviderBlock(ctx)
+
+					if err != nil {
+						logging.HelperResourceError(ctx,
+							"Error determining whether configuration contains provider block",
+							map[string]interface{}{logging.KeyError: err},
+						)
+						t.Fatalf("Error determining whether configuration contains provider block: %s", err)
+					}
+				}
+
+				mergedConfig, err := step.mergedConfig(ctx, c, hasTerraformBlock, hasProviderBlock, helper.TerraformVersion())
 
 				if err != nil {
 					logging.HelperResourceError(ctx,
-						"Error determining whether configuration contains terraform block",
+						"Error generating merged configuration",
 						map[string]interface{}{logging.KeyError: err},
 					)
-					t.Fatalf("Error determining whether configuration contains terraform block: %s", err)
+					t.Fatalf("Error generating merged configuration: %s", err)
 				}
 
-				hasProviderBlock, err = cfg.HasProviderBlock(ctx)
+				confRequest := teststep.PrepareConfigurationRequest{
+					Directory: step.ConfigDirectory,
+					File:      step.ConfigFile,
+					Raw:       mergedConfig,
+					TestStepConfigRequest: config.TestStepConfigRequest{
+						StepNumber: stepIndex + 1,
+						TestName:   t.Name(),
+					},
+				}.Exec()
 
-				if err != nil {
-					logging.HelperResourceError(ctx,
-						"Error determining whether configuration contains provider block",
-						map[string]interface{}{logging.KeyError: err},
-					)
-					t.Fatalf("Error determining whether configuration contains provider block: %s", err)
-				}
+				appliedCfg = teststep.Configuration(confRequest)
+
+				logging.HelperResourceDebug(ctx, "Finished TestStep")
+
+				return
 			}
 
-			mergedConfig, err := step.mergedConfig(ctx, c, hasTerraformBlock, hasProviderBlock, helper.TerraformVersion())
-
-			if err != nil {
-				logging.HelperResourceError(ctx,
-					"Error generating merged configuration",
-					map[string]interface{}{logging.KeyError: err},
-				)
-				t.Fatalf("Error generating merged configuration: %s", err)
-			}
-
-			confRequest := teststep.PrepareConfigurationRequest{
-				Directory: step.ConfigDirectory,
-				File:      step.ConfigFile,
-				Raw:       mergedConfig,
-				TestStepConfigRequest: config.TestStepConfigRequest{
-					StepNumber: stepIndex + 1,
-					TestName:   t.Name(),
-				},
-			}.Exec()
-
-			appliedCfg = teststep.Configuration(confRequest)
-
-			logging.HelperResourceDebug(ctx, "Finished TestStep")
-
-			continue
-		}
-
-		t.Fatalf("Step %d/%d, unsupported test mode", stepNumber, len(c.Steps))
+			t.Fatalf("Step %d/%d, unsupported test mode", stepNumber, len(c.Steps))
+		})
 	}
 
 	if stepNumber > 0 {

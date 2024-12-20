@@ -5,6 +5,7 @@ package testingiface
 
 import (
 	"sync"
+	"testing"
 )
 
 // ExpectFailed provides a wrapper for test logic which should call any of the
@@ -16,7 +17,7 @@ import (
 //
 // If none of those were called, the real [testing.T.Fatal] is called to fail
 // the test.
-func ExpectFail(t T, logic func(*MockT)) {
+func ExpectFail(t *testing.T, logic func(*MockT)) {
 	t.Helper()
 
 	mockT := &MockT{}
@@ -42,7 +43,7 @@ func ExpectFail(t T, logic func(*MockT)) {
 // ExpectParallel provides a wrapper for test logic which should call the
 // [testing.T.Parallel] method. If it doesn't, the real [testing.T.Fatal] is
 // called.
-func ExpectParallel(t T, logic func(*MockT)) {
+func ExpectParallel(t *testing.T, logic func(*MockT)) {
 	t.Helper()
 
 	mockT := &MockT{}
@@ -81,7 +82,7 @@ func ExpectParallel(t T, logic func(*MockT)) {
 // If one of those were called, the real [testing.T.Fatal] is called to fail
 // the test. This is only necessary to check for false positives with skipped
 // tests.
-func ExpectPass(t T, logic func(*MockT)) {
+func ExpectPass(t *testing.T, logic func(*MockT)) {
 	t.Helper()
 
 	mockT := &MockT{}
@@ -115,7 +116,7 @@ func ExpectPass(t T, logic func(*MockT)) {
 //
 // If none of those were called, the real [testing.T.Fatal] is called to fail
 // the test.
-func ExpectSkip(t T, logic func(*MockT)) {
+func ExpectSkip(t *testing.T, logic func(*MockT)) {
 	t.Helper()
 
 	mockT := &MockT{}

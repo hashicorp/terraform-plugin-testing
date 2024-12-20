@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"testing"
 	"time"
 )
 
@@ -108,8 +107,12 @@ func (t *MockT) Parallel() {
 	t.isParallel = true
 }
 
-func (t *MockT) Run(name string, f func(t *testing.T)) bool {
-	panic("not implemented")
+func (t *MockT) Run(name string, f func(t T)) bool {
+	t.Log("Running subtest:", name)
+	defer t.Log("Finished subtest:", name)
+
+	f(t)
+	return !t.isFailed
 }
 
 func (t *MockT) Setenv(key string, value string) {

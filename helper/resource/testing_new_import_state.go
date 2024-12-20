@@ -129,23 +129,33 @@ func testStepNewImportState(ctx context.Context, t testingiface.T, helper *plugi
 		}
 	}
 
-	err = runProviderCommand(ctx, t, func() error {
-		return importWd.Import(ctx, step.ResourceName, importId)
-	}, importWd, providers)
-	if err != nil {
-		return err
-	}
-
+	var errorInTest error
 	var importState *terraform.State
-	err = runProviderCommand(ctx, t, func() error {
-		importState, err = getState(ctx, t, importWd)
+
+	t.Run("import into a new statefile", func(t testingiface.T) {
+		err = runProviderCommand(ctx, t, func() error {
+			return importWd.Import(ctx, step.ResourceName, importId)
+		}, importWd, providers)
 		if err != nil {
-			return err
+			errorInTest = err
+			t.Skipf("Error running import: %s", err)
+			return
 		}
-		return nil
-	}, importWd, providers)
-	if err != nil {
-		t.Fatalf("Error getting state: %s", err)
+
+		err = runProviderCommand(ctx, t, func() error {
+			importState, err = getState(ctx, t, importWd)
+			if err != nil {
+				return err
+			}
+			return nil
+		}, importWd, providers)
+		if err != nil {
+			t.Fatalf("Error getting state: %s", err)
+		}
+	})
+
+	if errorInTest != nil {
+		return errorInTest
 	}
 
 	// Go through the imported state and verify
@@ -212,27 +222,29 @@ func testStepNewImportState(ctx context.Context, t testingiface.T, helper *plugi
 
 			// Find the existing resource
 			var oldR *terraform.ResourceState
-			for _, r2 := range oldResources {
-				if r2.Primary == nil || r2.Type != r.Type || r2.Provider != r.Provider {
-					continue
-				}
+			t.Run(fmt.Sprintf("find created resource %s in old state for comparison", rIdentifier), func(t testingiface.T) {
+				for _, r2 := range oldResources {
+					if r2.Primary == nil || r2.Type != r.Type || r2.Provider != r.Provider {
+						continue
+					}
 
-				r2Identifier, ok := r2.Primary.Attributes[identifierAttribute]
+					r2Identifier, ok := r2.Primary.Attributes[identifierAttribute]
 
-				if !ok {
-					t.Fatalf("ImportStateVerify: Old resource missing identifier attribute %q, ensure attribute value is properly set or use ImportStateVerifyIdentifierAttribute to choose different attribute", identifierAttribute)
-				}
+					if !ok {
+						t.Fatalf("ImportStateVerify: Old resource missing identifier attribute %q, ensure attribute value is properly set or use ImportStateVerifyIdentifierAttribute to choose different attribute", identifierAttribute)
+					}
 
-				if r2Identifier == rIdentifier {
-					oldR = r2
-					break
+					if r2Identifier == rIdentifier {
+						oldR = r2
+						break
+					}
 				}
-			}
-			if oldR == nil || oldR.Primary == nil {
-				t.Fatalf(
-					"Failed state verification, resource with ID %s not found",
-					rIdentifier)
-			}
+				if oldR == nil || oldR.Primary == nil {
+					t.Fatalf(
+						"Failed state verification, resource with ID %s not found",
+						rIdentifier)
+				}
+			})
 
 			// don't add empty flatmapped containers, so we can more easily
 			// compare the attributes

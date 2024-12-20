@@ -21,7 +21,7 @@ func Test_Any_RunTest(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
 	testingiface.ExpectPass(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -48,7 +48,7 @@ func Test_Any_SkipTest(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
 	testingiface.ExpectSkip(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
 					return nil, nil
@@ -77,7 +77,7 @@ func Test_Any_Error(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
 	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
 					return nil, nil

@@ -21,7 +21,7 @@ func Test_RequireNot(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.4.3")
 
 	testingiface.ExpectPass(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -42,7 +42,7 @@ func Test_RequireNot_Error(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
 	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
 					return nil, nil
@@ -71,7 +71,7 @@ func Test_RequireNot_Prerelease_EqualCoreVersion(t *testing.T) { //nolint:parall
 	//
 	// Reference: https://github.com/hashicorp/terraform-plugin-testing/issues/303
 	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -96,7 +96,7 @@ func Test_RequireNot_Prerelease_HigherCoreVersion(t *testing.T) { //nolint:paral
 	// ignore the core version of the prerelease version when compared against
 	// the core version of the check.
 	testingiface.ExpectPass(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -119,7 +119,7 @@ func Test_RequireNot_Prerelease_HigherPrerelease(t *testing.T) { //nolint:parall
 	// The 1.7.0-rc1 prerelease should always be considered to be
 	// below the 1.7.0-rc2 prerelease.
 	testingiface.ExpectPass(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -142,7 +142,7 @@ func Test_RequireNot_Prerelease_LowerCoreVersion(t *testing.T) { //nolint:parall
 	// The 1.8.0-rc1 prerelease should always be considered to be
 	// above the 1.7.0 core version.
 	testingiface.ExpectPass(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -165,7 +165,7 @@ func Test_RequireNot_Prerelease_LowerPrerelease(t *testing.T) { //nolint:paralle
 	// The 1.8.0-rc1 prerelease should always be considered to be
 	// above the 1.8.0-beta1 prerelease.
 	testingiface.ExpectPass(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},

@@ -21,7 +21,7 @@ func Test_RequireAbove_Equal(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
 	testingiface.ExpectPass(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -46,7 +46,7 @@ func Test_RequireAbove_Higher(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.1")
 
 	testingiface.ExpectPass(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -71,7 +71,7 @@ func Test_RequireAbove_Lower(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.0.7")
 
 	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
 					return nil, nil
@@ -100,7 +100,7 @@ func Test_RequireAbove_Prerelease_EqualCoreVersion(t *testing.T) { //nolint:para
 	//
 	// Reference: https://github.com/hashicorp/terraform-plugin-testing/issues/303
 	testingiface.ExpectPass(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -121,7 +121,7 @@ func Test_RequireAbove_Prerelease_EqualPrerelease(t *testing.T) { //nolint:paral
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.8.0-rc1")
 
 	testingiface.ExpectPass(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -146,7 +146,7 @@ func Test_RequireAbove_Prerelease_HigherCoreVersion(t *testing.T) { //nolint:par
 	// ignore the core version of the prerelease version when compared against
 	// the core version of the check.
 	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -169,7 +169,7 @@ func Test_RequireAbove_Prerelease_HigherPrerelease(t *testing.T) { //nolint:para
 	// The 1.7.0-rc1 prerelease should always be considered to be
 	// below the 1.7.0-rc2 prerelease.
 	testingiface.ExpectFail(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -192,7 +192,7 @@ func Test_RequireAbove_Prerelease_LowerCoreVersion(t *testing.T) { //nolint:para
 	// The 1.8.0-rc1 prerelease should always be considered to be
 	// above the 1.7.0 core version.
 	testingiface.ExpectPass(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -215,7 +215,7 @@ func Test_RequireAbove_Prerelease_LowerPrerelease(t *testing.T) { //nolint:paral
 	// The 1.8.0-rc1 prerelease should always be considered to be
 	// above the 1.8.0-beta1 prerelease.
 	testingiface.ExpectPass(t, func(mockT *testingiface.MockT) {
-		r.UnitTest(mockT, r.TestCase{
+		r.UnitTestT(mockT, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},

@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
@@ -811,10 +812,14 @@ type RefreshPlanChecks struct {
 // tests to occur against the same resource or service (e.g. random naming).
 //
 // Test() function requirements and documentation also apply to this function.
-func ParallelTest(t testingiface.T, c TestCase) {
+func ParallelTestT(t testingiface.T, c TestCase) {
 	t.Helper()
 	t.Parallel()
-	Test(t, c)
+	TestT(t, c)
+}
+
+func ParallelTest(t *testing.T, c TestCase) {
+	ParallelTestT(tshim{t}, c)
 }
 
 // Test performs an acceptance test on a resource.
@@ -848,7 +853,7 @@ func ParallelTest(t testingiface.T, c TestCase) {
 //
 // Refer to the Env prefixed constants for additional details about these
 // environment variables, and others, that control testing functionality.
-func Test(t testingiface.T, c TestCase) {
+func TestT(t testingiface.T, c TestCase) {
 	t.Helper()
 
 	ctx := context.Background()
@@ -915,11 +920,11 @@ func Test(t testingiface.T, c TestCase) {
 	// This is done after creating the helper because a working directory is required
 	// to retrieve the Terraform version.
 	if c.TerraformVersionChecks != nil {
-		logging.HelperResourceDebug(ctx, "Calling TestCase Terraform version checks")
-
-		runTFVersionChecks(ctx, t, helper.TerraformVersion(), c.TerraformVersionChecks)
-
-		logging.HelperResourceDebug(ctx, "Called TestCase Terraform version checks")
+		t.Run("TerraformVersionChecks", func(t testingiface.T) {
+			logging.HelperResourceDebug(ctx, "Calling TestCase Terraform version checks")
+			runTFVersionChecks(ctx, t, helper.TerraformVersion(), c.TerraformVersionChecks)
+			logging.HelperResourceDebug(ctx, "Called TestCase Terraform version checks")
+		})
 	}
 
 	runNewTest(ctx, t, c, helper)
@@ -927,16 +932,34 @@ func Test(t testingiface.T, c TestCase) {
 	logging.HelperResourceDebug(ctx, "Finished TestCase")
 }
 
+func Test(t *testing.T, c TestCase) {
+	TestT(tshim{t}, c)
+}
+
 // UnitTest is a helper to force the acceptance testing harness to run in the
 // normal unit test suite. This should only be used for resource that don't
 // have any external dependencies.
 //
 // Test() function requirements and documentation also apply to this function.
-func UnitTest(t testingiface.T, c TestCase) {
+func UnitTestT(t testingiface.T, c TestCase) {
 	t.Helper()
 
 	c.IsUnitTest = true
-	Test(t, c)
+	TestT(t, c)
+}
+
+type tshim struct {
+	*testing.T
+}
+
+func (t tshim) Run(name string, f func(t testingiface.T)) bool {
+	return t.T.Run(name, func(t *testing.T) {
+		f(tshim{t})
+	})
+}
+
+func UnitTest(t *testing.T, c TestCase) {
+	UnitTestT(tshim{t}, c)
 }
 
 func testResource(c TestStep, state *terraform.State) (*terraform.ResourceState, error) {
