@@ -29,7 +29,7 @@ func TestParallelTest(t *testing.T) {
 	t.Parallel()
 
 	testingiface.ExpectParallel(t, func(mockT *testingiface.MockT) {
-		ParallelTest(mockt, TestCase{
+		ParallelTest(mockT, TestCase{
 			IsUnitTest: true,
 			ProviderFactories: map[string]func() (*schema.Provider, error){
 				"test": func() (*schema.Provider, error) { //nolint:unparam // required signature

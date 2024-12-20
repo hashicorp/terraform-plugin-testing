@@ -20,24 +20,26 @@ func Test_Any_RunTest(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
-	r.UnitTest(t, r.TestCase{
-		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"test": providerserver.NewProviderServer(testprovider.Provider{}),
-		},
-		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.Any(
-				tfversion.RequireNot(version.Must(version.NewVersion("1.1.0"))),   //returns error
-				tfversion.RequireBelow(version.Must(version.NewVersion("1.2.0"))), //returns nil
-			),
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `variable "a" {
+	testingiface.ExpectPass(t, func(mockT *testingiface.MockT) {
+		r.UnitTest(mockT, r.TestCase{
+			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+				"test": providerserver.NewProviderServer(testprovider.Provider{}),
+			},
+			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+				tfversion.Any(
+					tfversion.RequireNot(version.Must(version.NewVersion("1.1.0"))),   //returns error
+					tfversion.RequireBelow(version.Must(version.NewVersion("1.2.0"))), //returns nil
+				),
+			},
+			Steps: []r.TestStep{
+				{
+					Config: `variable "a" {
   					nullable = true
 					default  = "hello"
 				}`,
+				},
 			},
-		},
+		})
 	})
 }
 
@@ -45,26 +47,28 @@ func Test_Any_SkipTest(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
-	r.UnitTest(t, r.TestCase{
-		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
-				return nil, nil
+	testingiface.ExpectSkip(t, func(mockT *testingiface.MockT) {
+		r.UnitTest(mockT, r.TestCase{
+			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
+					return nil, nil
+				},
 			},
-		},
-		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.Any(
-				tfversion.SkipIf(version.Must(version.NewVersion("1.1.0"))),    //returns skip
-				tfversion.SkipBelow(version.Must(version.NewVersion("1.2.0"))), //returns skip
-			),
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `variable "a" {
+			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+				tfversion.Any(
+					tfversion.SkipIf(version.Must(version.NewVersion("1.1.0"))),    //returns skip
+					tfversion.SkipBelow(version.Must(version.NewVersion("1.2.0"))), //returns skip
+				),
+			},
+			Steps: []r.TestStep{
+				{
+					Config: `variable "a" {
   					nullable = true
 					default  = "hello"
 				}`,
+				},
 			},
-		},
+		})
 	})
 }
 
