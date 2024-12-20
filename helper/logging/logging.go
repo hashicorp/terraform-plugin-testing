@@ -12,7 +12,7 @@ import (
 	"syscall"
 
 	"github.com/hashicorp/logutils"
-	"github.com/mitchellh/go-testing-interface"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 )
 
 // These are the environmental variables that determine if we log, and if
@@ -33,7 +33,7 @@ var ValidLevels = []logutils.LogLevel{"TRACE", "DEBUG", "INFO", "WARN", "ERROR"}
 // logging controlled by Terraform itself and managed with the TF_ACC_LOG_PATH
 // environment variable. Calls to tflog.* will have their output managed by the
 // tfsdklog sink.
-func LogOutput(t testing.T) (logOutput io.Writer, err error) {
+func LogOutput(t testingiface.T) (logOutput io.Writer, err error) {
 	logOutput = io.Discard
 
 	logLevel := LogLevel()
@@ -91,7 +91,7 @@ func LogOutput(t testing.T) (logOutput io.Writer, err error) {
 // SetOutput checks for a log destination with LogOutput, and calls
 // log.SetOutput with the result. If LogOutput returns nil, SetOutput uses
 // io.Discard. Any error from LogOutout is fatal.
-func SetOutput(t testing.T) {
+func SetOutput(t testingiface.T) {
 	out, err := LogOutput(t)
 	if err != nil {
 		log.Fatal(err)
