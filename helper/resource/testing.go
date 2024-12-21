@@ -200,10 +200,15 @@ func filterSweepers(f string, source map[string]*Sweeper) map[string]*Sweeper {
 		return source
 	}
 
+	filterRegexes := make([]regexp.Regexp, len(filterSlice))
+	for i, filter := range filterSlice {
+		filterRegexes[i] = *regexp.MustCompile(filter)
+	}
+
 	sweepers := make(map[string]*Sweeper)
 	for name := range source {
-		for _, s := range filterSlice {
-			if strings.Contains(strings.ToLower(name), s) {
+		for _, r := range filterRegexes {
+			if r.MatchString(strings.ToLower(name)) {
 				for foundName, foundSweeper := range filterSweeperWithDependencies(name, source) {
 					sweepers[foundName] = foundSweeper
 				}
