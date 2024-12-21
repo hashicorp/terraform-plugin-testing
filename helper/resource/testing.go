@@ -193,15 +193,17 @@ func runSweepers(regions []string, sweepers map[string]*Sweeper, allowFailures b
 // to be ran, and returns a filtered set from the list of all of sweepers to
 // run based on the names given.
 func filterSweepers(f string, source map[string]*Sweeper) map[string]*Sweeper {
-	filterSlice := strings.Split(strings.ToLower(f), ",")
+	filterSlice := strings.Split(f, ",")
 	if len(filterSlice) == 1 && filterSlice[0] == "" {
 		// if the filter slice is a single element of "" then no sweeper list was
 		// given, so just return the full list
 		return source
 	}
 
+	// Downcase filter elements and create regular expressions
 	filterRegexes := make([]regexp.Regexp, len(filterSlice))
 	for i, filter := range filterSlice {
+		filter = strings.ToLower(filter)
 		filterRegexes[i] = *regexp.MustCompile(filter)
 	}
 
