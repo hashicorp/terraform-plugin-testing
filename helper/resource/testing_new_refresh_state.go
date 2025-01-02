@@ -8,15 +8,15 @@ import (
 	"fmt"
 
 	tfjson "github.com/hashicorp/terraform-json"
-	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testingiface"
 )
 
-func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {
+func testStepNewRefreshState(ctx context.Context, t testingiface.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {
 	t.Helper()
 
 	var err error
