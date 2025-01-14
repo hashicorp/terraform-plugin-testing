@@ -43,9 +43,9 @@ func TestExtractStringValue_Basic(t *testing.T) {
 		},
 	})
 
-	t.Run("CheckTargetVar", func(t *testing.T) {
+	t.Run("check_target_var", func(t *testing.T) {
 		if err := testAccAssertStringEquals("str", targetVar); err != nil {
-			t.Errorf("Error in testAccAssertBoolEquals: %v", err)
+			t.Errorf("extracted value does not match expected value: %v", err)
 		}
 	})
 }
