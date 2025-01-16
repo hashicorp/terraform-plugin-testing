@@ -26,7 +26,7 @@ func (v numberFunc) CheckValue(other any) error {
 
 	otherVal, _, err := big.ParseFloat(jsonNum.String(), 10, 512, big.ToNearestEven)
 	if err != nil {
-		return fmt.Errorf("expected json.Number to be parseable as int64 value for NumberFunc check: %s", err)
+		return fmt.Errorf("expected json.Number to be parseable as big.Float value for NumberFunc check: %s", err)
 	}
 
 	return v.checkFunc(otherVal)

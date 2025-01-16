@@ -30,6 +30,11 @@ func TestInt32Func_CheckValue(t *testing.T) {
 			other:         "wrongtype",
 			expectedError: fmt.Errorf("expected json.Number value for Int32Func check, got: string"),
 		},
+		"no-digits": {
+			self:          knownvalue.Int32Func(func(int32) error { return nil }),
+			other:         json.Number("str"),
+			expectedError: fmt.Errorf("expected json.Number to be parseable as int32 value for Int32Func check: strconv.ParseInt: parsing \"str\": invalid syntax"),
+		},
 		"failure": {
 			self: knownvalue.Int32Func(func(i int32) error {
 				if i != 1 {

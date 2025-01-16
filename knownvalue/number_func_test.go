@@ -17,6 +17,11 @@ import (
 func TestNumberFunc_CheckValue(t *testing.T) {
 	t.Parallel()
 
+	expected, _, err := big.ParseFloat("1.797693134862315797693134862315797693134862315", 10, 512, big.ToNearestEven)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+
 	testCases := map[string]struct {
 		self          knownvalue.Check
 		other         any
@@ -31,24 +36,29 @@ func TestNumberFunc_CheckValue(t *testing.T) {
 			other:         "wrongtype",
 			expectedError: fmt.Errorf("expected json.Number value for NumberFunc check, got: string"),
 		},
+		"no-digits": {
+			self:          knownvalue.NumberFunc(func(*big.Float) error { return nil }),
+			other:         json.Number("str"),
+			expectedError: fmt.Errorf("expected json.Number to be parseable as big.Float value for NumberFunc check: number has no digits"),
+		},
 		"failure": {
 			self: knownvalue.NumberFunc(func(i *big.Float) error {
-				if i != big.NewFloat(1.667114241575161769818551140818851511176942075) {
-					return fmt.Errorf("%f was not 1.667114241575161769818551140818851511176942075", i)
+				if i.Cmp(expected) != 0 {
+					return fmt.Errorf("%s was not %s", i.Text('f', -1), expected.Text('f', -1))
 				}
 				return nil
 			}),
-			other:         json.Number("1.797693134862315797693134862315797693134862315"),
-			expectedError: fmt.Errorf("%f was not 1.667114241575161769818551140818851511176942075", 1.797693134862315797693134862315797693134862315),
+			other:         json.Number("1.667114241575161769818551140818851511176942075"),
+			expectedError: fmt.Errorf("1.667114241575161769818551140818851511176942075 was not 1.797693134862315797693134862315797693134862315"),
 		},
 		"success": {
 			self: knownvalue.NumberFunc(func(i *big.Float) error {
-				if i != big.NewFloat(1.667114241575161769818551140818851511176942075) {
-					return fmt.Errorf("%f was not 1.667114241575161769818551140818851511176942075", i)
+				if i.Cmp(expected) != 0 {
+					return fmt.Errorf("%s was not %s", i.Text('f', -1), expected.Text('f', -1))
 				}
 				return nil
 			}),
-			other: json.Number("1.667114241575161769818551140818851511176942075"),
+			other: json.Number("1.797693134862315797693134862315797693134862315"),
 		},
 	}
 
