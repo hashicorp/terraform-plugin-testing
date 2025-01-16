@@ -28,7 +28,7 @@ func TestBoolFunc_CheckValue(t *testing.T) {
 		"wrong-type": {
 			self:          knownvalue.BoolFunc(func(bool) error { return nil }),
 			other:         json.Number("1.234"),
-			expectedError: fmt.Errorf("expected bool value for BoolFunc check, got: float64"),
+			expectedError: fmt.Errorf("expected bool value for BoolFunc check, got: json.Number"),
 		},
 		"failure": {
 			self: knownvalue.BoolFunc(func(b bool) error {

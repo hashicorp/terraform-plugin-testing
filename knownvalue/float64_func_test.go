@@ -30,6 +30,11 @@ func TestFloat64Func_CheckValue(t *testing.T) {
 			other:         "wrongtype",
 			expectedError: fmt.Errorf("expected json.Number value for Float64Func check, got: string"),
 		},
+		"no-digits": {
+			self:          knownvalue.Float64Func(func(float64) error { return nil }),
+			other:         json.Number("str"),
+			expectedError: fmt.Errorf("expected json.Number to be parseable as float64 value for Float64Func check: strconv.ParseFloat: parsing \"str\": invalid syntax"),
+		},
 		"failure": {
 			self: knownvalue.Float64Func(func(f float64) error {
 				if f != 1.1 {

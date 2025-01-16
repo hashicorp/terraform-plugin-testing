@@ -23,12 +23,17 @@ func TestInt64Func_CheckValue(t *testing.T) {
 	}{
 		"nil": {
 			self:          knownvalue.Int64Func(func(int64) error { return nil }),
-			expectedError: fmt.Errorf("expected json.Number value for Int32Func check, got: <nil>"),
+			expectedError: fmt.Errorf("expected json.Number value for Int64Func check, got: <nil>"),
 		},
 		"wrong-type": {
 			self:          knownvalue.Int64Func(func(int64) error { return nil }),
 			other:         "wrongtype",
-			expectedError: fmt.Errorf("expected json.Number value for Int32Func check, got: string"),
+			expectedError: fmt.Errorf("expected json.Number value for Int64Func check, got: string"),
+		},
+		"no-digits": {
+			self:          knownvalue.Int64Func(func(int64) error { return nil }),
+			other:         json.Number("str"),
+			expectedError: fmt.Errorf("expected json.Number to be parseable as int64 value for Int64Func check: strconv.ParseInt: parsing \"str\": invalid syntax"),
 		},
 		"failure": {
 			self: knownvalue.Int64Func(func(i int64) error {

@@ -70,7 +70,7 @@ func TestStringFunc_String(t *testing.T) {
 
 	got := knownvalue.StringFunc(func(string) error { return nil }).String()
 
-	if diff := cmp.Diff(got, "stringFunc"); diff != "" {
+	if diff := cmp.Diff(got, "StringFunc"); diff != "" {
 		t.Errorf("unexpected difference: %s", diff)
 	}
 }
