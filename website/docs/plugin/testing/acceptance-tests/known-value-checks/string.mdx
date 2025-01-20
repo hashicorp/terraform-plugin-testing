@@ -96,10 +96,10 @@ func TestExpectKnownValue_CheckState_StringFunc(t *testing.T) {
 						"test_resource.one",
 						tfjsonpath.New("configurable_attribute"),
 						knownvalue.StringFunc(func(v string) error {
-                            if !strings.HasPrefix(v, "str") {
+							if !strings.HasPrefix(v, "str") {
 								return fmt.Errorf("value must start with 'str'")
 							}
-                            return nil
+							return nil
 						}),
 					),
 				},

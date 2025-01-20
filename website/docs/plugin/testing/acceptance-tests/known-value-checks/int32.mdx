@@ -66,10 +66,10 @@ func TestExpectKnownValue_CheckState_Int32Func(t *testing.T) {
 						"test_resource.one",
 						tfjsonpath.New("configurable_attribute"),
 						knownvalue.Int32Func(func(v int32) error {
-							if v < 1 && v > 12 {
-								return fmt.Errorf("range cannot be less than 1 or greater than 12")
+							if v > 1 && v < 12 {
+								return fmt.Errorf("value must be between 1 and 12")
 							}
-                            return nil
+							return nil
 						}),
 					),
 				},
