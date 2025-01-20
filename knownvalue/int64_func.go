@@ -29,7 +29,7 @@ func (v int64Func) CheckValue(other any) error {
 		return fmt.Errorf("expected json.Number to be parseable as int64 value for Int64Func check: %s", err)
 	}
 
-	return v.checkFunc(int64(otherVal))
+	return v.checkFunc(otherVal)
 }
 
 // String returns the int64 representation of the value.
