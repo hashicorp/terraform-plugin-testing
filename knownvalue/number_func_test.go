@@ -51,7 +51,7 @@ func TestNumberFunc_CheckValue(t *testing.T) {
 			other:         json.Number("1.667114241575161769818551140818851511176942075"),
 			expectedError: fmt.Errorf("1.667114241575161769818551140818851511176942075 was not 1.797693134862315797693134862315797693134862315"),
 		},
-		"success": {
+		"success-precise-number": {
 			self: knownvalue.NumberFunc(func(i *big.Float) error {
 				if i.Cmp(expected) != 0 {
 					return fmt.Errorf("%s was not %s", i.Text('f', -1), expected.Text('f', -1))
@@ -59,6 +59,15 @@ func TestNumberFunc_CheckValue(t *testing.T) {
 				return nil
 			}),
 			other: json.Number("1.797693134862315797693134862315797693134862315"),
+		},
+		"success-whole-number": {
+			self: knownvalue.NumberFunc(func(i *big.Float) error {
+				if i.Cmp(big.NewFloat(1)) != 0 {
+					return fmt.Errorf("%s was not %s", i.Text('f', -1), big.NewFloat(1).Text('f', -1))
+				}
+				return nil
+			}),
+			other: json.Number("1"),
 		},
 	}
 
