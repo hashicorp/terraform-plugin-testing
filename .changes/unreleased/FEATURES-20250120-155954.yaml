@@ -1,0 +1,5 @@
+kind: FEATURES
+body: 'knownvalue: added function checks for custom validation of resource attribute or output values.'
+time: 2025-01-20T15:59:54.135609+01:00
+custom:
+    Issue: "412"
