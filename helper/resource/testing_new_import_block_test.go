@@ -87,10 +87,10 @@ func TestTest_TestStep_ImportBlockVerify(t *testing.T) {
 					import {
 						to = examplecloud_thing.test
 						identity = {
-						hat = "derby"
-						cat = "garfield"
-					}
-				}`,
+							hat = "derby"
+							cat = "garfield"
+						}
+					}`,
 			},
 		},
 	})
