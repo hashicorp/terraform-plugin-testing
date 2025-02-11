@@ -83,12 +83,13 @@ func TestTest_TestStep_ImportBlockVerify(t *testing.T) {
 			{
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateBlockConfig: `import {
-              			  to = examplecloud_thing.test
-				  identity = {
-				    hat = "derby"
-				    cat = "garfield"
-				  }
+				ImportStateBlockConfig: `
+					import {
+						to = examplecloud_thing.test
+						identity = {
+						hat = "derby"
+						cat = "garfield"
+					}
 				}`,
 			},
 		},
