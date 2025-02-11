@@ -633,6 +633,10 @@ type TestStep struct {
 	// ID of that resource.
 	ImportState bool
 
+	// ImportStateBlockConfig, if non-empty, supplies declarative import
+	// configuration. This is (?mutually exclusive of ImportStateID + ResourceName?).
+	ImportStateBlockConfig string
+
 	// ImportStateId is the ID to perform an ImportState operation with.
 	// This is optional. If it isn't set, then the resource ID is automatically
 	// determined by inspecting the state for ResourceName's ID.
