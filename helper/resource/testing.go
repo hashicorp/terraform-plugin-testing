@@ -457,7 +457,7 @@ type ExternalProvider struct {
 type ImportStateKind byte
 
 const (
-	TerraformImportCommand ImportStateKind = iota
+	ImportCommandWithId ImportStateKind = iota
 	ImportBlockWithId
 	ImportBlockWithResourceIdentity
 )

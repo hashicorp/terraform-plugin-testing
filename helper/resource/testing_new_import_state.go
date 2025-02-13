@@ -119,7 +119,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	switch step.ImportStateKind {
-	case TerraformImportCommand:
+	case ImportCommandWithId:
 		logging.HelperResourceDebug(ctx, "Running Terraform CLI init and import")
 
 		if !step.ImportStatePersist {
@@ -137,6 +137,13 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		if err != nil {
 			return err
 		}
+	case ImportBlockWithId:
+		t.Fatalf("not yet implemented")
+	case ImportBlockWithResourceIdentity:
+		t.Fatalf("not yet implemented")
+	default:
+		t.Fatalf(`\o/`)
+	}
 
 	var importState *terraform.State
 	err = runProviderCommand(ctx, t, func() error {
