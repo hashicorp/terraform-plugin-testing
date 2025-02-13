@@ -27,8 +27,9 @@ type CreateRequest struct {
 }
 
 type CreateResponse struct {
-	Diagnostics []*tfprotov6.Diagnostic
-	NewState    tftypes.Value
+	Diagnostics             []*tfprotov6.Diagnostic
+	NewState                tftypes.Value
+	NewResourceIdentityData tftypes.Value
 }
 
 type DeleteRequest struct {
@@ -68,6 +69,13 @@ type ReadRequest struct {
 type ReadResponse struct {
 	Diagnostics []*tfprotov6.Diagnostic
 	NewState    tftypes.Value
+}
+
+type ResourceIdentitySchemaRequest struct{}
+
+type ResourceIdentitySchemaResponse struct {
+	Diagnostics            []*tfprotov6.Diagnostic
+	ResourceIdentitySchema tftypes.Value // *tfprotov6.Schema
 }
 
 type SchemaRequest struct{}

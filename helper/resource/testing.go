@@ -454,6 +454,14 @@ type ExternalProvider struct {
 	Source            string // the provider source
 }
 
+type ImportStateKind byte
+
+const (
+	TerraformImportCommand ImportStateKind = iota
+	ImportBlockWithId
+	ImportBlockWithResourceIdentity
+)
+
 // TestStep is a single apply sequence of a test, done within the
 // context of a state.
 //
@@ -632,6 +640,8 @@ type TestStep struct {
 	// by importing the resource with ResourceName (must be set) and the
 	// ID of that resource.
 	ImportState bool
+
+	ImportStateKind ImportStateKind // or ImportStateStrategy or ImportStateSubmode or ImportStateFlavor or ...
 
 	// ImportStateBlockConfig, if non-empty, supplies declarative import
 	// configuration. This is (?mutually exclusive of ImportStateID + ResourceName?).

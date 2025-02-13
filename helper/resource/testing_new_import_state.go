@@ -118,23 +118,25 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		t.Fatalf("Error setting test config: %s", err)
 	}
 
-	logging.HelperResourceDebug(ctx, "Running Terraform CLI init and import")
+	switch step.ImportStateKind {
+	case TerraformImportCommand:
+		logging.HelperResourceDebug(ctx, "Running Terraform CLI init and import")
 
-	if !step.ImportStatePersist {
+		if !step.ImportStatePersist {
+			err = runProviderCommand(ctx, t, func() error {
+				return importWd.Init(ctx)
+			}, importWd, providers)
+			if err != nil {
+				t.Fatalf("Error running init: %s", err)
+			}
+		}
+
 		err = runProviderCommand(ctx, t, func() error {
-			return importWd.Init(ctx)
+			return importWd.Import(ctx, step.ResourceName, importId)
 		}, importWd, providers)
 		if err != nil {
-			t.Fatalf("Error running init: %s", err)
+			return err
 		}
-	}
-
-	err = runProviderCommand(ctx, t, func() error {
-		return importWd.Import(ctx, step.ResourceName, importId)
-	}, importWd, providers)
-	if err != nil {
-		return err
-	}
 
 	var importState *terraform.State
 	err = runProviderCommand(ctx, t, func() error {

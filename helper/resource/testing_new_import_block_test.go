@@ -20,78 +20,81 @@ func TestTest_TestStep_ImportBlockVerify(t *testing.T) {
 
 	UnitTest(t, TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_5_0), // import blocks are only available in v1.5.0 and later
+			// import blocks are only available in v1.5.0 and later
+			tfversion.SkipBelow(tfversion.Version1_5_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				Resources: map[string]testprovider.Resource{
-					"examplecloud_thing": {
-						CreateResponse: &resource.CreateResponse{
-							NewState: tftypes.NewValue(
-								tftypes.Object{
-									AttributeTypes: map[string]tftypes.Type{
-										"id":    tftypes.String,
-										"other": tftypes.String,
-									},
-								},
-								map[string]tftypes.Value{
-									"id":    tftypes.NewValue(tftypes.String, "resource-test"),
-									"other": tftypes.NewValue(tftypes.String, "testvalue"),
-								},
-							),
-						},
-						ImportStateResponse: &resource.ImportStateResponse{
-							State: tftypes.NewValue(
-								tftypes.Object{
-									AttributeTypes: map[string]tftypes.Type{
-										"id":    tftypes.String,
-										"other": tftypes.String,
-									},
-								},
-								map[string]tftypes.Value{
-									"id":    tftypes.NewValue(tftypes.String, "resource-test"),
-									"other": tftypes.NewValue(tftypes.String, "testvalue"),
-								},
-							),
-						},
-						SchemaResponse: &resource.SchemaResponse{
-							Schema: &tfprotov6.Schema{
-								Block: &tfprotov6.SchemaBlock{
-									Attributes: []*tfprotov6.SchemaAttribute{
-										{
-											Name:     "id",
-											Type:     tftypes.String,
-											Computed: true,
-										},
-										{
-											Name:     "other",
-											Type:     tftypes.String,
-											Computed: true,
-										},
-									},
-								},
-							},
-						},
-					},
+					"examplecloud_bucket": exampleCloudBucketResource(t),
 				},
 			}),
 		},
 		Steps: []TestStep{
 			{
-				Config: `resource "examplecloud_thing" "test" {}`,
+				Config: `
+				resource "examplecloud_bucket" "storage" {
+					bucket = "test-bucket"
+					description = "A bucket for testing."
+				}`,
 			},
 			{
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateBlockConfig: `
-					import {
-						to = examplecloud_thing.test
-						identity = {
-							hat = "derby"
-							cat = "garfield"
-						}
-					}`,
+				ImportState:     true,
+				ImportStateKind: ImportBlockWithResourceIdentity,
+				ResourceName:    "examplecloud_bucket.storage",
 			},
 		},
 	})
+}
+
+func exampleCloudBucketResource(t *testing.T) testprovider.Resource {
+	t.Helper()
+
+	return testprovider.Resource{
+		CreateResponse: &resource.CreateResponse{
+			NewResourceIdentityData: tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"region": tftypes.String,
+						"bucket": tftypes.String,
+					},
+				},
+				map[string]tftypes.Value{
+					"region": tftypes.NewValue(tftypes.String, "test-region"),
+					"bucket": tftypes.NewValue(tftypes.String, "test-bucket"),
+				},
+			),
+			NewState: tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"bucket":      tftypes.String,
+						"description": tftypes.String,
+					},
+				},
+				map[string]tftypes.Value{
+					"bucket":      tftypes.NewValue(tftypes.String, "test-bucket"),
+					"description": tftypes.NewValue(tftypes.String, "A bucket for testing."),
+				},
+			),
+		},
+		ImportStateResponse: &resource.ImportStateResponse{},
+		SchemaResponse: &resource.SchemaResponse{
+			Schema: &tfprotov6.Schema{
+				Block: &tfprotov6.SchemaBlock{
+					Attributes: []*tfprotov6.SchemaAttribute{
+						{
+							Name:     "bucket",
+							Type:     tftypes.String,
+							Required: true,
+						},
+						{
+							Name:     "description",
+							Type:     tftypes.String,
+							Optional: true,
+						},
+					},
+				},
+			},
+		},
+	}
 }
