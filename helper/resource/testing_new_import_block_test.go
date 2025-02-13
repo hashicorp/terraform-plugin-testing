@@ -39,9 +39,11 @@ func TestTest_TestStep_ImportBlockVerify(t *testing.T) {
 				}`,
 			},
 			{
-				ImportState:     true,
-				ImportStateKind: ImportBlockWithResourceIdentity,
-				ResourceName:    "examplecloud_bucket.storage",
+				ImportState:                          true,
+				ImportStateKind:                      ImportBlockWithResourceIdentity,
+				ImportStateVerify:                    true,
+				ImportStateVerifyIdentifierAttribute: "bucket", // upgrade to resource identity
+				ResourceName:                         "examplecloud_bucket.storage",
 			},
 		},
 	})
@@ -77,7 +79,20 @@ func exampleCloudBucketResource(t *testing.T) testprovider.Resource {
 				},
 			),
 		},
-		ImportStateResponse: &resource.ImportStateResponse{},
+		ImportStateResponse: &resource.ImportStateResponse{
+			State: tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"bucket":      tftypes.String,
+						"description": tftypes.String,
+					},
+				},
+				map[string]tftypes.Value{
+					"bucket":      tftypes.NewValue(tftypes.String, "test-bucket"),
+					"description": tftypes.NewValue(tftypes.String, "A bucket for testing."),
+				},
+			),
+		},
 		SchemaResponse: &resource.SchemaResponse{
 			Schema: &tfprotov6.Schema{
 				Block: &tfprotov6.SchemaBlock{

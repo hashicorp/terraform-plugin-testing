@@ -134,6 +134,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	// use this to track last step successfully applied
 	// acts as default for import tests
 	var appliedCfg teststep.Config
+	var appliedMergedCfg string
 	var stepNumber int
 
 	for stepIndex, step := range c.Steps {
@@ -289,7 +290,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.ImportState {
 			logging.HelperResourceTrace(ctx, "TestStep is ImportState mode")
 
-			err := testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, providers, stepIndex)
+			err := testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, appliedMergedCfg, providers, stepIndex)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 				if err == nil {
@@ -446,7 +447,8 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				},
 			}.Exec()
 
-			appliedCfg = teststep.Configuration(confRequest)
+			appliedCfg = teststep.Configuration(confRequest) // magical
+			appliedMergedCfg = mergedConfig
 
 			logging.HelperResourceDebug(ctx, "Finished TestStep")
 

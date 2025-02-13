@@ -20,7 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfg teststep.Config, providers *providerFactories, stepIndex int) error {
+func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfg teststep.Config, cfgHcl string, providers *providerFactories, stepIndex int) error {
 	t.Helper()
 
 	configRequest := teststep.PrepareConfigurationRequest{
@@ -31,9 +31,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			StepNumber: stepIndex + 1,
 			TestName:   t.Name(),
 		},
-	}.Exec()
-
-	testStepConfig := teststep.Configuration(configRequest)
+	}
 
 	if step.ResourceName == "" {
 		t.Fatal("ResourceName is required for an import state test")
@@ -93,13 +91,24 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
-	// Create working directory for import tests
-	if testStepConfig == nil {
-		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
-
-		testStepConfig = cfg
+	var testStepConfig teststep.Config
+	if step.ImportStateKind == ImportBlockWithResourceIdentity {
+		cfgHcl += `
+                   import {
+		      to = examplecloud_bucket.storage
+		      id = "test-bucket" // to be replaced with identity
+		   }`
+		configRequest.Raw = cfgHcl
+		testStepConfig = teststep.Configuration(configRequest.Exec())
+	} else {
+		// Create working directory for import tests
 		if testStepConfig == nil {
-			t.Fatal("Cannot import state with no specified config")
+			logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
+
+			testStepConfig = cfg
+			if testStepConfig == nil {
+				t.Fatal("Cannot import state with no specified config")
+			}
 		}
 	}
 
@@ -140,7 +149,26 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	case ImportBlockWithId:
 		t.Fatalf("not yet implemented")
 	case ImportBlockWithResourceIdentity:
-		t.Fatalf("not yet implemented")
+		if !step.ImportStatePersist {
+			err = runProviderCommand(ctx, t, func() error {
+				return importWd.Init(ctx)
+			}, importWd, providers)
+			if err != nil {
+				t.Fatalf("Error running init: %s", err)
+			}
+		}
+		err = runProviderCommand(ctx, t, func() error {
+			return importWd.CreatePlan(ctx)
+		}, importWd, providers)
+		if err != nil {
+			t.Fatalf("Error running plan: %s", err)
+		}
+		err = runProviderCommand(ctx, t, func() error {
+			return importWd.Apply(ctx)
+		}, importWd, providers)
+		if err != nil {
+			t.Fatalf("Error running apply: %s", err)
+		}
 	default:
 		t.Fatalf(`\o/`)
 	}
