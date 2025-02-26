@@ -47,6 +47,16 @@ var anTestProvider = testprovider.Provider{
 								Type:     tftypes.List{ElementType: tftypes.String},
 								Optional: true,
 							},
+							{
+								Name:     "map_attribute",
+								Type:     tftypes.Map{ElementType: tftypes.String},
+								Optional: true,
+							},
+							{
+								Name:     "set_attribute",
+								Type:     tftypes.Set{ElementType: tftypes.String},
+								Optional: true,
+							},
 						},
 						BlockTypes: []*tfprotov6.SchemaNestedBlock{
 							{
@@ -58,6 +68,40 @@ var anTestProvider = testprovider.Provider{
 											Name:     "list_nested_block_attribute",
 											Type:     tftypes.String,
 											Optional: true,
+										},
+									},
+								},
+							},
+							{
+								TypeName: "set_nested_block",
+								Nesting:  3,
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "set_nested_block_attribute",
+											Type:     tftypes.String,
+											Optional: true,
+										},
+									},
+								},
+							},
+							{
+								TypeName: "set_nested_nested_block",
+								Nesting:  3,
+								Block: &tfprotov6.SchemaBlock{
+									BlockTypes: []*tfprotov6.SchemaNestedBlock{
+										{
+											TypeName: "set_nested_block",
+											Nesting:  4,
+											Block: &tfprotov6.SchemaBlock{
+												Attributes: []*tfprotov6.SchemaAttribute{
+													{
+														Name:     "set_nested_block_attribute",
+														Type:     tftypes.String,
+														Optional: true,
+													},
+												},
+											},
 										},
 									},
 								},
