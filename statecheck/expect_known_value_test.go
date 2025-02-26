@@ -199,11 +199,9 @@ func TestExpectKnownValue_CheckState_AttributeValueNotNull(t *testing.T) {
 func TestExpectKnownValue_CheckState_Bool(t *testing.T) {
 	t.Parallel()
 
-	p := aTestProvider{}
-
 	r.Test(t, r.TestCase{
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"test": providerserver.NewProviderServer(p),
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
