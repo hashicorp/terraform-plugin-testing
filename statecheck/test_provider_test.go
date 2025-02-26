@@ -48,6 +48,21 @@ var anTestProvider = testprovider.Provider{
 								Optional: true,
 							},
 						},
+						BlockTypes: []*tfprotov6.SchemaNestedBlock{
+							{
+								TypeName: "list_nested_block",
+								Nesting:  2,
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "list_nested_block_attribute",
+											Type:     tftypes.String,
+											Optional: true,
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
