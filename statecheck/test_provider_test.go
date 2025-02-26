@@ -42,6 +42,11 @@ var anTestProvider = testprovider.Provider{
 								Type:     tftypes.String,
 								Computed: true,
 							},
+							{
+								Name:     "list_attribute",
+								Type:     tftypes.List{ElementType: tftypes.String},
+								Optional: true,
+							},
 						},
 					},
 				},
