@@ -32,6 +32,16 @@ var anTestProvider = testprovider.Provider{
 								Type:     tftypes.Number,
 								Optional: true,
 							},
+							{
+								Name:     "string_attribute",
+								Type:     tftypes.String,
+								Optional: true,
+							},
+							{
+								Name:     "string_computed_attribute",
+								Type:     tftypes.String,
+								Computed: true,
+							},
 						},
 					},
 				},
