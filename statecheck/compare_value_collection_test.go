@@ -351,11 +351,6 @@ func TestCompareValueCollection_CheckState_ListNestedBlock_ValuesSame(t *testing
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(anTestProvider),
 		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -924,11 +919,6 @@ func TestCompareValueCollection_CheckState_SetNestedNestedBlock_ValuesDiffer_Err
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(anTestProvider),
 		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -973,11 +963,6 @@ func TestCompareValueCollection_CheckState_SetNestedNestedBlock_ValuesDiffer_Err
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(anTestProvider),
 		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -1021,11 +1006,6 @@ func TestCompareValueCollection_CheckState_SetNestedNestedBlock_ValuesDiffer_Err
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(anTestProvider),
 		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -1067,11 +1047,6 @@ func TestCompareValueCollection_CheckState_SetNestedNestedBlock_ValuesDifferAttr
 	r.Test(t, r.TestCase{
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(anTestProvider),
-		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
 		},
 		Steps: []r.TestStep{
 			{
@@ -1130,11 +1105,6 @@ func TestCompareValueCollection_CheckState_SetNestedNestedBlock_ValuesDifferNest
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(anTestProvider),
 		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -1191,11 +1161,6 @@ func TestCompareValueCollection_CheckState_SetNestedNestedBlock_ValuesDifferNest
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(anTestProvider),
 		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -1250,11 +1215,6 @@ func TestCompareValueCollection_CheckState_SetNested_ValuesSame_ErrorAttribute(t
 	r.Test(t, r.TestCase{
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(anTestProvider),
-		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
 		},
 		Steps: []r.TestStep{
 			{
@@ -1314,11 +1274,6 @@ func TestCompareValueCollection_CheckState_SetNested_ValuesSame_ErrorNestedBlock
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(anTestProvider),
 		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -1376,11 +1331,6 @@ func TestCompareValueCollection_CheckState_SetNested_ValuesSame_ErrorNestedNeste
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(anTestProvider),
 		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -1436,11 +1386,6 @@ func TestCompareValueCollection_CheckState_SetNested_ValuesSameAttribute(t *test
 	r.Test(t, r.TestCase{
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(anTestProvider),
-		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
 		},
 		Steps: []r.TestStep{
 			{
@@ -1499,11 +1444,6 @@ func TestCompareValueCollection_CheckState_SetNested_ValuesSameNestedBlock(t *te
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(anTestProvider),
 		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "test_resource" "one" {
@@ -1559,11 +1499,6 @@ func TestCompareValueCollection_CheckState_SetNested_ValuesSameNestedNestedBlock
 	r.Test(t, r.TestCase{
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(anTestProvider),
-		},
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
 		},
 		Steps: []r.TestStep{
 			{

@@ -38,11 +38,6 @@ var anTestProvider = testprovider.Provider{
 								Optional: true,
 							},
 							{
-								Name:     "string_computed_attribute",
-								Type:     tftypes.String,
-								Computed: true,
-							},
-							{
 								Name:     "list_attribute",
 								Type:     tftypes.List{ElementType: tftypes.String},
 								Optional: true,
@@ -74,7 +69,7 @@ var anTestProvider = testprovider.Provider{
 							},
 							{
 								TypeName: "set_nested_block",
-								Nesting:  3,
+								Nesting:  tfprotov6.SchemaNestedBlockNestingModeList,
 								Block: &tfprotov6.SchemaBlock{
 									Attributes: []*tfprotov6.SchemaAttribute{
 										{
@@ -87,12 +82,12 @@ var anTestProvider = testprovider.Provider{
 							},
 							{
 								TypeName: "set_nested_nested_block",
-								Nesting:  3,
+								Nesting:  tfprotov6.SchemaNestedBlockNestingModeSet,
 								Block: &tfprotov6.SchemaBlock{
 									BlockTypes: []*tfprotov6.SchemaNestedBlock{
 										{
 											TypeName: "set_nested_block",
-											Nesting:  4,
+											Nesting:  tfprotov6.SchemaNestedBlockNestingModeSet,
 											Block: &tfprotov6.SchemaBlock{
 												Attributes: []*tfprotov6.SchemaAttribute{
 													{
