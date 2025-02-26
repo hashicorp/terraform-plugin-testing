@@ -13,10 +13,12 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	tfjson "github.com/hashicorp/terraform-json"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
@@ -197,11 +199,11 @@ func TestExpectKnownValue_CheckState_AttributeValueNotNull(t *testing.T) {
 func TestExpectKnownValue_CheckState_Bool(t *testing.T) {
 	t.Parallel()
 
+	p := aTestProvider{}
+
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(p),
 		},
 		Steps: []r.TestStep{
 			{
