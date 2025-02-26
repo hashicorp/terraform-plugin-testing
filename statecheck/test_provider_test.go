@@ -20,7 +20,17 @@ var anTestProvider = testprovider.Provider{
 							{
 								Name:     "bool_attribute",
 								Type:     tftypes.Bool,
-								Computed: true,
+								Optional: true,
+							},
+							{
+								Name:     "float_attribute",
+								Type:     tftypes.Number,
+								Optional: true,
+							},
+							{
+								Name:     "int_attribute",
+								Type:     tftypes.Number,
+								Optional: true,
 							},
 						},
 					},
