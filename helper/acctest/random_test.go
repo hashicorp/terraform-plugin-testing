@@ -96,8 +96,6 @@ func TestRandSSHKeyPair(t *testing.T) {
 	}
 
 	for name, testCase := range testCases {
-		name, testCase := name, testCase
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -198,7 +196,6 @@ func TestInverseMask(t *testing.T) {
 	}
 
 	for tName, tCase := range testCases {
-		tName, tCase := tName, tCase
 		t.Run(tName, func(t *testing.T) {
 			t.Parallel()
 

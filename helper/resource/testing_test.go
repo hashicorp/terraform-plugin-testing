@@ -177,7 +177,7 @@ func TestTest_Main(t *testing.T) {
 	for _, tc := range cases {
 		// reset sweepers
 		sweeperFuncs = map[string]*Sweeper{}
-		tc := tc
+
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
@@ -389,7 +389,6 @@ func TestFilterSweepers(t *testing.T) {
 	for _, tc := range cases {
 		// reset sweepers
 		sweeperFuncs = map[string]*Sweeper{}
-		tc := tc
 
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
@@ -634,7 +633,6 @@ func TestFilterSweeperWithDependencies(t *testing.T) {
 	for _, tc := range cases {
 		// reset sweepers
 		sweeperFuncs = map[string]*Sweeper{}
-		tc := tc
 
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
@@ -813,7 +811,6 @@ func TestRunSweepers(t *testing.T) {
 	for _, tc := range cases {
 		// reset sweepers
 		sweeperFuncs = map[string]*Sweeper{}
-		tc := tc
 
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
@@ -1363,8 +1360,6 @@ func TestTestCheckResourceAttr(t *testing.T) {
 	}
 
 	for name, testCase := range testCases {
-		name, testCase := name, testCase
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -1778,8 +1773,6 @@ func TestTestCheckResourceAttrWith(t *testing.T) {
 	}
 
 	for name, testCase := range testCases {
-		name, testCase := name, testCase
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -2000,8 +1993,6 @@ func TestTestCheckNoResourceAttr(t *testing.T) {
 	}
 
 	for name, testCase := range testCases {
-		name, testCase := name, testCase
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -2295,8 +2286,6 @@ func TestTestCheckResourceAttrPair(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		name, test := name, test
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -2431,8 +2420,6 @@ func TestTestCheckResourceAttrSet(t *testing.T) {
 	}
 
 	for name, testCase := range testCases {
-		name, testCase := name, testCase
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 

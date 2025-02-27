@@ -241,7 +241,6 @@ func TestConfigValueFromHCL2Block(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 
 		t.Run(fmt.Sprintf("%#v", test.Input), func(t *testing.T) {
 			t.Parallel()
@@ -334,7 +333,6 @@ func TestConfigValueFromHCL2(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 
 		t.Run(fmt.Sprintf("%#v", test.Input), func(t *testing.T) {
 			t.Parallel()
@@ -423,7 +421,6 @@ func TestHCL2ValueFromConfigValue(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 
 		t.Run(fmt.Sprintf("%#v", test.Input), func(t *testing.T) {
 			t.Parallel()
