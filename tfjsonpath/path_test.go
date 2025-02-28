@@ -472,8 +472,6 @@ func Test_Traverse_Array_ExpectError(t *testing.T) {
 	}
 
 	for name, tc := range testCases {
-		name, tc := name, tc
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -516,8 +514,6 @@ func TestPath_String(t *testing.T) {
 	}
 
 	for name, tc := range testCases {
-		name, tc := name, tc
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 

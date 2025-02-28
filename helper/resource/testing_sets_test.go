@@ -402,7 +402,6 @@ func TestTestCheckTypeSetElemAttr(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		testCase := testCase
 
 		t.Run(testCase.Description, func(t *testing.T) {
 			t.Parallel()
@@ -1010,7 +1009,6 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		testCase := testCase
 
 		t.Run(testCase.Description, func(t *testing.T) {
 			t.Parallel()
@@ -1754,7 +1752,6 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		testCase := testCase
 
 		t.Run(testCase.Description, func(t *testing.T) {
 			t.Parallel()
@@ -2593,7 +2590,6 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		testCase := testCase
 
 		t.Run(testCase.Description, func(t *testing.T) {
 			t.Parallel()

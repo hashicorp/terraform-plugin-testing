@@ -189,8 +189,6 @@ func TestParseResourceAddress(t *testing.T) {
 	}
 
 	for tn, tc := range cases {
-		tn, tc := tn, tc
-
 		t.Run(tn, func(t *testing.T) {
 			t.Parallel()
 
@@ -288,7 +286,6 @@ func TestResourceAddressLess(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 
 		t.Run(fmt.Sprintf("%s < %s", test.A, test.B), func(t *testing.T) {
 			t.Parallel()

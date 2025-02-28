@@ -1498,8 +1498,6 @@ func TestExpectKnownValue_CheckPlan_UnknownAttributeType(t *testing.T) {
 	}
 
 	for name, testCase := range testCases {
-		name, testCase := name, testCase
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 

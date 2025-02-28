@@ -243,7 +243,6 @@ func TestFlatmapValueFromHCL2(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 
 		t.Run(test.Value.GoString(), func(t *testing.T) {
 			t.Parallel()
@@ -312,7 +311,6 @@ func TestFlatmapValueFromHCL2FromFlatmap(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 
 		t.Run(test.Name, func(t *testing.T) {
 			t.Parallel()
@@ -740,8 +738,6 @@ func TestHCL2ValueFromFlatmap(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		i, test := i, test
-
 		t.Run(fmt.Sprintf("%d %#v as %#v", i, test.Flatmap, test.Type), func(t *testing.T) {
 			t.Parallel()
 

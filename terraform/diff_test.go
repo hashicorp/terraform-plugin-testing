@@ -820,8 +820,6 @@ func TestInstanceDiffSame(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		i, tc := i, tc
-
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			t.Parallel()
 
@@ -867,8 +865,6 @@ func TestCountFlatmapContainerValues(t *testing.T) {
 			count: "2",
 		},
 	} {
-		i, tc := i, tc
-
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			t.Parallel()
 

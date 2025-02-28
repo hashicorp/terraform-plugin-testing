@@ -43,8 +43,6 @@ func TestUniqueStrings(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		i, tc := i, tc
-
 		t.Run(fmt.Sprintf("unique-%d", i), func(t *testing.T) {
 			t.Parallel()
 

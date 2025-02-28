@@ -211,7 +211,6 @@ func TestPathFromFlatmap(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 
 		t.Run(fmt.Sprintf("%s as %#v", test.Flatmap, test.Type), func(t *testing.T) {
 			t.Parallel()
@@ -364,7 +363,6 @@ func TestRequiresReplace(t *testing.T) {
 			},
 		},
 	} {
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -413,8 +411,6 @@ func TestFlatmapKeyFromPath(t *testing.T) {
 			attr: "attr.key.obj_attr.0.force_new",
 		},
 	} {
-		i, tc := i, tc
-
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			t.Parallel()
 

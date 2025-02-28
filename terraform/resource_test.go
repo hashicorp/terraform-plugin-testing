@@ -185,8 +185,6 @@ func TestResourceConfigGet(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		i, tc := i, tc
-
 		rc := NewResourceConfigShimmed(tc.Config, tc.Schema)
 
 		// Test getting a key
@@ -636,7 +634,6 @@ func TestNewResourceConfigShimmed(t *testing.T) {
 			},
 		},
 	} {
-		tc := tc
 
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
