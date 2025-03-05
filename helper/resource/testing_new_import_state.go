@@ -6,19 +6,18 @@ package resource
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-exec/tfexec"
 	"reflect"
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/hashicorp/terraform-plugin-testing/config"
-	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
-
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepIndex int) error {
