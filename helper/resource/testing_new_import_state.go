@@ -6,6 +6,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"reflect"
 	"strings"
 
@@ -20,7 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfg teststep.Config, providers *providerFactories, stepIndex int) error {
+func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepIndex int) error {
 	t.Helper()
 
 	configRequest := teststep.PrepareConfigurationRequest{
@@ -93,11 +94,40 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
+	if testStepConfig == nil {
+		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
+	}
+
 	// Create working directory for import tests
 	if testStepConfig == nil {
 		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
 
-		testStepConfig = cfg
+		switch step.ImportStateKind {
+		case ImportBlockWithResourceIdentity:
+			t.Fatalf("TODO implement me")
+		case ImportBlockWithId:
+			cfgRaw += fmt.Sprintf(`
+			import {
+				to = %s
+				id = %q
+			}
+		`, step.ResourceName, importId)
+		default:
+			// Not an import block test so nothing to do here
+		}
+
+		confRequest := teststep.PrepareConfigurationRequest{
+			Directory: step.ConfigDirectory,
+			File:      step.ConfigFile,
+			Raw:       cfgRaw,
+			TestStepConfigRequest: config.TestStepConfigRequest{
+				StepNumber: stepIndex + 1,
+				TestName:   t.Name(),
+			},
+		}.Exec()
+
+		testStepConfig = teststep.Configuration(confRequest)
+		//testStepConfig = cfg
 		if testStepConfig == nil {
 			t.Fatal("Cannot import state with no specified config")
 		}
@@ -129,11 +159,22 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 	}
 
-	err = runProviderCommand(ctx, t, func() error {
-		return importWd.Import(ctx, step.ResourceName, importId)
-	}, importWd, providers)
-	if err != nil {
-		return err
+	if step.ImportStateKind == ImportBlockWithResourceIdentity || step.ImportStateKind == ImportBlockWithId {
+		var opts []tfexec.ApplyOption
+
+		err = runProviderCommand(ctx, t, func() error {
+			return importWd.Apply(ctx, opts...)
+		}, importWd, providers)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = runProviderCommand(ctx, t, func() error {
+			return importWd.Import(ctx, step.ResourceName, importId)
+		}, importWd, providers)
+		if err != nil {
+			return err
+		}
 	}
 
 	var importState *terraform.State
