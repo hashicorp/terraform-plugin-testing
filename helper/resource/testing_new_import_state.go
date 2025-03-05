@@ -93,7 +93,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
-	// Create working directory for import tests
+	// Prepare the test config dependent on the kind of import test being performed
 	if testStepConfig == nil {
 		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
 
@@ -122,7 +122,6 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}.Exec()
 
 		testStepConfig = teststep.Configuration(confRequest)
-		//testStepConfig = cfg
 		if testStepConfig == nil {
 			t.Fatal("Cannot import state with no specified config")
 		}
