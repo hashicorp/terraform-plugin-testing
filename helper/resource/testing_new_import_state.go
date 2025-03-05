@@ -93,10 +93,6 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
-	if testStepConfig == nil {
-		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
-	}
-
 	// Create working directory for import tests
 	if testStepConfig == nil {
 		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
