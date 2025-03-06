@@ -5,6 +5,9 @@ description: >-
   provides built-in Plan Checks for common use-cases, and custom Plan Checks can also be implemented.
 ---
 
+> [!IMPORTANT]  
+> **Documentation Update:** Product documentation previously located in `/website` has moved to the [`hashicorp/web-unified-docs`](https://github.com/hashicorp/web-unified-docs) repository, where all product documentation is now centralized. Please make contributions directly to `web-unified-docs`, since changes to `/website` in this repository will not appear on developer.hashicorp.com.
+
 # Plan Checks
 
 During the **Lifecycle (config)** and **Refresh** [modes](/terraform/plugin/testing/acceptance-tests/teststep#test-modes) of a `TestStep`, the testing framework will run `terraform plan` before and after certain operations. For example, the **Lifecycle (config)** mode will run a plan before the `terraform apply` phase, as well as a plan before and after the `terraform refresh` phase.

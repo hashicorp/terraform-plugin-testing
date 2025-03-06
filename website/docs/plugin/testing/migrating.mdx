@@ -4,6 +4,9 @@ description: >-
   Migrate your provider's acceptance testing dependencies from SDKv2 to the testing module.
 ---
 
+> [!IMPORTANT]  
+> **Documentation Update:** Product documentation previously located in `/website` has moved to the [`hashicorp/web-unified-docs`](https://github.com/hashicorp/web-unified-docs) repository, where all product documentation is now centralized. Please make contributions directly to `web-unified-docs`, since changes to `/website` in this repository will not appear on developer.hashicorp.com.
+
 # Overview
 
 This guide helps you migrate a Terraform provider's acceptance testing dependencies from SDKv2 to the plugin testing module. We recommend migrating to terraform-plugin-testing to take advantage of new features of the testing module and to avoid importing the SDKv2 for providers that are built on the plugin Framework.
