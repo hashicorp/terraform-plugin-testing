@@ -12,15 +12,15 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/hashicorp/terraform-plugin-testing/config"
-	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
-
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfg teststep.Config, providers *providerFactories, stepIndex int) error {
+func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
 	t.Helper()
 
 	configRequest := teststep.PrepareConfigurationRequest{
@@ -28,7 +28,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		File:      step.ConfigFile,
 		Raw:       step.Config,
 		TestStepConfigRequest: config.TestStepConfigRequest{
-			StepNumber: stepIndex + 1,
+			StepNumber: stepNumber,
 			TestName:   t.Name(),
 		},
 	}.Exec()
@@ -93,11 +93,35 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
-	// Create working directory for import tests
+	// Prepare the test config dependent on the kind of import test being performed
 	if testStepConfig == nil {
 		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
 
-		testStepConfig = cfg
+		switch step.ImportStateKind {
+		case ImportBlockWithResourceIdentity:
+			t.Fatalf("TODO implement me")
+		case ImportBlockWithId:
+			cfgRaw += fmt.Sprintf(`
+			import {
+				to = %s
+				id = %q
+			}
+		`, step.ResourceName, importId)
+		default:
+			// Not an import block test so nothing to do here
+		}
+
+		confRequest := teststep.PrepareConfigurationRequest{
+			Directory: step.ConfigDirectory,
+			File:      step.ConfigFile,
+			Raw:       cfgRaw,
+			TestStepConfigRequest: config.TestStepConfigRequest{
+				StepNumber: stepNumber,
+				TestName:   t.Name(),
+			},
+		}.Exec()
+
+		testStepConfig = teststep.Configuration(confRequest)
 		if testStepConfig == nil {
 			t.Fatal("Cannot import state with no specified config")
 		}
@@ -129,11 +153,22 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 	}
 
-	err = runProviderCommand(ctx, t, func() error {
-		return importWd.Import(ctx, step.ResourceName, importId)
-	}, importWd, providers)
-	if err != nil {
-		return err
+	if step.ImportStateKind == ImportBlockWithResourceIdentity || step.ImportStateKind == ImportBlockWithId {
+		var opts []tfexec.ApplyOption
+
+		err = runProviderCommand(ctx, t, func() error {
+			return importWd.Apply(ctx, opts...)
+		}, importWd, providers)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = runProviderCommand(ctx, t, func() error {
+			return importWd.Import(ctx, step.ResourceName, importId)
+		}, importWd, providers)
+		if err != nil {
+			return err
+		}
 	}
 
 	var importState *terraform.State

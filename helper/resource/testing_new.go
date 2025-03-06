@@ -133,7 +133,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 	// use this to track last step successfully applied
 	// acts as default for import tests
-	var appliedCfg teststep.Config
+	var appliedCfg string
 	var stepNumber int
 
 	for stepIndex, step := range c.Steps {
@@ -249,7 +249,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				File:      step.ConfigFile,
 				Raw:       rawCfg,
 				TestStepConfigRequest: config.TestStepConfigRequest{
-					StepNumber: stepIndex + 1,
+					StepNumber: stepNumber,
 					TestName:   t.Name(),
 				},
 			}.Exec()
@@ -289,7 +289,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.ImportState {
 			logging.HelperResourceTrace(ctx, "TestStep is ImportState mode")
 
-			err := testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, providers, stepIndex)
+			err := testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, providers, stepNumber)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 				if err == nil {
@@ -426,7 +426,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				}
 			}
 
-			mergedConfig, err := step.mergedConfig(ctx, c, hasTerraformBlock, hasProviderBlock, helper.TerraformVersion())
+			appliedCfg, err = step.mergedConfig(ctx, c, hasTerraformBlock, hasProviderBlock, helper.TerraformVersion())
 
 			if err != nil {
 				logging.HelperResourceError(ctx,
@@ -435,18 +435,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				)
 				t.Fatalf("Error generating merged configuration: %s", err)
 			}
-
-			confRequest := teststep.PrepareConfigurationRequest{
-				Directory: step.ConfigDirectory,
-				File:      step.ConfigFile,
-				Raw:       mergedConfig,
-				TestStepConfigRequest: config.TestStepConfigRequest{
-					StepNumber: stepIndex + 1,
-					TestName:   t.Name(),
-				},
-			}.Exec()
-
-			appliedCfg = teststep.Configuration(confRequest)
 
 			logging.HelperResourceDebug(ctx, "Finished TestStep")
 
