@@ -20,7 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepIndex int) error {
+func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
 	t.Helper()
 
 	configRequest := teststep.PrepareConfigurationRequest{
@@ -28,7 +28,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		File:      step.ConfigFile,
 		Raw:       step.Config,
 		TestStepConfigRequest: config.TestStepConfigRequest{
-			StepNumber: stepIndex + 1,
+			StepNumber: stepNumber,
 			TestName:   t.Name(),
 		},
 	}.Exec()
@@ -116,7 +116,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			File:      step.ConfigFile,
 			Raw:       cfgRaw,
 			TestStepConfigRequest: config.TestStepConfigRequest{
-				StepNumber: stepIndex + 1,
+				StepNumber: stepNumber,
 				TestName:   t.Name(),
 			},
 		}.Exec()
