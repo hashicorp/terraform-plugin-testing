@@ -12,9 +12,10 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	tfjson "github.com/hashicorp/terraform-json"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
@@ -24,10 +25,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_ResourceNotFound(t *testing.T) 
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -56,10 +55,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_AttributeValueNull(t *testing.T
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -125,10 +122,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_AttributeValueNotNull(t *testin
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -210,10 +205,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Bool(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -241,10 +234,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Bool_KnownValueWrongType(t *tes
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -273,10 +264,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Bool_KnownValueWrongValue(t *te
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -305,10 +294,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Float64(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -337,10 +324,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Float64_KnownValueWrongType(t *
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -369,10 +354,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Float64_KnownValueWrongValue(t 
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -401,10 +384,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Int64(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -432,10 +413,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Int64_KnownValueWrongValue(t *t
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -464,10 +443,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_List(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -501,10 +478,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_List_KnownValueWrongType(t *tes
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -536,10 +511,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_List_KnownValueWrongValue(t *te
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -574,10 +547,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_ListPartial(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -612,10 +583,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_ListPartial_KnownValueWrongValu
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -649,10 +618,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_ListElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -683,10 +650,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_ListElements_WrongNum(t *testin
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -718,10 +683,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_ListNestedBlock(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -761,10 +724,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_ListNestedBlockPartial(t *testi
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -801,10 +762,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_ListNestedBlockElements(t *test
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -837,10 +796,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Map(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -874,10 +831,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Map_KnownValueWrongType(t *test
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -909,10 +864,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Map_KnownValueWrongValue(t *tes
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -947,10 +900,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_MapPartial(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -983,10 +934,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_MapPartial_KnownValueWrongValue
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1020,10 +969,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_MapElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1054,10 +1001,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_MapElements_WrongNum(t *testing
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1095,10 +1040,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Number(t *testing.T) {
 	}
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1132,10 +1075,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Number_KnownValueWrongValue(t *
 	}
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1164,10 +1105,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Set(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1201,10 +1140,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_Set_KnownValueWrongValue(t *tes
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1239,10 +1176,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_SetPartial(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1275,10 +1210,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_SetPartial_KnownValueWrongValue
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1312,10 +1245,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_SetElements(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1346,10 +1277,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_SetNestedBlock(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1389,10 +1318,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_SetNestedBlockPartial(t *testin
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1429,10 +1356,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_SetNestedBlockElements(t *testi
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1465,10 +1390,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_String(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1495,10 +1418,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_String_Custom(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1525,10 +1446,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_String_KnownValueWrongType(t *t
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -1556,10 +1475,8 @@ func TestExpectKnownOutputValueAtPath_CheckState_String_KnownValueWrongValue(t *
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
