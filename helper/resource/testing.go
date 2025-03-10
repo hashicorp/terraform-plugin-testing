@@ -454,6 +454,14 @@ type ExternalProvider struct {
 	Source            string // the provider source
 }
 
+type ImportStateKind byte
+
+const (
+	ImportCommandWithId ImportStateKind = iota
+	ImportBlockWithId
+	ImportBlockWithResourceIdentity
+)
+
 // TestStep is a single apply sequence of a test, done within the
 // context of a state.
 //
@@ -632,6 +640,8 @@ type TestStep struct {
 	// by importing the resource with ResourceName (must be set) and the
 	// ID of that resource.
 	ImportState bool
+
+	ImportStateKind ImportStateKind
 
 	// ImportStateId is the ID to perform an ImportState operation with.
 	// This is optional. If it isn't set, then the resource ID is automatically
