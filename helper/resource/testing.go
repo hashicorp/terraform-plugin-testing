@@ -457,8 +457,11 @@ type ExternalProvider struct {
 type ImportStateKind byte
 
 const (
+	// ImportCommandWithId imports the state using the import command
 	ImportCommandWithId ImportStateKind = iota
+	// ImportBlockWithId imports the state using an import block with an ID
 	ImportBlockWithId
+	// ImportBlockWithResourceIdentity imports the state using an import block with a resource identity
 	ImportBlockWithResourceIdentity
 )
 
