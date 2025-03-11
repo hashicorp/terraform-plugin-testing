@@ -214,7 +214,7 @@ func TestTest_TestStep_ImportBlockId_SkipDataSourceState(t *testing.T) {
 func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *testing.T) {
 	/*
 		This test tries to imitate a real world example of behaviour we often see in the AzureRM provider which requires
-		the use of `ImportStateVerifyIgnore` when testing the import of a resource.
+		the use of `ImportStateVerifyIgnore` when testing the import of a resource using the import command.
 
 		A sensitive field e.g. a password can be supplied on create but isn't returned in the API response on a subsequent
 		read, resulting in a different value for password in the two states.
@@ -297,7 +297,7 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *tes
 								        state.
 
 								Modifying the plan to set the id to a known value appears to be the only way to
-								circumvent this behaviour, the cause of which I don't fully understand
+								circumvent this behaviour, the cause of which I don't fully understand.
 
 								This doesn't seem great, because this gets applied to all Plans that happen in this
 								test - so we're modifying plans in steps that we might not want to.
@@ -351,18 +351,13 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *tes
   					required_providers {
     					examplecloud = {
       						source = "registry.terraform.io/hashicorp/examplecloud"
-    					}
+						}
 					}
 				}
 
 				resource "examplecloud_container" "test" {
 					name = "somename"
-				}
-
-				import {
-					to = examplecloud_container.test
-					id = "sometestid"
-   				}`,
+				}`,
 				ResourceName:            "examplecloud_container.test",
 				ImportState:             true,
 				ImportStateKind:         ImportBlockWithId,

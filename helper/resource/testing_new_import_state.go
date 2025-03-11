@@ -23,6 +23,14 @@ import (
 func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
 	t.Helper()
 
+	// Currently import modes `ImportBlockWithId` and `ImportBlockWithResourceIdentity` cannot support config file or directory
+	// since these modes append the import block to the configuration automatically
+	if step.ImportStateKind != ImportCommandWithId {
+		if step.ConfigFile != nil || step.ConfigDirectory != nil {
+			t.Fatalf("ImportStateKind %q is not supported for config file or directory", step.ImportStateKind)
+		}
+	}
+
 	configRequest := teststep.PrepareConfigurationRequest{
 		Directory: step.ConfigDirectory,
 		File:      step.ConfigFile,
@@ -93,15 +101,19 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
-	// Prepare the test config dependent on the kind of import test being performed
-	if testStepConfig == nil {
-		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
+	if testStepConfig == nil || step.Config != "" {
+		importConfig := step.Config
+		if importConfig == "" {
+			logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
+			importConfig = cfgRaw
+		}
 
+		// Update the test config dependent on the kind of import test being performed
 		switch step.ImportStateKind {
 		case ImportBlockWithResourceIdentity:
 			t.Fatalf("TODO implement me")
 		case ImportBlockWithId:
-			cfgRaw += fmt.Sprintf(`
+			importConfig += fmt.Sprintf(`
 			import {
 				to = %s
 				id = %q
@@ -114,7 +126,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		confRequest := teststep.PrepareConfigurationRequest{
 			Directory: step.ConfigDirectory,
 			File:      step.ConfigFile,
-			Raw:       cfgRaw,
+			Raw:       importConfig,
 			TestStepConfigRequest: config.TestStepConfigRequest{
 				StepNumber: stepNumber,
 				TestName:   t.Name(),
