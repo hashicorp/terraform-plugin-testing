@@ -6,6 +6,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	tfjson "github.com/hashicorp/terraform-json"
 	"reflect"
 	"strings"
 
@@ -166,14 +167,53 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	if step.ImportStateKind == ImportBlockWithResourceIdentity || step.ImportStateKind == ImportBlockWithId {
-		var opts []tfexec.ApplyOption
+		var opts []tfexec.PlanOption
 
 		err = runProviderCommand(ctx, t, func() error {
-			return importWd.Apply(ctx, opts...)
+			return importWd.CreatePlan(ctx, opts...)
 		}, importWd, providers)
 		if err != nil {
 			return err
 		}
+
+		var plan *tfjson.Plan
+		err = runProviderCommand(ctx, t, func() error {
+			var err error
+			plan, err = importWd.SavedPlan(ctx)
+			return err
+		}, importWd, providers)
+		if err != nil {
+			return err
+		}
+
+		if plan.ResourceChanges != nil {
+			for _, rc := range plan.ResourceChanges {
+				if rc.Address != step.ResourceName {
+					// we're only interested in the changes for the resource being imported
+					continue
+				}
+				if rc.Change != nil && rc.Change.Actions != nil {
+					// should this be length checked and used as a condition, if it's a no-op then there shouldn't be any other changes here
+					for _, action := range rc.Change.Actions {
+						if action != "no-op" {
+							var stdout string
+							err = runProviderCommand(ctx, t, func() error {
+								var err error
+								stdout, err = importWd.SavedPlanRawStdout(ctx)
+								return err
+							}, importWd, providers)
+							if err != nil {
+								return fmt.Errorf("retrieving formatted plan output: %w", err)
+							}
+
+							return fmt.Errorf("importing resource %s should be a no-op, but got action %s with plan \\nstdout:\\n\\n%s", rc.Address, action, stdout)
+						}
+					}
+				}
+			}
+		}
+
+		// TODO compare plan to state from previous step
 	} else {
 		err = runProviderCommand(ctx, t, func() error {
 			return importWd.Import(ctx, step.ResourceName, importId)

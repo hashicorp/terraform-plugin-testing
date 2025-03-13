@@ -4,10 +4,10 @@
 package resource
 
 import (
-	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/datasource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -31,6 +31,22 @@ func TestTest_TestStep_ImportBlockId(t *testing.T) {
 				Resources: map[string]testprovider.Resource{
 					"examplecloud_container": {
 						CreateResponse: &resource.CreateResponse{
+							NewState: tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id":       tftypes.String,
+										"location": tftypes.String,
+										"name":     tftypes.String,
+									},
+								},
+								map[string]tftypes.Value{
+									"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+									"location": tftypes.NewValue(tftypes.String, "westeurope"),
+									"name":     tftypes.NewValue(tftypes.String, "somevalue"),
+								},
+							),
+						},
+						ReadResponse: &resource.ReadResponse{
 							NewState: tftypes.NewValue(
 								tftypes.Object{
 									AttributeTypes: map[string]tftypes.Type{
@@ -102,6 +118,116 @@ func TestTest_TestStep_ImportBlockId(t *testing.T) {
 				ImportState:       true,
 				ImportStateKind:   ImportBlockWithId,
 				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestTest_TestStep_ImportBlockId_ExpectError(t *testing.T) {
+	t.Parallel()
+
+	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_5_0), // ProtoV6ProviderFactories
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_container": {
+						CreateResponse: &resource.CreateResponse{
+							NewState: tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id":       tftypes.String,
+										"location": tftypes.String,
+										"name":     tftypes.String,
+									},
+								},
+								map[string]tftypes.Value{
+									"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+									"location": tftypes.NewValue(tftypes.String, "westeurope"),
+									"name":     tftypes.NewValue(tftypes.String, "somevalue"),
+								},
+							),
+						},
+						ReadResponse: &resource.ReadResponse{
+							NewState: tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id":       tftypes.String,
+										"location": tftypes.String,
+										"name":     tftypes.String,
+									},
+								},
+								map[string]tftypes.Value{
+									"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+									"location": tftypes.NewValue(tftypes.String, "westeurope"),
+									"name":     tftypes.NewValue(tftypes.String, "somevalue"),
+								},
+							),
+						},
+						ImportStateResponse: &resource.ImportStateResponse{
+							State: tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id":       tftypes.String,
+										"location": tftypes.String,
+										"name":     tftypes.String,
+									},
+								},
+								map[string]tftypes.Value{
+									"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+									"location": tftypes.NewValue(tftypes.String, "westeurope"),
+									"name":     tftypes.NewValue(tftypes.String, "somevalue"),
+								},
+							),
+						},
+						SchemaResponse: &resource.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "id",
+											Type:     tftypes.String,
+											Computed: true,
+										},
+										{
+											Name:     "location",
+											Type:     tftypes.String,
+											Required: true,
+										},
+										{
+											Name:     "name",
+											Type:     tftypes.String,
+											Required: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}),
+		},
+		Steps: []TestStep{
+			{
+				Config: `
+				resource "examplecloud_container" "test" {
+					location = "westeurope"
+					name     = "somevalue"
+				}`,
+			},
+			{
+				Config: `
+				resource "examplecloud_container" "test" {
+					location = "eastus"
+					name     = "somevalue"
+				}`,
+				ResourceName:      "examplecloud_container.test",
+				ImportState:       true,
+				ImportStateKind:   ImportBlockWithId,
+				ImportStateVerify: true,
+				ExpectError:       regexp.MustCompile(`importing resource examplecloud_container.test should be a no-op, but got action update with plan(.?)`),
 			},
 		},
 	})
@@ -211,6 +337,8 @@ func TestTest_TestStep_ImportBlockId_SkipDataSourceState(t *testing.T) {
 	})
 }
 
+// These tests currently pass but only because the `getState` function which is used on the imported resource
+// to do the state comparison doesn't return an error if there is no state in the working directory
 func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *testing.T) {
 	/*
 		This test tries to imitate a real world example of behaviour we often see in the AzureRM provider which requires
@@ -282,33 +410,6 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *tes
 									"password": tftypes.NewValue(tftypes.String, nil), // this simulates an absent property when importing
 								},
 							),
-						},
-						PlanChangeFunc: func(ctx context.Context, request resource.PlanChangeRequest, response *resource.PlanChangeResponse) {
-							/*
-								Returning a nil for another attribute to simulate a situation where `ImportStateVerifyIgnore`
-								should be used results in the error below from Terraform
-
-								Error: Provider returned invalid result object after apply
-
-								        After the apply operation, the provider still indicated an unknown value for
-								        examplecloud_container.test.id. All values must be known after apply, so this
-								        is always a bug in the provider and should be reported in the provider's own
-								        repository. Terraform will still save the other known object values in the
-								        state.
-
-								Modifying the plan to set the id to a known value appears to be the only way to
-								circumvent this behaviour, the cause of which I don't fully understand.
-
-								This doesn't seem great, because this gets applied to all Plans that happen in this
-								test - so we're modifying plans in steps that we might not want to.
-							*/
-
-							objVal := map[string]tftypes.Value{}
-
-							if !response.PlannedState.IsNull() {
-								_ = response.PlannedState.As(&objVal)
-								objVal["id"] = tftypes.NewValue(tftypes.String, "sometestid")
-							}
 						},
 						SchemaResponse: &resource.SchemaResponse{
 							Schema: &tfprotov6.Schema{
