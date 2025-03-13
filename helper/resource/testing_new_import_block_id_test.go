@@ -341,33 +341,27 @@ func TestTest_TestStep_ImportBlockId_SkipDataSourceState(t *testing.T) {
 // to do the state comparison doesn't return an error if there is no state in the working directory
 func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *testing.T) {
 	/*
-		This test tries to imitate a real world example of behaviour we often see in the AzureRM provider which requires
-		the use of `ImportStateVerifyIgnore` when testing the import of a resource using the import command.
+			This test tries to imitate a real world example of behaviour we often see in the AzureRM provider which requires
+			the use of `ImportStateVerifyIgnore` when testing the import of a resource using the import command.
 
-		A sensitive field e.g. a password can be supplied on create but isn't returned in the API response on a subsequent
-		read, resulting in a different value for password in the two states.
+			A sensitive field e.g. a password can be supplied on create but isn't returned in the API response on a subsequent
+			read, resulting in a different value for password in the two states.
 
-		In the AzureRM provider this is usually handled one of two ways, both requiring `ImportStateVerifyIgnore` to make
-		the test pass:
+			In the AzureRM provider this is usually handled one of two ways, both requiring `ImportStateVerifyIgnore` to make
+			the test pass:
 
-		1. Property doesn't get set in the read
-			* in pluginSDK at create the config gets written to state because that's what we're expecting
-			* the subsequent read updates the values to create a post-apply diff and update computed values
-		 	* since we don't do anything to the property in the read the imported resource's state has the password missing
-		      compared to the created resource's state
+			1. Property doesn't get set in the read
+				* in pluginSDK at create the config gets written to state because that's what we're expecting
+				* the subsequent read updates the values to create a post-apply diff and update computed values
+			 	* since we don't do anything to the property in the read the imported resource's state has the password missing
+			      compared to the created resource's state
 
-		2. We retrieve the value from config and set that into state
-			* the config isn't available at import time using only the import command (I think?) so there is nothing to
-		      retrieve and set into state when importing
+			2. We retrieve the value from config and set that into state
+				* the config isn't available at import time using only the import command (I think?) so there is nothing to
+			      retrieve and set into state when importing
 
-		For this test to pass I needed to add a `PlanChangeFunc` to the resource to set the id to a known value in the plan - see comment in the `PlanChangeFunc`
-
-		I also need to omit the `password` in the import config, otherwise the value in the config is used when importing the resource and the test
-		ends up passing regardless of whether `ImportStateVerifyIgnore` has been specified or not
-
-		Ultimately it looks like:
-			* Terraform is saying there's a bug in the provider? (see comment in `PlanChangeFunc`)
-			* The import behaviour using a block vs. the command appears to differ
+			I also need to omit the `password` in the import config, otherwise the value in the config is used when importing the
+		    with an import block and the test ends up passing regardless of whether `ImportStateVerifyIgnore` has been specified or not
 	*/
 	t.Parallel()
 
