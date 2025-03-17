@@ -217,6 +217,36 @@ func Test_ExpectUnknownValue_SetNestedBlock(t *testing.T) {
 	})
 }
 
+func Test_ExpectUnknownValue_ExpectError_KnownValue_PathNotFound(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "two" {
+					list_nested_block {
+						list_nested_block_attribute = "value 1"
+					}
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("test_resource.two",
+							tfjsonpath.New("list_nested_block").AtSliceIndex(0).AtMapKey("not_correct_attr")),
+					},
+				},
+				ExpectError: regexp.MustCompile(`path not found: specified key not_correct_attr not found in map at list_nested_block.0.not_correct_attr`),
+			},
+		},
+	})
+}
+
 func Test_ExpectUnknownValue_ExpectError_KnownValue_ListAttribute(t *testing.T) {
 	t.Parallel()
 
