@@ -7,10 +7,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/compare"
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
@@ -21,10 +21,8 @@ func TestCompareValue_CheckState_NoStateValues(t *testing.T) {
 	boolValuesDiffer := statecheck.CompareValue(compare.ValuesSame())
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -48,10 +46,8 @@ func TestCompareValue_CheckState_ValuesSame_ValueDiffersError(t *testing.T) {
 	boolValuesDiffer := statecheck.CompareValue(compare.ValuesSame())
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -101,10 +97,8 @@ func TestCompareValue_CheckState_ValuesSame(t *testing.T) {
 	boolValuesDiffer := statecheck.CompareValue(compare.ValuesSame())
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -141,10 +135,8 @@ func TestCompareValue_CheckState_ValuesDiffer_ValueSameError(t *testing.T) {
 	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
@@ -194,10 +186,8 @@ func TestCompareValue_CheckState_ValuesDiffer(t *testing.T) {
 	boolValuesDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(anTestProvider),
 		},
 		Steps: []r.TestStep{
 			{
