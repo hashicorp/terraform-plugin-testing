@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: 'knownvalue: Updated the `ObjectExact` error message to report extra/missing attributes from the actual object.'
-time: 2025-03-17T18:27:30.206493-04:00
-custom:
-    Issue: "451"
