@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: 'plancheck: Fixed bug with all unknown value plan checks where a valid path would return a "path not found" error.'
+time: 2025-03-17T19:05:58.513949-04:00
+custom:
+    Issue: "450"
