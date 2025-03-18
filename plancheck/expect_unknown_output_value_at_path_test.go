@@ -361,7 +361,7 @@ func Test_ExpectUnknownOutputValueAtPath_SetNestedBlock_Object(t *testing.T) {
 	})
 }
 
-func Test_ExpectUnknownOutputValueAtPath_ExpectError_KnownValue(t *testing.T) {
+func Test_ExpectUnknownOutputValueAtPath_ExpectError_KnownValue_PathNotFound(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -381,7 +381,9 @@ func Test_ExpectUnknownOutputValueAtPath_ExpectError_KnownValue(t *testing.T) {
 			{
 				Config: `
 				resource "test_resource" "one" {
-					set_attribute = ["value1"]
+					list_nested_block {
+						list_nested_block_attribute = "value 1"
+					}
 				}
 
 				output "resource" {
@@ -390,10 +392,202 @@ func Test_ExpectUnknownOutputValueAtPath_ExpectError_KnownValue(t *testing.T) {
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValueAtPath("resource", tfjsonpath.New("set_attribute").AtSliceIndex(0)),
+						plancheck.ExpectUnknownOutputValueAtPath("resource", tfjsonpath.New("list_nested_block").AtSliceIndex(0).AtMapKey("not_correct_attr")),
 					},
 				},
-				ExpectError: regexp.MustCompile(`attribute at path is known`),
+				ExpectError: regexp.MustCompile(`path not found: specified key not_correct_attr not found in map at list_nested_block.0.not_correct_attr`),
+			},
+		},
+	})
+}
+
+func Test_ExpectUnknownOutputValueAtPath_ExpectError_KnownValue_ListAttribute(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {
+					list_attribute = ["value1"]
+				}
+
+				output "resource" {
+					value = test_resource.one
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownOutputValueAtPath("resource", tfjsonpath.New("list_attribute").AtSliceIndex(0)),
+					},
+				},
+				ExpectError: regexp.MustCompile(`Expected unknown value at output "resource" path "list_attribute.0", but found known value: "value1"`),
+			},
+		},
+	})
+}
+
+func Test_ExpectUnknownOutputValueAtPath_ExpectError_KnownValue_StringAttribute(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {
+					string_attribute = "hello world!"
+				}
+
+				output "resource" {
+					value = test_resource.one
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownOutputValueAtPath("resource", tfjsonpath.New("string_attribute")),
+					},
+				},
+				ExpectError: regexp.MustCompile(`Expected unknown value at output "resource" path "string_attribute", but found known value: "hello world!"`),
+			},
+		},
+	})
+}
+
+func Test_ExpectUnknownOutputValueAtPath_ExpectError_KnownValue_BoolAttribute(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {
+					bool_attribute = true
+				}
+
+				output "resource" {
+					value = test_resource.one
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownOutputValueAtPath("resource", tfjsonpath.New("bool_attribute")),
+					},
+				},
+				ExpectError: regexp.MustCompile(`Expected unknown value at output "resource" path "bool_attribute", but found known value: "true"`),
+			},
+		},
+	})
+}
+
+func Test_ExpectUnknownOutputValueAtPath_ExpectError_KnownValue_FloatAttribute(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {
+					float_attribute = 1.234
+				}
+
+				output "resource" {
+					value = test_resource.one
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownOutputValueAtPath("resource", tfjsonpath.New("float_attribute")),
+					},
+				},
+				ExpectError: regexp.MustCompile(`Expected unknown value at output "resource" path "float_attribute", but found known value: "1.234"`),
+			},
+		},
+	})
+}
+
+func Test_ExpectUnknownOutputValueAtPath_ExpectError_KnownValue_ListNestedBlock(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		// Prior to Terraform v1.3.0 a planned output is marked as fully unknown
+		// if any attribute is unknown. The id attribute within the test provider
+		// is unknown.
+		// Reference: https://github.com/hashicorp/terraform/blob/v1.3/CHANGELOG.md#130-september-21-2022
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_3_0),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {
+					list_nested_block {
+						list_nested_block_attribute = "value 1"
+					}
+				}
+
+				output "resource" {
+					value = test_resource.one
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownOutputValueAtPath("resource", tfjsonpath.New("list_nested_block").AtSliceIndex(0).AtMapKey("list_nested_block_attribute")),
+					},
+				},
+				ExpectError: regexp.MustCompile(`Expected unknown value at output "resource" path "list_nested_block.0.list_nested_block_attribute", but found known value: "value 1"`),
 			},
 		},
 	})

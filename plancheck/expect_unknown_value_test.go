@@ -217,7 +217,37 @@ func Test_ExpectUnknownValue_SetNestedBlock(t *testing.T) {
 	})
 }
 
-func Test_ExpectUnknownValue_ExpectError_KnownValue(t *testing.T) {
+func Test_ExpectUnknownValue_ExpectError_KnownValue_PathNotFound(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "two" {
+					list_nested_block {
+						list_nested_block_attribute = "value 1"
+					}
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("test_resource.two",
+							tfjsonpath.New("list_nested_block").AtSliceIndex(0).AtMapKey("not_correct_attr")),
+					},
+				},
+				ExpectError: regexp.MustCompile(`path not found: specified key not_correct_attr not found in map at list_nested_block.0.not_correct_attr`),
+			},
+		},
+	})
+}
+
+func Test_ExpectUnknownValue_ExpectError_KnownValue_ListAttribute(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -230,15 +260,126 @@ func Test_ExpectUnknownValue_ExpectError_KnownValue(t *testing.T) {
 			{
 				Config: `
 				resource "test_resource" "one" {
-					set_attribute = ["value1"]
+					list_attribute = ["value1"]
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownValue("test_resource.one", tfjsonpath.New("set_attribute").AtSliceIndex(0)),
+						plancheck.ExpectUnknownValue("test_resource.one", tfjsonpath.New("list_attribute").AtSliceIndex(0)),
 					},
 				},
-				ExpectError: regexp.MustCompile(`attribute at path is known`),
+				ExpectError: regexp.MustCompile(`Expected unknown value at "list_attribute.0", but found known value: "value1"`),
+			},
+		},
+	})
+}
+
+func Test_ExpectUnknownValue_ExpectError_KnownValue_StringAttribute(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {
+					string_attribute = "hello world!"
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("test_resource.one", tfjsonpath.New("string_attribute")),
+					},
+				},
+				ExpectError: regexp.MustCompile(`Expected unknown value at "string_attribute", but found known value: "hello world!"`),
+			},
+		},
+	})
+}
+
+func Test_ExpectUnknownValue_ExpectError_KnownValue_BoolAttribute(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {
+					bool_attribute = true
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("test_resource.one", tfjsonpath.New("bool_attribute")),
+					},
+				},
+				ExpectError: regexp.MustCompile(`Expected unknown value at "bool_attribute", but found known value: "true"`),
+			},
+		},
+	})
+}
+
+func Test_ExpectUnknownValue_ExpectError_KnownValue_FloatAttribute(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {
+					float_attribute = 1.234
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("test_resource.one", tfjsonpath.New("float_attribute")),
+					},
+				},
+				ExpectError: regexp.MustCompile(`Expected unknown value at "float_attribute", but found known value: "1.234"`),
+			},
+		},
+	})
+}
+
+func Test_ExpectUnknownValue_ExpectError_KnownValue_ListNestedBlock(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "two" {
+					list_nested_block {
+						list_nested_block_attribute = "value 1"
+					}
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("test_resource.two",
+							tfjsonpath.New("list_nested_block").AtSliceIndex(0).AtMapKey("list_nested_block_attribute")),
+					},
+				},
+				ExpectError: regexp.MustCompile(`Expected unknown value at "list_nested_block.0.list_nested_block_attribute", but found known value: "value 1"`),
 			},
 		},
 	})

@@ -226,7 +226,7 @@ func Test_ExpectUnknownOutputValue_ListNestedBlock(t *testing.T) {
 	})
 }
 
-func Test_ExpectUnknownOutputValue_ExpectError_KnownValue(t *testing.T) {
+func Test_ExpectUnknownOutputValue_ExpectError_KnownValue_ListAttribute(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -239,19 +239,145 @@ func Test_ExpectUnknownOutputValue_ExpectError_KnownValue(t *testing.T) {
 			{
 				Config: `
 				resource "test_resource" "one" {
-					set_attribute = ["value1"]
+					list_attribute = ["value1"]
 				}
 
-				output "set_attribute" {
-					value = test_resource.one.set_attribute
+				output "list_attribute" {
+					value = test_resource.one.list_attribute
 				}
 				`,
 				ConfigPlanChecks: r.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectUnknownOutputValue("set_attribute"),
+						plancheck.ExpectUnknownOutputValue("list_attribute"),
 					},
 				},
-				ExpectError: regexp.MustCompile(`attribute at path is known`),
+				ExpectError: regexp.MustCompile(`Expected unknown value at output "list_attribute", but found known value: "\[value1\]"`),
+			},
+		},
+	})
+}
+
+func Test_ExpectUnknownOutputValue_ExpectError_KnownValue_StringAttribute(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {
+					string_attribute = "hello world!"
+				}
+
+				output "string_attribute" {
+					value = test_resource.one.string_attribute
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownOutputValue("string_attribute"),
+					},
+				},
+				ExpectError: regexp.MustCompile(`Expected unknown value at output "string_attribute", but found known value: "hello world!"`),
+			},
+		},
+	})
+}
+
+func Test_ExpectUnknownOutputValue_ExpectError_KnownValue_BoolAttribute(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {
+					bool_attribute = true
+				}
+
+				output "bool_attribute" {
+					value = test_resource.one.bool_attribute
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownOutputValue("bool_attribute"),
+					},
+				},
+				ExpectError: regexp.MustCompile(`Expected unknown value at output "bool_attribute", but found known value: "true"`),
+			},
+		},
+	})
+}
+
+func Test_ExpectUnknownOutputValue_ExpectError_KnownValue_FloatAttribute(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {
+					float_attribute = 1.234
+				}
+
+				output "float_attribute" {
+					value = test_resource.one.float_attribute
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownOutputValue("float_attribute"),
+					},
+				},
+				ExpectError: regexp.MustCompile(`Expected unknown value at output "float_attribute", but found known value: "1.234"`),
+			},
+		},
+	})
+}
+
+func Test_ExpectUnknownOutputValue_ExpectError_KnownValue_ListNestedBlock(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		ProviderFactories: map[string]func() (*schema.Provider, error){
+			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return testProvider(), nil
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "test_resource" "one" {
+					list_nested_block {
+						list_nested_block_attribute = "value 1"
+					}
+				}
+
+				output "list_nested_block" {
+					value = test_resource.one.list_nested_block
+				}
+				`,
+				ConfigPlanChecks: r.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownOutputValue("list_nested_block"),
+					},
+				},
+				ExpectError: regexp.MustCompile(`Expected unknown value at output "list_nested_block", but found known value: "\[map\[list_nested_block_attribute:value 1\]\]"`),
 			},
 		},
 	})

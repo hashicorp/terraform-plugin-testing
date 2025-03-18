@@ -53,9 +53,9 @@ func TestObjectValue_CheckValue(t *testing.T) {
 				"three": knownvalue.Float64Exact(7.89),
 			}),
 			other:         map[string]any{},
-			expectedError: fmt.Errorf("expected 3 attributes for ObjectExact check, got 0 attributes"),
+			expectedError: fmt.Errorf("expected 3 attribute(s) for ObjectExact check, got 0 attribute(s): actual value is missing attribute(s): \"one\", \"three\", \"two\""),
 		},
-		"wrong-length": {
+		"missing-one-attribute": {
 			self: knownvalue.ObjectExact(map[string]knownvalue.Check{
 				"one":   knownvalue.Float64Exact(1.23),
 				"two":   knownvalue.Float64Exact(4.56),
@@ -65,7 +65,47 @@ func TestObjectValue_CheckValue(t *testing.T) {
 				"one": json.Number("1.23"),
 				"two": json.Number("4.56"),
 			},
-			expectedError: fmt.Errorf("expected 3 attributes for ObjectExact check, got 2 attributes"),
+			expectedError: fmt.Errorf("expected 3 attribute(s) for ObjectExact check, got 2 attribute(s): actual value is missing attribute(s): \"three\""),
+		},
+		"missing-multiple-attributes": {
+			self: knownvalue.ObjectExact(map[string]knownvalue.Check{
+				"one":   knownvalue.Float64Exact(1.23),
+				"two":   knownvalue.Float64Exact(4.56),
+				"three": knownvalue.Float64Exact(7.89),
+				"four":  knownvalue.Float64Exact(0.12),
+				"five":  knownvalue.Float64Exact(3.45),
+			}),
+			other: map[string]any{
+				"one": json.Number("1.23"),
+				"two": json.Number("4.56"),
+			},
+			expectedError: fmt.Errorf("expected 5 attribute(s) for ObjectExact check, got 2 attribute(s): actual value is missing attribute(s): \"five\", \"four\", \"three\""),
+		},
+		"extra-one-attribute": {
+			self: knownvalue.ObjectExact(map[string]knownvalue.Check{
+				"one": knownvalue.Float64Exact(1.23),
+				"two": knownvalue.Float64Exact(4.56),
+			}),
+			other: map[string]any{
+				"one":   json.Number("1.23"),
+				"two":   json.Number("4.56"),
+				"three": json.Number("7.89"),
+			},
+			expectedError: fmt.Errorf("expected 2 attribute(s) for ObjectExact check, got 3 attribute(s): actual value has extra attribute(s): \"three\""),
+		},
+		"extra-multiple-attributes": {
+			self: knownvalue.ObjectExact(map[string]knownvalue.Check{
+				"one": knownvalue.Float64Exact(1.23),
+				"two": knownvalue.Float64Exact(4.56),
+			}),
+			other: map[string]any{
+				"one":   json.Number("1.23"),
+				"two":   json.Number("4.56"),
+				"three": json.Number("7.89"),
+				"four":  json.Number("0.12"),
+				"five":  json.Number("3.45"),
+			},
+			expectedError: fmt.Errorf("expected 2 attribute(s) for ObjectExact check, got 5 attribute(s): actual value has extra attribute(s): \"five\", \"four\", \"three\""),
 		},
 		"not-equal": {
 			self: knownvalue.ObjectExact(map[string]knownvalue.Check{
