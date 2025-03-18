@@ -6,7 +6,7 @@ toolchain go1.23.7
 
 require (
 	github.com/google/go-cmp v0.7.0
-	github.com/hashicorp/go-cty v1.4.1
+	github.com/hashicorp/go-cty v1.5.0
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/go-uuid v1.0.3
 	github.com/hashicorp/go-version v1.7.0
