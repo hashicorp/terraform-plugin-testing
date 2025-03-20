@@ -6,29 +6,38 @@ package resource
 import (
 	"context"
 	"fmt"
+	tfjson "github.com/hashicorp/terraform-json"
 	"reflect"
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/hashicorp/terraform-plugin-testing/config"
-	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
-
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfg teststep.Config, providers *providerFactories, stepIndex int) error {
+func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
 	t.Helper()
+
+	// Currently import modes `ImportBlockWithId` and `ImportBlockWithResourceIdentity` cannot support config file or directory
+	// since these modes append the import block to the configuration automatically
+	if step.ImportStateKind != ImportCommandWithId {
+		if step.ConfigFile != nil || step.ConfigDirectory != nil {
+			t.Fatalf("ImportStateKind %q is not supported for config file or directory", step.ImportStateKind)
+		}
+	}
 
 	configRequest := teststep.PrepareConfigurationRequest{
 		Directory: step.ConfigDirectory,
 		File:      step.ConfigFile,
 		Raw:       step.Config,
 		TestStepConfigRequest: config.TestStepConfigRequest{
-			StepNumber: stepIndex + 1,
+			StepNumber: stepNumber,
 			TestName:   t.Name(),
 		},
 	}.Exec()
@@ -93,11 +102,39 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
-	// Create working directory for import tests
-	if testStepConfig == nil {
-		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
+	if testStepConfig == nil || step.Config != "" {
+		importConfig := step.Config
+		if importConfig == "" {
+			logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
+			importConfig = cfgRaw
+		}
 
-		testStepConfig = cfg
+		// Update the test config dependent on the kind of import test being performed
+		switch step.ImportStateKind {
+		case ImportBlockWithResourceIdentity:
+			t.Fatalf("TODO implement me")
+		case ImportBlockWithId:
+			importConfig += fmt.Sprintf(`
+			import {
+				to = %s
+				id = %q
+			}
+		`, step.ResourceName, importId)
+		default:
+			// Not an import block test so nothing to do here
+		}
+
+		confRequest := teststep.PrepareConfigurationRequest{
+			Directory: step.ConfigDirectory,
+			File:      step.ConfigFile,
+			Raw:       importConfig,
+			TestStepConfigRequest: config.TestStepConfigRequest{
+				StepNumber: stepNumber,
+				TestName:   t.Name(),
+			},
+		}.Exec()
+
+		testStepConfig = teststep.Configuration(confRequest)
 		if testStepConfig == nil {
 			t.Fatal("Cannot import state with no specified config")
 		}
@@ -129,11 +166,61 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 	}
 
-	err = runProviderCommand(ctx, t, func() error {
-		return importWd.Import(ctx, step.ResourceName, importId)
-	}, importWd, providers)
-	if err != nil {
-		return err
+	if step.ImportStateKind == ImportBlockWithResourceIdentity || step.ImportStateKind == ImportBlockWithId {
+		var opts []tfexec.PlanOption
+
+		err = runProviderCommand(ctx, t, func() error {
+			return importWd.CreatePlan(ctx, opts...)
+		}, importWd, providers)
+		if err != nil {
+			return err
+		}
+
+		var plan *tfjson.Plan
+		err = runProviderCommand(ctx, t, func() error {
+			var err error
+			plan, err = importWd.SavedPlan(ctx)
+			return err
+		}, importWd, providers)
+		if err != nil {
+			return err
+		}
+
+		if plan.ResourceChanges != nil {
+			for _, rc := range plan.ResourceChanges {
+				if rc.Address != step.ResourceName {
+					// we're only interested in the changes for the resource being imported
+					continue
+				}
+				if rc.Change != nil && rc.Change.Actions != nil {
+					// should this be length checked and used as a condition, if it's a no-op then there shouldn't be any other changes here
+					for _, action := range rc.Change.Actions {
+						if action != "no-op" {
+							var stdout string
+							err = runProviderCommand(ctx, t, func() error {
+								var err error
+								stdout, err = importWd.SavedPlanRawStdout(ctx)
+								return err
+							}, importWd, providers)
+							if err != nil {
+								return fmt.Errorf("retrieving formatted plan output: %w", err)
+							}
+
+							return fmt.Errorf("importing resource %s should be a no-op, but got action %s with plan \\nstdout:\\n\\n%s", rc.Address, action, stdout)
+						}
+					}
+				}
+			}
+		}
+
+		// TODO compare plan to state from previous step
+	} else {
+		err = runProviderCommand(ctx, t, func() error {
+			return importWd.Import(ctx, step.ResourceName, importId)
+		}, importWd, providers)
+		if err != nil {
+			return err
+		}
 	}
 
 	var importState *terraform.State
