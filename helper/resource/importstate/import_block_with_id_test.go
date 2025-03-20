@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package import_test
+package importstate_test
 
 import (
 	"fmt"
@@ -32,79 +32,7 @@ func TestTest_TestStep_ImportBlockId(t *testing.T) {
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				Resources: map[string]testprovider.Resource{
-					"examplecloud_container": {
-						CreateResponse: &resource.CreateResponse{
-							NewState: tftypes.NewValue(
-								tftypes.Object{
-									AttributeTypes: map[string]tftypes.Type{
-										"id":       tftypes.String,
-										"location": tftypes.String,
-										"name":     tftypes.String,
-									},
-								},
-								map[string]tftypes.Value{
-									"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
-									"location": tftypes.NewValue(tftypes.String, "westeurope"),
-									"name":     tftypes.NewValue(tftypes.String, "somevalue"),
-								},
-							),
-						},
-						ReadResponse: &resource.ReadResponse{
-							NewState: tftypes.NewValue(
-								tftypes.Object{
-									AttributeTypes: map[string]tftypes.Type{
-										"id":       tftypes.String,
-										"location": tftypes.String,
-										"name":     tftypes.String,
-									},
-								},
-								map[string]tftypes.Value{
-									"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
-									"location": tftypes.NewValue(tftypes.String, "westeurope"),
-									"name":     tftypes.NewValue(tftypes.String, "somevalue"),
-								},
-							),
-						},
-						ImportStateResponse: &resource.ImportStateResponse{
-							State: tftypes.NewValue(
-								tftypes.Object{
-									AttributeTypes: map[string]tftypes.Type{
-										"id":       tftypes.String,
-										"location": tftypes.String,
-										"name":     tftypes.String,
-									},
-								},
-								map[string]tftypes.Value{
-									"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
-									"location": tftypes.NewValue(tftypes.String, "westeurope"),
-									"name":     tftypes.NewValue(tftypes.String, "somevalue"),
-								},
-							),
-						},
-						SchemaResponse: &resource.SchemaResponse{
-							Schema: &tfprotov6.Schema{
-								Block: &tfprotov6.SchemaBlock{
-									Attributes: []*tfprotov6.SchemaAttribute{
-										{
-											Name:     "id",
-											Type:     tftypes.String,
-											Computed: true,
-										},
-										{
-											Name:     "location",
-											Type:     tftypes.String,
-											Required: true,
-										},
-										{
-											Name:     "name",
-											Type:     tftypes.String,
-											Required: true,
-										},
-									},
-								},
-							},
-						},
-					},
+					"examplecloud_container": examplecloudResource(),
 				},
 			}),
 		},
@@ -136,79 +64,7 @@ func TestTest_TestStep_ImportBlockId_ExpectError(t *testing.T) {
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				Resources: map[string]testprovider.Resource{
-					"examplecloud_container": {
-						CreateResponse: &resource.CreateResponse{
-							NewState: tftypes.NewValue(
-								tftypes.Object{
-									AttributeTypes: map[string]tftypes.Type{
-										"id":       tftypes.String,
-										"location": tftypes.String,
-										"name":     tftypes.String,
-									},
-								},
-								map[string]tftypes.Value{
-									"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
-									"location": tftypes.NewValue(tftypes.String, "westeurope"),
-									"name":     tftypes.NewValue(tftypes.String, "somevalue"),
-								},
-							),
-						},
-						ReadResponse: &resource.ReadResponse{
-							NewState: tftypes.NewValue(
-								tftypes.Object{
-									AttributeTypes: map[string]tftypes.Type{
-										"id":       tftypes.String,
-										"location": tftypes.String,
-										"name":     tftypes.String,
-									},
-								},
-								map[string]tftypes.Value{
-									"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
-									"location": tftypes.NewValue(tftypes.String, "westeurope"),
-									"name":     tftypes.NewValue(tftypes.String, "somevalue"),
-								},
-							),
-						},
-						ImportStateResponse: &resource.ImportStateResponse{
-							State: tftypes.NewValue(
-								tftypes.Object{
-									AttributeTypes: map[string]tftypes.Type{
-										"id":       tftypes.String,
-										"location": tftypes.String,
-										"name":     tftypes.String,
-									},
-								},
-								map[string]tftypes.Value{
-									"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
-									"location": tftypes.NewValue(tftypes.String, "westeurope"),
-									"name":     tftypes.NewValue(tftypes.String, "somevalue"),
-								},
-							),
-						},
-						SchemaResponse: &resource.SchemaResponse{
-							Schema: &tfprotov6.Schema{
-								Block: &tfprotov6.SchemaBlock{
-									Attributes: []*tfprotov6.SchemaAttribute{
-										{
-											Name:     "id",
-											Type:     tftypes.String,
-											Computed: true,
-										},
-										{
-											Name:     "location",
-											Type:     tftypes.String,
-											Required: true,
-										},
-										{
-											Name:     "name",
-											Type:     tftypes.String,
-											Required: true,
-										},
-									},
-								},
-							},
-						},
-					},
+					"examplecloud_container": examplecloudResource(),
 				},
 			}),
 		},
