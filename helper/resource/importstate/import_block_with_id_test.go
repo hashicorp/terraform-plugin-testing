@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/datasource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -103,74 +102,10 @@ func TestTest_TestStep_ImportBlockId_SkipDataSourceState(t *testing.T) {
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				DataSources: map[string]testprovider.DataSource{
-					"examplecloud_thing": {
-						ReadResponse: &datasource.ReadResponse{
-							State: tftypes.NewValue(
-								tftypes.Object{
-									AttributeTypes: map[string]tftypes.Type{
-										"id": tftypes.String,
-									},
-								},
-								map[string]tftypes.Value{
-									"id": tftypes.NewValue(tftypes.String, "datasource-test"),
-								},
-							),
-						},
-						SchemaResponse: &datasource.SchemaResponse{
-							Schema: &tfprotov6.Schema{
-								Block: &tfprotov6.SchemaBlock{
-									Attributes: []*tfprotov6.SchemaAttribute{
-										{
-											Name:     "id",
-											Type:     tftypes.String,
-											Computed: true,
-										},
-									},
-								},
-							},
-						},
-					},
+					"examplecloud_thing": examplecloudDataSource(),
 				},
 				Resources: map[string]testprovider.Resource{
-					"examplecloud_thing": {
-						CreateResponse: &resource.CreateResponse{
-							NewState: tftypes.NewValue(
-								tftypes.Object{
-									AttributeTypes: map[string]tftypes.Type{
-										"id": tftypes.String,
-									},
-								},
-								map[string]tftypes.Value{
-									"id": tftypes.NewValue(tftypes.String, "resource-test"),
-								},
-							),
-						},
-						ImportStateResponse: &resource.ImportStateResponse{
-							State: tftypes.NewValue(
-								tftypes.Object{
-									AttributeTypes: map[string]tftypes.Type{
-										"id": tftypes.String,
-									},
-								},
-								map[string]tftypes.Value{
-									"id": tftypes.NewValue(tftypes.String, "resource-test"),
-								},
-							),
-						},
-						SchemaResponse: &resource.SchemaResponse{
-							Schema: &tfprotov6.Schema{
-								Block: &tfprotov6.SchemaBlock{
-									Attributes: []*tfprotov6.SchemaAttribute{
-										{
-											Name:     "id",
-											Type:     tftypes.String,
-											Computed: true,
-										},
-									},
-								},
-							},
-						},
-					},
+					"examplecloud_thing": examplecloudResource(),
 				},
 			}),
 		},
@@ -178,7 +113,10 @@ func TestTest_TestStep_ImportBlockId_SkipDataSourceState(t *testing.T) {
 			{
 				Config: `
 					data "examplecloud_thing" "test" {}
-					resource "examplecloud_thing" "test" {}
+					resource "examplecloud_thing" "test" {
+						name = "somevalue"
+						location = "westeurope"
+					}
 				`,
 			},
 			{

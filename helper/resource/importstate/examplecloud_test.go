@@ -4,8 +4,39 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/datasource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 )
+
+func examplecloudDataSource() testprovider.DataSource {
+	return testprovider.DataSource{
+		ReadResponse: &datasource.ReadResponse{
+			State: tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"id": tftypes.String,
+					},
+				},
+				map[string]tftypes.Value{
+					"id": tftypes.NewValue(tftypes.String, "datasource-test"),
+				},
+			),
+		},
+		SchemaResponse: &datasource.SchemaResponse{
+			Schema: &tfprotov6.Schema{
+				Block: &tfprotov6.SchemaBlock{
+					Attributes: []*tfprotov6.SchemaAttribute{
+						{
+							Name:     "id",
+							Type:     tftypes.String,
+							Computed: true,
+						},
+					},
+				},
+			},
+		},
+	}
+}
 
 func examplecloudResource() testprovider.Resource {
 	return testprovider.Resource{
