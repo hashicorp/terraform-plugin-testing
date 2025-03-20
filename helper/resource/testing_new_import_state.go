@@ -6,9 +6,11 @@ package resource
 import (
 	"context"
 	"fmt"
-	tfjson "github.com/hashicorp/terraform-json"
 	"reflect"
 	"strings"
+
+	"github.com/hashicorp/go-version"
+	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/mitchellh/go-testing-interface"
@@ -21,6 +23,21 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
+func requirePlannableImport(t testing.T, versionUnderTest version.Version) error {
+	t.Helper()
+
+	minVersion, err := version.NewVersion("1.5.0")
+	if err != nil {
+		panic("failed to parse version string")
+	}
+
+	if versionUnderTest.LessThan(minVersion) {
+		return fmt.Errorf("ImportState steps require Terraform 1.5.0 or later")
+	}
+
+	return nil
+}
+
 func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
 	t.Helper()
 
@@ -29,6 +46,13 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	if step.ImportStateKind != ImportCommandWithId {
 		if step.ConfigFile != nil || step.ConfigDirectory != nil {
 			t.Fatalf("ImportStateKind %q is not supported for config file or directory", step.ImportStateKind)
+		}
+	}
+
+	{
+		err := requirePlannableImport(t, *helper.TerraformVersion())
+		if err != nil {
+			return err
 		}
 	}
 

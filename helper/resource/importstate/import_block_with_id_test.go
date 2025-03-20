@@ -91,6 +91,42 @@ func TestTest_TestStep_ImportBlockId_ExpectError(t *testing.T) {
 	})
 }
 
+func TestTest_TestStep_ImportBlockId_FailWhenPlannableImportIsNotSupported(t *testing.T) {
+	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
+	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.4.7") // Plannable import is supported in Terraform 1.5.0 and later
+
+	r.UnitTest(t, r.TestCase{
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_container": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "examplecloud_container" "test" {
+					location = "westeurope"
+					name     = "somevalue"
+				}`,
+			},
+			{
+				Config: `
+				resource "examplecloud_container" "test" {
+					location = "eastus"
+					name     = "somevalue"
+				}`,
+				ResourceName:      "examplecloud_container.test",
+				ImportState:       true,
+				ImportStateKind:   r.ImportBlockWithId,
+				ImportStateVerify: true,
+				ExpectError:       regexp.MustCompile(`Terraform 1.5.0`),
+			},
+		},
+	})
+}
+
 func TestTest_TestStep_ImportBlockId_SkipDataSourceState(t *testing.T) {
 	t.Parallel()
 
