@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package resource
+package importstate_test
 
 import (
 	"fmt"
@@ -17,12 +17,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
+	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestTest_TestStep_ImportStateCheck_SkipDataSourceState(t *testing.T) {
+func Test_TestStep_ImportStateCheck_SkipDataSourceState(t *testing.T) {
 	t.Parallel()
 
-	UnitTest(t, TestCase{
+	r.UnitTest(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
 		},
@@ -100,7 +101,7 @@ func TestTest_TestStep_ImportStateCheck_SkipDataSourceState(t *testing.T) {
 				},
 			}),
 		},
-		Steps: []TestStep{
+		Steps: []r.TestStep{
 			{
 				Config: `
 					data "examplecloud_thing" "test" {}
@@ -122,10 +123,10 @@ func TestTest_TestStep_ImportStateCheck_SkipDataSourceState(t *testing.T) {
 	})
 }
 
-func TestTest_TestStep_ImportStateVerify(t *testing.T) {
+func Test_TestStep_ImportStateVerify(t *testing.T) {
 	t.Parallel()
 
-	UnitTest(t, TestCase{
+	r.UnitTest(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
 		},
@@ -183,7 +184,7 @@ func TestTest_TestStep_ImportStateVerify(t *testing.T) {
 				},
 			}),
 		},
-		Steps: []TestStep{
+		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "test" {}`,
 			},
@@ -196,10 +197,10 @@ func TestTest_TestStep_ImportStateVerify(t *testing.T) {
 	})
 }
 
-func TestTest_TestStep_ImportStateVerifyIgnore(t *testing.T) {
+func Test_TestStep_ImportStateVerifyIgnore(t *testing.T) {
 	t.Parallel()
 
-	UnitTest(t, TestCase{
+	r.UnitTest(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
 		},
@@ -266,7 +267,7 @@ func TestTest_TestStep_ImportStateVerifyIgnore(t *testing.T) {
 				},
 			}),
 		},
-		Steps: []TestStep{
+		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "test" {}`,
 			},
@@ -280,10 +281,10 @@ func TestTest_TestStep_ImportStateVerifyIgnore(t *testing.T) {
 	})
 }
 
-func TestTest_TestStep_ExpectError_ImportState(t *testing.T) {
+func Test_TestStep_ExpectError_ImportState(t *testing.T) {
 	t.Parallel()
 
-	UnitTest(t, TestCase{
+	r.UnitTest(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
 		},
@@ -329,7 +330,7 @@ func TestTest_TestStep_ExpectError_ImportState(t *testing.T) {
 				},
 			}),
 		},
-		Steps: []TestStep{
+		Steps: []r.TestStep{
 			{
 				Config:        `resource "test_resource" "test" {}`,
 				ImportStateId: "invalid time string",
