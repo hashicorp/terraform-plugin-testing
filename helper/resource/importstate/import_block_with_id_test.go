@@ -21,7 +21,7 @@ import (
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestTest_TestStep_ImportBlockId(t *testing.T) {
+func Test_TestStep_ImportBlockId(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
