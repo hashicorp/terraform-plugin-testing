@@ -14,7 +14,7 @@ import (
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func Test_TestStep_Import_AsFirstStep(t *testing.T) {
+func Test_TestStep_ImportBlock_AsFirstStep(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -33,7 +33,7 @@ func Test_TestStep_Import_AsFirstStep(t *testing.T) {
 				ResourceName:    "examplecloud_container.test",
 				ImportStateId:   "examplecloud_container.test",
 				ImportState:     true,
-				ImportStateKind: r.ImportCommandWithId,
+				ImportStateKind: r.ImportBlockWithId,
 				// ImportStateVerify: true,
 				Config: `resource "examplecloud_container" "test" {
 					name = "somevalue"

@@ -179,10 +179,9 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		t.Fatalf("Error setting test config: %s", err)
 	}
 
-	logging.HelperResourceDebug(ctx, "Running Terraform CLI init and import")
-
 	if !step.ImportStatePersist {
 		err = runProviderCommand(ctx, t, func() error {
+			logging.HelperResourceDebug(ctx, "Run terraform init")
 			return importWd.Init(ctx)
 		}, importWd, providers)
 		if err != nil {
@@ -194,6 +193,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		var opts []tfexec.PlanOption
 
 		err = runProviderCommand(ctx, t, func() error {
+			logging.HelperResourceDebug(ctx, "Run terraform plan")
 			return importWd.CreatePlan(ctx, opts...)
 		}, importWd, providers)
 		if err != nil {
@@ -203,6 +203,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		var plan *tfjson.Plan
 		err = runProviderCommand(ctx, t, func() error {
 			var err error
+			logging.HelperResourceDebug(ctx, "Run terraform show")
 			plan, err = importWd.SavedPlan(ctx)
 			return err
 		}, importWd, providers)
@@ -211,6 +212,8 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 
 		if plan.ResourceChanges != nil {
+			logging.HelperResourceDebug(ctx, fmt.Sprintf("ImportBlockWithId: %d resource changes", len(plan.ResourceChanges)))
+
 			for _, rc := range plan.ResourceChanges {
 				if rc.Address != step.ResourceName {
 					// we're only interested in the changes for the resource being imported
@@ -238,8 +241,18 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 
 		// TODO compare plan to state from previous step
+		err = runProviderCommand(ctx, t, func() error {
+			var err error
+			logging.HelperResourceDebug(ctx, "Run terraform apply")
+			err = importWd.Apply(ctx)
+			return err
+		}, importWd, providers)
+		if err != nil {
+			return err
+		}
 	} else {
 		err = runProviderCommand(ctx, t, func() error {
+			logging.HelperResourceDebug(ctx, "Run terraform import")
 			return importWd.Import(ctx, step.ResourceName, importId)
 		}, importWd, providers)
 		if err != nil {
@@ -258,6 +271,8 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
 	}
+
+	logging.HelperResourceDebug(ctx, fmt.Sprintf("State after import: %d resources in the root module", len(importState.RootModule().Resources)))
 
 	// Go through the imported state and verify
 	if step.ImportStateCheck != nil {
