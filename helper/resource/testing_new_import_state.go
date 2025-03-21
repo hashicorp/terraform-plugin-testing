@@ -49,9 +49,8 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 	}
 
-	{
-		err := requirePlannableImport(t, *helper.TerraformVersion())
-		if err != nil {
+	if step.ImportStateKind != ImportCommandWithId {
+		if err := requirePlannableImport(t, *helper.TerraformVersion()); err != nil {
 			return err
 		}
 	}
