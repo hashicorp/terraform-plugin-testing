@@ -129,8 +129,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		}
 	}
 
-	logging.HelperResourceDebug(ctx, "Starting TestSteps")
-
 	// use this to track last step successfully applied
 	// acts as default for import tests
 	var appliedCfg string
