@@ -471,10 +471,6 @@ func (kind ImportStateKind) plannable() bool {
 	return kind == ImportBlockWithID || kind == ImportBlockWithResourceIdentity
 }
 
-func (kind ImportStateKind) resourceIdentity() bool {
-	return kind == ImportBlockWithResourceIdentity
-}
-
 func (kind ImportStateKind) String() string {
 	return map[ImportStateKind]string{
 		ImportCommandWithID:             "ImportCommandWithID",
