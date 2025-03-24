@@ -188,29 +188,8 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		if plan.ResourceChanges != nil {
 			logging.HelperResourceDebug(ctx, fmt.Sprintf("ImportBlockWithId: %d resource changes", len(plan.ResourceChanges)))
 
-			for _, rc := range plan.ResourceChanges {
-				if rc.Address != resourceName {
-					// we're only interested in the changes for the resource being imported
-					continue
-				}
-				if rc.Change != nil && rc.Change.Actions != nil {
-					// should this be length checked and used as a condition, if it's a no-op then there shouldn't be any other changes here
-					for _, action := range rc.Change.Actions {
-						if action != "no-op" {
-							var stdout string
-							err = runProviderCommand(ctx, t, func() error {
-								var err error
-								stdout, err = importWd.SavedPlanRawStdout(ctx)
-								return err
-							}, importWd, providers)
-							if err != nil {
-								return fmt.Errorf("retrieving formatted plan output: %w", err)
-							}
-
-							return fmt.Errorf("importing resource %s: expected a no-op resource action, got %q action with plan \nstdout:\n\n%s", rc.Address, action, stdout)
-						}
-					}
-				}
+			if err := requireNoopResourceAction(ctx, t, plan, resourceName, importWd, providers); err != nil {
+				return err
 			}
 		}
 
@@ -386,6 +365,46 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 	}
 
+	return nil
+}
+
+func requireNoopResourceAction(ctx context.Context, t testing.T, plan *tfjson.Plan, resourceName string, importWd *plugintest.WorkingDir, providers *providerFactories) error {
+	t.Helper()
+
+	rc := findResourceChangeInPlan(t, plan, resourceName)
+	if rc == nil || rc.Change == nil || rc.Change.Actions == nil {
+		// does this matter?
+		return nil
+	}
+
+	// should this be length checked and used as a condition, if it's a no-op then there shouldn't be any other changes here
+	for _, action := range rc.Change.Actions {
+		if action != "no-op" {
+			var stdout string
+			err := runProviderCommand(ctx, t, func() error {
+				var err error
+				stdout, err = importWd.SavedPlanRawStdout(ctx)
+				return err
+			}, importWd, providers)
+			if err != nil {
+				return fmt.Errorf("retrieving formatted plan output: %w", err)
+			}
+
+			return fmt.Errorf("importing resource %s: expected a no-op resource action, got %q action with plan \nstdout:\n\n%s", rc.Address, action, stdout)
+		}
+	}
+
+	return nil
+}
+
+func findResourceChangeInPlan(t testing.T, plan *tfjson.Plan, resourceName string) *tfjson.ResourceChange {
+	t.Helper()
+
+	for _, rc := range plan.ResourceChanges {
+		if rc.Address == resourceName {
+			return rc
+		}
+	}
 	return nil
 }
 
