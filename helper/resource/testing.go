@@ -817,9 +817,9 @@ type ConfigPlanChecks struct {
 	PostApplyPostRefresh []plancheck.PlanCheck
 }
 
-// ImportPlanChecks defines the different points in a Import TestStep when plan checks can be run.
+// ImportPlanChecks defines the different points in an Import TestStep when plan checks can be run.
 type ImportPlanChecks struct {
-	// PreApply runs all plan checks in the slice. This occurs before the apply of a Import test is run. This slice cannot be populated
+	// PreApply runs all plan checks in the slice. This occurs after the plan of an Import test is computed. This slice cannot be populated
 	// with TestStep.PlanOnly, as there is no PreApply plan run with that flag set. All errors by plan checks in this slice are aggregated, reported, and will result in a test failure.
 	PreApply []plancheck.PlanCheck
 }
