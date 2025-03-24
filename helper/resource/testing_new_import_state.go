@@ -21,18 +21,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 func requirePlannableImport(t testing.T, versionUnderTest version.Version) error {
 	t.Helper()
 
-	minVersion, err := version.NewVersion("1.5.0")
-	if err != nil {
-		panic("failed to parse version string")
-	}
-
-	if versionUnderTest.LessThan(minVersion) {
-		return fmt.Errorf("ImportState steps require Terraform 1.5.0 or later")
+	if versionUnderTest.LessThan(tfversion.Version1_5_0) {
+		return fmt.Errorf(
+			`ImportState steps using plannable import blocks require Terraform 1.5.0 or later. Either ` +
+				`upgrade the Terraform version running the test or add a ` + "`TerraformVersionChecks`" + ` to ` +
+				`the test case to skip this test.` + "\n\n" +
+				`https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/tfversion-checks#skip-version-checks`)
 	}
 
 	return nil
@@ -49,9 +49,8 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 	}
 
-	{
-		err := requirePlannableImport(t, *helper.TerraformVersion())
-		if err != nil {
+	if step.ImportStateKind != ImportCommandWithId {
+		if err := requirePlannableImport(t, *helper.TerraformVersion()); err != nil {
 			return err
 		}
 	}
