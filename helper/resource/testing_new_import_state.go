@@ -9,6 +9,8 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/hashicorp/go-version"
+
 	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/google/go-cmp/cmp"
@@ -20,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
@@ -242,29 +245,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	// Go through the imported state and verify
 	if step.ImportStateCheck != nil {
 		logging.HelperResourceTrace(ctx, "Using TestStep ImportStateCheck")
-
-		var states []*terraform.InstanceState
-		for address, r := range importState.RootModule().Resources {
-			if strings.HasPrefix(address, "data.") {
-				continue
-			}
-
-			if r.Primary == nil {
-				continue
-			}
-
-			is := r.Primary.DeepCopy() //nolint:staticcheck // legacy usage
-			is.Ephemeral.Type = r.Type // otherwise the check function cannot see the type
-			states = append(states, is)
-		}
-
-		logging.HelperResourceDebug(ctx, "Calling TestStep ImportStateCheck")
-
-		if err := step.ImportStateCheck(states); err != nil {
-			t.Fatal(err)
-		}
-
-		logging.HelperResourceDebug(ctx, "Called TestStep ImportStateCheck")
+		runImportStateCheckFunction(ctx, t, importState, step)
 	}
 
 	// Verify that all the states match
@@ -406,4 +387,52 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	return nil
+}
+
+func appendImportBlock(config string, resourceName string, importID string) string {
+	return config + fmt.Sprintf(``+"\n"+
+		`import {`+"\n"+
+		`	to = %s`+"\n"+
+		`	id = %q`+"\n"+
+		`}`,
+		resourceName, importID)
+}
+
+func requirePlannableImport(t testing.T, versionUnderTest version.Version) error {
+	t.Helper()
+
+	if versionUnderTest.LessThan(tfversion.Version1_5_0) {
+		return fmt.Errorf(
+			`ImportState steps using plannable import blocks require Terraform 1.5.0 or later. Either ` +
+				`upgrade the Terraform version running the test or add a ` + "`TerraformVersionChecks`" + ` to ` +
+				`the test case to skip this test.` + "\n\n" +
+				`https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/tfversion-checks#skip-version-checks`)
+	}
+
+	return nil
+}
+
+func runImportStateCheckFunction(ctx context.Context, t testing.T, importState *terraform.State, step TestStep) {
+	var states []*terraform.InstanceState
+	for address, r := range importState.RootModule().Resources {
+		if strings.HasPrefix(address, "data.") {
+			continue
+		}
+
+		if r.Primary == nil {
+			continue
+		}
+
+		is := r.Primary.DeepCopy() //nolint:staticcheck // legacy usage
+		is.Ephemeral.Type = r.Type // otherwise the check function cannot see the type
+		states = append(states, is)
+	}
+
+	logging.HelperResourceTrace(ctx, "Calling TestStep ImportStateCheck")
+
+	if err := step.ImportStateCheck(states); err != nil {
+		t.Fatal(err)
+	}
+
+	logging.HelperResourceTrace(ctx, "Called TestStep ImportStateCheck")
 }
