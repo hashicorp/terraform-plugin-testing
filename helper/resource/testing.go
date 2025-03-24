@@ -457,13 +457,31 @@ type ExternalProvider struct {
 type ImportStateKind byte
 
 const (
-	// ImportCommandWithId imports the state using the import command
-	ImportCommandWithId ImportStateKind = iota
-	// ImportBlockWithId imports the state using an import block with an ID
-	ImportBlockWithId
+	// ImportCommandWithID imports the state using the import command
+	ImportCommandWithID ImportStateKind = iota
+
+	// ImportBlockWithID imports the state using an import block with an ID
+	ImportBlockWithID
+
 	// ImportBlockWithResourceIdentity imports the state using an import block with a resource identity
 	ImportBlockWithResourceIdentity
 )
+
+func (kind ImportStateKind) plannable() bool {
+	return kind == ImportBlockWithID || kind == ImportBlockWithResourceIdentity
+}
+
+func (kind ImportStateKind) resourceIdentity() bool {
+	return kind == ImportBlockWithResourceIdentity
+}
+
+func (kind ImportStateKind) String() string {
+	return map[ImportStateKind]string{
+		ImportCommandWithID:             "ImportCommandWithID",
+		ImportBlockWithID:               "ImportBlockWithID",
+		ImportBlockWithResourceIdentity: "ImportBlockWithResourceIdentity",
+	}[kind]
+}
 
 // TestStep is a single apply sequence of a test, done within the
 // context of a state.
@@ -967,17 +985,17 @@ func UnitTest(t testing.T, c TestCase) {
 	Test(t, c)
 }
 
-func testResource(c TestStep, state *terraform.State) (*terraform.ResourceState, error) {
+func testResource(name string, state *terraform.State) (*terraform.ResourceState, error) {
 	for _, m := range state.Modules {
 		if len(m.Resources) > 0 {
-			if v, ok := m.Resources[c.ResourceName]; ok {
+			if v, ok := m.Resources[name]; ok {
 				return v, nil
 			}
 		}
 	}
 
 	return nil, fmt.Errorf(
-		"Resource specified by ResourceName couldn't be found: %s", c.ResourceName)
+		"Resource specified by ResourceName couldn't be found: %s", name)
 }
 
 // ComposeTestCheckFunc lets you compose multiple TestCheckFuncs into
