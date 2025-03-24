@@ -39,11 +39,6 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 	}
 
-	resourceName := step.ResourceName
-	if resourceName == "" {
-		t.Fatal("ResourceName is required for an import state test")
-	}
-
 	configRequest := teststep.PrepareConfigurationRequest{
 		Directory: step.ConfigDirectory,
 		File:      step.ConfigFile,
@@ -55,6 +50,11 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}.Exec()
 
 	testStepConfig := teststep.Configuration(configRequest)
+
+	resourceName := step.ResourceName
+	if resourceName == "" {
+		t.Fatal("ResourceName is required for an import state test")
+	}
 
 	// get state from check sequence
 	var state *terraform.State
