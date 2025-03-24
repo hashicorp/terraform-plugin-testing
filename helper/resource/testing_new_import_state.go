@@ -413,6 +413,8 @@ func requirePlannableImport(t testing.T, versionUnderTest version.Version) error
 }
 
 func runImportStateCheckFunction(ctx context.Context, t testing.T, importState *terraform.State, step TestStep) {
+	t.Helper()
+
 	var states []*terraform.InstanceState
 	for address, r := range importState.RootModule().Resources {
 		if strings.HasPrefix(address, "data.") {
