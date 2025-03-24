@@ -6,9 +6,11 @@ package resource
 import (
 	"context"
 	"fmt"
-	tfjson "github.com/hashicorp/terraform-json"
 	"reflect"
 	"strings"
+
+	"github.com/hashicorp/go-version"
+	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/mitchellh/go-testing-interface"
@@ -19,7 +21,22 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
+
+func requirePlannableImport(t testing.T, versionUnderTest version.Version) error {
+	t.Helper()
+
+	if versionUnderTest.LessThan(tfversion.Version1_5_0) {
+		return fmt.Errorf(
+			`ImportState steps using plannable import blocks require Terraform 1.5.0 or later. Either ` +
+				`upgrade the Terraform version running the test or add a ` + "`TerraformVersionChecks`" + ` to ` +
+				`the test case to skip this test.` + "\n\n" +
+				`https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/tfversion-checks#skip-version-checks`)
+	}
+
+	return nil
+}
 
 func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
 	t.Helper()
@@ -29,6 +46,12 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	if step.ImportStateKind != ImportCommandWithId {
 		if step.ConfigFile != nil || step.ConfigDirectory != nil {
 			t.Fatalf("ImportStateKind %q is not supported for config file or directory", step.ImportStateKind)
+		}
+	}
+
+	if step.ImportStateKind != ImportCommandWithId {
+		if err := requirePlannableImport(t, *helper.TerraformVersion()); err != nil {
+			return err
 		}
 	}
 
