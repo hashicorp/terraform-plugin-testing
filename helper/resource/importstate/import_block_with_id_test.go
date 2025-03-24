@@ -92,6 +92,8 @@ func TestTest_TestStep_ImportBlockId_ExpectError(t *testing.T) {
 }
 
 func TestTest_TestStep_ImportBlockId_FailWhenPlannableImportIsNotSupported(t *testing.T) {
+	t.Parallel()
+
 	r.UnitTest(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipAbove(tfversion.Version1_4_0), // ImportBlockWithId requires Terraform 1.5.0 or later
