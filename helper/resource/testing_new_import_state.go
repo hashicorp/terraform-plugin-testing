@@ -188,6 +188,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 	}
 
+	var plan *tfjson.Plan
 	if step.ImportStateKind == ImportBlockWithResourceIdentity || step.ImportStateKind == ImportBlockWithId {
 		var opts []tfexec.PlanOption
 
@@ -199,7 +200,6 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			return err
 		}
 
-		var plan *tfjson.Plan
 		err = runProviderCommand(ctx, t, func() error {
 			var err error
 			logging.HelperResourceDebug(ctx, "Run terraform show")
@@ -240,15 +240,11 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 
 		// TODO compare plan to state from previous step
-		err = runProviderCommand(ctx, t, func() error {
-			var err error
-			logging.HelperResourceDebug(ctx, "Run terraform apply")
-			err = importWd.Apply(ctx)
-			return err
-		}, importWd, providers)
-		if err != nil {
+
+		if err := runPlanChecks(ctx, t, plan, step.ImportPlanChecks.PreApply); err != nil {
 			return err
 		}
+
 	} else {
 		err = runProviderCommand(ctx, t, func() error {
 			logging.HelperResourceDebug(ctx, "Run terraform import")

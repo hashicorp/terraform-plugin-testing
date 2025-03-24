@@ -59,10 +59,6 @@ func Test_TestStep_ImportCommand_AsFirstStep(t *testing.T) {
 					return nil
 				},
 			},
-			{
-				RefreshState: true,
-				Check:        r.TestCheckResourceAttr("examplecloud_container.test", "name", "somevalue"),
-			},
 		},
 	})
 }

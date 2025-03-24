@@ -4,14 +4,15 @@
 package importstate_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -43,25 +44,14 @@ func Test_TestStep_ImportBlock_AsFirstStep(t *testing.T) {
 					location = "westeurope"
 				}`,
 				ImportStatePersist: true,
-				ImportStateCheck: func(states []*terraform.InstanceState) error {
-					if len(states) != 1 {
-						return fmt.Errorf("expected 1 state; got %d", len(states))
-					}
-					if states[0].ID != "westeurope/somevalue" {
-						return fmt.Errorf("unexpected ID: %s", states[0].ID)
-					}
-					if states[0].Attributes["name"] != "somevalue" {
-						return fmt.Errorf("unexpected name: %s", states[0].Attributes["name"])
-					}
-					if states[0].Attributes["location"] != "westeurope" {
-						return fmt.Errorf("unexpected location: %s", states[0].Attributes["location"])
-					}
-					return nil
+				ImportPlanChecks: r.ImportPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("examplecloud_container.test", plancheck.ResourceActionNoop),
+						plancheck.ExpectKnownValue("examplecloud_container.test", tfjsonpath.New("id"), knownvalue.StringExact("westeurope/somevalue")),
+						plancheck.ExpectKnownValue("examplecloud_container.test", tfjsonpath.New("name"), knownvalue.StringExact("somevalue")),
+						plancheck.ExpectKnownValue("examplecloud_container.test", tfjsonpath.New("location"), knownvalue.StringExact("westeurope")),
+					},
 				},
-			},
-			{
-				RefreshState: true,
-				Check:        r.TestCheckResourceAttr("examplecloud_container.test", "name", "somevalue"),
 			},
 		},
 	})

@@ -679,6 +679,13 @@ type TestStep struct {
 	// Terraform version specific logic in provider testing.
 	ImportStateCheck ImportStateCheckFunc
 
+	// ImportPlanChecks allows assertions to be made against the plan file at different points of a plannable import test using a plan check.
+	// Custom plan checks can be created by implementing the [PlanCheck] interface, or by using a PlanCheck implementation from the provided [plancheck] package
+	//
+	// [PlanCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#PlanCheck
+	// [plancheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck
+	ImportPlanChecks ImportPlanChecks
+
 	// ImportStateVerify, if true, will also check that the state values
 	// that are finally put into the state after import match for all the
 	// IDs returned by the Import.  Note that this checks for strict equality
@@ -808,6 +815,13 @@ type ConfigPlanChecks struct {
 	// PostApplyPostRefresh runs all plan checks in the slice. This occurs after the apply and refresh of a Config test are run.
 	// All errors by plan checks in this slice are aggregated, reported, and will result in a test failure.
 	PostApplyPostRefresh []plancheck.PlanCheck
+}
+
+// ImportPlanChecks defines the different points in a Import TestStep when plan checks can be run.
+type ImportPlanChecks struct {
+	// PreApply runs all plan checks in the slice. This occurs before the apply of a Import test is run. This slice cannot be populated
+	// with TestStep.PlanOnly, as there is no PreApply plan run with that flag set. All errors by plan checks in this slice are aggregated, reported, and will result in a test failure.
+	PreApply []plancheck.PlanCheck
 }
 
 // RefreshPlanChecks defines the different points in a Refresh TestStep when plan checks can be run.
