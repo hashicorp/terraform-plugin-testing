@@ -17,7 +17,7 @@ import (
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func Test_TestStep_ImportCommand_AsFirstStep(t *testing.T) {
+func Test_ImportCommand_AsFirstStep(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
