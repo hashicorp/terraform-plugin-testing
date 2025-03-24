@@ -254,6 +254,10 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			identifierAttribute = "id"
 		}
 
+		if len(newResources) == 0 {
+			return fmt.Errorf("ImportStateVerify: no new resources imported")
+		}
+
 		for _, r := range newResources {
 			rIdentifier, ok := r.Primary.Attributes[identifierAttribute]
 

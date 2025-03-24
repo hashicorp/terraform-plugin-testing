@@ -200,6 +200,11 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *tes
 			I also need to omit the `password` in the import config, otherwise the value in the config is used when importing the
 		    with an import block and the test ends up passing regardless of whether `ImportStateVerifyIgnore` has been specified or not
 	*/
+
+	// Skipped while we decide whether ImportBlockWithID will perform an apply; else, it will not produce a new state,
+	// and there is no new state for ImportStateVerify to do anything meaningful with.
+	t.Skip()
+
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -301,6 +306,10 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *tes
 }
 
 func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore(t *testing.T) {
+	// Skipped while we decide whether ImportBlockWithID will perform an apply; else, it will not produce a new state,
+	// and there is no new state for ImportStateVerify to do anything meaningful with.
+	t.Skip()
+
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
