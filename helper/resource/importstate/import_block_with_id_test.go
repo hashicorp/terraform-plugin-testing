@@ -92,10 +92,10 @@ func TestTest_TestStep_ImportBlockId_ExpectError(t *testing.T) {
 }
 
 func TestTest_TestStep_ImportBlockId_FailWhenPlannableImportIsNotSupported(t *testing.T) {
-	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
-	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.4.7") // Plannable import is supported in Terraform 1.5.0 and later
-
 	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipAbove(tfversion.Version1_4_0), // ImportBlockWithId requires Terraform 1.5.0 or later
+		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				Resources: map[string]testprovider.Resource{
