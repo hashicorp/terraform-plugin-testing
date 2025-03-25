@@ -120,7 +120,8 @@ func IdentityValuetoDynamicValue(schema *tfprotov6.ResourceIdentitySchema, value
 	return &dynamicValue, nil
 }
 
-// TODO: This should be replaced by a method from plugin-go -> (*tfprotov6.ResourceIdentitySchema).ValueType()
+// TODO: This should be replaced by the `ValueType` method from plugin-go:
+// https://github.com/hashicorp/terraform-plugin-go/pull/497
 func getIdentitySchemaValueType(schema *tfprotov6.ResourceIdentitySchema) tftypes.Type {
 	if schema == nil || schema.IdentityAttributes == nil {
 		return tftypes.Object{
@@ -148,7 +149,8 @@ func getIdentitySchemaValueType(schema *tfprotov6.ResourceIdentitySchema) tftype
 	}
 }
 
-// TODO: This should be replaced by a method from plugin-go -> (*tfprotov6.ResourceIdentitySchemaAttribute).ValueType()
+// TODO: This should be replaced by the `ValueType` method from plugin-go:
+// https://github.com/hashicorp/terraform-plugin-go/pull/497
 func getIdentityAttributeValueType(attr *tfprotov6.ResourceIdentitySchemaAttribute) tftypes.Type {
 	if attr == nil {
 		return nil
