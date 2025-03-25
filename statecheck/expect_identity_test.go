@@ -68,7 +68,7 @@ func TestExpectIdentity_CheckState_No_Terraform_Identity_Support(t *testing.T) {
 				Config: `resource "examplecloud_thing" "one" {}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectIdentity(
-						"examplecloud_thing.two",
+						"examplecloud_thing.one",
 						map[string]knownvalue.Check{
 							"id": knownvalue.StringExact("id-123"),
 							"list_of_numbers": knownvalue.ListExact(
