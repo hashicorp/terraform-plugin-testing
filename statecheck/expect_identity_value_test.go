@@ -47,6 +47,65 @@ func TestExpectIdentityValue_CheckState_ResourceNotFound(t *testing.T) {
 	})
 }
 
+func TestExpectIdentityValue_CheckState_No_Terraform_Identity_Support(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+			tfversion.SkipAbove(tfversion.Version1_11_0),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			// Resource support identity, but the Terraform versions running will not.
+			"examplecloud": examplecloudProviderWithResourceIdentity(),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "examplecloud_thing" "one" {}`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectIdentityValue(
+						"examplecloud_thing.one",
+						tfjsonpath.New("id"),
+						knownvalue.StringExact("id-123"),
+					),
+				},
+				ExpectError: regexp.MustCompile(`examplecloud_thing.one - Identity not found in state. Either the resource ` +
+					`does not support identity or the Terraform version running the test does not support identity. \(must be v1.12\+\)`,
+				),
+			},
+		},
+	})
+}
+
+func TestExpectIdentityValue_CheckState_No_Identity(t *testing.T) {
+	t.Parallel()
+
+	r.Test(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_12_0),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			// Resource does not support identity
+			"examplecloud": examplecloudProviderNoIdentity(),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `resource "examplecloud_thing" "one" {}`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectIdentityValue(
+						"examplecloud_thing.one",
+						tfjsonpath.New("id"),
+						knownvalue.StringExact("id-123"),
+					),
+				},
+				ExpectError: regexp.MustCompile(`examplecloud_thing.one - Identity not found in state. Either the resource ` +
+					`does not support identity or the Terraform version running the test does not support identity. \(must be v1.12\+\)`,
+				),
+			},
+		},
+	})
+}
+
 func TestExpectIdentityValue_CheckState_String(t *testing.T) {
 	t.Parallel()
 
@@ -137,13 +196,23 @@ func TestExpectIdentityValue_CheckState_List(t *testing.T) {
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectIdentityValue(
 						"examplecloud_thing.one",
-						tfjsonpath.New("list_of_numbers"),
-						knownvalue.ListExact([]knownvalue.Check{
-							knownvalue.Int64Exact(1),
-							knownvalue.Int64Exact(2),
-							knownvalue.Int64Exact(3),
-							knownvalue.Int64Exact(4),
-						}),
+						tfjsonpath.New("list_of_numbers").AtSliceIndex(0),
+						knownvalue.Int64Exact(1),
+					),
+					statecheck.ExpectIdentityValue(
+						"examplecloud_thing.one",
+						tfjsonpath.New("list_of_numbers").AtSliceIndex(1),
+						knownvalue.Int64Exact(2),
+					),
+					statecheck.ExpectIdentityValue(
+						"examplecloud_thing.one",
+						tfjsonpath.New("list_of_numbers").AtSliceIndex(2),
+						knownvalue.Int64Exact(3),
+					),
+					statecheck.ExpectIdentityValue(
+						"examplecloud_thing.one",
+						tfjsonpath.New("list_of_numbers").AtSliceIndex(3),
+						knownvalue.Int64Exact(4),
 					),
 				},
 			},
@@ -292,6 +361,52 @@ func examplecloudProviderWithResourceIdentity() func() (tfprotov6.ProviderServer
 							},
 						},
 					},
+				},
+				SchemaResponse: &resource.SchemaResponse{
+					Schema: &tfprotov6.Schema{
+						Block: &tfprotov6.SchemaBlock{
+							Attributes: []*tfprotov6.SchemaAttribute{
+								{
+									Name:     "name",
+									Type:     tftypes.String,
+									Computed: true,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+}
+
+func examplecloudProviderNoIdentity() func() (tfprotov6.ProviderServer, error) {
+	return providerserver.NewProviderServer(testprovider.Provider{
+		Resources: map[string]testprovider.Resource{
+			"examplecloud_thing": {
+				CreateResponse: &resource.CreateResponse{
+					NewState: tftypes.NewValue(
+						tftypes.Object{
+							AttributeTypes: map[string]tftypes.Type{
+								"name": tftypes.String,
+							},
+						},
+						map[string]tftypes.Value{
+							"name": tftypes.NewValue(tftypes.String, "test value"),
+						},
+					),
+				},
+				ReadResponse: &resource.ReadResponse{
+					NewState: tftypes.NewValue(
+						tftypes.Object{
+							AttributeTypes: map[string]tftypes.Type{
+								"name": tftypes.String,
+							},
+						},
+						map[string]tftypes.Value{
+							"name": tftypes.NewValue(tftypes.String, "test value"),
+						},
+					),
 				},
 				SchemaResponse: &resource.SchemaResponse{
 					Schema: &tfprotov6.Schema{
