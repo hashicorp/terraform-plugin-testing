@@ -21,6 +21,7 @@ type Resource struct {
 	PlanChangeFunc func(context.Context, resource.PlanChangeRequest, *resource.PlanChangeResponse)
 
 	ReadResponse           *resource.ReadResponse
+	IdentitySchemaResponse *resource.IdentitySchemaResponse
 	SchemaResponse         *resource.SchemaResponse
 	UpdateResponse         *resource.UpdateResponse
 	UpgradeStateResponse   *resource.UpgradeStateResponse
@@ -31,6 +32,7 @@ func (r Resource) Create(ctx context.Context, req resource.CreateRequest, resp *
 	if r.CreateResponse != nil {
 		resp.Diagnostics = r.CreateResponse.Diagnostics
 		resp.NewState = r.CreateResponse.NewState
+		resp.NewIdentity = r.CreateResponse.NewIdentity
 	}
 }
 
@@ -44,6 +46,7 @@ func (r Resource) ImportState(ctx context.Context, req resource.ImportStateReque
 	if r.ImportStateResponse != nil {
 		resp.Diagnostics = r.ImportStateResponse.Diagnostics
 		resp.State = r.ImportStateResponse.State
+		resp.Identity = r.ImportStateResponse.Identity
 	}
 }
 
@@ -57,6 +60,14 @@ func (r Resource) Read(ctx context.Context, req resource.ReadRequest, resp *reso
 	if r.ReadResponse != nil {
 		resp.Diagnostics = r.ReadResponse.Diagnostics
 		resp.NewState = r.ReadResponse.NewState
+		resp.NewIdentity = r.ReadResponse.NewIdentity
+	}
+}
+
+func (r Resource) IdentitySchema(ctx context.Context, req resource.IdentitySchemaRequest, resp *resource.IdentitySchemaResponse) {
+	if r.IdentitySchemaResponse != nil {
+		resp.Diagnostics = r.IdentitySchemaResponse.Diagnostics
+		resp.Schema = r.IdentitySchemaResponse.Schema
 	}
 }
 
@@ -71,6 +82,7 @@ func (r Resource) Update(ctx context.Context, req resource.UpdateRequest, resp *
 	if r.UpdateResponse != nil {
 		resp.Diagnostics = r.UpdateResponse.Diagnostics
 		resp.NewState = r.UpdateResponse.NewState
+		resp.NewIdentity = r.UpdateResponse.NewIdentity
 	}
 }
 
