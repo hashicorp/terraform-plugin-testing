@@ -48,12 +48,17 @@ func VerifyImportPlan(plan *tfjson.Plan, state *terraform.State) error {
 			if !ok {
 				panic(fmt.Sprintf("unexpected type %T", v))
 			}
+
 			oldResource := oldResources[rc.Address]
 			if oldResource == nil {
 				// does this matter?
 				return fmt.Errorf("importing resource %s: expected resource %s to exist in known state", rc.Address, rc.Change.Importing.ID)
 			}
+
 			attr, ok := oldResource.Primary.Attributes[k]
+			if !ok {
+				return fmt.Errorf("importing resource %s: expected %s in known state to exist", rc.Address, k)
+			}
 			if attr != vs {
 				return fmt.Errorf("importing resource %s: expected %s in known state to be %q, got %q", rc.Address, k, oldResource.Primary.Attributes[k], vs)
 			}
