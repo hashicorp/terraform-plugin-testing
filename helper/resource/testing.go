@@ -17,6 +17,7 @@ import (
 
 	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 
@@ -457,13 +458,46 @@ type ExternalProvider struct {
 type ImportStateKind byte
 
 const (
-	// ImportCommandWithId imports the state using the import command
-	ImportCommandWithId ImportStateKind = iota
-	// ImportBlockWithId imports the state using an import block with an ID
-	ImportBlockWithId
+	// ImportCommandWithID imports the state using the import command
+	ImportCommandWithID ImportStateKind = iota
+
+	// ImportBlockWithID imports the state using an import block with an ID
+	ImportBlockWithID
+
 	// ImportBlockWithResourceIdentity imports the state using an import block with a resource identity
 	ImportBlockWithResourceIdentity
 )
+
+// plannable returns true if this ImportStateKind uses the plannable import feature
+func (kind ImportStateKind) plannable() bool {
+	return kind == ImportBlockWithID || kind == ImportBlockWithResourceIdentity
+}
+
+// resourceIdentity returns true if this ImportStateKind uses resource identity
+func (kind ImportStateKind) resourceIdentity() bool {
+	return kind == ImportBlockWithResourceIdentity
+}
+
+// terraformVersion returns the minimum Terraform version that supports
+// the features required for this ImportStateKind.
+func (kind ImportStateKind) terraformVersion() *version.Version {
+	switch kind {
+	case ImportBlockWithID:
+		return tfversion.Version1_5_0
+	case ImportBlockWithResourceIdentity:
+		return tfversion.Version1_12_0
+	default:
+		return tfversion.Version0_12_26 // Default to the earlist version supported by the testing framework
+	}
+}
+
+func (kind ImportStateKind) String() string {
+	return map[ImportStateKind]string{
+		ImportCommandWithID:             "ImportCommandWithID",
+		ImportBlockWithID:               "ImportBlockWithID",
+		ImportBlockWithResourceIdentity: "ImportBlockWithResourceIdentity",
+	}[kind]
+}
 
 // TestStep is a single apply sequence of a test, done within the
 // context of a state.
@@ -679,6 +713,30 @@ type TestStep struct {
 	// Terraform version specific logic in provider testing.
 	ImportStateCheck ImportStateCheckFunc
 
+	// ImportPlanChecks allows assertions to be made against the plan file at different points of a plannable import test using a plan check.
+	// Custom plan checks can be created by implementing the [PlanCheck] interface, or by using a PlanCheck implementation from the provided [plancheck] package
+	//
+	// [PlanCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck#PlanCheck
+	// [plancheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck
+	ImportPlanChecks ImportPlanChecks
+
+	// ImportPlanVerify checks that a generated plan for a plannable import
+	// (ImportBlockWithID or ImportBlockWithResourceIdentity) agrees with
+	// the known state of a previous test stepstate values
+	// that are finally put into the state after import match for all the
+	// IDs returned by the Import.  Note that this checks for strict equality
+	// and does not respect DiffSuppressFunc or CustomizeDiff.
+	//
+	// By default, the prior resource state and import resource state are
+	// matched by the "id" attribute. If the "id" attribute is not implemented
+	// or another attribute more uniquely identifies the resource, set the
+	// ImportStateVerifyIdentifierAttribute field to adjust the attribute for
+	// matching.
+	//
+	// If certain attributes cannot be correctly imported, set the
+	// ImportStateVerifyIgnore field.
+	ImportPlanVerify bool
+
 	// ImportStateVerify, if true, will also check that the state values
 	// that are finally put into the state after import match for all the
 	// IDs returned by the Import.  Note that this checks for strict equality
@@ -808,6 +866,13 @@ type ConfigPlanChecks struct {
 	// PostApplyPostRefresh runs all plan checks in the slice. This occurs after the apply and refresh of a Config test are run.
 	// All errors by plan checks in this slice are aggregated, reported, and will result in a test failure.
 	PostApplyPostRefresh []plancheck.PlanCheck
+}
+
+// ImportPlanChecks defines the different points in an Import TestStep when plan checks can be run.
+type ImportPlanChecks struct {
+	// PreApply runs all plan checks in the slice. This occurs after the plan of an Import test is computed. This slice cannot be populated
+	// with TestStep.PlanOnly, as there is no PreApply plan run with that flag set. All errors by plan checks in this slice are aggregated, reported, and will result in a test failure.
+	PreApply []plancheck.PlanCheck
 }
 
 // RefreshPlanChecks defines the different points in a Refresh TestStep when plan checks can be run.
@@ -953,17 +1018,17 @@ func UnitTest(t testing.T, c TestCase) {
 	Test(t, c)
 }
 
-func testResource(c TestStep, state *terraform.State) (*terraform.ResourceState, error) {
+func testResource(name string, state *terraform.State) (*terraform.ResourceState, error) {
 	for _, m := range state.Modules {
 		if len(m.Resources) > 0 {
-			if v, ok := m.Resources[c.ResourceName]; ok {
+			if v, ok := m.Resources[name]; ok {
 				return v, nil
 			}
 		}
 	}
 
 	return nil, fmt.Errorf(
-		"Resource specified by ResourceName couldn't be found: %s", c.ResourceName)
+		"Resource specified by ResourceName couldn't be found: %s", name)
 }
 
 // ComposeTestCheckFunc lets you compose multiple TestCheckFuncs into

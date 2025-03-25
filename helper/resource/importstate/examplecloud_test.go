@@ -75,6 +75,18 @@ func examplecloudResource() testprovider.Resource {
 				},
 			),
 		},
+		IdentitySchemaResponse: &resource.IdentitySchemaResponse{
+			Schema: &tfprotov6.ResourceIdentitySchema{
+				Version: 1,
+				IdentityAttributes: []*tfprotov6.ResourceIdentitySchemaAttribute{
+					{
+						Name:              "id",
+						Type:              tftypes.String,
+						RequiredForImport: true,
+					},
+				},
+			},
+		},
 		ImportStateResponse: &resource.ImportStateResponse{
 			State: tftypes.NewValue(
 				tftypes.Object{
