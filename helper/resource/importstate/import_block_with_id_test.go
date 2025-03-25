@@ -44,10 +44,9 @@ func Test_TestStep_ImportBlockId(t *testing.T) {
 				}`,
 			},
 			{
-				ResourceName:      "examplecloud_container.test",
-				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithID,
-				ImportStateVerify: true,
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
 			},
 		},
 	})
@@ -81,11 +80,10 @@ func TestTest_TestStep_ImportBlockId_ExpectError(t *testing.T) {
 					location = "eastus"
 					name     = "somevalue"
 				}`,
-				ResourceName:      "examplecloud_container.test",
-				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithID,
-				ImportStateVerify: true,
-				ExpectError:       regexp.MustCompile(`importing resource examplecloud_container.test: expected a no-op resource action, got "update" action with plan(.?)`),
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
+				ExpectError:     regexp.MustCompile(`importing resource examplecloud_container.test: expected a no-op resource action, got "update" action with plan(.?)`),
 			},
 		},
 	})
@@ -120,11 +118,10 @@ func TestTest_TestStep_ImportBlockId_FailWhenPlannableImportIsNotSupported(t *te
 					location = "eastus"
 					name     = "somevalue"
 				}`,
-				ResourceName:      "examplecloud_container.test",
-				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithID,
-				ImportStateVerify: true,
-				ExpectError:       regexp.MustCompile(`Terraform 1.5.0`),
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
+				ExpectError:     regexp.MustCompile(`Terraform 1.5.0`),
 			},
 		},
 	})

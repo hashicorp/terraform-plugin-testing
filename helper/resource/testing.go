@@ -700,6 +700,8 @@ type TestStep struct {
 	// [plancheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck
 	ImportPlanChecks ImportPlanChecks
 
+	ImportPlanVerify bool
+
 	// ImportStateVerify, if true, will also check that the state values
 	// that are finally put into the state after import match for all the
 	// IDs returned by the Import.  Note that this checks for strict equality

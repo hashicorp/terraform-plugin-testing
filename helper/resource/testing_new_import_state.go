@@ -72,7 +72,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	// Determine the ID to import
-	var importId string
+	var importId string //nolint:revive
 	switch {
 	case step.ImportStateIdFunc != nil:
 		logging.HelperResourceTrace(ctx, "Using TestStep ImportStateIdFunc for import identifier")
@@ -185,15 +185,19 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			return err
 		}
 
-		if plan.ResourceChanges != nil {
+		if len(plan.ResourceChanges) > 0 {
 			logging.HelperResourceDebug(ctx, fmt.Sprintf("ImportBlockWithId: %d resource changes", len(plan.ResourceChanges)))
 
 			if err := requireNoopResourceAction(ctx, t, plan, resourceName, importWd, providers); err != nil {
 				return err
 			}
-		}
 
-		// TODO compare plan to state from previous step
+			if step.ImportPlanVerify {
+				if err := teststep.VerifyImportPlan(plan, state); err != nil {
+					return err
+				}
+			}
+		}
 
 		if err := runPlanChecks(ctx, t, plan, step.ImportPlanChecks.PreApply); err != nil {
 			return err
