@@ -57,9 +57,12 @@ func (e expectIdentityValue) CheckState(ctx context.Context, req CheckStateReque
 		return
 	}
 
-	// TODO: Write special error messages/tests for when identity doesn't exist at all?
-	// 1. Identity isn't supported by resource (but Terraform supports it).
-	// 2. Identity isn't support by Terraform, but the resource supports it.
+	if resource.IdentitySchemaVersion == nil || len(resource.IdentityValues) == 0 {
+		resp.Error = fmt.Errorf("%s - Identity not found in state. Either the resource does not support identity or the Terraform version running the test does not support identity. (must be v1.12+)", e.resourceAddress)
+
+		return
+	}
+
 	result, err := tfjsonpath.Traverse(resource.IdentityValues, e.attributePath)
 
 	if err != nil {
