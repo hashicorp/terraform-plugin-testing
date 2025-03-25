@@ -252,7 +252,7 @@ func (s ProviderServer) ApplyResourceChange(ctx context.Context, req *tfprotov6.
 		}
 
 		resp.NewIdentity = &tfprotov6.ResourceIdentityData{
-			IdentityData: newIdentity,
+			IdentityData: newIdentityVal,
 		}
 	}
 
