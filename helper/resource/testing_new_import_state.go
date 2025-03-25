@@ -24,35 +24,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func requirePlannableImport(t testing.T, versionUnderTest version.Version) error {
-	t.Helper()
-
-	if versionUnderTest.LessThan(tfversion.Version1_5_0) {
-		return fmt.Errorf(
-			`ImportState steps using plannable import blocks require Terraform 1.5.0 or later. Either ` +
-				`upgrade the Terraform version running the test or add a ` + "`TerraformVersionChecks`" + ` to ` +
-				`the test case to skip this test.` + "\n\n" +
-				`https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/tfversion-checks#skip-version-checks`)
-	}
-
-	return nil
-}
-
 func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
 	t.Helper()
 
-	// Currently import modes `ImportBlockWithId` and `ImportBlockWithResourceIdentity` cannot support config file or directory
-	// since these modes append the import block to the configuration automatically
-	if step.ImportStateKind != ImportCommandWithId {
-		if step.ConfigFile != nil || step.ConfigDirectory != nil {
-			t.Fatalf("ImportStateKind %q is not supported for config file or directory", step.ImportStateKind)
-		}
-	}
-
-	if step.ImportStateKind != ImportCommandWithId {
-		if err := requirePlannableImport(t, *helper.TerraformVersion()); err != nil {
-			return err
-		}
+	// step.ImportStateKind implicitly defaults to the zero-value (ImportCommandWithID) for backward compatibility
+	kind := step.ImportStateKind
+	// Instead of calling [t.Fatal], return an error. This package's unit tests can use [TestStep.ExpectError] to match on the error message.
+	// An alternative, [plugintest.TestExpectTFatal], does not have access to logged error messages, so it is open to false positives on this
+	// complex code path.
+	if err := checkTerraformVersion(t, kind, *helper.TerraformVersion()); err != nil {
+		return err
 	}
 
 	configRequest := teststep.PrepareConfigurationRequest{
@@ -132,19 +113,12 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			importConfig = cfgRaw
 		}
 
-		// Update the test config dependent on the kind of import test being performed
-		switch step.ImportStateKind {
-		case ImportBlockWithResourceIdentity:
-			t.Fatalf("TODO implement me")
-		case ImportBlockWithId:
-			importConfig += fmt.Sprintf(`
-			import {
-				to = %s
-				id = %q
+		if kind.plannable() {
+			if kind.resourceIdentity() {
+				importConfig = appendImportWithResourceIDBlock(importConfig, resourceName, importId)
+			} else {
+				importConfig = appendImportWithIDBlock(importConfig, resourceName, importId)
 			}
-		`, step.ResourceName, importId)
-		default:
-			// Not an import block test so nothing to do here
 		}
 
 		confRequest := teststep.PrepareConfigurationRequest{
@@ -425,4 +399,105 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	return nil
+}
+
+func requireNoopResourceAction(ctx context.Context, t testing.T, plan *tfjson.Plan, resourceName string, importWd *plugintest.WorkingDir, providers *providerFactories) error {
+	t.Helper()
+
+	rc := findResourceChangeInPlan(t, plan, resourceName)
+	if rc == nil || rc.Change == nil || rc.Change.Actions == nil {
+		// does this matter?
+		return nil
+	}
+
+	// should this be length checked and used as a condition, if it's a no-op then there shouldn't be any other changes here
+	for _, action := range rc.Change.Actions {
+		if action != "no-op" {
+			var stdout string
+			err := runProviderCommand(ctx, t, func() error {
+				var err error
+				stdout, err = importWd.SavedPlanRawStdout(ctx)
+				return err
+			}, importWd, providers)
+			if err != nil {
+				return fmt.Errorf("retrieving formatted plan output: %w", err)
+			}
+
+			return fmt.Errorf("importing resource %s: expected a no-op resource action, got %q action with plan \nstdout:\n\n%s", rc.Address, action, stdout)
+		}
+	}
+
+	return nil
+}
+
+func findResourceChangeInPlan(t testing.T, plan *tfjson.Plan, resourceName string) *tfjson.ResourceChange {
+	t.Helper()
+
+	for _, rc := range plan.ResourceChanges {
+		if rc.Address == resourceName {
+			return rc
+		}
+	}
+	return nil
+}
+
+func appendImportWithIDBlock(config string, resourceName string, importID string) string {
+	return config + fmt.Sprintf(``+"\n"+
+		`import {`+"\n"+
+		`	to = %s`+"\n"+
+		`	id = %q`+"\n"+
+		`}`,
+		resourceName, importID)
+}
+
+func appendImportWithResourceIDBlock(config string, resourceName string, importID string) string {
+	return config + fmt.Sprintf(``+"\n"+
+		`import {`+"\n"+
+		`	to = %s`+"\n"+
+		`	identity = {`+"\n"+
+		`         // Add identity attributes here`+"\n"+
+		`   }`+"\n"+
+		`}`+"\n",
+		resourceName) //, importID)
+}
+
+func checkTerraformVersion(t testing.T, kind ImportStateKind, versionUnderTest version.Version) error {
+	t.Helper()
+
+	if versionUnderTest.Core().LessThan(kind.terraformVersion()) {
+		return fmt.Errorf(
+			`%s steps require Terraform %s. Detected Terraform %s. Either upgrade the Terraform version running the test `+
+				`or add `+"`TerraformVersionChecks`"+` to the test case to skip this test.`+"\n\n"+
+				`https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/tfversion-checks#skip-version-checks`,
+			kind, kind.terraformVersion(), versionUnderTest)
+	}
+
+	return nil
+}
+
+func runImportStateCheckFunction(ctx context.Context, t testing.T, importState *terraform.State, step TestStep) {
+	t.Helper()
+
+	var states []*terraform.InstanceState
+	for address, r := range importState.RootModule().Resources {
+		if strings.HasPrefix(address, "data.") {
+			continue
+		}
+
+		if r.Primary == nil {
+			continue
+		}
+
+		is := r.Primary.DeepCopy() //nolint:staticcheck // legacy usage
+		is.Ephemeral.Type = r.Type // otherwise the check function cannot see the type
+		states = append(states, is)
+	}
+
+	logging.HelperResourceTrace(ctx, "Calling TestStep ImportStateCheck")
+
+	if err := step.ImportStateCheck(states); err != nil {
+		t.Fatal(err)
+	}
+
+	logging.HelperResourceTrace(ctx, "Called TestStep ImportStateCheck")
 }

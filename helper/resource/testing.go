@@ -17,6 +17,7 @@ import (
 
 	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 
@@ -457,13 +458,47 @@ type ExternalProvider struct {
 type ImportStateKind byte
 
 const (
-	// ImportCommandWithId imports the state using the import command
-	ImportCommandWithId ImportStateKind = iota
-	// ImportBlockWithId imports the state using an import block with an ID
-	ImportBlockWithId
+	// ImportCommandWithID imports the state using the import command
+	ImportCommandWithID ImportStateKind = iota
+
+	// ImportBlockWithID imports the state using an import block with an ID
+	ImportBlockWithID
+
 	// ImportBlockWithResourceIdentity imports the state using an import block with a resource identity
 	ImportBlockWithResourceIdentity
 )
+
+// plannable returns true if this ImportStateKind uses the plannable import feature
+func (kind ImportStateKind) plannable() bool {
+	return kind == ImportBlockWithID || kind == ImportBlockWithResourceIdentity
+}
+
+// resourceIdentity returns true if this ImportStateKind uses resource identity
+func (kind ImportStateKind) resourceIdentity() bool {
+	return kind == ImportBlockWithResourceIdentity
+}
+
+// terraformVersion returns the minimum Terraform version that supports
+// the features required for this ImportStateKind.
+func (kind ImportStateKind) terraformVersion() *version.Version {
+	switch kind {
+	case ImportBlockWithID:
+		return tfversion.Version1_5_0
+	case ImportBlockWithResourceIdentity:
+		return tfversion.Version1_12_0
+	default:
+		return tfversion.Version0_12_26 // Default to the earlist version supported by the testing framework
+	}
+
+}
+
+func (kind ImportStateKind) String() string {
+	return map[ImportStateKind]string{
+		ImportCommandWithID:             "ImportCommandWithID",
+		ImportBlockWithID:               "ImportBlockWithID",
+		ImportBlockWithResourceIdentity: "ImportBlockWithResourceIdentity",
+	}[kind]
+}
 
 // TestStep is a single apply sequence of a test, done within the
 // context of a state.
