@@ -198,7 +198,7 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *tes
 		    with an import block and the test ends up passing regardless of whether `ImportStateVerifyIgnore` has been specified or not
 	*/
 
-	// Skipped while we decide whether ImportBlockWithID will perform an apply; else, it will not produce a new state,
+	// In prerelease, we are choosing that ImportBlockWithID will not perform an apply, so it will not produce a new state,
 	// and there is no new state for ImportStateVerify to do anything meaningful with.
 	t.Skip()
 
@@ -303,7 +303,7 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *tes
 }
 
 func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore(t *testing.T) {
-	// Skipped while we decide whether ImportBlockWithID will perform an apply; else, it will not produce a new state,
+	// In prerelease, we are choosing that ImportBlockWithID will not perform an apply, so it will not produce a new state,
 	// and there is no new state for ImportStateVerify to do anything meaningful with.
 	t.Skip()
 
