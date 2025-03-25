@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
@@ -27,18 +26,6 @@ func Test_ResourceIdentity(t *testing.T) {
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				Resources: map[string]testprovider.Resource{
 					"examplecloud_container": examplecloudResource(),
-				},
-				ResourceIdentitySchemas: map[string]*tfprotov6.ResourceIdentitySchema{
-					"examplecloud_container": {
-						Version: 1,
-						IdentityAttributes: []*tfprotov6.ResourceIdentitySchemaAttribute{
-							{
-								Name:              "id",
-								Type:              tftypes.String,
-								RequiredForImport: true,
-							},
-						},
-					},
 				},
 			}),
 		},
