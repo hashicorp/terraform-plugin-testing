@@ -489,6 +489,7 @@ func (kind ImportStateKind) terraformVersion() *version.Version {
 	default:
 		return tfversion.Version0_12_26 // Default to the earlist version supported by the testing framework
 	}
+}
 
 func (kind ImportStateKind) String() string {
 	return map[ImportStateKind]string{

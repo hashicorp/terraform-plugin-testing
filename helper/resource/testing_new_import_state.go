@@ -446,7 +446,7 @@ func checkTerraformVersion(t testing.T, kind ImportStateKind, versionUnderTest v
 			`%s steps require Terraform %s. Detected Terraform %s. Either upgrade the Terraform version running the test `+
 				`or add `+"`TerraformVersionChecks`"+` to the test case to skip this test.`+"\n\n"+
 				`https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/tfversion-checks#skip-version-checks`,
-			kind, kind.terraformVersion(), versionUnderTest)
+			kind, kind.terraformVersion(), versionUnderTest.String())
 	}
 
 	return nil
