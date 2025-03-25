@@ -243,7 +243,7 @@ func (s ProviderServer) ApplyResourceChange(ctx context.Context, req *tfprotov6.
 	}
 
 	if newIdentity != nil {
-		newIdentity, diag := IdentityValuetoDynamicValue(identitySchemaResp.Schema, *newIdentity)
+		newIdentityVal, diag := IdentityValuetoDynamicValue(identitySchemaResp.Schema, *newIdentity)
 
 		if diag != nil {
 			resp.Diagnostics = append(resp.Diagnostics, diag)
