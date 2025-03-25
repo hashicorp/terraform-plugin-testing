@@ -37,10 +37,10 @@ func Test_ImportBlock_InConfigFile(t *testing.T) {
 				},
 			},
 			{
-				ResourceName:    "examplecloud_container.test",
-				ImportState:     true,
-				ImportStateKind: r.ImportBlockWithID,
-				// ImportStateVerify: true,
+				ResourceName:     "examplecloud_container.test",
+				ImportState:      true,
+				ImportStateKind:  r.ImportBlockWithID,
+				ImportPlanVerify: true,
 				ConfigFile: func(config.TestStepConfigRequest) string {
 					return `testdata/2/examplecloud_container_import.tf`
 				},

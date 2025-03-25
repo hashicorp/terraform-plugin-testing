@@ -37,10 +37,10 @@ func Test_ImportBlock_InConfigDirectory(t *testing.T) {
 				},
 			},
 			{
-				ResourceName:    "examplecloud_container.test",
-				ImportState:     true,
-				ImportStateKind: r.ImportBlockWithID,
-				// ImportStateVerify: true,
+				ResourceName:     "examplecloud_container.test",
+				ImportState:      true,
+				ImportStateKind:  r.ImportBlockWithID,
+				ImportPlanVerify: true,
 				ConfigDirectory: func(config.TestStepConfigRequest) string {
 					return `testdata/2`
 				},
