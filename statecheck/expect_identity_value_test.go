@@ -193,6 +193,12 @@ func TestExpectIdentityValue_CheckState_List(t *testing.T) {
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_12_0),
+			// TODO: There is currently a bug in Terraform v1.12.0-alpha20250319 that causes a panic
+			// when refreshing a resource that has an identity stored via protocol v6.
+			//
+			// We can remove this skip once the bug fix is merged/released:
+			// - https://github.com/hashicorp/terraform/pull/36756
+			tfversion.SkipIf(version.Must(version.NewVersion("1.12.0-alpha20250319"))),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": examplecloudProviderWithResourceIdentity(),
