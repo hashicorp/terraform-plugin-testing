@@ -57,6 +57,9 @@ func (e expectIdentityValue) CheckState(ctx context.Context, req CheckStateReque
 		return
 	}
 
+	// TODO: Write special error messages/tests for when identity doesn't exist at all?
+	// 1. Identity isn't supported by resource (but Terraform supports it).
+	// 2. Identity isn't support by Terraform, but the resource supports it.
 	result, err := tfjsonpath.Traverse(resource.IdentityValues, e.attributePath)
 
 	if err != nil {
@@ -72,8 +75,10 @@ func (e expectIdentityValue) CheckState(ctx context.Context, req CheckStateReque
 	}
 }
 
-// ExpectIdentityValue returns a state check that asserts that the specified identity attribute at the given maanged resource
-// matches a known value.
+// ExpectIdentityValue returns a state check that asserts that the specified identity attribute at the given resource
+// matches a known value. This state check can only be used with managed resources that support resource identity.
+//
+// Resource identity is only supported in Terraform v1.12+
 func ExpectIdentityValue(resourceAddress string, attributePath tfjsonpath.Path, identityValue knownvalue.Check) StateCheck {
 	return expectIdentityValue{
 		resourceAddress: resourceAddress,
