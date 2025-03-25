@@ -16,6 +16,7 @@ type Resource interface {
 	ImportState(context.Context, ImportStateRequest, *ImportStateResponse)
 	PlanChange(context.Context, PlanChangeRequest, *PlanChangeResponse)
 	Read(context.Context, ReadRequest, *ReadResponse)
+	IdentitySchema(context.Context, IdentitySchemaRequest, *IdentitySchemaResponse)
 	Schema(context.Context, SchemaRequest, *SchemaResponse)
 	Update(context.Context, UpdateRequest, *UpdateResponse)
 	UpgradeState(context.Context, UpgradeStateRequest, *UpgradeStateResponse)
@@ -23,12 +24,14 @@ type Resource interface {
 }
 
 type CreateRequest struct {
-	Config tftypes.Value
+	Config          tftypes.Value
+	PlannedIdentity *tftypes.Value
 }
 
 type CreateResponse struct {
 	Diagnostics []*tfprotov6.Diagnostic
 	NewState    tftypes.Value
+	NewIdentity *tftypes.Value
 }
 
 type DeleteRequest struct {
@@ -39,18 +42,28 @@ type DeleteResponse struct {
 	Diagnostics []*tfprotov6.Diagnostic
 }
 
+type IdentitySchemaRequest struct{}
+
+type IdentitySchemaResponse struct {
+	Diagnostics []*tfprotov6.Diagnostic
+	Schema      *tfprotov6.ResourceIdentitySchema
+}
+
 type ImportStateRequest struct {
-	ID string
+	ID       string
+	Identity *tftypes.Value
 }
 
 type ImportStateResponse struct {
 	Diagnostics []*tfprotov6.Diagnostic
 	State       tftypes.Value
+	Identity    *tftypes.Value
 }
 
 type PlanChangeRequest struct {
 	Config           tftypes.Value
 	PriorState       tftypes.Value
+	PriorIdentity    *tftypes.Value
 	ProposedNewState tftypes.Value
 }
 
@@ -58,16 +71,19 @@ type PlanChangeResponse struct {
 	Deferred        *tfprotov6.Deferred
 	Diagnostics     []*tfprotov6.Diagnostic
 	PlannedState    tftypes.Value
+	PlannedIdentity *tftypes.Value
 	RequiresReplace []*tftypes.AttributePath
 }
 
 type ReadRequest struct {
-	CurrentState tftypes.Value
+	CurrentState    tftypes.Value
+	CurrentIdentity *tftypes.Value
 }
 
 type ReadResponse struct {
 	Diagnostics []*tfprotov6.Diagnostic
 	NewState    tftypes.Value
+	NewIdentity *tftypes.Value
 }
 
 type SchemaRequest struct{}
@@ -78,14 +94,16 @@ type SchemaResponse struct {
 }
 
 type UpdateRequest struct {
-	Config       tftypes.Value
-	PlannedState tftypes.Value
-	PriorState   tftypes.Value
+	Config          tftypes.Value
+	PlannedState    tftypes.Value
+	PlannedIdentity *tftypes.Value
+	PriorState      tftypes.Value
 }
 
 type UpdateResponse struct {
 	Diagnostics []*tfprotov6.Diagnostic
 	NewState    tftypes.Value
+	NewIdentity *tftypes.Value
 }
 
 type UpgradeStateRequest struct {

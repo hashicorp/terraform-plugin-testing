@@ -5,6 +5,7 @@ package providerserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -49,11 +50,16 @@ func NewProviderServerWithError(p provider.Provider, err error) func() (tfprotov
 // By default, the following data is copied automatically:
 //
 //   - ApplyResourceChange (create): req.Config -> resp.NewState
+//   - ApplyResourceChange (create): req.PlannedIdentity -> resp.NewIdentity
 //   - ApplyResourceChange (delete): req.PlannedState -> resp.NewState
 //   - ApplyResourceChange (update): req.PlannedState -> resp.NewState
+//   - ApplyResourceChange (update): req.PlannedIdentity -> resp.NewIdentity
 //   - PlanResourceChange: req.ProposedNewState -> resp.PlannedState
+//   - PlanResourceChange: req.PriorIdentity -> resp.PlannedIdentity
+//   - ImportResourceState: req.Identity -> resp.ImportedResources[0].Identity
 //   - ReadDataSource: req.Config -> resp.State
 //   - ReadResource: req.CurrentState -> resp.NewState
+//   - ReadResource: req.CurrentIdentity -> resp.NewIdentity
 type ProviderServer struct {
 	Provider provider.Provider
 }
@@ -135,12 +141,40 @@ func (s ProviderServer) ApplyResourceChange(ctx context.Context, req *tfprotov6.
 		return resp, nil
 	}
 
+	// Copy over identity if it's supported
+	identitySchemaReq := resource.IdentitySchemaRequest{}
+	identitySchemaResp := &resource.IdentitySchemaResponse{}
+
+	r.IdentitySchema(ctx, identitySchemaReq, identitySchemaResp)
+
+	resp.Diagnostics = identitySchemaResp.Diagnostics
+
+	if len(resp.Diagnostics) > 0 {
+		return resp, nil
+	}
+
+	var plannedIdentity *tftypes.Value
+	if identitySchemaResp.Schema != nil && req.PlannedIdentity != nil {
+		plannedIdentityVal, diag := IdentityDynamicValueToValue(identitySchemaResp.Schema, req.PlannedIdentity.IdentityData)
+
+		if diag != nil {
+			resp.Diagnostics = append(resp.Diagnostics, diag)
+
+			return resp, nil
+		}
+
+		plannedIdentity = &plannedIdentityVal
+	}
+
+	var newIdentity *tftypes.Value
 	if priorState.IsNull() {
 		createReq := resource.CreateRequest{
-			Config: config,
+			Config:          config,
+			PlannedIdentity: plannedIdentity,
 		}
 		createResp := &resource.CreateResponse{
-			NewState: config.Copy(),
+			NewState:    config.Copy(),
+			NewIdentity: plannedIdentity,
 		}
 
 		r.Create(ctx, createReq, createResp)
@@ -160,6 +194,7 @@ func (s ProviderServer) ApplyResourceChange(ctx context.Context, req *tfprotov6.
 		}
 
 		resp.NewState = newState
+		newIdentity = createResp.NewIdentity
 	} else if plannedState.IsNull() {
 		deleteReq := resource.DeleteRequest{
 			PriorState: priorState,
@@ -177,12 +212,14 @@ func (s ProviderServer) ApplyResourceChange(ctx context.Context, req *tfprotov6.
 		resp.NewState = req.PlannedState
 	} else {
 		updateReq := resource.UpdateRequest{
-			Config:       config,
-			PlannedState: plannedState,
-			PriorState:   priorState,
+			Config:          config,
+			PlannedState:    plannedState,
+			PlannedIdentity: plannedIdentity,
+			PriorState:      priorState,
 		}
 		updateResp := &resource.UpdateResponse{
-			NewState: plannedState.Copy(),
+			NewState:    plannedState.Copy(),
+			NewIdentity: plannedIdentity,
 		}
 
 		r.Update(ctx, updateReq, updateResp)
@@ -202,6 +239,21 @@ func (s ProviderServer) ApplyResourceChange(ctx context.Context, req *tfprotov6.
 		}
 
 		resp.NewState = newState
+		newIdentity = updateResp.NewIdentity
+	}
+
+	if newIdentity != nil {
+		newIdentity, diag := IdentityValuetoDynamicValue(identitySchemaResp.Schema, *newIdentity)
+
+		if diag != nil {
+			resp.Diagnostics = append(resp.Diagnostics, diag)
+
+			return resp, nil
+		}
+
+		resp.NewIdentity = &tfprotov6.ResourceIdentityData{
+			IdentityData: newIdentity,
+		}
 	}
 
 	return resp, nil
@@ -286,6 +338,27 @@ func (s ProviderServer) GetProviderSchema(ctx context.Context, req *tfprotov6.Ge
 	return resp, nil
 }
 
+func (s ProviderServer) GetResourceIdentitySchemas(ctx context.Context, req *tfprotov6.GetResourceIdentitySchemasRequest) (*tfprotov6.GetResourceIdentitySchemasResponse, error) {
+	resp := &tfprotov6.GetResourceIdentitySchemasResponse{
+		IdentitySchemas: map[string]*tfprotov6.ResourceIdentitySchema{},
+	}
+
+	for typeName, r := range s.Provider.ResourcesMap() {
+		identitySchemaReq := resource.IdentitySchemaRequest{}
+		identitySchemaResp := &resource.IdentitySchemaResponse{}
+
+		r.IdentitySchema(ctx, identitySchemaReq, identitySchemaResp)
+
+		resp.Diagnostics = append(resp.Diagnostics, identitySchemaResp.Diagnostics...)
+
+		if identitySchemaResp.Schema != nil {
+			resp.IdentitySchemas[typeName] = identitySchemaResp.Schema
+		}
+	}
+
+	return resp, nil
+}
+
 func (s ProviderServer) ImportResourceState(ctx context.Context, req *tfprotov6.ImportResourceStateRequest) (*tfprotov6.ImportResourceStateResponse, error) {
 	resp := &tfprotov6.ImportResourceStateResponse{}
 
@@ -312,6 +385,31 @@ func (s ProviderServer) ImportResourceState(ctx context.Context, req *tfprotov6.
 		ID: req.ID,
 	}
 	importResp := &resource.ImportStateResponse{}
+
+	// Copy over identity if it's supported
+	identitySchemaReq := resource.IdentitySchemaRequest{}
+	identitySchemaResp := &resource.IdentitySchemaResponse{}
+
+	r.IdentitySchema(ctx, identitySchemaReq, identitySchemaResp)
+
+	resp.Diagnostics = identitySchemaResp.Diagnostics
+
+	if len(resp.Diagnostics) > 0 {
+		return resp, nil
+	}
+
+	if identitySchemaResp.Schema != nil && req.Identity != nil {
+		identity, diag := IdentityDynamicValueToValue(identitySchemaResp.Schema, req.Identity.IdentityData)
+
+		if diag != nil {
+			resp.Diagnostics = append(resp.Diagnostics, diag)
+
+			return resp, nil
+		}
+
+		importReq.Identity = &identity
+		importResp.Identity = &identity
+	}
 
 	r.ImportState(ctx, importReq, importResp)
 
@@ -345,6 +443,21 @@ func (s ProviderServer) ImportResourceState(ctx context.Context, req *tfprotov6.
 			State:    state,
 			TypeName: req.TypeName,
 		},
+	}
+
+	if importResp.Identity != nil {
+		identity, diag := IdentityValuetoDynamicValue(identitySchemaResp.Schema, *importResp.Identity)
+
+		if diag != nil {
+			resp.Diagnostics = append(resp.Diagnostics, diag)
+
+			return resp, nil
+		}
+
+		// There is only one imported resource, so this should always be safe
+		resp.ImportedResources[0].Identity = &tfprotov6.ResourceIdentityData{
+			IdentityData: identity,
+		}
 	}
 
 	return resp, nil
@@ -456,6 +569,31 @@ func (s ProviderServer) PlanResourceChange(ctx context.Context, req *tfprotov6.P
 		PlannedState: proposedNewState.Copy(),
 	}
 
+	// Copy over identity if it's supported
+	identitySchemaReq := resource.IdentitySchemaRequest{}
+	identitySchemaResp := &resource.IdentitySchemaResponse{}
+
+	r.IdentitySchema(ctx, identitySchemaReq, identitySchemaResp)
+
+	resp.Diagnostics = identitySchemaResp.Diagnostics
+
+	if len(resp.Diagnostics) > 0 {
+		return resp, nil
+	}
+
+	if identitySchemaResp.Schema != nil && req.PriorIdentity != nil {
+		priorIdentity, diag := IdentityDynamicValueToValue(identitySchemaResp.Schema, req.PriorIdentity.IdentityData)
+
+		if diag != nil {
+			resp.Diagnostics = append(resp.Diagnostics, diag)
+
+			return resp, nil
+		}
+
+		planReq.PriorIdentity = &priorIdentity
+		planResp.PlannedIdentity = &priorIdentity
+	}
+
 	r.PlanChange(ctx, planReq, planResp)
 
 	resp.Diagnostics = planResp.Diagnostics
@@ -472,6 +610,20 @@ func (s ProviderServer) PlanResourceChange(ctx context.Context, req *tfprotov6.P
 		resp.Diagnostics = append(resp.Diagnostics, diag)
 
 		return resp, nil
+	}
+
+	if planResp.PlannedIdentity != nil {
+		plannedIdentity, diag := IdentityValuetoDynamicValue(identitySchemaResp.Schema, *planResp.PlannedIdentity)
+
+		if diag != nil {
+			resp.Diagnostics = append(resp.Diagnostics, diag)
+
+			return resp, nil
+		}
+
+		resp.PlannedIdentity = &tfprotov6.ResourceIdentityData{
+			IdentityData: plannedIdentity,
+		}
 	}
 
 	resp.PlannedState = plannedState
@@ -574,6 +726,31 @@ func (s ProviderServer) ReadResource(ctx context.Context, req *tfprotov6.ReadRes
 		NewState: currentState.Copy(),
 	}
 
+	// Copy over identity if it's supported
+	identitySchemaReq := resource.IdentitySchemaRequest{}
+	identitySchemaResp := &resource.IdentitySchemaResponse{}
+
+	r.IdentitySchema(ctx, identitySchemaReq, identitySchemaResp)
+
+	resp.Diagnostics = identitySchemaResp.Diagnostics
+
+	if len(resp.Diagnostics) > 0 {
+		return resp, nil
+	}
+
+	if identitySchemaResp.Schema != nil && req.CurrentIdentity != nil {
+		currentIdentity, diag := IdentityDynamicValueToValue(identitySchemaResp.Schema, req.CurrentIdentity.IdentityData)
+
+		if diag != nil {
+			resp.Diagnostics = append(resp.Diagnostics, diag)
+
+			return resp, nil
+		}
+
+		readReq.CurrentIdentity = &currentIdentity
+		readResp.NewIdentity = &currentIdentity
+	}
+
 	r.Read(ctx, readReq, readResp)
 
 	resp.Diagnostics = readResp.Diagnostics
@@ -591,6 +768,20 @@ func (s ProviderServer) ReadResource(ctx context.Context, req *tfprotov6.ReadRes
 	}
 
 	resp.NewState = newState
+
+	if readResp.NewIdentity != nil {
+		newIdentity, diag := IdentityValuetoDynamicValue(identitySchemaResp.Schema, *readResp.NewIdentity)
+
+		if diag != nil {
+			resp.Diagnostics = append(resp.Diagnostics, diag)
+
+			return resp, nil
+		}
+
+		resp.NewIdentity = &tfprotov6.ResourceIdentityData{
+			IdentityData: newIdentity,
+		}
+	}
 
 	return resp, nil
 }
@@ -696,6 +887,11 @@ func (s ProviderServer) UpgradeResourceState(ctx context.Context, req *tfprotov6
 	resp.UpgradedState = upgradedState
 
 	return resp, nil
+}
+
+func (s ProviderServer) UpgradeResourceIdentity(context.Context, *tfprotov6.UpgradeResourceIdentityRequest) (*tfprotov6.UpgradeResourceIdentityResponse, error) {
+	// TODO: Implement
+	return nil, errors.New("UpgradeResourceIdentity is not currently implemented in testprovider")
 }
 
 func (s ProviderServer) ValidateDataResourceConfig(ctx context.Context, req *tfprotov6.ValidateDataResourceConfigRequest) (*tfprotov6.ValidateDataResourceConfigResponse, error) {
