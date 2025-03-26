@@ -44,10 +44,9 @@ func Test_TestStep_ImportBlockId(t *testing.T) {
 				}`,
 			},
 			{
-				ResourceName:      "examplecloud_container.test",
-				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithID,
-				ImportStateVerify: true,
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
 			},
 		},
 	})
@@ -81,11 +80,10 @@ func TestTest_TestStep_ImportBlockId_ExpectError(t *testing.T) {
 					location = "eastus"
 					name     = "somevalue"
 				}`,
-				ResourceName:      "examplecloud_container.test",
-				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithID,
-				ImportStateVerify: true,
-				ExpectError:       regexp.MustCompile(`importing resource examplecloud_container.test: expected a no-op resource action, got "update" action with plan(.?)`),
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
+				ExpectError:     regexp.MustCompile(`importing resource examplecloud_container.test: expected a no-op resource action, got "update" action with plan(.?)`),
 			},
 		},
 	})
@@ -120,11 +118,10 @@ func TestTest_TestStep_ImportBlockId_FailWhenPlannableImportIsNotSupported(t *te
 					location = "eastus"
 					name     = "somevalue"
 				}`,
-				ResourceName:      "examplecloud_container.test",
-				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithID,
-				ImportStateVerify: true,
-				ExpectError:       regexp.MustCompile(`Terraform 1.5.0`),
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
+				ExpectError:     regexp.MustCompile(`Terraform 1.5.0`),
 			},
 		},
 	})
@@ -200,6 +197,11 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *tes
 			I also need to omit the `password` in the import config, otherwise the value in the config is used when importing the
 		    with an import block and the test ends up passing regardless of whether `ImportStateVerifyIgnore` has been specified or not
 	*/
+
+	// In prerelease, we are choosing that ImportBlockWithID will not perform an apply, so it will not produce a new state,
+	// and there is no new state for ImportStateVerify to do anything meaningful with.
+	t.Skip()
+
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -301,6 +303,10 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *tes
 }
 
 func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore(t *testing.T) {
+	// In prerelease, we are choosing that ImportBlockWithID will not perform an apply, so it will not produce a new state,
+	// and there is no new state for ImportStateVerify to do anything meaningful with.
+	t.Skip()
+
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{

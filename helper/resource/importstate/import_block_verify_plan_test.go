@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 
-	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
@@ -16,7 +15,7 @@ import (
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func Test_ImportBlock_InConfigFile(t *testing.T) {
+func Test_ImportBlock_VerifyPlan(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -32,18 +31,17 @@ func Test_ImportBlock_InConfigFile(t *testing.T) {
 		},
 		Steps: []r.TestStep{
 			{
-				ConfigFile: func(config.TestStepConfigRequest) string {
-					return `testdata/1/examplecloud_container.tf`
-				},
+				Config: `
+				resource "examplecloud_container" "test" {
+					location = "westeurope"
+					name     = "somevalue"
+				}`,
 			},
 			{
 				ResourceName:     "examplecloud_container.test",
 				ImportState:      true,
 				ImportStateKind:  r.ImportBlockWithID,
 				ImportPlanVerify: true,
-				ConfigFile: func(config.TestStepConfigRequest) string {
-					return `testdata/2/examplecloud_container_import.tf`
-				},
 			},
 		},
 	})
