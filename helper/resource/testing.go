@@ -702,19 +702,7 @@ type TestStep struct {
 
 	// ImportPlanVerify checks that a generated plan for a plannable import
 	// (ImportBlockWithID or ImportBlockWithResourceIdentity) agrees with
-	// the known state of a previous test stepstate values
-	// that are finally put into the state after import match for all the
-	// IDs returned by the Import.  Note that this checks for strict equality
-	// and does not respect DiffSuppressFunc or CustomizeDiff.
-	//
-	// By default, the prior resource state and import resource state are
-	// matched by the "id" attribute. If the "id" attribute is not implemented
-	// or another attribute more uniquely identifies the resource, set the
-	// ImportStateVerifyIdentifierAttribute field to adjust the attribute for
-	// matching.
-	//
-	// If certain attributes cannot be correctly imported, set the
-	// ImportStateVerifyIgnore field.
+	// the known state of a previous test steps.
 	ImportPlanVerify bool
 
 	// ImportStateVerify, if true, will also check that the state values
