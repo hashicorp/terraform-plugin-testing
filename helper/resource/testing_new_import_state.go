@@ -387,7 +387,7 @@ func requireNoopResourceAction(ctx context.Context, t testing.T, plan *tfjson.Pl
 
 	// should this be length checked and used as a condition, if it's a no-op then there shouldn't be any other changes here
 	for _, action := range rc.Change.Actions {
-		if action != "no-op" {
+		if action != tfjson.ActionNoop {
 			var stdout string
 			err := runProviderCommand(ctx, t, func() error {
 				var err error
