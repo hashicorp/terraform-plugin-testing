@@ -943,11 +943,7 @@ func Test(t testing.T, c TestCase) {
 	// This is done after creating the helper because a working directory is required
 	// to retrieve the Terraform version.
 	if c.TerraformVersionChecks != nil {
-		logging.HelperResourceDebug(ctx, "Calling TestCase Terraform version checks")
-
 		runTFVersionChecks(ctx, t, helper.TerraformVersion(), c.TerraformVersionChecks)
-
-		logging.HelperResourceDebug(ctx, "Called TestCase Terraform version checks")
 	}
 
 	runNewTest(ctx, t, c, helper)

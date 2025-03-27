@@ -1,0 +1,5 @@
+kind: ENHANCEMENTS
+body: 'statecheck: Added `ExpectIdentityValue` state check, which asserts a specified attribute value of a managed resource identity in state.'
+time: 2025-03-25T12:10:07.55484-04:00
+custom:
+    Issue: "468"

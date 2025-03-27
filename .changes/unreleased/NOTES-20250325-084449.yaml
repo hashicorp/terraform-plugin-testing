@@ -1,0 +1,5 @@
+kind: NOTES
+body: reduced the volume of DEBUG-level logging to make it easier to visually scan debug output
+time: 2025-03-25T08:44:49.949718-04:00
+custom:
+    Issue: "463"
