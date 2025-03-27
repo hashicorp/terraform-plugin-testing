@@ -700,9 +700,9 @@ type TestStep struct {
 	// [plancheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/plancheck
 	ImportPlanChecks ImportPlanChecks
 
-	// ImportPlanVerify checks that a generated plan for a plannable import
-	// (ImportBlockWithID or ImportBlockWithResourceIdentity) agrees with
-	// the known state of a previous test steps.
+	// ImportPlanVerify checks that the planned resource state, created via a plannable import
+	// step (ImportBlockWithID or ImportBlockWithResourceIdentity), exactly matches
+	// the resource state of the previous test step.
 	ImportPlanVerify bool
 
 	// ImportStateVerify, if true, will also check that the state values
