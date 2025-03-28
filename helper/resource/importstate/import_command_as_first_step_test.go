@@ -33,11 +33,9 @@ func Test_ImportCommand_AsFirstStep(t *testing.T) {
 		},
 		Steps: []r.TestStep{
 			{
-				ResourceName:    "examplecloud_container.test",
-				ImportStateId:   "examplecloud_container.test",
-				ImportState:     true,
-				ImportStateKind: r.ImportCommandWithId,
-				// ImportStateVerify: true,
+				ResourceName:  "examplecloud_container.test",
+				ImportStateId: "examplecloud_container.test",
+				ImportState:   true,
 				Config: `resource "examplecloud_container" "test" {
 					name = "somevalue"
 					location = "westeurope"
