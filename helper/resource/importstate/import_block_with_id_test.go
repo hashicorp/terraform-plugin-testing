@@ -26,7 +26,7 @@ func Test_TestStep_ImportBlockId(t *testing.T) {
 
 	r.UnitTest(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithId requires Terraform 1.5.0 or later
+			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithID requires Terraform 1.5.0 or later
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
@@ -46,7 +46,7 @@ func Test_TestStep_ImportBlockId(t *testing.T) {
 			{
 				ResourceName:      "examplecloud_container.test",
 				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithId,
+				ImportStateKind:   r.ImportBlockWithID,
 				ImportStateVerify: true,
 			},
 		},
@@ -58,7 +58,7 @@ func TestTest_TestStep_ImportBlockId_ExpectError(t *testing.T) {
 
 	r.UnitTest(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithId requires Terraform 1.5.0 or later
+			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithID requires Terraform 1.5.0 or later
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
@@ -83,9 +83,9 @@ func TestTest_TestStep_ImportBlockId_ExpectError(t *testing.T) {
 				}`,
 				ResourceName:      "examplecloud_container.test",
 				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithId,
+				ImportStateKind:   r.ImportBlockWithID,
 				ImportStateVerify: true,
-				ExpectError:       regexp.MustCompile(`importing resource examplecloud_container.test should be a no-op, but got action update with plan(.?)`),
+				ExpectError:       regexp.MustCompile(`importing resource examplecloud_container.test: expected a no-op resource action, got "update" action with plan(.?)`),
 			},
 		},
 	})
@@ -122,7 +122,7 @@ func TestTest_TestStep_ImportBlockId_FailWhenPlannableImportIsNotSupported(t *te
 				}`,
 				ResourceName:      "examplecloud_container.test",
 				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithId,
+				ImportStateKind:   r.ImportBlockWithID,
 				ImportStateVerify: true,
 				ExpectError:       regexp.MustCompile(`Terraform 1.5.0`),
 			},
@@ -135,7 +135,7 @@ func TestTest_TestStep_ImportBlockId_SkipDataSourceState(t *testing.T) {
 
 	r.UnitTest(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithId requires Terraform 1.5.0 or later
+			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithID requires Terraform 1.5.0 or later
 
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
@@ -161,7 +161,7 @@ func TestTest_TestStep_ImportBlockId_SkipDataSourceState(t *testing.T) {
 			{
 				ResourceName:    "examplecloud_thing.test",
 				ImportState:     true,
-				ImportStateKind: r.ImportBlockWithId,
+				ImportStateKind: r.ImportBlockWithID,
 				ImportStateCheck: func(is []*terraform.InstanceState) error {
 					if len(is) > 1 {
 						return fmt.Errorf("expected 1 state, got: %d", len(is))
@@ -204,7 +204,7 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *tes
 
 	r.UnitTest(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithId requires Terraform 1.5.0 or later
+			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithID requires Terraform 1.5.0 or later
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
@@ -292,7 +292,7 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *tes
 				}`,
 				ResourceName:            "examplecloud_container.test",
 				ImportState:             true,
-				ImportStateKind:         r.ImportBlockWithId,
+				ImportStateKind:         r.ImportBlockWithID,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"password"},
 			},
@@ -305,7 +305,7 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore(t *testing.T) {
 
 	r.UnitTest(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithId requires Terraform 1.5.0 or later
+			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithID requires Terraform 1.5.0 or later
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
@@ -377,7 +377,7 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore(t *testing.T) {
 			{
 				ResourceName:            "examplecloud_container.test",
 				ImportState:             true,
-				ImportStateKind:         r.ImportBlockWithId,
+				ImportStateKind:         r.ImportBlockWithID,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"password"},
 			},

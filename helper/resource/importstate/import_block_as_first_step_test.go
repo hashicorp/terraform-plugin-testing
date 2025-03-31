@@ -23,7 +23,7 @@ func Test_ImportBlock_AsFirstStep(t *testing.T) {
 
 	r.UnitTest(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithId requires Terraform 1.5.0 or later
+			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithID requires Terraform 1.5.0 or later
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
@@ -37,7 +37,7 @@ func Test_ImportBlock_AsFirstStep(t *testing.T) {
 				ResourceName:    "examplecloud_container.test",
 				ImportStateId:   "examplecloud_container.test",
 				ImportState:     true,
-				ImportStateKind: r.ImportBlockWithId,
+				ImportStateKind: r.ImportBlockWithID,
 				// ImportStateVerify: true,
 				Config: `resource "examplecloud_container" "test" {
 					name = "somevalue"
