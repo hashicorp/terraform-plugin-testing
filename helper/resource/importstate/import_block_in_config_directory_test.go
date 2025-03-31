@@ -32,18 +32,14 @@ func Test_ImportBlock_InConfigDirectory(t *testing.T) {
 		},
 		Steps: []r.TestStep{
 			{
-				ConfigDirectory: func(config.TestStepConfigRequest) string {
-					return `testdata/1`
-				},
+				ConfigDirectory: config.StaticDirectory(`testdata/1`),
 			},
 			{
-				ResourceName:     "examplecloud_container.test",
-				ImportState:      true,
-				ImportStateKind:  r.ImportBlockWithID,
-				ImportPlanVerify: true,
-				ConfigDirectory: func(config.TestStepConfigRequest) string {
-					return `testdata/2`
-				},
+				ResourceName:      "examplecloud_container.test",
+				ImportState:       true,
+				ImportStateKind:   r.ImportBlockWithID,
+				ImportStateVerify: true,
+				ConfigDirectory:   config.StaticDirectory(`testdata/2`),
 			},
 		},
 	})

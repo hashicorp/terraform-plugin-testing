@@ -457,10 +457,10 @@ type ExternalProvider struct {
 type ImportStateKind byte
 
 const (
-	// ImportCommandWithID imports the state using the import command
+	// ImportCommandWithID tests import by using the ID string with the `terraform import` command
 	ImportCommandWithID ImportStateKind = iota
 
-	// ImportBlockWithID imports the state using an import block with an ID
+	// ImportBlockWithID tests import by using the ID string in an import configuration block with the `terraform plan` command
 	ImportBlockWithID
 
 	// ImportBlockWithResourceIdentity imports the state using an import block with a resource identity
@@ -962,11 +962,7 @@ func Test(t testing.T, c TestCase) {
 	// This is done after creating the helper because a working directory is required
 	// to retrieve the Terraform version.
 	if c.TerraformVersionChecks != nil {
-		logging.HelperResourceDebug(ctx, "Calling TestCase Terraform version checks")
-
 		runTFVersionChecks(ctx, t, helper.TerraformVersion(), c.TerraformVersionChecks)
-
-		logging.HelperResourceDebug(ctx, "Called TestCase Terraform version checks")
 	}
 
 	runNewTest(ctx, t, c, helper)
