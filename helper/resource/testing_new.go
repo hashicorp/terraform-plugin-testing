@@ -68,7 +68,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		var statePreDestroy *terraform.State
 		var err error
 		err = runProviderCommand(ctx, t, func() error {
-			statePreDestroy, err = getState(ctx, t, wd)
+			_, statePreDestroy, err = getState(ctx, t, wd)
 			if err != nil {
 				return err
 			}
@@ -447,18 +447,18 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	}
 }
 
-func getState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir) (*terraform.State, error) {
+func getState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir) (*tfjson.State, *terraform.State, error) {
 	t.Helper()
 
 	jsonState, err := wd.State(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	state, err := shimStateFromJson(jsonState)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return state, nil
+	return jsonState, state, nil
 }
 
 func stateIsEmpty(state *terraform.State) bool {
@@ -573,7 +573,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 		if err != nil {
 			t.Fatalf("Error running terraform refresh: %s", err)
 		}
-		state, err = getState(ctx, t, wd)
+		_, state, err = getState(ctx, t, wd)
 		if err != nil {
 			return err
 		}

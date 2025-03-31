@@ -58,10 +58,11 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	// get state from check sequence
 	var state *terraform.State
+	var stateJSON *tfjson.State
 	var err error
 
 	err = runProviderCommand(ctx, t, func() error {
-		state, err = getState(ctx, t, wd)
+		stateJSON, state, err = getState(ctx, t, wd)
 		if err != nil {
 			return err
 		}
@@ -70,6 +71,9 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
 	}
+
+	// TODO: this statement is a placeholder -- it simply prevents stateJSON from being unused
+	logging.HelperResourceTrace(ctx, fmt.Sprintf("State before import: values %v", stateJSON.Values != nil))
 
 	// Determine the ID to import
 	var importId string //nolint:revive
@@ -213,7 +217,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	var importState *terraform.State
 	err = runProviderCommand(ctx, t, func() error {
-		importState, err = getState(ctx, t, importWd)
+		_, importState, err = getState(ctx, t, importWd)
 		if err != nil {
 			return err
 		}
