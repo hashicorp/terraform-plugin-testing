@@ -72,9 +72,6 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		t.Fatalf("Error getting state: %s", err)
 	}
 
-	// TODO: this statement is a placeholder -- it simply prevents stateJSON from being unused
-	logging.HelperResourceTrace(ctx, fmt.Sprintf("State before import: values %v", stateJSON.Values != nil))
-
 	// Determine the ID to import
 	var importId string //nolint:revive
 	switch {
@@ -197,7 +194,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			}
 
 			if step.ImportPlanVerify {
-				if err := teststep.VerifyImportPlan(plan, state); err != nil {
+				if err := teststep.VerifyImportPlan(plan, stateJSON); err != nil {
 					return err
 				}
 			}

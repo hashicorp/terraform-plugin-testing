@@ -35,11 +35,11 @@ func Test_ImportBlock_InConfigFile(t *testing.T) {
 				ConfigFile: config.StaticFile(`testdata/1/examplecloud_container.tf`),
 			},
 			{
-				ResourceName:      "examplecloud_container.test",
-				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithID,
-				ImportStateVerify: true,
-				ConfigFile:        config.StaticFile(`testdata/2/examplecloud_container_import.tf`),
+				ResourceName:     "examplecloud_container.test",
+				ImportState:      true,
+				ImportStateKind:  r.ImportBlockWithID,
+				ImportPlanVerify: true,
+				ConfigFile:       config.StaticFile(`testdata/2/examplecloud_container_import.tf`),
 			},
 		},
 	})
