@@ -25,7 +25,44 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
+type testOutcome struct {
+	ok      bool
+	message string
+	err     error
+}
+
+var testOK = testOutcome{ok: true}
+var testFail = func(format string, a ...any) testOutcome {
+	return testOutcome{
+		ok:      false,
+		message: fmt.Sprintf(format, a...),
+	}
+}
+var testFailErr = func(err error) testOutcome {
+	return testOutcome{
+		ok:  false,
+		err: err,
+	}
+}
+
 func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
+	t.Helper()
+
+	outcome, fatalErr := runImportTestStep(ctx, t, helper, wd, step, cfgRaw, providers, stepNumber)
+	if fatalErr != nil {
+		t.Fatal(fatalErr)
+	}
+
+	switch {
+	case outcome.err != nil:
+		return outcome.err
+	case !outcome.ok:
+		return fmt.Errorf(outcome.message)
+	default:
+		return nil
+	}
+}
+func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) (testOutcome, error) {
 	t.Helper()
 
 	// step.ImportStateKind implicitly defaults to the zero-value (ImportCommandWithID) for backward compatibility
@@ -35,7 +72,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		// An alternative, [plugintest.TestExpectTFatal], does not have access to logged error messages, so it is open to false positives on this
 		// complex code path.
 		if err := requirePlannableImport(t, *helper.TerraformVersion()); err != nil {
-			return err
+			return testFailErr(err), nil
 		}
 	}
 
@@ -172,7 +209,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			return importWd.CreatePlan(ctx, opts...)
 		}, importWd, providers)
 		if err != nil {
-			return err
+			return testFailErr(err), nil
 		}
 
 		err = runProviderCommand(ctx, t, func() error {
@@ -182,7 +219,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			return err
 		}, importWd, providers)
 		if err != nil {
-			return err
+			return testFailErr(err), nil
 		}
 
 		if plan.ResourceChanges != nil {
@@ -204,10 +241,10 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 								return err
 							}, importWd, providers)
 							if err != nil {
-								return fmt.Errorf("retrieving formatted plan output: %w", err)
+								return testFail("retrieving formatted plan output: %w", err), nil
 							}
 
-							return fmt.Errorf("importing resource %s: expected a no-op resource action, got %q action with plan \nstdout:\n\n%s", rc.Address, action, stdout)
+							return testFail("importing resource %s: expected a no-op resource action, got %q action with plan \nstdout:\n\n%s", rc.Address, action, stdout), nil
 						}
 					}
 				}
@@ -217,14 +254,14 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		// TODO compare plan to state from previous step
 
 		if err := runPlanChecks(ctx, t, plan, step.ImportPlanChecks.PreApply); err != nil {
-			return err
+			return testFailErr(err), nil
 		}
 	} else {
 		err = runProviderCommand(ctx, t, func() error {
 			return importWd.Import(ctx, resourceName, importId)
 		}, importWd, providers)
 		if err != nil {
-			return err
+			return testFailErr(err), nil
 		}
 	}
 
@@ -380,13 +417,13 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 				}
 
 				if diff := cmp.Diff(expected, actual); diff != "" {
-					return fmt.Errorf("ImportStateVerify attributes not equivalent. Difference is shown below. The - symbol indicates attributes missing after import.\n\n%s", diff)
+					return testFail("ImportStateVerify attributes not equivalent. Difference is shown below. The - symbol indicates attributes missing after import.\n\n%s", diff), nil
 				}
 			}
 		}
 	}
 
-	return nil
+	return testOK, nil
 }
 
 func appendImportBlock(config string, resourceName string, importID string) string {
