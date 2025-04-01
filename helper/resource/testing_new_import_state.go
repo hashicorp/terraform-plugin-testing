@@ -296,138 +296,146 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 	if step.ImportStateVerify {
 		logging.HelperResourceTrace(ctx, "Using TestStep ImportStateVerify")
 
-		// Ensure that we do not match against data sources as they
-		// cannot be imported and are not what we want to verify.
-		// Mode is not present in ResourceState so we use the
-		// stringified ResourceStateKey for comparison.
-		newResources := make(map[string]*terraform.ResourceState)
-		for k, v := range importState.RootModule().Resources {
-			if !strings.HasPrefix(k, "data.") {
-				newResources[k] = v
-			}
-		}
-		oldResources := make(map[string]*terraform.ResourceState)
-		for k, v := range state.RootModule().Resources {
-			if !strings.HasPrefix(k, "data.") {
-				oldResources[k] = v
-			}
-		}
-
 		identifierAttribute := step.ImportStateVerifyIdentifierAttribute
+		importStateVerifyIgnore := step.ImportStateVerifyIgnore
 
-		if identifierAttribute == "" {
-			identifierAttribute = "id"
+		if outcome, err := verifyImportState(state, importState, identifierAttribute, importStateVerifyIgnore); !outcome.ok {
+			return outcome, err
+		}
+	}
+
+	return testOK()
+}
+
+func verifyImportState(state *terraform.State, importState *terraform.State, identifierAttribute string, importStateVerifyIgnore []string) (testOutcome, error) {
+	// Ensure that we do not match against data sources as they
+	// cannot be imported and are not what we want to verify.
+	// Mode is not present in ResourceState so we use the
+	// stringified ResourceStateKey for comparison.
+	newResources := make(map[string]*terraform.ResourceState)
+	for k, v := range importState.RootModule().Resources {
+		if !strings.HasPrefix(k, "data.") {
+			newResources[k] = v
+		}
+	}
+	oldResources := make(map[string]*terraform.ResourceState)
+	for k, v := range state.RootModule().Resources {
+		if !strings.HasPrefix(k, "data.") {
+			oldResources[k] = v
+		}
+	}
+
+	if identifierAttribute == "" {
+		identifierAttribute = "id"
+	}
+
+	for _, r := range newResources {
+		rIdentifier, ok := r.Primary.Attributes[identifierAttribute]
+
+		if !ok {
+			return testFatal(fmt.Errorf("ImportStateVerify: New resource missing identifier attribute %q, ensure attribute value is properly set or use ImportStateVerifyIdentifierAttribute to choose different attribute", identifierAttribute))
 		}
 
-		for _, r := range newResources {
-			rIdentifier, ok := r.Primary.Attributes[identifierAttribute]
+		// Find the existing resource
+		var oldR *terraform.ResourceState
+		for _, r2 := range oldResources {
+			if r2.Primary == nil || r2.Type != r.Type || r2.Provider != r.Provider {
+				continue
+			}
+
+			r2Identifier, ok := r2.Primary.Attributes[identifierAttribute]
 
 			if !ok {
-				return testFatal(fmt.Errorf("ImportStateVerify: New resource missing identifier attribute %q, ensure attribute value is properly set or use ImportStateVerifyIdentifierAttribute to choose different attribute", identifierAttribute))
+				return testFatal(fmt.Errorf("ImportStateVerify: Old resource missing identifier attribute %q, ensure attribute value is properly set or use ImportStateVerifyIdentifierAttribute to choose different attribute", identifierAttribute))
 			}
 
-			// Find the existing resource
-			var oldR *terraform.ResourceState
-			for _, r2 := range oldResources {
-				if r2.Primary == nil || r2.Type != r.Type || r2.Provider != r.Provider {
-					continue
-				}
+			if r2Identifier == rIdentifier {
+				oldR = r2
+				break
+			}
+		}
+		if oldR == nil || oldR.Primary == nil {
+			return testFatal(fmt.Errorf("Failed state verification, resource with ID %s not found", rIdentifier))
+		}
 
-				r2Identifier, ok := r2.Primary.Attributes[identifierAttribute]
-
-				if !ok {
-					return testFatal(fmt.Errorf("ImportStateVerify: Old resource missing identifier attribute %q, ensure attribute value is properly set or use ImportStateVerifyIdentifierAttribute to choose different attribute", identifierAttribute))
-				}
-
-				if r2Identifier == rIdentifier {
-					oldR = r2
-					break
+		// don't add empty flatmapped containers, so we can more easily
+		// compare the attributes
+		skipEmpty := func(k, v string) bool {
+			if strings.HasSuffix(k, ".#") || strings.HasSuffix(k, ".%") {
+				if v == "0" {
+					return true
 				}
 			}
-			if oldR == nil || oldR.Primary == nil {
-				return testFatal(fmt.Errorf("Failed state verification, resource with ID %s not found", rIdentifier))
-			}
+			return false
+		}
 
-			// don't add empty flatmapped containers, so we can more easily
-			// compare the attributes
-			skipEmpty := func(k, v string) bool {
-				if strings.HasSuffix(k, ".#") || strings.HasSuffix(k, ".%") {
-					if v == "0" {
-						return true
-					}
-				}
-				return false
+		// Compare their attributes
+		actual := make(map[string]string)
+		for k, v := range r.Primary.Attributes {
+			if skipEmpty(k, v) {
+				continue
 			}
+			actual[k] = v
+		}
 
-			// Compare their attributes
-			actual := make(map[string]string)
-			for k, v := range r.Primary.Attributes {
-				if skipEmpty(k, v) {
-					continue
-				}
-				actual[k] = v
+		expected := make(map[string]string)
+		for k, v := range oldR.Primary.Attributes {
+			if skipEmpty(k, v) {
+				continue
 			}
+			expected[k] = v
+		}
 
-			expected := make(map[string]string)
-			for k, v := range oldR.Primary.Attributes {
-				if skipEmpty(k, v) {
-					continue
-				}
-				expected[k] = v
-			}
-
-			// Remove fields we're ignoring
-			for _, v := range step.ImportStateVerifyIgnore {
-				for k := range actual {
-					if strings.HasPrefix(k, v) {
-						delete(actual, k)
-					}
-				}
-				for k := range expected {
-					if strings.HasPrefix(k, v) {
-						delete(expected, k)
-					}
-				}
-			}
-
-			// timeouts are only _sometimes_ added to state. To
-			// account for this, just don't compare timeouts at
-			// all.
+		// Remove fields we're ignoring
+		for _, v := range importStateVerifyIgnore {
 			for k := range actual {
-				if strings.HasPrefix(k, "timeouts.") {
-					delete(actual, k)
-				}
-				if k == "timeouts" {
+				if strings.HasPrefix(k, v) {
 					delete(actual, k)
 				}
 			}
 			for k := range expected {
-				if strings.HasPrefix(k, "timeouts.") {
+				if strings.HasPrefix(k, v) {
 					delete(expected, k)
-				}
-				if k == "timeouts" {
-					delete(expected, k)
-				}
-			}
-
-			if !reflect.DeepEqual(actual, expected) {
-				// Determine only the different attributes
-				// go-cmp tries to show surrounding identical map key/value for
-				// context of differences, which may be confusing.
-				for k, v := range expected {
-					if av, ok := actual[k]; ok && v == av {
-						delete(expected, k)
-						delete(actual, k)
-					}
-				}
-
-				if diff := cmp.Diff(expected, actual); diff != "" {
-					return testFail("ImportStateVerify attributes not equivalent. Difference is shown below. The - symbol indicates attributes missing after import.\n\n%s", diff)
 				}
 			}
 		}
-	}
 
+		// timeouts are only _sometimes_ added to state. To
+		// account for this, just don't compare timeouts at
+		// all.
+		for k := range actual {
+			if strings.HasPrefix(k, "timeouts.") {
+				delete(actual, k)
+			}
+			if k == "timeouts" {
+				delete(actual, k)
+			}
+		}
+		for k := range expected {
+			if strings.HasPrefix(k, "timeouts.") {
+				delete(expected, k)
+			}
+			if k == "timeouts" {
+				delete(expected, k)
+			}
+		}
+
+		if !reflect.DeepEqual(actual, expected) {
+			// Determine only the different attributes
+			// go-cmp tries to show surrounding identical map key/value for
+			// context of differences, which may be confusing.
+			for k, v := range expected {
+				if av, ok := actual[k]; ok && v == av {
+					delete(expected, k)
+					delete(actual, k)
+				}
+			}
+
+			if diff := cmp.Diff(expected, actual); diff != "" {
+				return testFail("ImportStateVerify attributes not equivalent. Difference is shown below. The - symbol indicates attributes missing after import.\n\n%s", diff)
+			}
+		}
+	}
 	return testOK()
 }
 
