@@ -31,18 +31,25 @@ type testOutcome struct {
 	err     error
 }
 
-var testOK = testOutcome{ok: true}
-var testFail = func(format string, a ...any) testOutcome {
+var testOK = func() (testOutcome, error) {
+	return testOutcome{ok: true}, nil
+}
+
+var testFail = func(format string, a ...any) (testOutcome, error) {
 	return testOutcome{
 		ok:      false,
 		message: fmt.Sprintf(format, a...),
-	}
+	}, nil
 }
-var testFailErr = func(err error) testOutcome {
+var testErr = func(err error) (testOutcome, error) {
 	return testOutcome{
 		ok:  false,
 		err: err,
-	}
+	}, nil
+}
+
+var testFatal = func(fatalErr error) (testOutcome, error) {
+	return testOutcome{ok: false}, fatalErr
 }
 
 func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
@@ -72,7 +79,7 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 		// An alternative, [plugintest.TestExpectTFatal], does not have access to logged error messages, so it is open to false positives on this
 		// complex code path.
 		if err := requirePlannableImport(t, *helper.TerraformVersion()); err != nil {
-			return testFailErr(err), nil
+			return testErr(err)
 		}
 	}
 
@@ -90,7 +97,7 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 
 	resourceName := step.ResourceName
 	if resourceName == "" {
-		t.Fatal("ResourceName is required for an import state test")
+		return testFatal(fmt.Errorf("ResourceName is required for an import state test"))
 	}
 
 	// get state from check sequence
@@ -105,7 +112,7 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 		return nil
 	}, wd, providers)
 	if err != nil {
-		t.Fatalf("Error getting state: %s", err)
+		return testFatal(fmt.Errorf("Error getting state: %s", err))
 	}
 
 	// Determine the ID to import
@@ -121,7 +128,7 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 		importId, err = step.ImportStateIdFunc(state)
 
 		if err != nil {
-			t.Fatal(err)
+			return testFatal(err)
 		}
 
 		logging.HelperResourceDebug(ctx, "Called TestStep ImportStateIdFunc")
@@ -134,7 +141,7 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 
 		resource, err := testResource(resourceName, state)
 		if err != nil {
-			t.Fatal(err)
+			return testFatal(err)
 		}
 		importId = resource.Primary.ID
 	}
@@ -187,7 +194,7 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 
 	err = importWd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 	if err != nil {
-		t.Fatalf("Error setting test config: %s", err)
+		return testFatal(fmt.Errorf("Error setting test config: %s", err))
 	}
 
 	if !step.ImportStatePersist {
@@ -196,7 +203,7 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 			return importWd.Init(ctx)
 		}, importWd, providers)
 		if err != nil {
-			t.Fatalf("Error running init: %s", err)
+			return testFatal(fmt.Errorf("Error running init: %s", err))
 		}
 	}
 
@@ -209,7 +216,7 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 			return importWd.CreatePlan(ctx, opts...)
 		}, importWd, providers)
 		if err != nil {
-			return testFailErr(err), nil
+			return testErr(err)
 		}
 
 		err = runProviderCommand(ctx, t, func() error {
@@ -219,7 +226,7 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 			return err
 		}, importWd, providers)
 		if err != nil {
-			return testFailErr(err), nil
+			return testErr(err)
 		}
 
 		if plan.ResourceChanges != nil {
@@ -241,10 +248,10 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 								return err
 							}, importWd, providers)
 							if err != nil {
-								return testFail("retrieving formatted plan output: %w", err), nil
+								return testFail("retrieving formatted plan output: %w", err)
 							}
 
-							return testFail("importing resource %s: expected a no-op resource action, got %q action with plan \nstdout:\n\n%s", rc.Address, action, stdout), nil
+							return testFail("importing resource %s: expected a no-op resource action, got %q action with plan \nstdout:\n\n%s", rc.Address, action, stdout)
 						}
 					}
 				}
@@ -254,14 +261,14 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 		// TODO compare plan to state from previous step
 
 		if err := runPlanChecks(ctx, t, plan, step.ImportPlanChecks.PreApply); err != nil {
-			return testFailErr(err), nil
+			return testErr(err)
 		}
 	} else {
 		err = runProviderCommand(ctx, t, func() error {
 			return importWd.Import(ctx, resourceName, importId)
 		}, importWd, providers)
 		if err != nil {
-			return testFailErr(err), nil
+			return testErr(err)
 		}
 	}
 
@@ -274,7 +281,7 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 		return nil
 	}, importWd, providers)
 	if err != nil {
-		t.Fatalf("Error getting state: %s", err)
+		return testFatal(fmt.Errorf("Error getting state: %s", err))
 	}
 
 	logging.HelperResourceDebug(ctx, fmt.Sprintf("State after import: %d resources in the root module", len(importState.RootModule().Resources)))
@@ -316,7 +323,7 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 			rIdentifier, ok := r.Primary.Attributes[identifierAttribute]
 
 			if !ok {
-				t.Fatalf("ImportStateVerify: New resource missing identifier attribute %q, ensure attribute value is properly set or use ImportStateVerifyIdentifierAttribute to choose different attribute", identifierAttribute)
+				return testFatal(fmt.Errorf("ImportStateVerify: New resource missing identifier attribute %q, ensure attribute value is properly set or use ImportStateVerifyIdentifierAttribute to choose different attribute", identifierAttribute))
 			}
 
 			// Find the existing resource
@@ -329,7 +336,7 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 				r2Identifier, ok := r2.Primary.Attributes[identifierAttribute]
 
 				if !ok {
-					t.Fatalf("ImportStateVerify: Old resource missing identifier attribute %q, ensure attribute value is properly set or use ImportStateVerifyIdentifierAttribute to choose different attribute", identifierAttribute)
+					return testFatal(fmt.Errorf("ImportStateVerify: Old resource missing identifier attribute %q, ensure attribute value is properly set or use ImportStateVerifyIdentifierAttribute to choose different attribute", identifierAttribute))
 				}
 
 				if r2Identifier == rIdentifier {
@@ -338,9 +345,7 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 				}
 			}
 			if oldR == nil || oldR.Primary == nil {
-				t.Fatalf(
-					"Failed state verification, resource with ID %s not found",
-					rIdentifier)
+				return testFatal(fmt.Errorf("Failed state verification, resource with ID %s not found", rIdentifier))
 			}
 
 			// don't add empty flatmapped containers, so we can more easily
@@ -417,13 +422,13 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 				}
 
 				if diff := cmp.Diff(expected, actual); diff != "" {
-					return testFail("ImportStateVerify attributes not equivalent. Difference is shown below. The - symbol indicates attributes missing after import.\n\n%s", diff), nil
+					return testFail("ImportStateVerify attributes not equivalent. Difference is shown below. The - symbol indicates attributes missing after import.\n\n%s", diff)
 				}
 			}
 		}
 	}
 
-	return testOK, nil
+	return testOK()
 }
 
 func appendImportBlock(config string, resourceName string, importID string) string {
