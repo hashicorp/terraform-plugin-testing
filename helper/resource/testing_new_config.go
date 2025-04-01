@@ -159,7 +159,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			}
 
 			err = runProviderCommand(ctx, t, func() error {
-				stateBeforeApplication, err = getState(ctx, t, wd)
+				_, stateBeforeApplication, err = getState(ctx, t, wd)
 				if err != nil {
 					return err
 				}
@@ -200,7 +200,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				var state *terraform.State
 
 				err := runProviderCommand(ctx, t, func() error {
-					state, err = getState(ctx, t, wd)
+					_, state, err = getState(ctx, t, wd)
 					if err != nil {
 						return err
 					}
@@ -384,7 +384,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		var state *terraform.State
 
 		err = runProviderCommand(ctx, t, func() error {
-			state, err = getState(ctx, t, wd)
+			_, state, err = getState(ctx, t, wd)
 			if err != nil {
 				return err
 			}

@@ -22,7 +22,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 	var err error
 	// Explicitly ensure prior state exists before refresh.
 	err = runProviderCommand(ctx, t, func() error {
-		_, err = getState(ctx, t, wd)
+		_, _, err = getState(ctx, t, wd)
 		if err != nil {
 			return err
 		}
@@ -41,7 +41,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 
 	var refreshState *terraform.State
 	err = runProviderCommand(ctx, t, func() error {
-		refreshState, err = getState(ctx, t, wd)
+		_, refreshState, err = getState(ctx, t, wd)
 		if err != nil {
 			return err
 		}
