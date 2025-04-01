@@ -308,8 +308,6 @@ func runImportTestStep(ctx context.Context, t testing.T, helper *plugintest.Help
 }
 
 func verifyImportState(state *terraform.State, importState *terraform.State, identifierAttribute string, importStateVerifyIgnore []string) (testOutcome, error) {
-	t.Helper()
-
 	// Ensure that we do not match against data sources as they
 	// cannot be imported and are not what we want to verify.
 	// Mode is not present in ResourceState so we use the
