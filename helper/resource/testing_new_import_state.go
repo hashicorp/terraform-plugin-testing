@@ -202,36 +202,37 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 		logging.HelperResourceDebug(ctx, fmt.Sprintf("ImportBlockWithId: %d resource changes", len(plan.ResourceChanges)))
 
-		for _, rc := range plan.ResourceChanges {
-			if rc.Address != resourceName {
-				// we're only interested in the changes for the resource being imported
-				continue
-			}
-			if rc.Change != nil && rc.Change.Actions != nil {
-				// should this be length checked and used as a condition, if it's a no-op then there shouldn't be any other changes here
-				for _, action := range rc.Change.Actions {
-					if action != "no-op" {
-						var stdout string
-						err = runProviderCommand(ctx, t, func() error {
-							var err error
-							stdout, err = importWd.SavedPlanRawStdout(ctx)
-							return err
-						}, importWd, providers)
-						if err != nil {
-							return fmt.Errorf("retrieving formatted plan output: %w", err)
-						}
-
-						return fmt.Errorf("importing resource %s: expected a no-op resource action, got %q action with plan \nstdout:\n\n%s", rc.Address, action, stdout)
-					}
-				}
-			}
-		}
+		// Verify reasonable things about the plan
+		var resourceChangeUnderTest *tfjson.ResourceChange
 
 		if len(plan.ResourceChanges) == 0 {
 			return fmt.Errorf("importing resource %s: expected a resource change, got no changes", resourceName)
 		}
 
-		// TODO compare plan to state from previous step
+		for _, change := range plan.ResourceChanges {
+			if change.Address == resourceName {
+				resourceChangeUnderTest = change
+			}
+		}
+
+		if resourceChangeUnderTest == nil || resourceChangeUnderTest.Change == nil || resourceChangeUnderTest.Change.Actions == nil {
+			return fmt.Errorf("importing resource %s: expected a resource change, got no changes", resourceName)
+		}
+
+		actions := resourceChangeUnderTest.Change.Actions
+		if !actions.NoOp() {
+			var stdout string
+			err = runProviderCommand(ctx, t, func() error {
+				var err error
+				stdout, err = importWd.SavedPlanRawStdout(ctx)
+				return err
+			}, importWd, providers)
+			if err != nil {
+				return fmt.Errorf("retrieving formatted plan output: %w", err)
+			}
+
+			return fmt.Errorf("importing resource %s: expected a no-op resource action, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, stdout)
+		}
 
 		if err := runPlanChecks(ctx, t, plan, step.ImportPlanChecks.PreApply); err != nil {
 			return err
