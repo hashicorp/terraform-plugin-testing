@@ -476,7 +476,7 @@ func savedPlanRawStdout(ctx context.Context, t testing.T, wd *plugintest.Working
 	}, wd, providers)
 
 	if err != nil {
-		return fmt.Sprintf("error retrieving formatted plan output: %w", err)
+		return fmt.Sprintf("error retrieving formatted plan output: %s", err)
 	}
 	return stdout
 }
