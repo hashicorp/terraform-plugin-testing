@@ -219,19 +219,16 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			return fmt.Errorf("importing resource %s: expected a resource change, got no changes", resourceName)
 		}
 
-		actions := resourceChangeUnderTest.Change.Actions
-		if !actions.NoOp() {
-			var stdout string
-			err = runProviderCommand(ctx, t, func() error {
-				var err error
-				stdout, err = importWd.SavedPlanRawStdout(ctx)
-				return err
-			}, importWd, providers)
-			if err != nil {
-				return fmt.Errorf("retrieving formatted plan output: %w", err)
-			}
+		change := resourceChangeUnderTest.Change
+		actions := change.Actions
+		importing := change.Importing
 
-			return fmt.Errorf("importing resource %s: expected a no-op resource action, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, stdout)
+		switch {
+		case importing == nil:
+			return fmt.Errorf("importing resource %s: expected an import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, importWd, providers))
+
+		case !actions.NoOp():
+			return fmt.Errorf("importing resource %s: expected a no-op import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, importWd, providers))
 		}
 
 		if err := runPlanChecks(ctx, t, plan, step.ImportPlanChecks.PreApply); err != nil {
@@ -468,4 +465,21 @@ func runImportStateCheckFunction(ctx context.Context, t testing.T, importState *
 	}
 
 	logging.HelperResourceTrace(ctx, "Called TestStep ImportStateCheck")
+}
+
+func savedPlanRawStdout(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, providers *providerFactories) string {
+	t.Helper()
+
+	var stdout string
+
+	err := runProviderCommand(ctx, t, func() error {
+		var err error
+		stdout, err = wd.SavedPlanRawStdout(ctx)
+		return err
+	}, wd, providers)
+
+	if err != nil {
+		return fmt.Sprintf("error retrieving formatted plan output: %w", err)
+	}
+	return stdout
 }

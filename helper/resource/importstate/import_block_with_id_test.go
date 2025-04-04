@@ -83,7 +83,7 @@ func TestImportBlock_WithID_ExpectError(t *testing.T) {
 				ResourceName:    "examplecloud_container.test",
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithID,
-				ExpectError:     regexp.MustCompile(`importing resource examplecloud_container.test: expected a no-op resource action, got \["update"\] action with plan(.?)`),
+				ExpectError:     regexp.MustCompile(`importing resource examplecloud_container.test: expected a no-op import operation, got.*\["update"\] action with plan(.?)`),
 			},
 		},
 	})
