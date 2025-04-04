@@ -30,12 +30,18 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	// step.ImportStateKind implicitly defaults to the zero-value (ImportCommandWithID) for backward compatibility
 	kind := step.ImportStateKind
+	importStatePersist := step.ImportStatePersist
+
 	if kind.plannable() {
 		// Instead of calling [t.Fatal], return an error. This package's unit tests can use [TestStep.ExpectError] to match on the error message.
 		// An alternative, [plugintest.TestExpectTFatal], does not have access to logged error messages, so it is open to false positives on this
 		// complex code path.
 		if err := requirePlannableImport(t, *helper.TerraformVersion()); err != nil {
 			return err
+		}
+
+		if importStatePersist {
+			return fmt.Errorf("ImportStatePersist is not supported with plannable import blocks")
 		}
 	}
 
@@ -145,7 +151,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	var importWd *plugintest.WorkingDir
 
 	// Use the same working directory to persist the state from import
-	if step.ImportStatePersist {
+	if importStatePersist {
 		importWd = wd
 	} else {
 		importWd = helper.RequireNewWorkingDir(ctx, t, "")
@@ -157,7 +163,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		t.Fatalf("Error setting test config: %s", err)
 	}
 
-	if !step.ImportStatePersist {
+	if !importStatePersist {
 		err = runProviderCommand(ctx, t, func() error {
 			logging.HelperResourceDebug(ctx, "Run terraform init")
 			return importWd.Init(ctx)
