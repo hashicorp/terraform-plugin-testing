@@ -144,12 +144,28 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		importWd = wd
 	} else {
 		importWd = helper.RequireNewWorkingDir(ctx, t, "")
-		defer importWd.Close() //nolint:errcheck
+		defer importWd.Close()
 	}
 
 	err = importWd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		t.Fatalf("Error setting test config: %s", err)
+	}
+
+	if kind.plannable() {
+		if stepNumber > 1 {
+			err = importWd.CopyState(ctx, wd.StateFilePath())
+			if err != nil {
+				t.Fatalf("copying state: %s", err)
+			}
+
+			err = runProviderCommand(ctx, t, func() error {
+				return importWd.RemoveResource(ctx, resourceName)
+			}, importWd, providers)
+			if err != nil {
+				t.Fatalf("removing resource %s from copied state: %s", resourceName, err)
+			}
+		}
 	}
 
 	if !importStatePersist {
@@ -184,33 +200,35 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			return err
 		}
 
-		if plan.ResourceChanges != nil {
-			logging.HelperResourceDebug(ctx, fmt.Sprintf("ImportBlockWithId: %d resource changes", len(plan.ResourceChanges)))
+		logging.HelperResourceDebug(ctx, fmt.Sprintf("ImportBlockWithId: %d resource changes", len(plan.ResourceChanges)))
 
-			for _, rc := range plan.ResourceChanges {
-				if rc.Address != resourceName {
-					// we're only interested in the changes for the resource being imported
-					continue
-				}
-				if rc.Change != nil && rc.Change.Actions != nil {
-					// should this be length checked and used as a condition, if it's a no-op then there shouldn't be any other changes here
-					for _, action := range rc.Change.Actions {
-						if action != "no-op" {
-							var stdout string
-							err = runProviderCommand(ctx, t, func() error {
-								var err error
-								stdout, err = importWd.SavedPlanRawStdout(ctx)
-								return err
-							}, importWd, providers)
-							if err != nil {
-								return fmt.Errorf("retrieving formatted plan output: %w", err)
-							}
-
-							return fmt.Errorf("importing resource %s: expected a no-op resource action, got %q action with plan \nstdout:\n\n%s", rc.Address, action, stdout)
+		for _, rc := range plan.ResourceChanges {
+			if rc.Address != resourceName {
+				// we're only interested in the changes for the resource being imported
+				continue
+			}
+			if rc.Change != nil && rc.Change.Actions != nil {
+				// should this be length checked and used as a condition, if it's a no-op then there shouldn't be any other changes here
+				for _, action := range rc.Change.Actions {
+					if action != "no-op" {
+						var stdout string
+						err = runProviderCommand(ctx, t, func() error {
+							var err error
+							stdout, err = importWd.SavedPlanRawStdout(ctx)
+							return err
+						}, importWd, providers)
+						if err != nil {
+							return fmt.Errorf("retrieving formatted plan output: %w", err)
 						}
+
+						return fmt.Errorf("importing resource %s: expected a no-op resource action, got %q action with plan \nstdout:\n\n%s", rc.Address, action, stdout)
 					}
 				}
 			}
+		}
+
+		if len(plan.ResourceChanges) == 0 {
+			return fmt.Errorf("importing resource %s: expected a resource change, got no changes", resourceName)
 		}
 
 		// TODO compare plan to state from previous step
