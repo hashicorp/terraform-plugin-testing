@@ -16,7 +16,7 @@ import (
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func Test_ImportBlock_InConfigFile(t *testing.T) {
+func TestImportBlock_InConfigFile(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{

@@ -20,7 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func Test_TestStep_ImportStateCheck_SkipDataSourceState(t *testing.T) {
+func TestImportCommand_ImportStateCheckSkipsDataSources(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -123,7 +123,7 @@ func Test_TestStep_ImportStateCheck_SkipDataSourceState(t *testing.T) {
 	})
 }
 
-func Test_TestStep_ImportStateVerify(t *testing.T) {
+func TestImportCommand_ImportStateVerify(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -197,7 +197,7 @@ func Test_TestStep_ImportStateVerify(t *testing.T) {
 	})
 }
 
-func Test_TestStep_ImportStateVerifyIgnore(t *testing.T) {
+func TestImportCommand_ImportStateVerify_Ignore(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -281,7 +281,7 @@ func Test_TestStep_ImportStateVerifyIgnore(t *testing.T) {
 	})
 }
 
-func Test_TestStep_ExpectError_ImportState(t *testing.T) {
+func TestImportCommand_ExpectError(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
