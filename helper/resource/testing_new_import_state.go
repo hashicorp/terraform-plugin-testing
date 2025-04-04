@@ -170,7 +170,6 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	if !importStatePersist {
 		err = runProviderCommand(ctx, t, func() error {
-			logging.HelperResourceDebug(ctx, "Run terraform init")
 			return importWd.Init(ctx)
 		}, importWd, providers)
 		if err != nil {
@@ -183,7 +182,6 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		var opts []tfexec.PlanOption
 
 		err = runProviderCommand(ctx, t, func() error {
-			logging.HelperResourceDebug(ctx, "Run terraform plan")
 			return importWd.CreatePlan(ctx, opts...)
 		}, importWd, providers)
 		if err != nil {
@@ -192,7 +190,6 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 		err = runProviderCommand(ctx, t, func() error {
 			var err error
-			logging.HelperResourceDebug(ctx, "Run terraform show")
 			plan, err = importWd.SavedPlan(ctx)
 			return err
 		}, importWd, providers)
