@@ -9,8 +9,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/hashicorp/go-version"
-
 	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/google/go-cmp/cmp"
@@ -32,17 +30,8 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	kind := step.ImportStateKind
 	importStatePersist := step.ImportStatePersist
 
-	if kind.plannable() {
-		// Instead of calling [t.Fatal], return an error. This package's unit tests can use [TestStep.ExpectError] to match on the error message.
-		// An alternative, [plugintest.TestExpectTFatal], does not have access to logged error messages, so it is open to false positives on this
-		// complex code path.
-		if err := requirePlannableImport(t, *helper.TerraformVersion()); err != nil {
-			return err
-		}
-
-		if importStatePersist {
-			return fmt.Errorf("ImportStatePersist is not supported with plannable import blocks")
-		}
+	if err := importStatePreconditions(t, helper, step); err != nil {
+		return err
 	}
 
 	configRequest := teststep.PrepareConfigurationRequest{
@@ -408,15 +397,28 @@ func appendImportBlock(config string, resourceName string, importID string) stri
 		resourceName, importID)
 }
 
-func requirePlannableImport(t testing.T, versionUnderTest version.Version) error {
+func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestStep) error {
 	t.Helper()
 
-	if versionUnderTest.LessThan(tfversion.Version1_5_0) {
+	kind := step.ImportStateKind
+	versionUnderTest := *helper.TerraformVersion()
+
+	// Instead of calling [t.Fatal], we return an error. This package's unit tests can use [TestStep.ExpectError] to match
+	// on the error message. An alternative, [plugintest.TestExpectTFatal], does not have access to logged error messages,
+	// so it is open to false positives on this complex code path.
+	switch {
+	case kind.plannable() && versionUnderTest.LessThan(tfversion.Version1_5_0):
 		return fmt.Errorf(
 			`ImportState steps using plannable import blocks require Terraform 1.5.0 or later. Either ` +
 				`upgrade the Terraform version running the test or add a ` + "`TerraformVersionChecks`" + ` to ` +
 				`the test case to skip this test.` + "\n\n" +
 				`https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/tfversion-checks#skip-version-checks`)
+
+	case kind.plannable() && step.ImportStatePersist:
+		return fmt.Errorf(`ImportStatePersist is not supported with plannable import blocks`)
+
+	case kind.plannable() && step.ImportStateVerify:
+		return fmt.Errorf(`ImportStateVerify is not supported with plannable import blocks`)
 	}
 
 	return nil

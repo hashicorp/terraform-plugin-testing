@@ -35,11 +35,10 @@ func Test_ImportBlock_InConfigDirectory(t *testing.T) {
 				ConfigDirectory: config.StaticDirectory(`testdata/1`),
 			},
 			{
-				ResourceName:      "examplecloud_container.test",
-				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithID,
-				ImportStateVerify: true,
-				ConfigDirectory:   config.StaticDirectory(`testdata/2`),
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
+				ConfigDirectory: config.StaticDirectory(`testdata/2`),
 			},
 		},
 	})
