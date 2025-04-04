@@ -21,7 +21,7 @@ import (
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func Test_TestStep_ImportBlockId(t *testing.T) {
+func TestImportBlock_WithID(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -44,16 +44,15 @@ func Test_TestStep_ImportBlockId(t *testing.T) {
 				}`,
 			},
 			{
-				ResourceName:      "examplecloud_container.test",
-				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithID,
-				ImportStateVerify: true,
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
 			},
 		},
 	})
 }
 
-func TestTest_TestStep_ImportBlockId_ExpectError(t *testing.T) {
+func TestImportBlock_WithID_ExpectError(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -81,17 +80,16 @@ func TestTest_TestStep_ImportBlockId_ExpectError(t *testing.T) {
 					location = "eastus"
 					name     = "somevalue"
 				}`,
-				ResourceName:      "examplecloud_container.test",
-				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithID,
-				ImportStateVerify: true,
-				ExpectError:       regexp.MustCompile(`importing resource examplecloud_container.test: expected a no-op resource action, got "update" action with plan(.?)`),
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
+				ExpectError:     regexp.MustCompile(`importing resource examplecloud_container.test: expected a no-op import operation, got.*\["update"\] action with plan(.?)`),
 			},
 		},
 	})
 }
 
-func TestTest_TestStep_ImportBlockId_FailWhenPlannableImportIsNotSupported(t *testing.T) {
+func TestImportBlock_WithID_FailWhenNotSupported(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -130,7 +128,7 @@ func TestTest_TestStep_ImportBlockId_FailWhenPlannableImportIsNotSupported(t *te
 	})
 }
 
-func TestTest_TestStep_ImportBlockId_SkipDataSourceState(t *testing.T) {
+func TestImportBlock_WithID_SkipsDataSources(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -174,9 +172,7 @@ func TestTest_TestStep_ImportBlockId_SkipDataSourceState(t *testing.T) {
 	})
 }
 
-// These tests currently pass but only because the `getState` function which is used on the imported resource
-// to do the state comparison doesn't return an error if there is no state in the working directory
-func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *testing.T) {
+func TestImportBlock_WithID_WithBlankOptionalAttribute_GeneratesCorrectPlan(t *testing.T) {
 	/*
 			This test tries to imitate a real world example of behaviour we often see in the AzureRM provider which requires
 			the use of `ImportStateVerifyIgnore` when testing the import of a resource using the import command.
@@ -290,17 +286,15 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore_Real_Example(t *tes
 				resource "examplecloud_container" "test" {
 					name = "somename"
 				}`,
-				ResourceName:            "examplecloud_container.test",
-				ImportState:             true,
-				ImportStateKind:         r.ImportBlockWithID,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"password"},
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
 			},
 		},
 	})
 }
 
-func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore(t *testing.T) {
+func TestImportBlock_WithID_WithBlankComputedAttribute_GeneratesCorrectPlan(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -375,11 +369,9 @@ func TestTest_TestStep_ImportBlockId_ImportStateVerifyIgnore(t *testing.T) {
 				Config: `resource "examplecloud_container" "test" {}`,
 			},
 			{
-				ResourceName:            "examplecloud_container.test",
-				ImportState:             true,
-				ImportStateKind:         r.ImportBlockWithID,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"password"},
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
 			},
 		},
 	})
