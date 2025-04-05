@@ -109,6 +109,8 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
+	var theIdentityValues map[string]any
+
 	// Append to previous step config unless using ConfigFile or ConfigDirectory
 	if testStepConfig == nil || step.Config != "" {
 		importConfig := step.Config
@@ -117,7 +119,46 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			importConfig = cfgRaw
 		}
 
-		if kind.plannable() {
+		if kind.plannable() && kind.resourceIdentity() {
+			// Find resourceName in previous state
+			// Get its resource identity
+			// Win
+
+			{
+				// resource, err := findInState(resourceName, stateJSON)
+				stateValues := stateJSON.Values // can be nil
+				if stateValues == nil {
+					// TODO: \o/
+				}
+
+				rootModule := stateValues.RootModule
+				if rootModule == nil {
+					// TODO: \o/
+				}
+
+				var resourceUnderTest *tfjson.StateResource
+				resources := rootModule.Resources
+				for _, resource := range resources {
+					if resource.Address == resourceName {
+						resourceUnderTest = resource
+						break
+					}
+				}
+
+				if resourceUnderTest == nil {
+					// TODO: \o/
+				}
+
+				identityValues := resourceUnderTest.IdentityValues // map[string]any
+				if len(identityValues) == 0 {
+					// TODO: \o/
+				}
+
+				theIdentityValues = identityValues
+			}
+
+			importConfig = appendImportBlockWithIdentity(importConfig, resourceName, theIdentityValues)
+		} else if kind.plannable() {
 			importConfig = appendImportBlock(importConfig, resourceName, importId)
 		}
 
@@ -212,6 +253,41 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			}
 		}
 
+		var plannedValue *tfjson.StateResource
+		{
+			if plan.PlannedValues == nil {
+				// TODO: \o/
+			}
+
+			rootModule := plan.PlannedValues.RootModule
+			if rootModule == nil {
+				// TODO: \o/
+			}
+
+			resources := rootModule.Resources
+			if len(resources) == 0 {
+				// TODO: \o/
+			}
+
+			for _, resource := range resources {
+				if resource.Address == resourceName {
+					plannedValue = resource
+					break
+				}
+			}
+		}
+
+		if plannedValue == nil {
+			// TODO: \o/
+		}
+
+		if cmp.Equal(theIdentityValues, plannedValue.IdentityValues) {
+			fmt.Println("Identity values match. Rejoice.")
+		} else {
+			fmt.Println("here is planned value: %v", plannedValue)
+			return fmt.Errorf("importing resource %s: expected identity values %v, got %v", resourceName, theIdentityValues, plannedValue.IdentityValues)
+		}
+
 		if resourceChangeUnderTest == nil || resourceChangeUnderTest.Change == nil || resourceChangeUnderTest.Change.Actions == nil {
 			return fmt.Errorf("importing resource %s: expected a resource change, got no changes", resourceName)
 		}
@@ -224,8 +300,10 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		case importing == nil:
 			return fmt.Errorf("importing resource %s: expected an import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, importWd, providers))
 
-		case !actions.NoOp(): // TODO: is this reachable? possible to have anything other than no-op when importing != nil ?
+		case !actions.NoOp():
 			return fmt.Errorf("importing resource %s: expected a no-op import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, importWd, providers))
+		case kind.resourceIdentity():
+			fmt.Printf("import resource with identity: %v", change.After)
 		}
 
 		if err := runPlanChecks(ctx, t, plan, step.ImportPlanChecks.PreApply); err != nil {
@@ -408,6 +486,26 @@ func appendImportBlock(config string, resourceName string, importID string) stri
 		`	id = %q`+"\n"+
 		`}`,
 		resourceName, importID)
+}
+
+func appendImportBlockWithIdentity(config string, resourceName string, identityValues map[string]any) string {
+	configBuilder := config
+	configBuilder += fmt.Sprintf(``+"\n"+
+		`import {`+"\n"+
+		`	to = %s`+"\n"+
+		`	identity = {`+"\n",
+		resourceName)
+
+	// `         id = %q`+"\n"+
+	for k, v := range identityValues {
+		configBuilder += fmt.Sprintf(`		%q = %q`+"\n", k, v)
+	}
+
+	configBuilder +=
+		`	}` + "\n" +
+			`}` + "\n"
+
+	return configBuilder
 }
 
 func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestStep) error {

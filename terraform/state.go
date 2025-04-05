@@ -1475,6 +1475,8 @@ type InstanceState struct {
 	Tainted bool `json:"tainted"`
 
 	mu sync.Mutex
+
+	// prolly want resource identity here
 }
 
 // Deprecated: This method is unintentionally exported by this Go module and not

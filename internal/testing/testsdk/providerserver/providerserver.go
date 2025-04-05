@@ -454,7 +454,7 @@ func (s ProviderServer) ImportResourceState(ctx context.Context, req *tfprotov6.
 			return resp, nil
 		}
 
-		// There is only one imported resource, so this should always be safe
+		// There is only one imported resource, so this should always be safe // to confirm
 		resp.ImportedResources[0].Identity = &tfprotov6.ResourceIdentityData{
 			IdentityData: identity,
 		}
