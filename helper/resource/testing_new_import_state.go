@@ -14,7 +14,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/mitchellh/go-testing-interface"
 
-	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
@@ -67,9 +66,6 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		t.Fatalf("Error getting state: %s", err)
 	}
 
-	// TODO: this statement is a placeholder -- it simply prevents stateJSON from being unused
-	logging.HelperResourceTrace(ctx, fmt.Sprintf("State before import: values %v", stateJSON.Values != nil))
-
 	// Determine the ID to import
 	var importId string
 	switch {
@@ -109,6 +105,8 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
+	var priorIdentityValues map[string]any
+
 	// Append to previous step config unless using ConfigFile or ConfigDirectory
 	if testStepConfig == nil || step.Config != "" {
 		importConfig := step.Config
@@ -117,7 +115,13 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			importConfig = cfgRaw
 		}
 
-		if kind.plannable() {
+		if kind.plannable() && kind.resourceIdentity() {
+			priorIdentityValues = identityValuesFromState(stateJSON, resourceName)
+			if len(priorIdentityValues) == 0 {
+				return fmt.Errorf("importing resource %s: expected prior state to have resource identity values, got none", resourceName)
+			}
+			importConfig = appendImportBlockWithIdentity(importConfig, resourceName, priorIdentityValues)
+		} else if kind.plannable() {
 			importConfig = appendImportBlock(importConfig, resourceName, importId)
 		}
 
@@ -179,22 +183,16 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	var plan *tfjson.Plan
 	if kind.plannable() {
-		var opts []tfexec.PlanOption
+		// TODO: extract to a function -- this is a long `if` :)
 
-		err = runProviderCommand(ctx, t, func() error {
-			return importWd.CreatePlan(ctx, opts...)
-		}, importWd, providers)
+		err := runProviderCommandCreatePlan(ctx, t, importWd, providers)
 		if err != nil {
-			return err
+			return fmt.Errorf("generating plan with import config: %s", err)
 		}
 
-		err = runProviderCommand(ctx, t, func() error {
-			var err error
-			plan, err = importWd.SavedPlan(ctx)
-			return err
-		}, importWd, providers)
+		plan, err = runProviderCommandSavedPlan(ctx, t, importWd, providers)
 		if err != nil {
-			return err
+			return fmt.Errorf("reading generated plan with import config: %s", err)
 		}
 
 		logging.HelperResourceDebug(ctx, fmt.Sprintf("ImportBlockWithId: %d resource changes", len(plan.ResourceChanges)))
@@ -231,16 +229,40 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		if err := runPlanChecks(ctx, t, plan, step.ImportPlanChecks.PreApply); err != nil {
 			return err
 		}
-	} else {
-		err = runProviderCommand(ctx, t, func() error {
-			return importWd.Import(ctx, resourceName, importId)
-		}, importWd, providers)
-		if err != nil {
-			return err
+
+		{
+			if kind.resourceIdentity() {
+				err := runProviderCommandApply(ctx, t, wd, providers)
+				if err != nil {
+					return fmt.Errorf("applying plan with import config: %s", err)
+				}
+
+				newStateJSON, err := runProviderCommandGetStateJSON(ctx, t, wd, providers)
+				if err != nil {
+					return fmt.Errorf("getting state after applying plan with import config: %s", err)
+				}
+
+				newIdentityValues := identityValuesFromState(newStateJSON, resourceName)
+				if !cmp.Equal(priorIdentityValues, newIdentityValues) {
+					return fmt.Errorf("importing resource %s: expected identity values %v, got %v", resourceName, priorIdentityValues, newIdentityValues)
+				}
+			}
 		}
+
+		return nil
 	}
 
+	// TODO: extract to a function -- this is an implicit `else` for the long `if` above :)
+
 	var importState *terraform.State
+
+	err = runProviderCommand(ctx, t, func() error {
+		return importWd.Import(ctx, resourceName, importId)
+	}, importWd, providers)
+	if err != nil {
+		return err
+	}
+
 	err = runProviderCommand(ctx, t, func() error {
 		_, importState, err = getState(ctx, t, importWd)
 		if err != nil {
@@ -410,6 +432,25 @@ func appendImportBlock(config string, resourceName string, importID string) stri
 		resourceName, importID)
 }
 
+func appendImportBlockWithIdentity(config string, resourceName string, identityValues map[string]any) string {
+	configBuilder := config
+	configBuilder += fmt.Sprintf(``+"\n"+
+		`import {`+"\n"+
+		`	to = %s`+"\n"+
+		`	identity = {`+"\n",
+		resourceName)
+
+	for k, v := range identityValues {
+		configBuilder += fmt.Sprintf(`		%q = %q`+"\n", k, v)
+	}
+
+	configBuilder += `` +
+		`	}` + "\n" +
+		`}` + "\n"
+
+	return configBuilder
+}
+
 func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestStep) error {
 	t.Helper()
 
@@ -435,6 +476,33 @@ func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestS
 	}
 
 	return nil
+}
+
+func resourcesFromState(state *tfjson.State) []*tfjson.StateResource {
+	stateValues := state.Values
+	if stateValues == nil || stateValues.RootModule == nil {
+		return []*tfjson.StateResource{}
+	}
+
+	return stateValues.RootModule.Resources
+}
+
+func identityValuesFromState(state *tfjson.State, resourceName string) map[string]any {
+	var resource *tfjson.StateResource
+	resources := resourcesFromState(state)
+
+	for _, r := range resources {
+		if r.Address == resourceName {
+			resource = r
+			break
+		}
+	}
+
+	if resource == nil || len(resource.IdentityValues) == 0 {
+		return map[string]any{}
+	}
+
+	return resource.IdentityValues
 }
 
 func runImportStateCheckFunction(ctx context.Context, t testing.T, importState *terraform.State, step TestStep) {
