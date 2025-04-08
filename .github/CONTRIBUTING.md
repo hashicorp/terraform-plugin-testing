@@ -31,7 +31,7 @@ https://www.terraform.io/community.html
 ## I want to report a vulnerability
 
 Please disclose security vulnerabilities responsibly by following the procedure
-described at https://www.hashicorp.com/security#vulnerability-reporting
+described at https://www.hashicorp.com/en/trust/security/vulnerability-management#vulnerability-reporting
 
 ## New Issue
 
