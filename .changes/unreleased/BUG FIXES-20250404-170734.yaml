@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: 'importstate: plannable import (`ImportBlockWith*`) fixed for a resource with a dependency'
+time: 2025-04-04T17:07:34.428542-04:00
+custom:
+    Issue: "476"
