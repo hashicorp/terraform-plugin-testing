@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/hashicorp/go-version"
 	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/google/go-cmp/cmp"
@@ -456,15 +457,17 @@ func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestS
 
 	kind := step.ImportStateKind
 	versionUnderTest := *helper.TerraformVersion()
+	resourceIdentityMinimumVersion := version.Must(version.NewVersion("1.12.0-beta1"))
 
 	// Instead of calling [t.Fatal], we return an error. This package's unit tests can use [TestStep.ExpectError] to match
 	// on the error message. An alternative, [plugintest.TestExpectTFatal], does not have access to logged error messages,
 	// so it is open to false positives on this complex code path.
 	switch {
 	// Multiple cases may match, so check the most specific cases first
-	case kind.resourceIdentity() && versionUnderTest.LessThan(tfversion.Version1_12_0):
+
+	case kind.resourceIdentity() && versionUnderTest.LessThan(resourceIdentityMinimumVersion):
 		return fmt.Errorf(
-			`ImportState steps using resource identity require Terraform 1.12.0 or later. Either ` +
+			`ImportState steps using resource identity require Terraform 1.12.0-beta1 or later. Either ` +
 				`upgrade the Terraform version running the test or add a ` + "`TerraformVersionChecks`" + ` to ` +
 				`the test case to skip this test.` + "\n\n" +
 				`https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/tfversion-checks#skip-version-checks`)

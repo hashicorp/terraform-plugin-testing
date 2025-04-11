@@ -80,7 +80,7 @@ func TestImportBlock_WithResourceIdentity_RequiresVersion1_12_0(t *testing.T) {
 				ResourceName:    "examplecloud_container.test",
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithResourceIdentity,
-				ExpectError:     regexp.MustCompile(`Terraform 1.12.0 or later`),
+				ExpectError:     regexp.MustCompile(`Terraform 1.12.0\S* or later`),
 			},
 		},
 	})
