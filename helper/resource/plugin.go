@@ -13,6 +13,7 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-exec/tfexec"
+	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -111,6 +112,58 @@ type providerFactories struct {
 	legacy  sdkProviderFactories
 	protov5 protov5ProviderFactories
 	protov6 protov6ProviderFactories
+}
+
+func runProviderCommandApply(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, factories *providerFactories) error {
+	t.Helper()
+
+	fn := func() error {
+		return wd.Apply(ctx)
+	}
+	return runProviderCommand(ctx, t, fn, wd, factories)
+}
+
+func runProviderCommandCreatePlan(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, factories *providerFactories) error {
+	t.Helper()
+
+	fn := func() error {
+		return wd.CreatePlan(ctx)
+	}
+	return runProviderCommand(ctx, t, fn, wd, factories)
+}
+
+func runProviderCommandGetStateJSON(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, factories *providerFactories) (*tfjson.State, error) {
+	t.Helper()
+
+	var stateJSON *tfjson.State
+	fn := func() error {
+		var err error
+		stateJSON, err = wd.State(ctx)
+		return err
+	}
+	err := runProviderCommand(ctx, t, fn, wd, factories)
+	if err != nil {
+		return nil, err
+	}
+
+	return stateJSON, nil
+}
+
+func runProviderCommandSavedPlan(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, factories *providerFactories) (*tfjson.Plan, error) {
+	t.Helper()
+
+	var plan *tfjson.Plan
+	fn := func() error {
+		var err error
+		plan, err = wd.SavedPlan(ctx)
+		return err
+	}
+	err := runProviderCommand(ctx, t, fn, wd, factories)
+	if err != nil {
+		return nil, err
+	}
+
+	return plan, nil
 }
 
 func runProviderCommand(ctx context.Context, t testing.T, f func() error, wd *plugintest.WorkingDir, factories *providerFactories) error {
