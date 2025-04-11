@@ -473,6 +473,13 @@ func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestS
 
 	case kind.plannable() && step.ImportStateVerify:
 		return fmt.Errorf(`ImportStateVerify is not supported with plannable import blocks`)
+
+	case kind.resourceIdentity() && versionUnderTest.LessThan(tfversion.Version1_12_0):
+		return fmt.Errorf(
+			`ImportState steps using resource identity require Terraform 1.12.0 or later. Either ` +
+				`upgrade the Terraform version running the test or add a ` + "`TerraformVersionChecks`" + ` to ` +
+				`the test case to skip this test.` + "\n\n" +
+				`https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/tfversion-checks#skip-version-checks`)
 	}
 
 	return nil
