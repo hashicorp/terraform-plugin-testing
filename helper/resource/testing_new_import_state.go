@@ -457,8 +457,8 @@ func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestS
 	t.Helper()
 
 	kind := step.ImportStateKind
-	versionUnderTest := *helper.TerraformVersion()
-	resourceIdentityMinimumVersion := version.Must(version.NewVersion("1.12.0-beta1"))
+	versionUnderTest := *helper.TerraformVersion().Core()
+	resourceIdentityMinimumVersion := version.Must(version.NewVersion("1.12.0"))
 
 	// Instead of calling [t.Fatal], we return an error. This package's unit tests can use [TestStep.ExpectError] to match
 	// on the error message. An alternative, [plugintest.TestExpectTFatal], does not have access to logged error messages,
