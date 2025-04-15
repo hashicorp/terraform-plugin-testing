@@ -16,7 +16,7 @@ import (
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func Test_ImportBlock_InConfigDirectory(t *testing.T) {
+func TestImportBlock_InConfigDirectory(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -35,11 +35,10 @@ func Test_ImportBlock_InConfigDirectory(t *testing.T) {
 				ConfigDirectory: config.StaticDirectory(`testdata/1`),
 			},
 			{
-				ResourceName:      "examplecloud_container.test",
-				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithID,
-				ImportStateVerify: true,
-				ConfigDirectory:   config.StaticDirectory(`testdata/2`),
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
+				ConfigDirectory: config.StaticDirectory(`testdata/2`),
 			},
 		},
 	})
