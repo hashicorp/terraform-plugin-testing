@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-version"
+
 	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/google/go-cmp/cmp"
@@ -462,9 +463,9 @@ func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestS
 	// Instead of calling [t.Fatal], we return an error. This package's unit tests can use [TestStep.ExpectError] to match
 	// on the error message. An alternative, [plugintest.TestExpectTFatal], does not have access to logged error messages,
 	// so it is open to false positives on this complex code path.
-	switch {
+	//
 	// Multiple cases may match, so check the most specific cases first
-
+	switch {
 	case kind.resourceIdentity() && versionUnderTest.LessThan(resourceIdentityMinimumVersion):
 		return fmt.Errorf(
 			`ImportState steps using resource identity require Terraform 1.12.0-beta1 or later. Either ` +
@@ -484,7 +485,6 @@ func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestS
 
 	case kind.plannable() && step.ImportStateVerify:
 		return fmt.Errorf(`ImportStateVerify is not supported with plannable import blocks`)
-
 	}
 
 	return nil
