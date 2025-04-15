@@ -39,9 +39,6 @@ func TestImportBlock_WithResourceIdentity(t *testing.T) {
 				}`,
 			},
 			{
-				RefreshState: true,
-			},
-			{
 				ResourceName:    "examplecloud_container.test",
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithResourceIdentity,
@@ -72,9 +69,6 @@ func TestImportBlock_WithResourceIdentity_RequiresVersion1_12_0(t *testing.T) {
 					location = "westeurope"
 					name     = "somevalue"
 				}`,
-			},
-			{
-				RefreshState: true,
 			},
 			{
 				ResourceName:    "examplecloud_container.test",
