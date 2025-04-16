@@ -110,16 +110,19 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	var priorIdentityValues map[string]any
 
+	if kind.plannable() && kind.resourceIdentity() {
+		priorIdentityValues = identityValuesFromState(stateJSON, resourceName)
+		if len(priorIdentityValues) == 0 {
+			return fmt.Errorf("importing resource %s: expected prior state to have resource identity values, got none", resourceName)
+		}
+	}
+
 	// Append to previous step config unless using explicit inline Config, or ConfigFile, or ConfigDirectory
 	if testStepConfig == nil && step.ConfigFile == nil && step.ConfigDirectory == nil {
 		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
 		importConfig := cfgRaw
 
 		if kind.plannable() && kind.resourceIdentity() {
-			priorIdentityValues = identityValuesFromState(stateJSON, resourceName)
-			if len(priorIdentityValues) == 0 {
-				return fmt.Errorf("importing resource %s: expected prior state to have resource identity values, got none", resourceName)
-			}
 			importConfig = appendImportBlockWithIdentity(importConfig, resourceName, priorIdentityValues)
 		} else if kind.plannable() {
 			importConfig = appendImportBlock(importConfig, resourceName, importId)

@@ -43,3 +43,31 @@ func TestImportBlock_InConfigFile(t *testing.T) {
 		},
 	})
 }
+
+func TestImportBlock_WithResourceIdentity_InConfigFile(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithID requires Terraform 1.5.0 or later
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_container": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				ConfigFile: config.StaticFile(`testdata/1/examplecloud_container.tf`),
+			},
+			{
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithResourceIdentity,
+				ConfigFile:      config.StaticFile(`testdata/examplecloud_container_import_with_identity.tf`),
+			},
+		},
+	})
+}
