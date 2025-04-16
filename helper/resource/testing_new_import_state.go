@@ -444,13 +444,13 @@ func appendImportBlockWithIdentity(config string, resourceName string, identityV
 		resourceName)
 
 	for k, v := range identityValues {
-		switch v.(type) {
+		switch v := v.(type) {
 		case bool:
 			configBuilder += fmt.Sprintf(`		%q = %t`+"\n", k, v)
 
 		case []any:
 			var quotedV []string
-			for _, v := range v.([]any) {
+			for _, v := range v {
 				quotedV = append(quotedV, fmt.Sprintf(`%q`, v))
 			}
 			configBuilder += fmt.Sprintf(`		%q = [%s]`+"\n", k, strings.Join(quotedV, ", "))
