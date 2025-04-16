@@ -109,13 +109,10 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
-	// Append to previous step config unless using ConfigFile or ConfigDirectory
-	if testStepConfig == nil || step.Config != "" {
-		importConfig := step.Config
-		if importConfig == "" {
-			logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
-			importConfig = cfgRaw
-		}
+	// Append to previous step config unless using explicit inline Config, or ConfigFile, or ConfigDirectory
+	if testStepConfig == nil && step.ConfigFile == nil && step.ConfigDirectory == nil {
+		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
+		importConfig := cfgRaw
 
 		if kind.plannable() {
 			importConfig = appendImportBlock(importConfig, resourceName, importId)
