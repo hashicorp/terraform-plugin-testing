@@ -488,7 +488,7 @@ func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestS
 	switch {
 	case kind.resourceIdentity() && versionUnderTest.LessThan(resourceIdentityMinimumVersion):
 		return fmt.Errorf(
-			`ImportState steps using resource identity require Terraform 1.12.0-beta1 or later. Either ` +
+			`ImportState steps using resource identity require Terraform 1.12.0 or later. Either ` +
 				`upgrade the Terraform version running the test or add a ` + "`TerraformVersionChecks`" + ` to ` +
 				`the test case to skip this test.` + "\n\n" +
 				`https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/tfversion-checks#skip-version-checks`)
