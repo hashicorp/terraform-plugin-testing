@@ -16,6 +16,15 @@ func RequiredBoolAttribute(name string) *tfprotov6.SchemaAttribute {
 	}
 }
 
+func OptionalComputedListAttribute(name string, elementType tftypes.Type) *tfprotov6.SchemaAttribute {
+	return &tfprotov6.SchemaAttribute{
+		Name:     name,
+		Type:     tftypes.List{ElementType: elementType},
+		Optional: true,
+		Computed: true,
+	}
+}
+
 func RequiredListAttribute(name string, elementType tftypes.Type) *tfprotov6.SchemaAttribute {
 	return &tfprotov6.SchemaAttribute{
 		Name:     name,

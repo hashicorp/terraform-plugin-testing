@@ -238,11 +238,13 @@ func examplecloudResourceWithEveryIdentitySchemaType() testprovider.Resource {
 			NewState: tftypes.NewValue(
 				tftypes.Object{
 					AttributeTypes: map[string]tftypes.Type{
-						"hostname": tftypes.String,
-						"cabinet":  tftypes.String,
-						"unit":     tftypes.Number,
-						"active":   tftypes.Bool,
-						"tags":     tftypes.List{ElementType: tftypes.String},
+						"hostname":      tftypes.String,
+						"cabinet":       tftypes.String,
+						"unit":          tftypes.Number,
+						"active":        tftypes.Bool,
+						"tags":          tftypes.List{ElementType: tftypes.String},
+						"magic_numbers": tftypes.List{ElementType: tftypes.Number},
+						"beep_boop":     tftypes.List{ElementType: tftypes.Bool},
 					},
 				},
 				map[string]tftypes.Value{
@@ -250,16 +252,30 @@ func examplecloudResourceWithEveryIdentitySchemaType() testprovider.Resource {
 					"cabinet":  tftypes.NewValue(tftypes.String, "A1"),
 					"unit":     tftypes.NewValue(tftypes.Number, 14),
 					"active":   tftypes.NewValue(tftypes.Bool, true),
-					"tags":     tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{tftypes.NewValue(tftypes.String, "storage"), tftypes.NewValue(tftypes.String, "fast")}),
+					"tags": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.String}, []tftypes.Value{
+							tftypes.NewValue(tftypes.String, "storage"),
+							tftypes.NewValue(tftypes.String, "fast")}),
+					"magic_numbers": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.Number}, []tftypes.Value{
+							tftypes.NewValue(tftypes.Number, 5),
+							tftypes.NewValue(tftypes.Number, 2)}),
+					"beep_boop": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.Bool}, []tftypes.Value{
+							tftypes.NewValue(tftypes.Bool, false),
+							tftypes.NewValue(tftypes.Bool, true),
+						}),
 				},
 			),
 			NewIdentity: teststep.Pointer(tftypes.NewValue(
 				tftypes.Object{
 					AttributeTypes: map[string]tftypes.Type{
-						"cabinet": tftypes.String,
-						"unit":    tftypes.Number,
-						"active":  tftypes.Bool,
-						"tags":    tftypes.List{ElementType: tftypes.String},
+						"cabinet":       tftypes.String,
+						"unit":          tftypes.Number,
+						"active":        tftypes.Bool,
+						"tags":          tftypes.List{ElementType: tftypes.String},
+						"magic_numbers": tftypes.List{ElementType: tftypes.Number},
+						"beep_boop":     tftypes.List{ElementType: tftypes.Bool},
 					},
 				},
 				map[string]tftypes.Value{
@@ -271,6 +287,15 @@ func examplecloudResourceWithEveryIdentitySchemaType() testprovider.Resource {
 							tftypes.NewValue(tftypes.String, "storage"),
 							tftypes.NewValue(tftypes.String, "fast"),
 						}),
+					"magic_numbers": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.Number}, []tftypes.Value{
+							tftypes.NewValue(tftypes.Number, 5),
+							tftypes.NewValue(tftypes.Number, 2)}),
+					"beep_boop": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.Bool}, []tftypes.Value{
+							tftypes.NewValue(tftypes.Bool, false),
+							tftypes.NewValue(tftypes.Bool, true),
+						}),
 				},
 			)),
 		},
@@ -278,11 +303,13 @@ func examplecloudResourceWithEveryIdentitySchemaType() testprovider.Resource {
 			NewState: tftypes.NewValue(
 				tftypes.Object{
 					AttributeTypes: map[string]tftypes.Type{
-						"hostname": tftypes.String,
-						"cabinet":  tftypes.String,
-						"unit":     tftypes.Number,
-						"active":   tftypes.Bool,
-						"tags":     tftypes.List{ElementType: tftypes.String},
+						"hostname":      tftypes.String,
+						"cabinet":       tftypes.String,
+						"unit":          tftypes.Number,
+						"active":        tftypes.Bool,
+						"tags":          tftypes.List{ElementType: tftypes.String},
+						"magic_numbers": tftypes.List{ElementType: tftypes.Number},
+						"beep_boop":     tftypes.List{ElementType: tftypes.Bool},
 					},
 				},
 				map[string]tftypes.Value{
@@ -290,23 +317,49 @@ func examplecloudResourceWithEveryIdentitySchemaType() testprovider.Resource {
 					"cabinet":  tftypes.NewValue(tftypes.String, "A1"),
 					"unit":     tftypes.NewValue(tftypes.Number, 14),
 					"active":   tftypes.NewValue(tftypes.Bool, true),
-					"tags":     tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{tftypes.NewValue(tftypes.String, "storage"), tftypes.NewValue(tftypes.String, "fast")}),
+					"tags": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.String}, []tftypes.Value{
+							tftypes.NewValue(tftypes.String, "storage"),
+							tftypes.NewValue(tftypes.String, "fast")}),
+					"magic_numbers": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.Number}, []tftypes.Value{
+							tftypes.NewValue(tftypes.Number, 5),
+							tftypes.NewValue(tftypes.Number, 2)}),
+					"beep_boop": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.Bool}, []tftypes.Value{
+							tftypes.NewValue(tftypes.Bool, false),
+							tftypes.NewValue(tftypes.Bool, true),
+						}),
 				},
 			),
 			NewIdentity: teststep.Pointer(tftypes.NewValue(
 				tftypes.Object{
 					AttributeTypes: map[string]tftypes.Type{
-						"cabinet": tftypes.String,
-						"unit":    tftypes.Number,
-						"active":  tftypes.Bool,
-						"tags":    tftypes.List{ElementType: tftypes.String},
+						"cabinet":       tftypes.String,
+						"unit":          tftypes.Number,
+						"active":        tftypes.Bool,
+						"tags":          tftypes.List{ElementType: tftypes.String},
+						"magic_numbers": tftypes.List{ElementType: tftypes.Number},
+						"beep_boop":     tftypes.List{ElementType: tftypes.Bool},
 					},
 				},
 				map[string]tftypes.Value{
 					"cabinet": tftypes.NewValue(tftypes.String, "A1"),
 					"unit":    tftypes.NewValue(tftypes.Number, 14),
 					"active":  tftypes.NewValue(tftypes.Bool, true),
-					"tags":    tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{tftypes.NewValue(tftypes.String, "storage"), tftypes.NewValue(tftypes.String, "fast")}),
+					"tags": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.String}, []tftypes.Value{
+							tftypes.NewValue(tftypes.String, "storage"),
+							tftypes.NewValue(tftypes.String, "fast")}),
+					"magic_numbers": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.Number}, []tftypes.Value{
+							tftypes.NewValue(tftypes.Number, 5),
+							tftypes.NewValue(tftypes.Number, 2)}),
+					"beep_boop": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.Bool}, []tftypes.Value{
+							tftypes.NewValue(tftypes.Bool, false),
+							tftypes.NewValue(tftypes.Bool, true),
+						}),
 				},
 			)),
 		},
@@ -314,11 +367,13 @@ func examplecloudResourceWithEveryIdentitySchemaType() testprovider.Resource {
 			State: tftypes.NewValue(
 				tftypes.Object{
 					AttributeTypes: map[string]tftypes.Type{
-						"hostname": tftypes.String,
-						"cabinet":  tftypes.String,
-						"unit":     tftypes.Number,
-						"active":   tftypes.Bool,
-						"tags":     tftypes.List{ElementType: tftypes.String},
+						"hostname":      tftypes.String,
+						"cabinet":       tftypes.String,
+						"unit":          tftypes.Number,
+						"active":        tftypes.Bool,
+						"tags":          tftypes.List{ElementType: tftypes.String},
+						"magic_numbers": tftypes.List{ElementType: tftypes.Number},
+						"beep_boop":     tftypes.List{ElementType: tftypes.Bool},
 					},
 				},
 				map[string]tftypes.Value{
@@ -326,23 +381,49 @@ func examplecloudResourceWithEveryIdentitySchemaType() testprovider.Resource {
 					"cabinet":  tftypes.NewValue(tftypes.String, "A1"),
 					"unit":     tftypes.NewValue(tftypes.Number, 14),
 					"active":   tftypes.NewValue(tftypes.Bool, true),
-					"tags":     tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{tftypes.NewValue(tftypes.String, "storage"), tftypes.NewValue(tftypes.String, "fast")}),
+					"tags": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.String}, []tftypes.Value{
+							tftypes.NewValue(tftypes.String, "storage"),
+							tftypes.NewValue(tftypes.String, "fast")}),
+					"magic_numbers": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.Number}, []tftypes.Value{
+							tftypes.NewValue(tftypes.Number, 5),
+							tftypes.NewValue(tftypes.Number, 2)}),
+					"beep_boop": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.Bool}, []tftypes.Value{
+							tftypes.NewValue(tftypes.Bool, false),
+							tftypes.NewValue(tftypes.Bool, true),
+						}),
 				},
 			),
 			Identity: teststep.Pointer(tftypes.NewValue(
 				tftypes.Object{
 					AttributeTypes: map[string]tftypes.Type{
-						"cabinet": tftypes.String,
-						"unit":    tftypes.Number,
-						"active":  tftypes.Bool,
-						"tags":    tftypes.List{ElementType: tftypes.String},
+						"cabinet":       tftypes.String,
+						"unit":          tftypes.Number,
+						"active":        tftypes.Bool,
+						"tags":          tftypes.List{ElementType: tftypes.String},
+						"magic_numbers": tftypes.List{ElementType: tftypes.Number},
+						"beep_boop":     tftypes.List{ElementType: tftypes.Bool},
 					},
 				},
 				map[string]tftypes.Value{
 					"cabinet": tftypes.NewValue(tftypes.String, "A1"),
 					"unit":    tftypes.NewValue(tftypes.Number, 14),
 					"active":  tftypes.NewValue(tftypes.Bool, true),
-					"tags":    tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{tftypes.NewValue(tftypes.String, "storage"), tftypes.NewValue(tftypes.String, "fast")}),
+					"tags": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.String}, []tftypes.Value{
+							tftypes.NewValue(tftypes.String, "storage"),
+							tftypes.NewValue(tftypes.String, "fast")}),
+					"magic_numbers": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.Number}, []tftypes.Value{
+							tftypes.NewValue(tftypes.Number, 5),
+							tftypes.NewValue(tftypes.Number, 2)}),
+					"beep_boop": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.Bool}, []tftypes.Value{
+							tftypes.NewValue(tftypes.Bool, false),
+							tftypes.NewValue(tftypes.Bool, true),
+						}),
 				},
 			)),
 		},
@@ -355,6 +436,7 @@ func examplecloudResourceWithEveryIdentitySchemaType() testprovider.Resource {
 						RequiredNumberAttribute("unit"),
 						RequiredBoolAttribute("active"),
 						RequiredListAttribute("tags", tftypes.String),
+						OptionalComputedListAttribute("magic_numbers", tftypes.Number),
 					},
 				},
 			},
@@ -382,6 +464,13 @@ func examplecloudResourceWithEveryIdentitySchemaType() testprovider.Resource {
 						Name: "tags",
 						Type: tftypes.List{
 							ElementType: tftypes.String,
+						},
+						OptionalForImport: true,
+					},
+					{
+						Name: "magic_numbers",
+						Type: tftypes.List{
+							ElementType: tftypes.Number,
 						},
 						OptionalForImport: true,
 					},
