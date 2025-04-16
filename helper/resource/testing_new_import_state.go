@@ -25,7 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
+func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, testCaseWorkingDir *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
 	t.Helper()
 
 	// step.ImportStateKind implicitly defaults to the zero-value (ImportCommandWithID) for backward compatibility
@@ -59,12 +59,12 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	var err error
 
 	err = runProviderCommand(ctx, t, func() error {
-		stateJSON, state, err = getState(ctx, t, wd)
+		stateJSON, state, err = getState(ctx, t, testCaseWorkingDir)
 		if err != nil {
 			return err
 		}
 		return nil
-	}, wd, providers)
+	}, testCaseWorkingDir, providers)
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
 	}
@@ -141,31 +141,31 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 	}
 
-	var importWd *plugintest.WorkingDir
+	var workingDir *plugintest.WorkingDir
 
 	// Use the same working directory to persist the state from import
 	if importStatePersist {
-		importWd = wd
+		workingDir = testCaseWorkingDir
 	} else {
-		importWd = helper.RequireNewWorkingDir(ctx, t, "")
-		defer importWd.Close()
+		workingDir = helper.RequireNewWorkingDir(ctx, t, "")
+		defer workingDir.Close()
 	}
 
-	err = importWd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
+	err = workingDir.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		t.Fatalf("Error setting test config: %s", err)
 	}
 
 	if kind.plannable() {
 		if stepNumber > 1 {
-			err = importWd.CopyState(ctx, wd.StateFilePath())
+			err = workingDir.CopyState(ctx, testCaseWorkingDir.StateFilePath())
 			if err != nil {
 				t.Fatalf("copying state: %s", err)
 			}
 
 			err = runProviderCommand(ctx, t, func() error {
-				return importWd.RemoveResource(ctx, resourceName)
-			}, importWd, providers)
+				return workingDir.RemoveResource(ctx, resourceName)
+			}, workingDir, providers)
 			if err != nil {
 				t.Fatalf("removing resource %s from copied state: %s", resourceName, err)
 			}
@@ -174,8 +174,8 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	if !importStatePersist {
 		err = runProviderCommand(ctx, t, func() error {
-			return importWd.Init(ctx)
-		}, importWd, providers)
+			return workingDir.Init(ctx)
+		}, workingDir, providers)
 		if err != nil {
 			t.Fatalf("Error running init: %s", err)
 		}
@@ -185,12 +185,12 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	if kind.plannable() {
 		// TODO: extract to a function -- this is a long `if` :)
 
-		err := runProviderCommandCreatePlan(ctx, t, importWd, providers)
+		err := runProviderCommandCreatePlan(ctx, t, workingDir, providers)
 		if err != nil {
 			return fmt.Errorf("generating plan with import config: %s", err)
 		}
 
-		plan, err = runProviderCommandSavedPlan(ctx, t, importWd, providers)
+		plan, err = runProviderCommandSavedPlan(ctx, t, workingDir, providers)
 		if err != nil {
 			return fmt.Errorf("reading generated plan with import config: %s", err)
 		}
@@ -220,10 +220,10 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 		switch {
 		case importing == nil:
-			return fmt.Errorf("importing resource %s: expected an import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, importWd, providers))
+			return fmt.Errorf("importing resource %s: expected an import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, workingDir, providers))
 
 		case !actions.NoOp():
-			return fmt.Errorf("importing resource %s: expected a no-op import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, importWd, providers))
+			return fmt.Errorf("importing resource %s: expected a no-op import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, workingDir, providers))
 		}
 
 		if err := runPlanChecks(ctx, t, plan, step.ImportPlanChecks.PreApply); err != nil {
@@ -232,12 +232,12 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 		{
 			if kind.resourceIdentity() {
-				err := runProviderCommandApply(ctx, t, wd, providers)
+				err := runProviderCommandApply(ctx, t, workingDir, providers)
 				if err != nil {
 					return fmt.Errorf("applying plan with import config: %s", err)
 				}
 
-				newStateJSON, err := runProviderCommandGetStateJSON(ctx, t, wd, providers)
+				newStateJSON, err := runProviderCommandGetStateJSON(ctx, t, workingDir, providers)
 				if err != nil {
 					return fmt.Errorf("getting state after applying plan with import config: %s", err)
 				}
@@ -257,19 +257,19 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	var importState *terraform.State
 
 	err = runProviderCommand(ctx, t, func() error {
-		return importWd.Import(ctx, resourceName, importId)
-	}, importWd, providers)
+		return workingDir.Import(ctx, resourceName, importId)
+	}, workingDir, providers)
 	if err != nil {
 		return err
 	}
 
 	err = runProviderCommand(ctx, t, func() error {
-		_, importState, err = getState(ctx, t, importWd)
+		_, importState, err = getState(ctx, t, workingDir)
 		if err != nil {
 			return err
 		}
 		return nil
-	}, importWd, providers)
+	}, workingDir, providers)
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
 	}
