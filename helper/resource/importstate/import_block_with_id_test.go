@@ -82,7 +82,15 @@ func TestImportBlock_WithID_ExpectError(t *testing.T) {
 				resource "examplecloud_container" "test" {
 					location = "eastus"
 					name     = "somevalue"
-				}`,
+				}
+
+				import {
+					to = examplecloud_container.test
+					identity = {
+						id = "westeurope/somevalue"
+					}
+				}
+				`,
 				ResourceName:    "examplecloud_container.test",
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithID,
@@ -116,16 +124,10 @@ func TestImportBlock_WithID_FailWhenNotSupported(t *testing.T) {
 				}`,
 			},
 			{
-				Config: `
-				resource "examplecloud_container" "test" {
-					location = "eastus"
-					name     = "somevalue"
-				}`,
-				ResourceName:      "examplecloud_container.test",
-				ImportState:       true,
-				ImportStateKind:   r.ImportBlockWithID,
-				ImportStateVerify: true,
-				ExpectError:       regexp.MustCompile(`Terraform 1.5.0`),
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
+				ResourceName:    "examplecloud_container.test",
+				ExpectError:     regexp.MustCompile(`Terraform 1.5.0`),
 			},
 		},
 	})
@@ -288,6 +290,12 @@ func TestImportBlock_WithID_WithBlankOptionalAttribute_GeneratesCorrectPlan(t *t
 
 				resource "examplecloud_container" "test" {
 					name = "somename"
+				}
+
+				import {
+					to = examplecloud_container.test
+					id = "sometestid"
+
 				}`,
 				ResourceName:    "examplecloud_container.test",
 				ImportState:     true,
