@@ -8,7 +8,10 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -372,6 +375,53 @@ func TestImportBlock_WithID_WithBlankComputedAttribute_GeneratesCorrectPlan(t *t
 				ResourceName:    "examplecloud_container.test",
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithID,
+			},
+		},
+	})
+}
+
+func TestImportBlock_WithID_WithExternalProvider(t *testing.T) {
+	t.Parallel()
+
+	config := `
+resource "random_string" "mystery_message" {
+	length = 31
+}
+`
+
+	configWithImportBlock := config + `
+import {
+	to = random_string.mystery_message
+	id = "It was a dark and stormy night."
+}
+`
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithID requires Terraform 1.5.0 or later
+		},
+		ExternalProviders: map[string]r.ExternalProvider{
+			"random": {
+				Source: "hashicorp/random",
+			},
+		},
+		Steps: []r.TestStep{
+			{
+				Config: config,
+			},
+			{
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
+				Config:          configWithImportBlock,
+				ResourceName:    "random_string.mystery_message",
+				ImportPlanChecks: r.ImportPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"random_string.mystery_message",
+							tfjsonpath.New("result"),
+							knownvalue.StringExact("It was a dark and stormy night.")),
+					},
+				},
 			},
 		},
 	})

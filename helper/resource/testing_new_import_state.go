@@ -110,13 +110,10 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	var priorIdentityValues map[string]any
 
-	// Append to previous step config unless using ConfigFile or ConfigDirectory
-	if testStepConfig == nil || step.Config != "" {
-		importConfig := step.Config
-		if importConfig == "" {
-			logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
-			importConfig = cfgRaw
-		}
+	// Append to previous step config unless using explicit inline Config, or ConfigFile, or ConfigDirectory
+	if testStepConfig == nil && step.ConfigFile == nil && step.ConfigDirectory == nil {
+		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
+		importConfig := cfgRaw
 
 		if kind.plannable() && kind.resourceIdentity() {
 			priorIdentityValues = identityValuesFromState(stateJSON, resourceName)
