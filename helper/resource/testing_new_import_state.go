@@ -5,6 +5,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -443,7 +444,26 @@ func appendImportBlockWithIdentity(config string, resourceName string, identityV
 		resourceName)
 
 	for k, v := range identityValues {
-		configBuilder += fmt.Sprintf(`		%q = %q`+"\n", k, v)
+		switch v.(type) {
+		case bool:
+			configBuilder += fmt.Sprintf(`		%q = %t`+"\n", k, v)
+
+		case []any:
+			var quotedV []string
+			for _, v := range v.([]any) {
+				quotedV = append(quotedV, fmt.Sprintf(`%q`, v))
+			}
+			configBuilder += fmt.Sprintf(`		%q = [%s]`+"\n", k, strings.Join(quotedV, ", "))
+
+		case json.Number:
+			configBuilder += fmt.Sprintf(`		%q = %s`+"\n", k, v)
+
+		case string:
+			configBuilder += fmt.Sprintf(`		%q = %q`+"\n", k, v)
+
+		default:
+			panic(fmt.Sprintf("unexpected type %T for identity value %q", v, k))
+		}
 	}
 
 	configBuilder += `` +

@@ -8,6 +8,30 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
+func RequiredBoolAttribute(name string) *tfprotov6.SchemaAttribute {
+	return &tfprotov6.SchemaAttribute{
+		Name:     name,
+		Type:     tftypes.Bool,
+		Required: true,
+	}
+}
+
+func RequiredListAttribute(name string, elementType tftypes.Type) *tfprotov6.SchemaAttribute {
+	return &tfprotov6.SchemaAttribute{
+		Name:     name,
+		Type:     tftypes.List{ElementType: elementType},
+		Required: true,
+	}
+}
+
+func RequiredNumberAttribute(name string) *tfprotov6.SchemaAttribute {
+	return &tfprotov6.SchemaAttribute{
+		Name:     name,
+		Type:     tftypes.Number,
+		Required: true,
+	}
+}
+
 func ComputedStringAttribute(name string) *tfprotov6.SchemaAttribute {
 	return &tfprotov6.SchemaAttribute{
 		Name:     name,

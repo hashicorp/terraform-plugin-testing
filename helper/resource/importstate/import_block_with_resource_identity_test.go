@@ -47,6 +47,39 @@ func TestImportBlock_WithResourceIdentity(t *testing.T) {
 	})
 }
 
+func TestImportBlock_WithResourceIdentity_WithEveryType(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_12_0), // ImportBlockWithResourceIdentity requires Terraform 1.12.0 or later
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_container": examplecloudResourceWithEveryIdentitySchemaType(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "examplecloud_container" "test" {
+					cabinet = "A1"
+					unit    = 14
+					tags    = ["storage", "fast"]
+					active  = true
+				}`,
+			},
+			{
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithResourceIdentity,
+			},
+		},
+	})
+}
+
 func TestImportBlock_WithResourceIdentity_RequiresVersion1_12_0(t *testing.T) {
 	t.Parallel()
 

@@ -231,3 +231,162 @@ func examplecloudZoneRecord() testprovider.Resource {
 		},
 	}
 }
+
+func examplecloudResourceWithEveryIdentitySchemaType() testprovider.Resource {
+	return testprovider.Resource{
+		CreateResponse: &resource.CreateResponse{
+			NewState: tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"hostname": tftypes.String,
+						"cabinet":  tftypes.String,
+						"unit":     tftypes.Number,
+						"active":   tftypes.Bool,
+						"tags":     tftypes.List{ElementType: tftypes.String},
+					},
+				},
+				map[string]tftypes.Value{
+					"hostname": tftypes.NewValue(tftypes.String, "mail.example.net"),
+					"cabinet":  tftypes.NewValue(tftypes.String, "A1"),
+					"unit":     tftypes.NewValue(tftypes.Number, 14),
+					"active":   tftypes.NewValue(tftypes.Bool, true),
+					"tags":     tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{tftypes.NewValue(tftypes.String, "storage"), tftypes.NewValue(tftypes.String, "fast")}),
+				},
+			),
+			NewIdentity: teststep.Pointer(tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"cabinet": tftypes.String,
+						"unit":    tftypes.Number,
+						"active":  tftypes.Bool,
+						"tags":    tftypes.List{ElementType: tftypes.String},
+					},
+				},
+				map[string]tftypes.Value{
+					"cabinet": tftypes.NewValue(tftypes.String, "A1"),
+					"unit":    tftypes.NewValue(tftypes.Number, 14),
+					"active":  tftypes.NewValue(tftypes.Bool, true),
+					"tags": tftypes.NewValue(
+						tftypes.List{ElementType: tftypes.String}, []tftypes.Value{
+							tftypes.NewValue(tftypes.String, "storage"),
+							tftypes.NewValue(tftypes.String, "fast"),
+						}),
+				},
+			)),
+		},
+		ReadResponse: &resource.ReadResponse{
+			NewState: tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"hostname": tftypes.String,
+						"cabinet":  tftypes.String,
+						"unit":     tftypes.Number,
+						"active":   tftypes.Bool,
+						"tags":     tftypes.List{ElementType: tftypes.String},
+					},
+				},
+				map[string]tftypes.Value{
+					"hostname": tftypes.NewValue(tftypes.String, "mail.example.net"),
+					"cabinet":  tftypes.NewValue(tftypes.String, "A1"),
+					"unit":     tftypes.NewValue(tftypes.Number, 14),
+					"active":   tftypes.NewValue(tftypes.Bool, true),
+					"tags":     tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{tftypes.NewValue(tftypes.String, "storage"), tftypes.NewValue(tftypes.String, "fast")}),
+				},
+			),
+			NewIdentity: teststep.Pointer(tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"cabinet": tftypes.String,
+						"unit":    tftypes.Number,
+						"active":  tftypes.Bool,
+						"tags":    tftypes.List{ElementType: tftypes.String},
+					},
+				},
+				map[string]tftypes.Value{
+					"cabinet": tftypes.NewValue(tftypes.String, "A1"),
+					"unit":    tftypes.NewValue(tftypes.Number, 14),
+					"active":  tftypes.NewValue(tftypes.Bool, true),
+					"tags":    tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{tftypes.NewValue(tftypes.String, "storage"), tftypes.NewValue(tftypes.String, "fast")}),
+				},
+			)),
+		},
+		ImportStateResponse: &resource.ImportStateResponse{
+			State: tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"hostname": tftypes.String,
+						"cabinet":  tftypes.String,
+						"unit":     tftypes.Number,
+						"active":   tftypes.Bool,
+						"tags":     tftypes.List{ElementType: tftypes.String},
+					},
+				},
+				map[string]tftypes.Value{
+					"hostname": tftypes.NewValue(tftypes.String, "mail.example.net"),
+					"cabinet":  tftypes.NewValue(tftypes.String, "A1"),
+					"unit":     tftypes.NewValue(tftypes.Number, 14),
+					"active":   tftypes.NewValue(tftypes.Bool, true),
+					"tags":     tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{tftypes.NewValue(tftypes.String, "storage"), tftypes.NewValue(tftypes.String, "fast")}),
+				},
+			),
+			Identity: teststep.Pointer(tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"cabinet": tftypes.String,
+						"unit":    tftypes.Number,
+						"active":  tftypes.Bool,
+						"tags":    tftypes.List{ElementType: tftypes.String},
+					},
+				},
+				map[string]tftypes.Value{
+					"cabinet": tftypes.NewValue(tftypes.String, "A1"),
+					"unit":    tftypes.NewValue(tftypes.Number, 14),
+					"active":  tftypes.NewValue(tftypes.Bool, true),
+					"tags":    tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{tftypes.NewValue(tftypes.String, "storage"), tftypes.NewValue(tftypes.String, "fast")}),
+				},
+			)),
+		},
+		SchemaResponse: &resource.SchemaResponse{
+			Schema: &tfprotov6.Schema{
+				Block: &tfprotov6.SchemaBlock{
+					Attributes: []*tfprotov6.SchemaAttribute{
+						ComputedStringAttribute("hostname"),
+						RequiredStringAttribute("cabinet"),
+						RequiredNumberAttribute("unit"),
+						RequiredBoolAttribute("active"),
+						RequiredListAttribute("tags", tftypes.String),
+					},
+				},
+			},
+		},
+		IdentitySchemaResponse: &resource.IdentitySchemaResponse{
+			Schema: &tfprotov6.ResourceIdentitySchema{
+				Version: 1,
+				IdentityAttributes: []*tfprotov6.ResourceIdentitySchemaAttribute{
+					{
+						Name:              "cabinet",
+						Type:              tftypes.String,
+						RequiredForImport: true,
+					},
+					{
+						Name:              "unit",
+						Type:              tftypes.Number,
+						OptionalForImport: true,
+					},
+					{
+						Name:              "active",
+						Type:              tftypes.Bool,
+						OptionalForImport: true,
+					},
+					{
+						Name: "tags",
+						Type: tftypes.List{
+							ElementType: tftypes.String,
+						},
+						OptionalForImport: true,
+					},
+				},
+			},
+		},
+	}
+}
