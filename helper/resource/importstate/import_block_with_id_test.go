@@ -86,9 +86,7 @@ func TestImportBlock_WithID_ExpectError(t *testing.T) {
 
 				import {
 					to = examplecloud_container.test
-					identity = {
-						id = "westeurope/somevalue"
-					}
+					id = "westeurope/somevalue"
 				}
 				`,
 				ResourceName:    "examplecloud_container.test",
