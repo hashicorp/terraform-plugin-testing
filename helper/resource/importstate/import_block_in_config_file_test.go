@@ -21,7 +21,7 @@ func TestImportBlock_InConfigFile(t *testing.T) {
 
 	r.UnitTest(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithID requires Terraform 1.5.0 or later
+			tfversion.SkipBelow(tfversion.Version1_12_0), // ImportBlockWithResourceIdentity requires Terraform 1.12.0 or later
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
