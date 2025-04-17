@@ -120,7 +120,7 @@ func runProviderCommandApply(ctx context.Context, t testing.T, wd *plugintest.Wo
 	fn := func() error {
 		return wd.Apply(ctx)
 	}
-	return runProviderCommand(ctx, t, fn, wd, factories)
+	return runProviderCommand(ctx, t, wd, factories, fn)
 }
 
 func runProviderCommandCreatePlan(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, factories *providerFactories) error {
@@ -129,7 +129,7 @@ func runProviderCommandCreatePlan(ctx context.Context, t testing.T, wd *pluginte
 	fn := func() error {
 		return wd.CreatePlan(ctx)
 	}
-	return runProviderCommand(ctx, t, fn, wd, factories)
+	return runProviderCommand(ctx, t, wd, factories, fn)
 }
 
 func runProviderCommandGetStateJSON(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, factories *providerFactories) (*tfjson.State, error) {
@@ -141,7 +141,7 @@ func runProviderCommandGetStateJSON(ctx context.Context, t testing.T, wd *plugin
 		stateJSON, err = wd.State(ctx)
 		return err
 	}
-	err := runProviderCommand(ctx, t, fn, wd, factories)
+	err := runProviderCommand(ctx, t, wd, factories, fn)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +158,7 @@ func runProviderCommandSavedPlan(ctx context.Context, t testing.T, wd *plugintes
 		plan, err = wd.SavedPlan(ctx)
 		return err
 	}
-	err := runProviderCommand(ctx, t, fn, wd, factories)
+	err := runProviderCommand(ctx, t, wd, factories, fn)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +166,7 @@ func runProviderCommandSavedPlan(ctx context.Context, t testing.T, wd *plugintes
 	return plan, nil
 }
 
-func runProviderCommand(ctx context.Context, t testing.T, f func() error, wd *plugintest.WorkingDir, factories *providerFactories) error {
+func runProviderCommand(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, factories *providerFactories, f func() error) error {
 	// don't point to this as a test failure location
 	// point to whatever called it
 	t.Helper()

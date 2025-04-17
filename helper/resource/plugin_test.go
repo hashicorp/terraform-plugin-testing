@@ -250,44 +250,38 @@ func TestRunProviderCommand(t *testing.T) {
 	funcCalled := false
 	helper := plugintest.AutoInitProviderHelper(ctx, currentDir)
 
-	err = runProviderCommand(
-		ctx,
-		t,
-		func() error {
-			funcCalled = true
-			return nil
-		},
-		helper.RequireNewWorkingDir(ctx, t, ""),
-		&providerFactories{
-			legacy: map[string]func() (*schema.Provider, error){
-				"examplecloud": func() (*schema.Provider, error) { //nolint:unparam // required signature
-					return &schema.Provider{
-						ResourcesMap: map[string]*schema.Resource{
-							"examplecloud_thing": {
-								CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) diag.Diagnostics {
-									d.SetId("id")
+	err = runProviderCommand(ctx, t, helper.RequireNewWorkingDir(ctx, t, ""), &providerFactories{
+		legacy: map[string]func() (*schema.Provider, error){
+			"examplecloud": func() (*schema.Provider, error) { //nolint:unparam // required signature
+				return &schema.Provider{
+					ResourcesMap: map[string]*schema.Resource{
+						"examplecloud_thing": {
+							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) diag.Diagnostics {
+								d.SetId("id")
 
-									return nil
-								},
-								DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
-									return nil
-								},
-								ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-									return nil
-								},
-								Schema: map[string]*schema.Schema{
-									"id": {
-										Computed: true,
-										Type:     schema.TypeString,
-									},
+								return nil
+							},
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+								return nil
+							},
+							Schema: map[string]*schema.Schema{
+								"id": {
+									Computed: true,
+									Type:     schema.TypeString,
 								},
 							},
 						},
-					}, nil
-				},
+					},
+				}, nil
 			},
 		},
-	)
+	}, func() error {
+		funcCalled = true
+		return nil
+	})
 
 	if err != nil {
 		t.Fatal(err)

@@ -58,13 +58,13 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	var stateJSON *tfjson.State
 	var err error
 
-	err = runProviderCommand(ctx, t, func() error {
+	err = runProviderCommand(ctx, t, testCaseWorkingDir, providers, func() error {
 		stateJSON, state, err = getState(ctx, t, testCaseWorkingDir)
 		if err != nil {
 			return err
 		}
 		return nil
-	}, testCaseWorkingDir, providers)
+	})
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
 	}
@@ -166,9 +166,9 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 				t.Fatalf("copying state: %s", err)
 			}
 
-			err = runProviderCommand(ctx, t, func() error {
+			err = runProviderCommand(ctx, t, workingDir, providers, func() error {
 				return workingDir.RemoveResource(ctx, resourceName)
-			}, workingDir, providers)
+			})
 			if err != nil {
 				t.Fatalf("removing resource %s from copied state: %s", resourceName, err)
 			}
@@ -176,9 +176,9 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	if !importStatePersist {
-		err = runProviderCommand(ctx, t, func() error {
+		err = runProviderCommand(ctx, t, workingDir, providers, func() error {
 			return workingDir.Init(ctx)
-		}, workingDir, providers)
+		})
 		if err != nil {
 			t.Fatalf("Error running init: %s", err)
 		}
@@ -259,20 +259,20 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	var importState *terraform.State
 
-	err = runProviderCommand(ctx, t, func() error {
+	err = runProviderCommand(ctx, t, workingDir, providers, func() error {
 		return workingDir.Import(ctx, resourceName, importId)
-	}, workingDir, providers)
+	})
 	if err != nil {
 		return err
 	}
 
-	err = runProviderCommand(ctx, t, func() error {
+	err = runProviderCommand(ctx, t, workingDir, providers, func() error {
 		_, importState, err = getState(ctx, t, workingDir)
 		if err != nil {
 			return err
 		}
 		return nil
-	}, workingDir, providers)
+	})
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
 	}
@@ -569,11 +569,11 @@ func savedPlanRawStdout(ctx context.Context, t testing.T, wd *plugintest.Working
 
 	var stdout string
 
-	err := runProviderCommand(ctx, t, func() error {
+	err := runProviderCommand(ctx, t, wd, providers, func() error {
 		var err error
 		stdout, err = wd.SavedPlanRawStdout(ctx)
 		return err
-	}, wd, providers)
+	})
 
 	if err != nil {
 		return fmt.Sprintf("error retrieving formatted plan output: %s", err)
