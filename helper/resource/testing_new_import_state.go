@@ -136,8 +136,6 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	var workingDir *plugintest.WorkingDir
-
-	// Use the same working directory to persist the state from import
 	if importStatePersist {
 		workingDir = testCaseWorkingDir
 	} else {
@@ -175,77 +173,80 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 	}
 
-	var plan *tfjson.Plan
 	if kind.plannable() {
-		// TODO: extract to a function -- this is a long `if` :)
+		return testImportBlock(ctx, t, workingDir, providers, resourceName, step, kind, priorIdentityValues)
+	} else {
+		return testImportCommand(ctx, t, err, workingDir, providers, resourceName, importId, step, state)
+	}
+}
 
-		err := runProviderCommandCreatePlan(ctx, t, workingDir, providers)
-		if err != nil {
-			return fmt.Errorf("generating plan with import config: %s", err)
-		}
-
-		plan, err = runProviderCommandSavedPlan(ctx, t, workingDir, providers)
-		if err != nil {
-			return fmt.Errorf("reading generated plan with import config: %s", err)
-		}
-
-		logging.HelperResourceDebug(ctx, fmt.Sprintf("ImportBlockWithId: %d resource changes", len(plan.ResourceChanges)))
-
-		// Verify reasonable things about the plan
-		var resourceChangeUnderTest *tfjson.ResourceChange
-
-		if len(plan.ResourceChanges) == 0 {
-			return fmt.Errorf("importing resource %s: expected a resource change, got no changes", resourceName)
-		}
-
-		for _, change := range plan.ResourceChanges {
-			if change.Address == resourceName {
-				resourceChangeUnderTest = change
-			}
-		}
-
-		if resourceChangeUnderTest == nil || resourceChangeUnderTest.Change == nil || resourceChangeUnderTest.Change.Actions == nil {
-			return fmt.Errorf("importing resource %s: expected a resource change, got no changes", resourceName)
-		}
-
-		change := resourceChangeUnderTest.Change
-		actions := change.Actions
-		importing := change.Importing
-
-		switch {
-		case importing == nil:
-			return fmt.Errorf("importing resource %s: expected an import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, workingDir, providers))
-
-		case !actions.NoOp():
-			return fmt.Errorf("importing resource %s: expected a no-op import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, workingDir, providers))
-		}
-
-		if err := runPlanChecks(ctx, t, plan, step.ImportPlanChecks.PreApply); err != nil {
-			return err
-		}
-
-		{
-			if kind.resourceIdentity() {
-				err := runProviderCommandApply(ctx, t, workingDir, providers)
-				if err != nil {
-					return fmt.Errorf("applying plan with import config: %s", err)
-				}
-
-				newStateJSON, err := runProviderCommandGetStateJSON(ctx, t, workingDir, providers)
-				if err != nil {
-					return fmt.Errorf("getting state after applying plan with import config: %s", err)
-				}
-
-				newIdentityValues := identityValuesFromState(newStateJSON, resourceName)
-				if !cmp.Equal(priorIdentityValues, newIdentityValues) {
-					return fmt.Errorf("importing resource %s: expected identity values %v, got %v", resourceName, priorIdentityValues, newIdentityValues)
-				}
-			}
-		}
-
-		return nil
+func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, step TestStep, kind ImportStateKind, priorIdentityValues map[string]any) error {
+	err := runProviderCommandCreatePlan(ctx, t, workingDir, providers)
+	if err != nil {
+		return fmt.Errorf("generating plan with import config: %s", err)
 	}
 
+	plan, err := runProviderCommandSavedPlan(ctx, t, workingDir, providers)
+	if err != nil {
+		return fmt.Errorf("reading generated plan with import config: %s", err)
+	}
+
+	logging.HelperResourceDebug(ctx, fmt.Sprintf("ImportBlockWithId: %d resource changes", len(plan.ResourceChanges)))
+
+	// Verify reasonable things about the plan
+	var resourceChangeUnderTest *tfjson.ResourceChange
+
+	if len(plan.ResourceChanges) == 0 {
+		return fmt.Errorf("importing resource %s: expected a resource change, got no changes", resourceName)
+	}
+
+	for _, change := range plan.ResourceChanges {
+		if change.Address == resourceName {
+			resourceChangeUnderTest = change
+		}
+	}
+
+	if resourceChangeUnderTest == nil || resourceChangeUnderTest.Change == nil || resourceChangeUnderTest.Change.Actions == nil {
+		return fmt.Errorf("importing resource %s: expected a resource change, got no changes", resourceName)
+	}
+
+	change := resourceChangeUnderTest.Change
+	actions := change.Actions
+	importing := change.Importing
+
+	switch {
+	case importing == nil:
+		return fmt.Errorf("importing resource %s: expected an import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, workingDir, providers))
+
+	case !actions.NoOp():
+		return fmt.Errorf("importing resource %s: expected a no-op import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, workingDir, providers))
+	}
+
+	if err := runPlanChecks(ctx, t, plan, step.ImportPlanChecks.PreApply); err != nil {
+		return err
+	}
+
+	if kind.resourceIdentity() {
+		err := runProviderCommandApply(ctx, t, workingDir, providers)
+		if err != nil {
+			return fmt.Errorf("applying plan with import config: %s", err)
+		}
+
+		newStateJSON, err := runProviderCommandGetStateJSON(ctx, t, workingDir, providers)
+		if err != nil {
+			return fmt.Errorf("getting state after applying plan with import config: %s", err)
+		}
+
+		newIdentityValues := identityValuesFromState(newStateJSON, resourceName)
+		if !cmp.Equal(priorIdentityValues, newIdentityValues) {
+			return fmt.Errorf("importing resource %s: expected identity values %v, got %v", resourceName, priorIdentityValues, newIdentityValues)
+		}
+	}
+	
+	return nil
+}
+
+func testImportCommand(ctx context.Context, t testing.T, err error, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, importId string, step TestStep, state *terraform.State) error {
 	// TODO: extract to a function -- this is an implicit `else` for the long `if` above :)
 
 	var importState *terraform.State
