@@ -467,8 +467,14 @@ const (
 	ImportBlockWithResourceIdentity
 )
 
+// plannable reports whether this kind indicates the use of plannable import blocks
 func (kind ImportStateKind) plannable() bool {
 	return kind == ImportBlockWithID || kind == ImportBlockWithResourceIdentity
+}
+
+// resourceIdentity reports whether this kind indicates the use of resource identity in import blocks
+func (kind ImportStateKind) resourceIdentity() bool {
+	return kind == ImportBlockWithResourceIdentity
 }
 
 func (kind ImportStateKind) String() string {

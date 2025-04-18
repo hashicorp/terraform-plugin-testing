@@ -41,7 +41,13 @@ func TestImportBlock_AsFirstStep(t *testing.T) {
 				Config: `resource "examplecloud_container" "test" {
 					name = "somevalue"
 					location = "westeurope"
-				}`,
+				}
+
+				import {
+					to = examplecloud_container.test
+					id = "westeurope/somevalue"
+				}
+				`,
 				ImportPlanChecks: r.ImportPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("examplecloud_container.test", plancheck.ResourceActionNoop),

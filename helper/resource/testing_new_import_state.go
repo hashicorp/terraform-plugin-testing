@@ -5,16 +5,18 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/hashicorp/go-version"
 
 	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/mitchellh/go-testing-interface"
 
-	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
@@ -23,7 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, wd *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
+func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, testCaseWorkingDir *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
 	t.Helper()
 
 	// step.ImportStateKind implicitly defaults to the zero-value (ImportCommandWithID) for backward compatibility
@@ -57,18 +59,15 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	var err error
 
 	err = runProviderCommand(ctx, t, func() error {
-		stateJSON, state, err = getState(ctx, t, wd)
+		stateJSON, state, err = getState(ctx, t, testCaseWorkingDir)
 		if err != nil {
 			return err
 		}
 		return nil
-	}, wd, providers)
+	}, testCaseWorkingDir, providers)
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
 	}
-
-	// TODO: this statement is a placeholder -- it simply prevents stateJSON from being unused
-	logging.HelperResourceTrace(ctx, fmt.Sprintf("State before import: values %v", stateJSON.Values != nil))
 
 	// Determine the ID to import
 	var importId string
@@ -109,12 +108,23 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	logging.HelperResourceTrace(ctx, fmt.Sprintf("Using import identifier: %s", importId))
 
+	var priorIdentityValues map[string]any
+
+	if kind.plannable() && kind.resourceIdentity() {
+		priorIdentityValues = identityValuesFromState(stateJSON, resourceName)
+		if len(priorIdentityValues) == 0 {
+			return fmt.Errorf("importing resource %s: expected prior state to have resource identity values, got none", resourceName)
+		}
+	}
+
 	// Append to previous step config unless using explicit inline Config, or ConfigFile, or ConfigDirectory
 	if testStepConfig == nil && step.ConfigFile == nil && step.ConfigDirectory == nil {
 		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
 		importConfig := cfgRaw
 
-		if kind.plannable() {
+		if kind.plannable() && kind.resourceIdentity() {
+			importConfig = appendImportBlockWithIdentity(importConfig, resourceName, priorIdentityValues)
+		} else if kind.plannable() {
 			importConfig = appendImportBlock(importConfig, resourceName, importId)
 		}
 
@@ -134,31 +144,31 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 	}
 
-	var importWd *plugintest.WorkingDir
+	var workingDir *plugintest.WorkingDir
 
 	// Use the same working directory to persist the state from import
 	if importStatePersist {
-		importWd = wd
+		workingDir = testCaseWorkingDir
 	} else {
-		importWd = helper.RequireNewWorkingDir(ctx, t, "")
-		defer importWd.Close()
+		workingDir = helper.RequireNewWorkingDir(ctx, t, "")
+		defer workingDir.Close()
 	}
 
-	err = importWd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
+	err = workingDir.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		t.Fatalf("Error setting test config: %s", err)
 	}
 
 	if kind.plannable() {
 		if stepNumber > 1 {
-			err = importWd.CopyState(ctx, wd.StateFilePath())
+			err = workingDir.CopyState(ctx, testCaseWorkingDir.StateFilePath())
 			if err != nil {
 				t.Fatalf("copying state: %s", err)
 			}
 
 			err = runProviderCommand(ctx, t, func() error {
-				return importWd.RemoveResource(ctx, resourceName)
-			}, importWd, providers)
+				return workingDir.RemoveResource(ctx, resourceName)
+			}, workingDir, providers)
 			if err != nil {
 				t.Fatalf("removing resource %s from copied state: %s", resourceName, err)
 			}
@@ -167,8 +177,8 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	if !importStatePersist {
 		err = runProviderCommand(ctx, t, func() error {
-			return importWd.Init(ctx)
-		}, importWd, providers)
+			return workingDir.Init(ctx)
+		}, workingDir, providers)
 		if err != nil {
 			t.Fatalf("Error running init: %s", err)
 		}
@@ -176,22 +186,16 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	var plan *tfjson.Plan
 	if kind.plannable() {
-		var opts []tfexec.PlanOption
+		// TODO: extract to a function -- this is a long `if` :)
 
-		err = runProviderCommand(ctx, t, func() error {
-			return importWd.CreatePlan(ctx, opts...)
-		}, importWd, providers)
+		err := runProviderCommandCreatePlan(ctx, t, workingDir, providers)
 		if err != nil {
-			return err
+			return fmt.Errorf("generating plan with import config: %s", err)
 		}
 
-		err = runProviderCommand(ctx, t, func() error {
-			var err error
-			plan, err = importWd.SavedPlan(ctx)
-			return err
-		}, importWd, providers)
+		plan, err = runProviderCommandSavedPlan(ctx, t, workingDir, providers)
 		if err != nil {
-			return err
+			return fmt.Errorf("reading generated plan with import config: %s", err)
 		}
 
 		logging.HelperResourceDebug(ctx, fmt.Sprintf("ImportBlockWithId: %d resource changes", len(plan.ResourceChanges)))
@@ -219,32 +223,56 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 		switch {
 		case importing == nil:
-			return fmt.Errorf("importing resource %s: expected an import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, importWd, providers))
+			return fmt.Errorf("importing resource %s: expected an import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, workingDir, providers))
 
 		case !actions.NoOp():
-			return fmt.Errorf("importing resource %s: expected a no-op import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, importWd, providers))
+			return fmt.Errorf("importing resource %s: expected a no-op import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, workingDir, providers))
 		}
 
 		if err := runPlanChecks(ctx, t, plan, step.ImportPlanChecks.PreApply); err != nil {
 			return err
 		}
-	} else {
-		err = runProviderCommand(ctx, t, func() error {
-			return importWd.Import(ctx, resourceName, importId)
-		}, importWd, providers)
-		if err != nil {
-			return err
+
+		{
+			if kind.resourceIdentity() {
+				err := runProviderCommandApply(ctx, t, workingDir, providers)
+				if err != nil {
+					return fmt.Errorf("applying plan with import config: %s", err)
+				}
+
+				newStateJSON, err := runProviderCommandGetStateJSON(ctx, t, workingDir, providers)
+				if err != nil {
+					return fmt.Errorf("getting state after applying plan with import config: %s", err)
+				}
+
+				newIdentityValues := identityValuesFromState(newStateJSON, resourceName)
+				if !cmp.Equal(priorIdentityValues, newIdentityValues) {
+					return fmt.Errorf("importing resource %s: expected identity values %v, got %v", resourceName, priorIdentityValues, newIdentityValues)
+				}
+			}
 		}
+
+		return nil
 	}
 
+	// TODO: extract to a function -- this is an implicit `else` for the long `if` above :)
+
 	var importState *terraform.State
+
 	err = runProviderCommand(ctx, t, func() error {
-		_, importState, err = getState(ctx, t, importWd)
+		return workingDir.Import(ctx, resourceName, importId)
+	}, workingDir, providers)
+	if err != nil {
+		return err
+	}
+
+	err = runProviderCommand(ctx, t, func() error {
+		_, importState, err = getState(ctx, t, workingDir)
 		if err != nil {
 			return err
 		}
 		return nil
-	}, importWd, providers)
+	}, workingDir, providers)
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
 	}
@@ -407,16 +435,64 @@ func appendImportBlock(config string, resourceName string, importID string) stri
 		resourceName, importID)
 }
 
+func appendImportBlockWithIdentity(config string, resourceName string, identityValues map[string]any) string {
+	configBuilder := config
+	configBuilder += fmt.Sprintf(``+"\n"+
+		`import {`+"\n"+
+		`	to = %s`+"\n"+
+		`	identity = {`+"\n",
+		resourceName)
+
+	for k, v := range identityValues {
+		switch v := v.(type) {
+		case bool:
+			configBuilder += fmt.Sprintf(`		%q = %t`+"\n", k, v)
+
+		case []any:
+			var quotedV []string
+			for _, v := range v {
+				quotedV = append(quotedV, fmt.Sprintf(`%q`, v))
+			}
+			configBuilder += fmt.Sprintf(`		%q = [%s]`+"\n", k, strings.Join(quotedV, ", "))
+
+		case json.Number:
+			configBuilder += fmt.Sprintf(`		%q = %s`+"\n", k, v)
+
+		case string:
+			configBuilder += fmt.Sprintf(`		%q = %q`+"\n", k, v)
+
+		default:
+			panic(fmt.Sprintf("unexpected type %T for identity value %q", v, k))
+		}
+	}
+
+	configBuilder += `` +
+		`	}` + "\n" +
+		`}` + "\n"
+
+	return configBuilder
+}
+
 func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestStep) error {
 	t.Helper()
 
 	kind := step.ImportStateKind
-	versionUnderTest := *helper.TerraformVersion()
+	versionUnderTest := *helper.TerraformVersion().Core()
+	resourceIdentityMinimumVersion := version.Must(version.NewVersion("1.12.0"))
 
 	// Instead of calling [t.Fatal], we return an error. This package's unit tests can use [TestStep.ExpectError] to match
 	// on the error message. An alternative, [plugintest.TestExpectTFatal], does not have access to logged error messages,
 	// so it is open to false positives on this complex code path.
+	//
+	// Multiple cases may match, so check the most specific cases first
 	switch {
+	case kind.resourceIdentity() && versionUnderTest.LessThan(resourceIdentityMinimumVersion):
+		return fmt.Errorf(
+			`ImportState steps using resource identity require Terraform 1.12.0 or later. Either ` +
+				`upgrade the Terraform version running the test or add a ` + "`TerraformVersionChecks`" + ` to ` +
+				`the test case to skip this test.` + "\n\n" +
+				`https://developer.hashicorp.com/terraform/plugin/testing/acceptance-tests/tfversion-checks#skip-version-checks`)
+
 	case kind.plannable() && versionUnderTest.LessThan(tfversion.Version1_5_0):
 		return fmt.Errorf(
 			`ImportState steps using plannable import blocks require Terraform 1.5.0 or later. Either ` +
@@ -432,6 +508,33 @@ func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestS
 	}
 
 	return nil
+}
+
+func resourcesFromState(state *tfjson.State) []*tfjson.StateResource {
+	stateValues := state.Values
+	if stateValues == nil || stateValues.RootModule == nil {
+		return []*tfjson.StateResource{}
+	}
+
+	return stateValues.RootModule.Resources
+}
+
+func identityValuesFromState(state *tfjson.State, resourceName string) map[string]any {
+	var resource *tfjson.StateResource
+	resources := resourcesFromState(state)
+
+	for _, r := range resources {
+		if r.Address == resourceName {
+			resource = r
+			break
+		}
+	}
+
+	if resource == nil || len(resource.IdentityValues) == 0 {
+		return map[string]any{}
+	}
+
+	return resource.IdentityValues
 }
 
 func runImportStateCheckFunction(ctx context.Context, t testing.T, importState *terraform.State, step TestStep) {
