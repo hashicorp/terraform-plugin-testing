@@ -1,5 +1,0 @@
-kind: BREAKING CHANGES
-body: 'importstate: `ImportStatePersist` and `ImportStateVerify` are not supported for plannable import (`ImportBlockWith*`) and will return an error'
-time: 2025-04-04T17:06:56.900935-04:00
-custom:
-    Issue: "476"

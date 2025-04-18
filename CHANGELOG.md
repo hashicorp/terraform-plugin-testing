@@ -1,3 +1,18 @@
+## 1.13.0-beta.1 (April 18, 2025)
+
+BREAKING CHANGES:
+
+* importstate: `ImportStatePersist` and `ImportStateVerify` are not supported for plannable import (`ImportBlockWith*`) and will return an error ([#476](https://github.com/hashicorp/terraform-plugin-testing/issues/476))
+* importstate: renamed `ImportStateWithId` to `ImportStateWithID` and renamed `ImportCommandWithId` to `ImportCommandWithID`. ([#465](https://github.com/hashicorp/terraform-plugin-testing/issues/465))
+
+NOTES:
+
+* This beta pre-release adds support for managed resource identity, which can be used with Terraform v1.12.0-beta2. Acceptance tests can use the `ImportBlockWithResourceIdentity` kind to exercise the import of a managed resource using its resource identity object values instead of using a string identifier. ([#480](https://github.com/hashicorp/terraform-plugin-testing/issues/480))
+
+BUG FIXES:
+
+* importstate: plannable import (`ImportBlockWith*`) fixed for a resource with a dependency ([#476](https://github.com/hashicorp/terraform-plugin-testing/issues/476))
+
 ## 1.13.0-alpha.1 (March 27, 2025)
 
 NOTES:
