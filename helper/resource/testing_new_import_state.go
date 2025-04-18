@@ -174,13 +174,15 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	if kind.plannable() {
-		return testImportBlock(ctx, t, workingDir, providers, resourceName, step, kind, priorIdentityValues)
+		return testImportBlock(ctx, t, workingDir, providers, resourceName, step, priorIdentityValues)
 	} else {
 		return testImportCommand(ctx, t, err, workingDir, providers, resourceName, importId, step, state)
 	}
 }
 
-func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, step TestStep, kind ImportStateKind, priorIdentityValues map[string]any) error {
+func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, step TestStep, priorIdentityValues map[string]any) error {
+	kind := step.ImportStateKind
+
 	err := runProviderCommandCreatePlan(ctx, t, workingDir, providers)
 	if err != nil {
 		return fmt.Errorf("generating plan with import config: %s", err)
@@ -227,22 +229,29 @@ func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.Wo
 	}
 
 	if kind.resourceIdentity() {
-		err := runProviderCommandApply(ctx, t, workingDir, providers)
-		if err != nil {
-			return fmt.Errorf("applying plan with import config: %s", err)
-		}
-
-		newStateJSON, err := runProviderCommandGetStateJSON(ctx, t, workingDir, providers)
-		if err != nil {
-			return fmt.Errorf("getting state after applying plan with import config: %s", err)
-		}
-
-		newIdentityValues := identityValuesFromState(newStateJSON, resourceName)
-		if !cmp.Equal(priorIdentityValues, newIdentityValues) {
-			return fmt.Errorf("importing resource %s: expected identity values %v, got %v", resourceName, priorIdentityValues, newIdentityValues)
+		if err := verifyIdentityValues(ctx, t, workingDir, providers, resourceName, priorIdentityValues); err != nil {
+			return err
 		}
 	}
-	
+
+	return nil
+}
+
+func verifyIdentityValues(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, priorIdentityValues map[string]any) error {
+	err := runProviderCommandApply(ctx, t, workingDir, providers)
+	if err != nil {
+		return fmt.Errorf("applying plan with import config: %s", err)
+	}
+
+	newStateJSON, err := runProviderCommandGetStateJSON(ctx, t, workingDir, providers)
+	if err != nil {
+		return fmt.Errorf("getting state after applying plan with import config: %s", err)
+	}
+
+	newIdentityValues := identityValuesFromState(newStateJSON, resourceName)
+	if !cmp.Equal(priorIdentityValues, newIdentityValues) {
+		return fmt.Errorf("importing resource %s: expected identity values %v, got %v", resourceName, priorIdentityValues, newIdentityValues)
+	}
 	return nil
 }
 
