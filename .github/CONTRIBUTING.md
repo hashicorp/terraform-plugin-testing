@@ -18,11 +18,24 @@ while we're on v0, breaking changes will be accepted during minor releases.
  - [I just have a question](#i-just-have-a-question)
  - [I want to report a vulnerability](#i-want-to-report-a-vulnerability)
  - [New Issue](#new-issue)
+   * [Bug Reports](#bug-reports)
+   * [Feature Requests](#feature-requests)
+   * [Documentation Contributions](#documentation-contributions)
  - [New Pull Request](#new-pull-request)
+   * [Cosmetic changes, code formatting, and typos](#cosmetic-changes-code-formatting-and-typos)
+     + [Exceptions](#exceptions)
+   * [License Headers](#license-headers)
+ - [Linting](#linting)
+ - [Testing](#testing)
+   * [GitHub Actions Tests](#github-actions-tests)
+   * [Go Unit Tests](#go-unit-tests)
+ - [Maintainers Guide](#maintainers-guide)
+   * [Releases](#releases)
 
 ## I just have a question
 
-> **Note:** We use GitHub for tracking bugs and feature requests related to
+> [!Note]
+> We use GitHub for tracking bugs and feature requests related to
 > terraform-plugin-testing.
 
 For questions, please see relevant channels at
@@ -31,7 +44,7 @@ https://www.terraform.io/community.html
 ## I want to report a vulnerability
 
 Please disclose security vulnerabilities responsibly by following the procedure
-described at https://www.hashicorp.com/en/trust/security/vulnerability-management#vulnerability-reporting
+described at https://www.hashicorp.com/en/trust/security/vulnerability-management
 
 ## New Issue
 
