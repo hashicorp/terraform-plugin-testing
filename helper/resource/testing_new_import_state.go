@@ -176,7 +176,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	if kind.plannable() {
 		return testImportBlock(ctx, t, workingDir, providers, resourceName, step, priorIdentityValues)
 	} else {
-		return testImportCommand(ctx, t, err, workingDir, providers, resourceName, importId, step, state)
+		return testImportCommand(ctx, t, workingDir, providers, resourceName, importId, step, state)
 	}
 }
 
@@ -255,18 +255,15 @@ func verifyIdentityValues(ctx context.Context, t testing.T, workingDir *pluginte
 	return nil
 }
 
-func testImportCommand(ctx context.Context, t testing.T, err error, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, importId string, step TestStep, state *terraform.State) error {
-	// TODO: extract to a function -- this is an implicit `else` for the long `if` above :)
-
-	var importState *terraform.State
-
-	err = runProviderCommand(ctx, t, workingDir, providers, func() error {
+func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, importId string, step TestStep, state *terraform.State) error {
+	err := runProviderCommand(ctx, t, workingDir, providers, func() error {
 		return workingDir.Import(ctx, resourceName, importId)
 	})
 	if err != nil {
 		return err
 	}
 
+	var importState *terraform.State
 	err = runProviderCommand(ctx, t, workingDir, providers, func() error {
 		_, importState, err = getState(ctx, t, workingDir)
 		if err != nil {
