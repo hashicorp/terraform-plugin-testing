@@ -36,18 +36,6 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		return err
 	}
 
-	configRequest := teststep.PrepareConfigurationRequest{
-		Directory: step.ConfigDirectory,
-		File:      step.ConfigFile,
-		Raw:       step.Config,
-		TestStepConfigRequest: config.TestStepConfigRequest{
-			StepNumber: stepNumber,
-			TestName:   t.Name(),
-		},
-	}.Exec()
-
-	testStepConfig := teststep.Configuration(configRequest)
-
 	resourceName := step.ResourceName
 	if resourceName == "" {
 		t.Fatal("ResourceName is required for an import state test")
@@ -117,8 +105,18 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 	}
 
-	// Append to previous step config unless using explicit inline Config, or ConfigFile, or ConfigDirectory
-	if testStepConfig == nil && step.ConfigFile == nil && step.ConfigDirectory == nil {
+	testStepConfigRequest := config.TestStepConfigRequest{
+		StepNumber: stepNumber,
+		TestName:   t.Name(),
+	}
+	testStepConfig := teststep.Configuration(teststep.PrepareConfigurationRequest{
+		Directory:             step.ConfigDirectory,
+		File:                  step.ConfigFile,
+		Raw:                   step.Config,
+		TestStepConfigRequest: testStepConfigRequest,
+	}.Exec())
+
+	if testStepConfig == nil {
 		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
 		importConfig := cfgRaw
 
@@ -128,17 +126,10 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			importConfig = appendImportBlock(importConfig, resourceName, importId)
 		}
 
-		confRequest := teststep.PrepareConfigurationRequest{
-			Directory: step.ConfigDirectory,
-			File:      step.ConfigFile,
-			Raw:       importConfig,
-			TestStepConfigRequest: config.TestStepConfigRequest{
-				StepNumber: stepNumber,
-				TestName:   t.Name(),
-			},
-		}.Exec()
-
-		testStepConfig = teststep.Configuration(confRequest)
+		testStepConfig = teststep.Configuration(teststep.PrepareConfigurationRequest{
+			Raw:                   importConfig,
+			TestStepConfigRequest: testStepConfigRequest,
+		}.Exec())
 		if testStepConfig == nil {
 			t.Fatal("Cannot import state with no specified config")
 		}
