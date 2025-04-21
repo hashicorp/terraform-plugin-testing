@@ -3360,7 +3360,7 @@ func TestTest_TestStep_ProviderFactories_Import_External_With_Data_Source(t *tes
 
 	Test(t, TestCase{
 		ExternalProviders: map[string]ExternalProvider{
-			"http": {
+			"null": {
 				Source: "registry.terraform.io/hashicorp/null",
 			},
 			"random": {
