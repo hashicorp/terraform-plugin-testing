@@ -19,5 +19,4 @@ const (
 	// level of SDK helper/resource loggers. Infers root SDK logging level, if
 	// unset.
 	EnvTfLogSdkHelperResource = "TF_LOG_SDK_HELPER_RESOURCE"
-
 )
