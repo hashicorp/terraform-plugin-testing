@@ -131,6 +131,22 @@ func TestMain(m interface {
 		}
 	} else {
 		exitCode := m.Run()
+
+		tempDir := os.Getenv(plugintest.EnvTfAccTempDir)
+		if tempDir == "" {
+			tempDir = os.TempDir()
+		}
+		pathParts := []string{
+			strings.TrimRight(tempDir, string(os.PathSeparator)),
+			"plugintest-terraform",
+			strconv.Itoa(os.Getpid()),
+		}
+		tfDir := strings.Join(pathParts, string(os.PathSeparator))
+		if err := os.RemoveAll(tfDir); err != nil {
+			log.Printf("[WARN] Failed to remove temporary directory for Terraform CLI: %s", err)
+
+		}
+
 		os.Exit(exitCode)
 	}
 }

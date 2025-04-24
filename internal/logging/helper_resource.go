@@ -12,6 +12,7 @@ import (
 const (
 	// SubsystemHelperResource is the tfsdklog subsystem name for helper/resource.
 	SubsystemHelperResource = "helper_resource"
+	SubsystemInstall        = "install"
 )
 
 // HelperResourceTrace emits a helper/resource subsystem log at TRACE level.

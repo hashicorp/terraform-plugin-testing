@@ -20,4 +20,5 @@ const (
 	// unset.
 	EnvTfLogSdkHelperResource = "TF_LOG_SDK_HELPER_RESOURCE"
 
+	EnvTfLogInstaller = "TF_LOG_INSTALLER"
 )

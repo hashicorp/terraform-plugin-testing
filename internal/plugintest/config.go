@@ -7,8 +7,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-version"
 	install "github.com/hashicorp/hc-install"
 	"github.com/hashicorp/hc-install/checkpoint"
@@ -16,6 +18,7 @@ import (
 	"github.com/hashicorp/hc-install/product"
 	"github.com/hashicorp/hc-install/releases"
 	"github.com/hashicorp/hc-install/src"
+	"github.com/hashicorp/terraform-plugin-log/tfsdklog"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 )
@@ -43,6 +46,8 @@ func DiscoverConfig(ctx context.Context, sourceDir string) (*Config, error) {
 		return nil, fmt.Errorf("failed to create temp dir: %w", err)
 	}
 
+	installLogger := tfsdklog.GetSDKSubsystemLogger(ctx, logging.SubsystemInstall)
+
 	var sources []src.Source
 	switch {
 	case tfPath != "":
@@ -51,6 +56,7 @@ func DiscoverConfig(ctx context.Context, sourceDir string) (*Config, error) {
 		sources = append(sources, &fs.AnyVersion{
 			ExactBinPath: tfPath,
 		})
+
 	case tfVersion != "":
 		tfVersion, err := version.NewVersion(tfVersion)
 
@@ -60,11 +66,31 @@ func DiscoverConfig(ctx context.Context, sourceDir string) (*Config, error) {
 
 		logging.HelperResourceTrace(ctx, fmt.Sprintf("Adding potential Terraform CLI source of releases.hashicorp.com exact version %q for installation in: %s", tfVersion, tfDir))
 
-		sources = append(sources, &releases.ExactVersion{
+		if tempDir == "" {
+			tempDir = os.TempDir()
+		}
+		pathParts := []string{
+			strings.TrimRight(tempDir, string(os.PathSeparator)),
+			"plugintest-terraform",
+			strconv.Itoa(os.Getpid()),
+			tfVersion.String(),
+		}
+		tfDir := strings.Join(pathParts, string(os.PathSeparator))
+		if err := os.MkdirAll(tfDir, 0o700); err != nil {
+			return nil, fmt.Errorf("failed to create temporary directory for Terraform CLI: %w", err)
+		}
+		findSource := &fs.ExactVersion{
+			ExtraPaths: []string{tfDir},
+			Product:    product.Terraform,
+			Version:    tfVersion,
+		}
+		releasesSource := &releases.ExactVersion{
 			InstallDir: tfDir,
 			Product:    product.Terraform,
 			Version:    tfVersion,
-		})
+		}
+		sources = append(sources, findSource, releasesSource)
+
 	default:
 		logging.HelperResourceTrace(ctx, "Adding potential Terraform CLI source of local filesystem PATH lookup")
 		logging.HelperResourceTrace(ctx, fmt.Sprintf("Adding potential Terraform CLI source of checkpoint.hashicorp.com latest version for installation in: %s", tfDir))
@@ -78,7 +104,13 @@ func DiscoverConfig(ctx context.Context, sourceDir string) (*Config, error) {
 		})
 	}
 
+	stdlibLogger := installLogger.StandardLogger(&hclog.StandardLoggerOptions{
+		InferLevels: true,
+	})
+
 	installer := install.NewInstaller()
+	installer.SetLogger(stdlibLogger)
+
 	tfExec, err := installer.Ensure(context.Background(), sources)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find or install Terraform CLI from %+v: %w", sources, err)

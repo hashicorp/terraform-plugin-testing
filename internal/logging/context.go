@@ -5,7 +5,9 @@ package logging
 
 import (
 	"context"
+	"os"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-log/tfsdklog"
 	helperlogging "github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	testing "github.com/mitchellh/go-testing-interface"
@@ -23,12 +25,22 @@ func InitTestContext(ctx context.Context, t testing.T) context.Context {
 
 	ctx = tfsdklog.RegisterTestSink(ctx, t)
 	ctx = tfsdklog.NewRootSDKLogger(ctx, tfsdklog.WithLevelFromEnv(EnvTfLogSdk))
+
 	ctx = tfsdklog.NewSubsystem(ctx, SubsystemHelperResource,
-		// All calls are through the HelperResource* helper functions
 		tfsdklog.WithAdditionalLocationOffset(1),
 		tfsdklog.WithLevelFromEnv(EnvTfLogSdkHelperResource),
 	)
 	ctx = TestNameContext(ctx, t.Name())
+
+	var logLevelOption = tfsdklog.WithLevel(hclog.Off)
+	if len(os.Getenv(EnvTfLogInstaller)) > 0 {
+		logLevelOption = tfsdklog.WithLevelFromEnv(EnvTfLogInstaller)
+	}
+
+	ctx = tfsdklog.NewSubsystem(ctx, SubsystemInstall,
+		tfsdklog.WithAdditionalLocationOffset(1),
+		logLevelOption,
+	)
 
 	return ctx
 }

@@ -110,14 +110,17 @@ func (h *Helper) Close() error {
 		return nil
 	}
 
+	return os.RemoveAll(h.baseDir)
+}
+
+func (h *Helper) CloseExecDir() error {
 	if h.execTempDir != "" {
 		err := os.RemoveAll(h.execTempDir)
 		if err != nil {
 			return err
 		}
 	}
-
-	return os.RemoveAll(h.baseDir)
+	return nil
 }
 
 // NewWorkingDir creates a new working directory for use in the implementation
