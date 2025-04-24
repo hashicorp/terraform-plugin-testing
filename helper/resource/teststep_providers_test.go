@@ -3360,8 +3360,8 @@ func TestTest_TestStep_ProviderFactories_Import_External_With_Data_Source(t *tes
 
 	Test(t, TestCase{
 		ExternalProviders: map[string]ExternalProvider{
-			"http": {
-				Source: "registry.terraform.io/hashicorp/http",
+			"null": {
+				Source: "registry.terraform.io/hashicorp/null",
 			},
 			"random": {
 				Source: "registry.terraform.io/hashicorp/random",
@@ -3369,28 +3369,23 @@ func TestTest_TestStep_ProviderFactories_Import_External_With_Data_Source(t *tes
 		},
 		Steps: []TestStep{
 			{
-				Config: `data "http" "example" {
-							url = "https://checkpoint-api.hashicorp.com/v1/check/terraform"
+				Config: `
+					data "null_data_source" "values" {
+						inputs = {
+							length = 12
 						}
+					}
 
-						resource "random_string" "example" {
-							length = length(data.http.example.response_headers)
-						}`,
+					resource "random_string" "example" {
+						length = data.null_data_source.values.outputs["length"]
+					}
+				`,
 				Check: extractResourceAttr("random_string.example", "id", &id),
 			},
 			{
-				Config: `data "http" "example" {
-							url = "https://checkpoint-api.hashicorp.com/v1/check/terraform"
-						}
-
-						resource "random_string" "example" {
-							length = length(data.http.example.response_headers)
-						}`,
-				ResourceName: "random_string.example",
-				ImportState:  true,
-				ImportStateCheck: composeImportStateCheck(
-					testCheckResourceAttrInstanceState(&id, "length", "12"),
-				),
+				ResourceName:      "random_string.example",
+				ImportState:       true,
+				ImportStateCheck:  testCheckResourceAttrInstanceState(&id, "length", "12"),
 				ImportStateVerify: true,
 			},
 		},
