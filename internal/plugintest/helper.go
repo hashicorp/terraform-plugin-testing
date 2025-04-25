@@ -34,6 +34,24 @@ func AutoInitProviderHelper(ctx context.Context, sourceDir string) *Helper {
 	return helper
 }
 
+func AutoInitProviderHelperWithExactVersion(ctx context.Context, sourceDir string, version string) *Helper {
+	helper, err := AutoInitHelperWithExactVersion(ctx, sourceDir, version)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "cannot run Terraform provider tests: %s\n", err)
+		os.Exit(1)
+	}
+	return helper
+}
+
+func AutoInitHelperWithExactVersion(ctx context.Context, sourceDir string, version string) (*Helper, error) {
+	config, err := DiscoverConfigWithExactVersion(ctx, sourceDir, version)
+	if err != nil {
+		return nil, err
+	}
+
+	return InitHelper(ctx, config)
+}
+
 // Helper is intended as a per-package singleton created in TestMain which
 // other tests in a package can use to create Terraform execution contexts
 type Helper struct {

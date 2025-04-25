@@ -16,10 +16,10 @@ import (
 )
 
 func Test_SkipBelow_Lower(t *testing.T) { //nolint:paralleltest
-	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
-	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.0.7")
+	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TFExactVersion: "1.0.7",
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
 				return nil, nil
@@ -41,10 +41,10 @@ func Test_SkipBelow_Lower(t *testing.T) { //nolint:paralleltest
 }
 
 func Test_SkipBelow_Equal(t *testing.T) { //nolint:paralleltest
-	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
-	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
+	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TFExactVersion: "1.1.0",
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},
@@ -64,10 +64,10 @@ func Test_SkipBelow_Equal(t *testing.T) { //nolint:paralleltest
 }
 
 func Test_SkipBelow_Higher(t *testing.T) { //nolint:paralleltest
-	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
-	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.1")
+	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TFExactVersion: "1.1.1",
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},
@@ -87,8 +87,7 @@ func Test_SkipBelow_Higher(t *testing.T) { //nolint:paralleltest
 }
 
 func Test_SkipBelow_Prerelease_EqualCoreVersion(t *testing.T) { //nolint:paralleltest
-	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
-	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.8.0-rc1")
+	t.Parallel()
 
 	// Pragmatic compromise that 1.8.0-rc1 prerelease is considered to
 	// be equivalent to the 1.8.0 core release. This enables developers
@@ -97,6 +96,7 @@ func Test_SkipBelow_Prerelease_EqualCoreVersion(t *testing.T) { //nolint:paralle
 	//
 	// Reference: https://github.com/hashicorp/terraform-plugin-testing/issues/303
 	r.UnitTest(t, r.TestCase{
+		TFExactVersion: "1.8.0-rc1",
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},
@@ -112,10 +112,10 @@ func Test_SkipBelow_Prerelease_EqualCoreVersion(t *testing.T) { //nolint:paralle
 }
 
 func Test_SkipBelow_Prerelease_EqualPrerelease(t *testing.T) { //nolint:paralleltest
-	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
-	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.8.0-rc1")
+	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TFExactVersion: "1.8.0-rc1",
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},
@@ -131,14 +131,14 @@ func Test_SkipBelow_Prerelease_EqualPrerelease(t *testing.T) { //nolint:parallel
 }
 
 func Test_SkipBelow_Prerelease_HigherCoreVersion(t *testing.T) { //nolint:paralleltest
-	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
-	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.7.0-rc1")
+	t.Parallel()
 
 	// The 1.7.0-rc1 prerelease should always be considered to be below the
 	// 1.8.0 core version. This intentionally verifies that the logic does not
 	// ignore the core version of the prerelease version when compared against
 	// the core version of the check.
 	r.UnitTest(t, r.TestCase{
+		TFExactVersion: "1.7.0-rc1",
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},
@@ -154,12 +154,12 @@ func Test_SkipBelow_Prerelease_HigherCoreVersion(t *testing.T) { //nolint:parall
 }
 
 func Test_SkipBelow_Prerelease_HigherPrerelease(t *testing.T) { //nolint:paralleltest
-	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
-	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.7.0-rc1")
+	t.Parallel()
 
 	// The 1.7.0-rc1 prerelease should always be considered to be
 	// below the 1.7.0-rc2 prerelease.
 	r.UnitTest(t, r.TestCase{
+		TFExactVersion: "1.7.0-rc1",
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},
@@ -175,12 +175,12 @@ func Test_SkipBelow_Prerelease_HigherPrerelease(t *testing.T) { //nolint:paralle
 }
 
 func Test_SkipBelow_Prerelease_LowerCoreVersion(t *testing.T) { //nolint:paralleltest
-	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
-	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.8.0-rc1")
+	t.Parallel()
 
 	// The 1.8.0-rc1 prerelease should always be considered to be
 	// above the 1.7.0 core version.
 	r.UnitTest(t, r.TestCase{
+		TFExactVersion: "1.8.0-rc1",
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},
@@ -196,12 +196,12 @@ func Test_SkipBelow_Prerelease_LowerCoreVersion(t *testing.T) { //nolint:paralle
 }
 
 func Test_SkipBelow_Prerelease_LowerPrerelease(t *testing.T) { //nolint:paralleltest
-	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
-	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.8.0-rc1")
+	t.Parallel()
 
 	// The 1.8.0-rc1 prerelease should always be considered to be
 	// above the 1.8.0-beta1 prerelease.
 	r.UnitTest(t, r.TestCase{
+		TFExactVersion: "1.8.0-rc1",
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},

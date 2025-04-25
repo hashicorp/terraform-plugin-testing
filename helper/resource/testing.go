@@ -328,6 +328,7 @@ type ErrorCheckFunc func(error) error
 // Refer to the Env prefixed constants for environment variables that further
 // control testing functionality.
 type TestCase struct {
+	TFExactVersion string
 	// IsUnitTest allows a test to run regardless of the TF_ACC
 	// environment variable. This should be used with care - only for
 	// fast tests on local resources (e.g. remote state with a local
@@ -967,7 +968,11 @@ func Test(t testing.T, c TestCase) {
 	if err != nil {
 		t.Fatalf("Error getting working dir: %s", err)
 	}
-	helper := plugintest.AutoInitProviderHelper(ctx, sourceDir)
+	exactVersion := os.Getenv(plugintest.EnvTfAccTerraformVersion)
+	if len(c.TFExactVersion) > 0 {
+		exactVersion = c.TFExactVersion
+	}
+	helper := plugintest.AutoInitProviderHelperWithExactVersion(ctx, sourceDir, exactVersion)
 	defer func(helper *plugintest.Helper) {
 		err := helper.Close()
 		if err != nil {

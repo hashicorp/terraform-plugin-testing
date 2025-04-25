@@ -18,10 +18,10 @@ import (
 )
 
 func Test_All_RunTest(t *testing.T) { //nolint:paralleltest
-	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
-	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
+	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TFExactVersion: "1.1.0",
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},
@@ -46,10 +46,10 @@ func Test_All_RunTest(t *testing.T) { //nolint:paralleltest
 }
 
 func Test_All_SkipTest(t *testing.T) { //nolint:paralleltest
-	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
-	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.0.7")
+	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
+		TFExactVersion: "1.0.7",
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
 				return nil, nil
@@ -77,11 +77,11 @@ func Test_All_SkipTest(t *testing.T) { //nolint:paralleltest
 }
 
 func Test_All_Error(t *testing.T) { //nolint:paralleltest
-	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
-	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
+	t.Parallel()
 
 	plugintest.TestExpectTFatal(t, func() {
 		r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
+			TFExactVersion: "1.0.7",
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
 					return nil, nil
