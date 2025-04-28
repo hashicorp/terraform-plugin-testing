@@ -68,7 +68,7 @@ func TestImportBlock_InConfigDirectory_Writeable(t *testing.T) {
 				ImportState:               true,
 				ImportStateKind:           r.ImportBlockWithID,
 				ImportStateReadOnlyConfig: false,
-				ConfigDirectory:           config.StaticDirectory(`testdata/helper/writeable-config-directory`),
+				ConfigDirectory:           config.StaticDirectory(`testdata/writeable-config-directory`),
 			},
 		},
 	})
