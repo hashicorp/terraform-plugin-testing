@@ -432,17 +432,17 @@ func TestConfigurationDirectory_Write(t *testing.T) {
 		},
 		"no-config": {
 			configDirectory: configurationDirectory{
-				"testdata/empty_dir",
+				directory: "testdata/empty_dir",
 			},
 		},
 		"dir-single-file": {
 			configDirectory: configurationDirectory{
-				"testdata/random",
+				directory: "testdata/random",
 			},
 		},
 		"dir-multiple-files": {
 			configDirectory: configurationDirectory{
-				"testdata/random_multiple_files",
+				directory: "testdata/random_multiple_files",
 			},
 		},
 	}
@@ -523,17 +523,17 @@ func TestConfigurationDirectory_Write_AbsolutePath(t *testing.T) {
 		},
 		"no-config": {
 			configDirectory: configurationDirectory{
-				"testdata/empty_dir",
+				directory: "testdata/empty_dir",
 			},
 		},
 		"dir-single-file": {
 			configDirectory: configurationDirectory{
-				"testdata/random",
+				directory: "testdata/random",
 			},
 		},
 		"dir-multiple-files": {
 			configDirectory: configurationDirectory{
-				"testdata/random_multiple_files",
+				directory: "testdata/random_multiple_files",
 			},
 		},
 	}
