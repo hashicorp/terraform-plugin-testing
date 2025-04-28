@@ -5,6 +5,8 @@ project {
   copyright_year = 2014
 
   header_ignore = [
+    "META.d/**/*.yaml",
+
     # changie tooling configuration and CHANGELOG entries (prose)
     ".changes/unreleased/**",
     ".changie.yaml",
