@@ -666,6 +666,10 @@ type TestStep struct {
 
 	ImportStateKind ImportStateKind
 
+	// ImportStateReadOnlyConfig indicates that the test framework should not
+	// modify ConfigFile or ConfigDirectory inputs to the test step.
+	ImportStateReadOnlyConfig bool
+
 	// ImportStateId is the ID to perform an ImportState operation with.
 	// This is optional. If it isn't set, then the resource ID is automatically
 	// determined by inspecting the state for ResourceName's ID.
