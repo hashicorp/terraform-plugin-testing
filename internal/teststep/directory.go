@@ -5,14 +5,18 @@ package teststep
 
 import (
 	"context"
+	"fmt"
+	"hash/crc32"
 	"os"
 	"path/filepath"
 )
 
 var _ Config = configurationDirectory{}
 
+// not threadsafe
 type configurationDirectory struct {
-	directory string
+	directory      string
+	generatedFiles map[string]string
 }
 
 // HasConfigurationFiles is used during validation to ensure that
@@ -85,9 +89,42 @@ func (c configurationDirectory) Write(ctx context.Context, dest string) error {
 	}
 
 	err := copyFiles(configDirectory, dest)
-
 	if err != nil {
 		return err
+	}
+
+	err = c.writeGeneratedFiles(dest)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c configurationDirectory) AppendGeneratedConfig(_ context.Context, config string) Config {
+	if c.generatedFiles == nil {
+		c.generatedFiles = make(map[string]string)
+	}
+
+	checksum := crc32.Checksum([]byte(config), crc32.IEEETable)
+	filename := fmt.Sprintf("terraform_plugin_test_%d.tf", checksum)
+
+	fmt.Println("Appending generated file:", filename)
+	c.generatedFiles[filename] = config
+	return c
+}
+
+func (c configurationDirectory) writeGeneratedFiles(dstPath string) error {
+	fmt.Println("Count of generated files:", len(c.generatedFiles))
+	for filename, config := range c.generatedFiles {
+		outFilename := filepath.Join(dstPath, filename)
+		fmt.Println("Writing generated file:", outFilename)
+
+		err := os.WriteFile(outFilename, []byte(config), 0700)
+		if err != nil {
+			return err
+		}
+		fmt.Println("Wrote generated file:", outFilename)
 	}
 
 	return nil

@@ -92,3 +92,7 @@ func (c configurationFile) Write(ctx context.Context, dest string) error {
 
 	return nil
 }
+
+func (c configurationFile) AppendGeneratedConfig(_ context.Context, config string) Config {
+	return c
+}
