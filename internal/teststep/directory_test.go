@@ -607,6 +607,81 @@ func TestConfigurationDirectory_Write_AbsolutePath(t *testing.T) {
 	}
 }
 
+func TestConfigurationDirectory_Write_WithGeneratedFiles(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		configDirectory configurationDirectory
+		expectedError   *regexp.Regexp
+	}{
+		"dir-single-file": {
+			configDirectory: configurationDirectory{
+				directory: "testdata/random",
+				generatedFiles: map[string]string{
+					"import.tf": `terraform {\nimport\n{\nto = satellite.the_moon\nid = "moon"\n}\n}\n`,
+				},
+			},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			tempDir := t.TempDir()
+
+			err := testCase.configDirectory.Write(context.Background(), tempDir)
+			if err != nil {
+				t.Errorf("unexpected error %s", err)
+			}
+
+			dirEntries, err := os.ReadDir(testCase.configDirectory.directory)
+			if err != nil {
+				t.Errorf("error reading directory: %s", err)
+			}
+
+			tempDirEntries, err := os.ReadDir(tempDir)
+
+			if err != nil {
+				t.Errorf("error reading temp directory: %s", err)
+			}
+
+			if len(tempDirEntries)-len(dirEntries) != 1 {
+				t.Errorf("expected %d dir entries, got %d dir entries", len(dirEntries)+1, tempDirEntries)
+			}
+
+			for _, entry := range dirEntries {
+				filename := entry.Name()
+				expectedContent, err := os.ReadFile(filepath.Join(testCase.configDirectory.directory, filename))
+				if err != nil {
+					t.Errorf("error reading file from config directory %s: %s", filename, err)
+				}
+
+				content, err := os.ReadFile(filepath.Join(tempDir, filename))
+				if err != nil {
+					t.Errorf("error reading generated file %s: %s", filename, err)
+				}
+
+				if diff := cmp.Diff(expectedContent, content); diff != "" {
+					t.Errorf("unexpected difference: %s", diff)
+				}
+			}
+
+			generatedFiles := testCase.configDirectory.generatedFiles
+			for filename, expectedContent := range generatedFiles {
+				content, err := os.ReadFile(filepath.Join(tempDir, filename))
+				if err != nil {
+					t.Errorf("error reading generated file %s: %s", filename, err)
+				}
+
+				if diff := cmp.Diff([]byte(expectedContent), content); diff != "" {
+					t.Errorf("unexpected difference: %s", diff)
+				}
+			}
+		})
+	}
+}
+
 var fileInfoComparer = cmp.Comparer(func(x, y os.FileInfo) bool {
 	if x.Name() != y.Name() {
 		return false

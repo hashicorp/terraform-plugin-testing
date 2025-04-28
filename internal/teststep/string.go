@@ -57,5 +57,11 @@ func (c configurationString) Write(ctx context.Context, dest string) error {
 		return err
 	}
 
+	fmt.Println("Wrote config to", outFilename)
+
 	return nil
+}
+
+func (c configurationString) AppendGeneratedConfig(_ context.Context, config string) Config {
+	return c
 }
