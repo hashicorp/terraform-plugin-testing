@@ -442,5 +442,13 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		}
 	}
 
+	// I'm sorry, I'm afraid I can't do that. With one exception.
+	if DeprecatedCompatibilityFlagRefreshAfterApply == "unlocked" {
+		err := runProviderCommandApplyRefreshOnly(ctx, t, wd, providers)
+		if err != nil {
+			return fmt.Errorf("Error running apply refresh-only: %w", err)
+		}
+	}
+
 	return nil
 }

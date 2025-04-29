@@ -2142,3 +2142,6 @@ func checkIfIndexesIntoTypeSetPair(keyFirst, keySecond string, f TestCheckFunc) 
 		return err
 	}
 }
+
+// Deprecated: no guarantee of future support.
+var DeprecatedCompatibilityFlagRefreshAfterApply string
