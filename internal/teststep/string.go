@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var _ Config = configurationString{}
@@ -62,6 +63,8 @@ func (c configurationString) Write(ctx context.Context, dest string) error {
 	return nil
 }
 
-func (c configurationString) AppendGeneratedConfig(_ context.Context, config string) Config {
-	return c
+func (c configurationString) Append(_ context.Context, config string) Config {
+	return configurationString{
+		raw: strings.Join([]string{c.raw, config}, "\n"),
+	}
 }
