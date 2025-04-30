@@ -119,18 +119,21 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	switch {
 	case testStepConfig == nil:
 		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
-		importConfig := cfgRaw
 
+		testStepConfig = teststep.Configuration(teststep.PrepareConfigurationRequest{
+			Raw:                   cfgRaw,
+			TestStepConfigRequest: testStepConfigRequest,
+		}.Exec())
+
+		importConfig := ""
 		if kind.plannable() && kind.resourceIdentity() {
 			importConfig = appendImportBlockWithIdentity(importConfig, resourceName, priorIdentityValues)
 		} else if kind.plannable() {
 			importConfig = appendImportBlock(importConfig, resourceName, importId)
 		}
 
-		testStepConfig = teststep.Configuration(teststep.PrepareConfigurationRequest{
-			Raw:                   importConfig,
-			TestStepConfigRequest: testStepConfigRequest,
-		}.Exec())
+		testStepConfig = testStepConfig.Append(ctx, importConfig)
+
 		if testStepConfig == nil {
 			t.Fatal("Cannot import state with no specified config")
 		}
