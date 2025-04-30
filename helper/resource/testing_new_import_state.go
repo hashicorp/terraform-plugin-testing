@@ -125,14 +125,11 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			TestStepConfigRequest: testStepConfigRequest,
 		}.Exec())
 
-		importConfig := ""
 		if kind.plannable() && kind.resourceIdentity() {
-			importConfig = appendImportBlockWithIdentity(importConfig, resourceName, priorIdentityValues)
+			testStepConfig = appendImportBlockWithIdentity(testStepConfig, resourceName, priorIdentityValues)
 		} else if kind.plannable() {
-			importConfig = appendImportBlock(importConfig, resourceName, importId)
+			testStepConfig = appendImportBlock(testStepConfig, resourceName, importId)
 		}
-
-		testStepConfig = testStepConfig.Append(ctx, importConfig)
 
 		if testStepConfig == nil {
 			t.Fatal("Cannot import state with no specified config")
@@ -144,13 +141,11 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	case step.ConfigDirectory != nil:
 		// TODO: extract / DRY
 
-		importConfig := ""
 		if kind.plannable() && kind.resourceIdentity() {
-			importConfig = appendImportBlockWithIdentity(importConfig, resourceName, priorIdentityValues)
+			testStepConfig = appendImportBlockWithIdentity(testStepConfig, resourceName, priorIdentityValues)
 		} else if kind.plannable() {
-			importConfig = appendImportBlock(importConfig, resourceName, importId)
+			testStepConfig = appendImportBlock(testStepConfig, resourceName, importId)
 		}
-		testStepConfig = testStepConfig.Append(ctx, importConfig)
 
 	case step.ConfigFile != nil:
 		// TODO: ship it
@@ -446,51 +441,52 @@ func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.
 	return nil
 }
 
-func appendImportBlock(config string, resourceName string, importID string) string {
-	return config + fmt.Sprintf(``+"\n"+
-		`import {`+"\n"+
-		`	to = %s`+"\n"+
-		`	id = %q`+"\n"+
-		`}`,
-		resourceName, importID)
+func appendImportBlock(config teststep.Config, resourceName string, importID string) teststep.Config {
+	return config.Append(
+		context.Background(), // TODO: remove
+		fmt.Sprintf(``+"\n"+
+			`import {`+"\n"+
+			`	to = %s`+"\n"+
+			`	id = %q`+"\n"+
+			`}`,
+			resourceName, importID))
 }
 
-func appendImportBlockWithIdentity(config string, resourceName string, identityValues map[string]any) string {
-	configBuilder := config
-	configBuilder += fmt.Sprintf(``+"\n"+
+func appendImportBlockWithIdentity(config teststep.Config, resourceName string, identityValues map[string]any) teststep.Config {
+	configBuilder := strings.Builder{}
+	configBuilder.WriteString(fmt.Sprintf(``+"\n"+
 		`import {`+"\n"+
 		`	to = %s`+"\n"+
 		`	identity = {`+"\n",
-		resourceName)
+		resourceName))
 
 	for k, v := range identityValues {
 		switch v := v.(type) {
 		case bool:
-			configBuilder += fmt.Sprintf(`		%q = %t`+"\n", k, v)
+			configBuilder.WriteString(fmt.Sprintf(`		%q = %t`+"\n", k, v))
 
 		case []any:
 			var quotedV []string
 			for _, v := range v {
 				quotedV = append(quotedV, fmt.Sprintf(`%q`, v))
 			}
-			configBuilder += fmt.Sprintf(`		%q = [%s]`+"\n", k, strings.Join(quotedV, ", "))
+			configBuilder.WriteString(fmt.Sprintf(`		%q = [%s]`+"\n", k, strings.Join(quotedV, ", ")))
 
 		case json.Number:
-			configBuilder += fmt.Sprintf(`		%q = %s`+"\n", k, v)
+			configBuilder.WriteString(fmt.Sprintf(`		%q = %s`+"\n", k, v))
 
 		case string:
-			configBuilder += fmt.Sprintf(`		%q = %q`+"\n", k, v)
+			configBuilder.WriteString(fmt.Sprintf(`		%q = %q`+"\n", k, v))
 
 		default:
 			panic(fmt.Sprintf("unexpected type %T for identity value %q", v, k))
 		}
 	}
 
-	configBuilder += `` +
-		`	}` + "\n" +
-		`}` + "\n"
+	configBuilder.WriteString(`	}` + "\n")
+	configBuilder.WriteString(`}` + "\n")
 
-	return configBuilder
+	return config.Append(context.Background(), configBuilder.String())
 }
 
 func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestStep) error {
