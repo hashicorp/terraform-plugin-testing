@@ -444,9 +444,16 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 	// I'm sorry, I'm afraid I can't do that. With one exception.
 	if DeprecatedCompatibilityFlagRefreshAfterApply == "unlocked" && !step.Destroy && !step.PlanOnly {
-		err := runProviderCommandApplyRefreshOnly(ctx, t, wd, providers)
-		if err != nil {
-			return fmt.Errorf("Error running apply refresh-only: %w", err)
+		if len(c.Steps) > stepIndex+1 {
+			// If the next step is a refresh, then we have no need to refresh here
+			if !c.Steps[stepIndex+1].RefreshState {
+				// Echo a searchable message to easily determine when this is no longer being used
+				fmt.Println("DeprecatedCompatibilityFlagRefreshAfterApply: running apply -refresh-only -refresh=true")
+				err := runProviderCommandApplyRefreshOnly(ctx, t, wd, providers)
+				if err != nil {
+					return fmt.Errorf("Error running apply refresh-only: %w", err)
+				}
+			}
 		}
 	}
 
