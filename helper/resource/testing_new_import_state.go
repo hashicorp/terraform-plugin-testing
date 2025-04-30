@@ -147,7 +147,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		} else if kind.plannable() {
 			importConfig = appendImportBlock(importConfig, resourceName, importId)
 		}
-		testStepConfig = testStepConfig.AppendGeneratedConfig(ctx, importConfig)
+		testStepConfig = testStepConfig.Append(ctx, importConfig)
 
 	case step.ConfigFile != nil:
 		// TODO: ship it

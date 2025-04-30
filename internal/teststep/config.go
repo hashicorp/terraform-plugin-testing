@@ -45,7 +45,7 @@ type Config interface {
 	HasProviderBlock(context.Context) (bool, error)
 	HasTerraformBlock(context.Context) (bool, error)
 	Write(context.Context, string) error
-	AppendGeneratedConfig(context.Context, string) Config
+	Append(context.Context, string) Config
 }
 
 // PrepareConfigurationRequest is used to simplify the generation of
@@ -194,6 +194,22 @@ func copyFile(path string, dstPath string) error {
 	defer dstF.Close()
 
 	if _, err := io.Copy(dstF, srcF); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// appendToFile accepts a path to a file and a string,
+// appending the file from path to destination.
+func appendToFile(path string, content string) error {
+	f, err := os.OpenFile(path, os.O_APPEND, os.ModeAppend)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err := io.WriteString(f, content); err != nil {
 		return err
 	}
 

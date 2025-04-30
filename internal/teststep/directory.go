@@ -101,7 +101,7 @@ func (c configurationDirectory) Write(ctx context.Context, dest string) error {
 	return nil
 }
 
-func (c configurationDirectory) AppendGeneratedConfig(_ context.Context, config string) Config {
+func (c configurationDirectory) Append(_ context.Context, config string) Config {
 	if c.generatedFiles == nil {
 		c.generatedFiles = make(map[string]string)
 	}
