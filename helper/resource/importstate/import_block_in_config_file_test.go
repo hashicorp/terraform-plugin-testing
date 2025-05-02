@@ -38,7 +38,7 @@ func TestImportBlock_InConfigFile(t *testing.T) {
 				ResourceName:    "examplecloud_container.test",
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithID,
-				ConfigFile:      config.StaticFile(`testdata/writeable-config-file/examplecloud_container.tf`),
+				ConfigFile:      config.StaticFile(`testdata/2/examplecloud_container.tf`),
 			},
 		},
 	})
@@ -66,7 +66,7 @@ func TestImportBlock_WithResourceIdentity_InConfigFile(t *testing.T) {
 				ResourceName:    "examplecloud_container.test",
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithResourceIdentity,
-				ConfigFile:      config.StaticFile(`testdata/writeable-config-file/examplecloud_container.tf`),
+				ConfigFile:      config.StaticFile(`testdata/2/examplecloud_container.tf`),
 			},
 		},
 	})
