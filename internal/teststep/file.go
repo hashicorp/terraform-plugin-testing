@@ -85,13 +85,13 @@ func (c configurationFile) Write(ctx context.Context, dest string) error {
 		configFile = filepath.Join(pwd, configFile)
 	}
 
-	err := copyFile(configFile, dest)
+	destPath, err := copyFile(configFile, dest)
 	if err != nil {
 		return err
 	}
 
 	if len(c.appendedConfig) > 0 {
-		err := appendToFile(configFile, c.appendedConfig)
+		err := appendToFile(destPath, c.appendedConfig)
 		if err != nil {
 			return err
 		}

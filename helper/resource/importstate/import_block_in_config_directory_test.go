@@ -16,7 +16,7 @@ import (
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestImportBlock_InConfigDirectory(t *testing.T) {
+func TestImportBlock_InConfigDirectory_ConfigExactTrue(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -45,7 +45,7 @@ func TestImportBlock_InConfigDirectory(t *testing.T) {
 	})
 }
 
-func TestImportBlock_InConfigDirectory_Writeable(t *testing.T) {
+func TestImportBlock_InConfigDirectory(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{

@@ -105,6 +105,12 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 	}
 
+	var inlineConfig string
+	if step.Config != "" {
+		inlineConfig = step.Config
+	} else {
+		inlineConfig = cfgRaw
+	}
 	testStepConfigRequest := config.TestStepConfigRequest{
 		StepNumber: stepNumber,
 		TestName:   t.Name(),
@@ -112,44 +118,24 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	testStepConfig := teststep.Configuration(teststep.PrepareConfigurationRequest{
 		Directory:             step.ConfigDirectory,
 		File:                  step.ConfigFile,
-		Raw:                   step.Config,
+		Raw:                   inlineConfig,
 		TestStepConfigRequest: testStepConfigRequest,
 	}.Exec())
 
 	switch {
-	case testStepConfig == nil:
-		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
-
-		testStepConfig = teststep.Configuration(teststep.PrepareConfigurationRequest{
-			Raw:                   cfgRaw,
-			TestStepConfigRequest: testStepConfigRequest,
-		}.Exec())
-
-		if kind.plannable() && kind.resourceIdentity() {
-			testStepConfig = appendImportBlockWithIdentity(testStepConfig, resourceName, priorIdentityValues)
-		} else if kind.plannable() {
-			testStepConfig = appendImportBlock(testStepConfig, resourceName, importId)
-		}
-
-		if testStepConfig == nil {
-			t.Fatal("Cannot import state with no specified config")
-		}
-
 	case step.ConfigExact:
 		break
 
-	case step.ConfigDirectory != nil:
-		// TODO: extract / DRY
-
+	default:
 		if kind.plannable() && kind.resourceIdentity() {
 			testStepConfig = appendImportBlockWithIdentity(testStepConfig, resourceName, priorIdentityValues)
 		} else if kind.plannable() {
 			testStepConfig = appendImportBlock(testStepConfig, resourceName, importId)
 		}
+	}
 
-	case step.ConfigFile != nil:
-		// TODO: ship it
-
+	if testStepConfig == nil {
+		t.Fatal("Cannot import state with no specified config")
 	}
 
 	var workingDir *plugintest.WorkingDir

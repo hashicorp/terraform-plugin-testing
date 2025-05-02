@@ -109,22 +109,18 @@ func (c configurationDirectory) Append(_ context.Context, config string) Config 
 	checksum := crc32.Checksum([]byte(config), crc32.IEEETable)
 	filename := fmt.Sprintf("terraform_plugin_test_%d.tf", checksum)
 
-	fmt.Println("Appending generated file:", filename)
 	c.generatedFiles[filename] = config
 	return c
 }
 
 func (c configurationDirectory) writeGeneratedFiles(dstPath string) error {
-	fmt.Println("Count of generated files:", len(c.generatedFiles))
 	for filename, config := range c.generatedFiles {
 		outFilename := filepath.Join(dstPath, filename)
-		fmt.Println("Writing generated file:", outFilename)
 
 		err := os.WriteFile(outFilename, []byte(config), 0700)
 		if err != nil {
 			return err
 		}
-		fmt.Println("Wrote generated file:", outFilename)
 	}
 
 	return nil

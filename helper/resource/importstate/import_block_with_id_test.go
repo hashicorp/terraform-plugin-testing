@@ -89,6 +89,7 @@ func TestImportBlock_WithID_ExpectError(t *testing.T) {
 					id = "westeurope/somevalue"
 				}
 				`,
+				ConfigExact:     true,
 				ResourceName:    "examplecloud_container.test",
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithID,
@@ -295,6 +296,7 @@ func TestImportBlock_WithID_WithBlankOptionalAttribute_GeneratesCorrectPlan(t *t
 					id = "sometestid"
 
 				}`,
+				ConfigExact:     true,
 				ResourceName:    "examplecloud_container.test",
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithID,
@@ -419,6 +421,7 @@ import {
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithID,
 				Config:          configWithImportBlock,
+				ConfigExact:     true,
 				ResourceName:    "random_string.mystery_message",
 				ImportPlanChecks: r.ImportPlanChecks{
 					PreApply: []plancheck.PlanCheck{

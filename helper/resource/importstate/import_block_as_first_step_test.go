@@ -48,6 +48,7 @@ func TestImportBlock_AsFirstStep(t *testing.T) {
 					id = "westeurope/somevalue"
 				}
 				`,
+				ConfigExact: true,
 				ImportPlanChecks: r.ImportPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("examplecloud_container.test", plancheck.ResourceActionNoop),
