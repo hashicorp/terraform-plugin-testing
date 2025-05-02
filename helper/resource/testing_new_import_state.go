@@ -126,12 +126,11 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	case step.ConfigExact:
 		break
 
-	default:
-		if kind.plannable() && kind.resourceIdentity() {
-			testStepConfig = appendImportBlockWithIdentity(testStepConfig, resourceName, priorIdentityValues)
-		} else if kind.plannable() {
-			testStepConfig = appendImportBlock(testStepConfig, resourceName, importId)
-		}
+	case kind.plannable() && kind.resourceIdentity():
+		testStepConfig = appendImportBlockWithIdentity(testStepConfig, resourceName, priorIdentityValues)
+
+	case kind.plannable():
+		testStepConfig = appendImportBlock(testStepConfig, resourceName, importId)
 	}
 
 	if testStepConfig == nil {
