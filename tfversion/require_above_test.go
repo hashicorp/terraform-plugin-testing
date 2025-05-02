@@ -1,6 +1,8 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
+//go:build testingtestingtesting
+
 package tfversion_test
 
 import (
@@ -64,26 +66,24 @@ func Test_RequireAbove_Higher(t *testing.T) { //nolint:paralleltest
 	})
 }
 
-func Test_RequireAbove_Lower(t *testing.T) { //nolint:paralleltest
+func TestRequireAbove_ExpectFailOnLowerVersion(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.0.7")
 
-	plugintest.TestExpectTFatal(t, func() {
-		r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
-			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
-					return nil, nil
-				},
+	r.UnitTest(t, r.TestCase{
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
+				return nil, nil
 			},
-			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-				tfversion.RequireAbove(version.Must(version.NewVersion("1.1.0"))),
+		},
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.RequireAbove(version.Must(version.NewVersion("1.1.0"))),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `//non-empty config`,
 			},
-			Steps: []r.TestStep{
-				{
-					Config: `//non-empty config`,
-				},
-			},
-		})
+		},
 	})
 }
 
