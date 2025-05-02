@@ -135,7 +135,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 			t.Fatal("Cannot import state with no specified config")
 		}
 
-	case step.ImportStateReadOnlyConfig:
+	case step.ConfigExact:
 		break
 
 	case step.ConfigDirectory != nil:

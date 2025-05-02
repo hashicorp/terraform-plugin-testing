@@ -35,11 +35,11 @@ func TestImportBlock_InConfigDirectory(t *testing.T) {
 				ConfigDirectory: config.StaticDirectory(`testdata/1`),
 			},
 			{
-				ResourceName:              "examplecloud_container.test",
-				ImportState:               true,
-				ImportStateKind:           r.ImportBlockWithID,
-				ImportStateReadOnlyConfig: true, // TODO: naming
-				ConfigDirectory:           config.StaticDirectory(`testdata/2`),
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
+				ConfigDirectory: config.StaticDirectory(`testdata/2`),
+				ConfigExact:     true,
 			},
 		},
 	})
@@ -64,11 +64,11 @@ func TestImportBlock_InConfigDirectory_Writeable(t *testing.T) {
 				ConfigDirectory: config.StaticDirectory(`testdata/1`),
 			},
 			{
-				ResourceName:              "examplecloud_container.test",
-				ImportState:               true,
-				ImportStateKind:           r.ImportBlockWithID,
-				ImportStateReadOnlyConfig: false,
-				ConfigDirectory:           config.StaticDirectory(`testdata/writeable-config-directory`),
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
+				ConfigDirectory: config.StaticDirectory(`testdata/writeable-config-directory`),
+				ConfigExact:     false,
 			},
 		},
 	})
