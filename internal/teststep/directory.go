@@ -15,8 +15,10 @@ var _ Config = configurationDirectory{}
 
 // not threadsafe
 type configurationDirectory struct {
-	directory      string
-	generatedFiles map[string]string
+	directory string
+
+	// appendedConfig is a map of filenames to content
+	appendedConfig map[string]string
 }
 
 // HasConfigurationFiles is used during validation to ensure that
@@ -93,7 +95,7 @@ func (c configurationDirectory) Write(ctx context.Context, dest string) error {
 		return err
 	}
 
-	err = c.writeGeneratedFiles(dest)
+	err = c.writeAppendedConfig(dest)
 	if err != nil {
 		return err
 	}
@@ -102,19 +104,19 @@ func (c configurationDirectory) Write(ctx context.Context, dest string) error {
 }
 
 func (c configurationDirectory) Append(config string) Config {
-	if c.generatedFiles == nil {
-		c.generatedFiles = make(map[string]string)
+	if c.appendedConfig == nil {
+		c.appendedConfig = make(map[string]string)
 	}
 
 	checksum := crc32.Checksum([]byte(config), crc32.IEEETable)
 	filename := fmt.Sprintf("terraform_plugin_test_%d.tf", checksum)
 
-	c.generatedFiles[filename] = config
+	c.appendedConfig[filename] = config
 	return c
 }
 
-func (c configurationDirectory) writeGeneratedFiles(dstPath string) error {
-	for filename, config := range c.generatedFiles {
+func (c configurationDirectory) writeAppendedConfig(dstPath string) error {
+	for filename, config := range c.appendedConfig {
 		outFilename := filepath.Join(dstPath, filename)
 
 		err := os.WriteFile(outFilename, []byte(config), 0700)

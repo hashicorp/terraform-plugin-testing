@@ -607,7 +607,7 @@ func TestConfigurationDirectory_Write_AbsolutePath(t *testing.T) {
 	}
 }
 
-func TestConfigurationDirectory_Write_WithGeneratedFiles(t *testing.T) {
+func TestConfigurationDirectory_Write_WithAppendedConfig(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
@@ -617,7 +617,7 @@ func TestConfigurationDirectory_Write_WithGeneratedFiles(t *testing.T) {
 		"dir-single-file": {
 			configDirectory: configurationDirectory{
 				directory: "testdata/random",
-				generatedFiles: map[string]string{
+				appendedConfig: map[string]string{
 					"import.tf": `terraform {\nimport\n{\nto = satellite.the_moon\nid = "moon"\n}\n}\n`,
 				},
 			},
@@ -667,11 +667,11 @@ func TestConfigurationDirectory_Write_WithGeneratedFiles(t *testing.T) {
 				}
 			}
 
-			generatedFiles := testCase.configDirectory.generatedFiles
-			for filename, expectedContent := range generatedFiles {
+			appendedConfigFiles := testCase.configDirectory.appendedConfig
+			for filename, expectedContent := range appendedConfigFiles {
 				content, err := os.ReadFile(filepath.Join(tempDir, filename))
 				if err != nil {
-					t.Errorf("error reading generated file %s: %s", filename, err)
+					t.Errorf("error reading appended config file %s: %s", filename, err)
 				}
 
 				if diff := cmp.Diff([]byte(expectedContent), content); diff != "" {
