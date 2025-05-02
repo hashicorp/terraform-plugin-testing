@@ -448,7 +448,7 @@ func examplecloudResourceWithEveryIdentitySchemaType() testprovider.Resource {
 					{
 						Name:              "cabinet",
 						Type:              tftypes.String,
-						RequiredForImport: true,
+						OptionalForImport: true,
 					},
 					{
 						Name:              "unit",

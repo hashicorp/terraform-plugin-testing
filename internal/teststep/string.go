@@ -58,8 +58,6 @@ func (c configurationString) Write(ctx context.Context, dest string) error {
 		return err
 	}
 
-	fmt.Println("Wrote config to", outFilename)
-
 	return nil
 }
 

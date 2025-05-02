@@ -25,6 +25,14 @@ func OptionalComputedListAttribute(name string, elementType tftypes.Type) *tfpro
 	}
 }
 
+func OptionalListAttribute(name string, elementType tftypes.Type) *tfprotov6.SchemaAttribute {
+	return &tfprotov6.SchemaAttribute{
+		Name:     name,
+		Type:     tftypes.List{ElementType: elementType},
+		Optional: true,
+	}
+}
+
 func RequiredListAttribute(name string, elementType tftypes.Type) *tfprotov6.SchemaAttribute {
 	return &tfprotov6.SchemaAttribute{
 		Name:     name,
