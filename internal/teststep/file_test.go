@@ -432,7 +432,7 @@ func TestConfigurationFile_Write(t *testing.T) {
 		},
 		"file": {
 			configFile: configurationFile{
-				"testdata/random/random.tf",
+				file: "testdata/random/random.tf",
 			},
 		},
 	}
@@ -495,7 +495,7 @@ func TestConfigurationFile_Write_AbsolutePath(t *testing.T) {
 		},
 		"file": {
 			configFile: configurationFile{
-				"testdata/random/random.tf",
+				file: "testdata/random/random.tf",
 			},
 		},
 	}
