@@ -61,7 +61,7 @@ func (c configurationString) Write(ctx context.Context, dest string) error {
 	return nil
 }
 
-func (c configurationString) Append(_ context.Context, config string) Config {
+func (c configurationString) Append(config string) Config {
 	return configurationString{
 		raw: strings.Join([]string{c.raw, config}, "\n"),
 	}

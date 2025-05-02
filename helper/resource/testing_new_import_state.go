@@ -428,7 +428,6 @@ func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.
 
 func appendImportBlock(config teststep.Config, resourceName string, importID string) teststep.Config {
 	return config.Append(
-		context.Background(), // TODO: remove
 		fmt.Sprintf(``+"\n"+
 			`import {`+"\n"+
 			`	to = %s`+"\n"+
@@ -471,7 +470,7 @@ func appendImportBlockWithIdentity(config teststep.Config, resourceName string, 
 	configBuilder.WriteString(`	}` + "\n")
 	configBuilder.WriteString(`}` + "\n")
 
-	return config.Append(context.Background(), configBuilder.String())
+	return config.Append(configBuilder.String())
 }
 
 func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestStep) error {

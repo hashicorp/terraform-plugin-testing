@@ -100,7 +100,7 @@ func (c configurationFile) Write(ctx context.Context, dest string) error {
 	return nil
 }
 
-func (c configurationFile) Append(_ context.Context, config string) Config {
+func (c configurationFile) Append(config string) Config {
 	return configurationFile{
 		file:           c.file,
 		appendedConfig: config,

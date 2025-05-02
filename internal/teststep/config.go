@@ -45,7 +45,7 @@ type Config interface {
 	HasProviderBlock(context.Context) (bool, error)
 	HasTerraformBlock(context.Context) (bool, error)
 	Write(context.Context, string) error
-	Append(context.Context, string) Config
+	Append(string) Config
 }
 
 // PrepareConfigurationRequest is used to simplify the generation of
