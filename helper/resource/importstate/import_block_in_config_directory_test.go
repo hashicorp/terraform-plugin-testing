@@ -39,7 +39,6 @@ func TestImportBlock_InConfigDirectory(t *testing.T) {
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithID,
 				ConfigDirectory: config.StaticDirectory(`testdata/2`),
-				ConfigExact:     false,
 			},
 		},
 	})
