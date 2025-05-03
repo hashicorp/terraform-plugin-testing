@@ -871,11 +871,6 @@ func ParallelTest(t testing.T, c TestCase) {
 // set to some non-empty value. This is to avoid test cases surprising
 // a user by creating real resources.
 //
-// Tests will fail unless the verbose flag (`go test -v`, or explicitly
-// the "-test.v" flag) is set. Because some acceptance tests take quite
-// long, we require the verbose flag so users are able to see progress
-// output.
-//
 // Use the ParallelTest() function to automatically set (*testing.T).Parallel()
 // to enable testing concurrency. Use the UnitTest() function to automatically
 // set the TestCase type IsUnitTest field.
