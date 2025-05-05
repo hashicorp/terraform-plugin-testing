@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/hashicorp/terraform-plugin-testing/config"
 )
 
 func TestConfigurationFile_HasProviderBlock(t *testing.T) {
@@ -546,6 +547,52 @@ func TestConfigurationFile_Write_AbsolutePath(t *testing.T) {
 				if diff := cmp.Diff(tempFileInfo, fileInfo, fileInfoComparer); diff != "" {
 					t.Errorf("unexpected difference: %s", diff)
 				}
+			}
+		})
+	}
+}
+
+func TestConfigFile_Append(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		filename        string
+		appendContent   string
+		expectedContent string
+	}{
+		"append content to a ConfigFile": {
+			filename:        `testdata/main.tf`, // Contains `// Hello world`
+			appendContent:   `terraform {}`,
+			expectedContent: "// Hello world\nterraform {}",
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			prepareConfigRequest := PrepareConfigurationRequest{
+				File: func(config.TestStepConfigRequest) string {
+					return testCase.filename
+				},
+			}
+
+			teststepConfig := Configuration(prepareConfigRequest.Exec())
+			teststepConfig = teststepConfig.Append(testCase.appendContent)
+
+			tempdir := t.TempDir()
+			if err := teststepConfig.Write(context.Background(), tempdir); err != nil {
+				t.Fatalf("failed to write file: %s", err)
+			}
+
+			got, err := os.ReadFile(filepath.Join(tempdir, filepath.Base(testCase.filename)))
+			if err != nil {
+				t.Fatalf("failed to read file: %s", err)
+			}
+
+			gotS := string(got[:])
+			if diff := cmp.Diff(testCase.expectedContent, gotS); diff != "" {
+				t.Errorf("expected %+v, got %+v", testCase.expectedContent, gotS)
 			}
 		})
 	}
