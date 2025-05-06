@@ -8,7 +8,5 @@ resource "examplecloud_container" "test" {
 
 import {
   to = examplecloud_container.test
-  identity = {
-    id = "examplecloud_container.test"
-  }
+  id = "examplecloud_container.test"
 }
