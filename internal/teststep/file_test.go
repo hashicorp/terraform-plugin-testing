@@ -563,7 +563,7 @@ func TestConfigFile_Append(t *testing.T) {
 		"append content to a ConfigFile": {
 			filename:        `testdata/main.tf`, // Contains `// Hello world`
 			appendContent:   `terraform {}`,
-			expectedContent: "// Hello world\nterraform {}",
+			expectedContent: "# Copyright (c) HashiCorp, Inc.\n# SPDX-License-Identifier: MPL-2.0\n\n// Hello world" + "\n" + "terraform {}",
 		},
 	}
 
