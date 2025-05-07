@@ -97,8 +97,8 @@ func TestImportBlock_InConfigFile_ConfigExactTrue(t *testing.T) {
 
 				// This content includes an import block with an ID so we will
 				// use the exact content
-				ConfigFile:  config.StaticFile(`testdata/examplecloud_container_with_exact_import_config_with_id.tf`),
-				ConfigExact: true,
+				ConfigFile:             config.StaticFile(`testdata/examplecloud_container_with_exact_import_config_with_id.tf`),
+				ImportStateConfigExact: true,
 			},
 		},
 	})

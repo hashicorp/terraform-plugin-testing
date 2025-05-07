@@ -69,8 +69,8 @@ func TestImportBlock_InConfigDirectory_ConfigExactTrue(t *testing.T) {
 
 				// This content includes an import block with an ID so we will
 				// use the exact content
-				ConfigDirectory: config.StaticDirectory(`testdata/2_with_exact_import_config`),
-				ConfigExact:     true,
+				ConfigDirectory:        config.StaticDirectory(`testdata/2_with_exact_import_config`),
+				ImportStateConfigExact: true,
 			},
 		},
 	})

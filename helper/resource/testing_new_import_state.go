@@ -123,7 +123,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}.Exec())
 
 	switch {
-	case step.ConfigExact:
+	case step.ImportStateConfigExact:
 		break
 
 	case kind.plannable() && kind.resourceIdentity():

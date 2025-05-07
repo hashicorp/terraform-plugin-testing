@@ -576,7 +576,7 @@ type TestStep struct {
 	// otherwise an error will be returned.
 	ConfigFile config.TestStepConfigFunc
 
-	// ConfigExact indicates that the test framework should use the exact
+	// ImportStateConfigExact indicates that the test framework should use the exact
 	// content of the Config, ConfigFile, or ConfigDirectory inputs and should
 	// not modify it at test run time.
 	//
@@ -584,7 +584,7 @@ type TestStep struct {
 	// specific kinds of configuration, such as import blocks, and append them
 	// to the given Config, ConfigFile, or ConfigDirectory inputs. Using this
 	// default improves test readability and removes duplication of setup.
-	ConfigExact bool
+	ImportStateConfigExact bool
 
 	// ConfigVariables is a map defining variables for use in conjunction
 	// with Terraform configuration. If this map is populated then it

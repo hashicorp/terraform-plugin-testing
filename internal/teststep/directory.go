@@ -13,7 +13,6 @@ import (
 
 var _ Config = configurationDirectory{}
 
-// not threadsafe
 type configurationDirectory struct {
 	directory string
 
