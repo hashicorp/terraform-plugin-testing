@@ -11,6 +11,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -68,6 +70,12 @@ func TestImportBlock_WithResourceIdentity_NullAttribute(t *testing.T) {
 					location = "westeurope"
 					name     = "somevalue"
 				}`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectIdentity("examplecloud_container.test", map[string]knownvalue.Check{
+						"id":                        knownvalue.StringExact("westeurope/somevalue"),
+						"value_we_dont_always_need": knownvalue.Null(), // This value will not be brought over to import config
+					}),
+				},
 			},
 			{
 				ResourceName:    "examplecloud_container.test",
