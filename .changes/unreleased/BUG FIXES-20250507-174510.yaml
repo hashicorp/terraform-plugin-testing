@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: 'ImportState: Fixes a bug where an identity attribute set to `null` would panic when testing import via identity.'
+time: 2025-05-07T17:45:10.221508-04:00
+custom:
+    Issue: "499"
