@@ -432,17 +432,17 @@ func TestConfigurationDirectory_Write(t *testing.T) {
 		},
 		"no-config": {
 			configDirectory: configurationDirectory{
-				"testdata/empty_dir",
+				directory: "testdata/empty_dir",
 			},
 		},
 		"dir-single-file": {
 			configDirectory: configurationDirectory{
-				"testdata/random",
+				directory: "testdata/random",
 			},
 		},
 		"dir-multiple-files": {
 			configDirectory: configurationDirectory{
-				"testdata/random_multiple_files",
+				directory: "testdata/random_multiple_files",
 			},
 		},
 	}
@@ -523,17 +523,17 @@ func TestConfigurationDirectory_Write_AbsolutePath(t *testing.T) {
 		},
 		"no-config": {
 			configDirectory: configurationDirectory{
-				"testdata/empty_dir",
+				directory: "testdata/empty_dir",
 			},
 		},
 		"dir-single-file": {
 			configDirectory: configurationDirectory{
-				"testdata/random",
+				directory: "testdata/random",
 			},
 		},
 		"dir-multiple-files": {
 			configDirectory: configurationDirectory{
-				"testdata/random_multiple_files",
+				directory: "testdata/random_multiple_files",
 			},
 		},
 	}
@@ -601,6 +601,81 @@ func TestConfigurationDirectory_Write_AbsolutePath(t *testing.T) {
 					if diff := cmp.Diff(tempDirEntryInfo, dirEntryInfo, fileInfoComparer); diff != "" {
 						t.Errorf("unexpected difference: %s", diff)
 					}
+				}
+			}
+		})
+	}
+}
+
+func TestConfigurationDirectory_Write_WithAppendedConfig(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		configDirectory configurationDirectory
+		expectedError   *regexp.Regexp
+	}{
+		"dir-single-file": {
+			configDirectory: configurationDirectory{
+				directory: "testdata/random",
+				appendedConfig: map[string]string{
+					"import.tf": `terraform {\nimport\n{\nto = satellite.the_moon\nid = "moon"\n}\n}\n`,
+				},
+			},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			tempDir := t.TempDir()
+
+			err := testCase.configDirectory.Write(context.Background(), tempDir)
+			if err != nil {
+				t.Errorf("unexpected error %s", err)
+			}
+
+			dirEntries, err := os.ReadDir(testCase.configDirectory.directory)
+			if err != nil {
+				t.Errorf("error reading directory: %s", err)
+			}
+
+			tempDirEntries, err := os.ReadDir(tempDir)
+
+			if err != nil {
+				t.Errorf("error reading temp directory: %s", err)
+			}
+
+			if len(tempDirEntries)-len(dirEntries) != 1 {
+				t.Errorf("expected %d dir entries, got %d dir entries", len(dirEntries)+1, tempDirEntries)
+			}
+
+			for _, entry := range dirEntries {
+				filename := entry.Name()
+				expectedContent, err := os.ReadFile(filepath.Join(testCase.configDirectory.directory, filename))
+				if err != nil {
+					t.Errorf("error reading file from config directory %s: %s", filename, err)
+				}
+
+				content, err := os.ReadFile(filepath.Join(tempDir, filename))
+				if err != nil {
+					t.Errorf("error reading generated file %s: %s", filename, err)
+				}
+
+				if diff := cmp.Diff(expectedContent, content); diff != "" {
+					t.Errorf("unexpected difference: %s", diff)
+				}
+			}
+
+			appendedConfigFiles := testCase.configDirectory.appendedConfig
+			for filename, expectedContent := range appendedConfigFiles {
+				content, err := os.ReadFile(filepath.Join(tempDir, filename))
+				if err != nil {
+					t.Errorf("error reading appended config file %s: %s", filename, err)
+				}
+
+				if diff := cmp.Diff([]byte(expectedContent), content); diff != "" {
+					t.Errorf("unexpected difference: %s", diff)
 				}
 			}
 		})

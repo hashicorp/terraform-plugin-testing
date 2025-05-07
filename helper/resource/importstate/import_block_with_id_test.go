@@ -89,10 +89,11 @@ func TestImportBlock_WithID_ExpectError(t *testing.T) {
 					id = "westeurope/somevalue"
 				}
 				`,
-				ResourceName:    "examplecloud_container.test",
-				ImportState:     true,
-				ImportStateKind: r.ImportBlockWithID,
-				ExpectError:     regexp.MustCompile(`importing resource examplecloud_container.test: expected a no-op import operation, got.*\["update"\] action with plan(.?)`),
+				ResourceName:           "examplecloud_container.test",
+				ImportState:            true,
+				ImportStateKind:        r.ImportBlockWithID,
+				ImportStateConfigExact: true,
+				ExpectError:            regexp.MustCompile(`importing resource examplecloud_container.test: expected a no-op import operation, got.*\["update"\] action with plan(.?)`),
 			},
 		},
 	})
@@ -295,9 +296,10 @@ func TestImportBlock_WithID_WithBlankOptionalAttribute_GeneratesCorrectPlan(t *t
 					id = "sometestid"
 
 				}`,
-				ResourceName:    "examplecloud_container.test",
-				ImportState:     true,
-				ImportStateKind: r.ImportBlockWithID,
+				ResourceName:           "examplecloud_container.test",
+				ImportState:            true,
+				ImportStateKind:        r.ImportBlockWithID,
+				ImportStateConfigExact: true,
 			},
 		},
 	})
@@ -416,10 +418,11 @@ import {
 				Config: config,
 			},
 			{
-				ImportState:     true,
-				ImportStateKind: r.ImportBlockWithID,
-				Config:          configWithImportBlock,
-				ResourceName:    "random_string.mystery_message",
+				ImportState:            true,
+				ImportStateKind:        r.ImportBlockWithID,
+				ImportStateConfigExact: true,
+				Config:                 configWithImportBlock,
+				ResourceName:           "random_string.mystery_message",
 				ImportPlanChecks: r.ImportPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectKnownValue(
