@@ -105,6 +105,12 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		}
 	}
 
+	var inlineConfig string
+	if step.Config != "" {
+		inlineConfig = step.Config
+	} else {
+		inlineConfig = cfgRaw
+	}
 	testStepConfigRequest := config.TestStepConfigRequest{
 		StepNumber: stepNumber,
 		TestName:   t.Name(),
@@ -112,27 +118,23 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	testStepConfig := teststep.Configuration(teststep.PrepareConfigurationRequest{
 		Directory:             step.ConfigDirectory,
 		File:                  step.ConfigFile,
-		Raw:                   step.Config,
+		Raw:                   inlineConfig,
 		TestStepConfigRequest: testStepConfigRequest,
 	}.Exec())
 
+	switch {
+	case step.ImportStateConfigExact:
+		break
+
+	case kind.plannable() && kind.resourceIdentity():
+		testStepConfig = appendImportBlockWithIdentity(testStepConfig, resourceName, priorIdentityValues)
+
+	case kind.plannable():
+		testStepConfig = appendImportBlock(testStepConfig, resourceName, importId)
+	}
+
 	if testStepConfig == nil {
-		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
-		importConfig := cfgRaw
-
-		if kind.plannable() && kind.resourceIdentity() {
-			importConfig = appendImportBlockWithIdentity(importConfig, resourceName, priorIdentityValues)
-		} else if kind.plannable() {
-			importConfig = appendImportBlock(importConfig, resourceName, importId)
-		}
-
-		testStepConfig = teststep.Configuration(teststep.PrepareConfigurationRequest{
-			Raw:                   importConfig,
-			TestStepConfigRequest: testStepConfigRequest,
-		}.Exec())
-		if testStepConfig == nil {
-			t.Fatal("Cannot import state with no specified config")
-		}
+		t.Fatal("Cannot import state with no specified config")
 	}
 
 	var workingDir *plugintest.WorkingDir
@@ -424,40 +426,42 @@ func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.
 	return nil
 }
 
-func appendImportBlock(config string, resourceName string, importID string) string {
-	return config + fmt.Sprintf(``+"\n"+
-		`import {`+"\n"+
-		`	to = %s`+"\n"+
-		`	id = %q`+"\n"+
-		`}`,
-		resourceName, importID)
+func appendImportBlock(config teststep.Config, resourceName string, importID string) teststep.Config {
+	return config.Append(
+		fmt.Sprintf(``+"\n"+
+			`import {`+"\n"+
+			`	to = %s`+"\n"+
+			`	id = %q`+"\n"+
+			`}`,
+			resourceName, importID))
 }
 
-func appendImportBlockWithIdentity(config string, resourceName string, identityValues map[string]any) string {
-	configBuilder := config
-	configBuilder += fmt.Sprintf(``+"\n"+
+func appendImportBlockWithIdentity(config teststep.Config, resourceName string, identityValues map[string]any) teststep.Config {
+	configBuilder := strings.Builder{}
+	configBuilder.WriteString(fmt.Sprintf(``+"\n"+
 		`import {`+"\n"+
 		`	to = %s`+"\n"+
 		`	identity = {`+"\n",
-		resourceName)
+		resourceName))
 
 	for k, v := range identityValues {
 		switch v := v.(type) {
 		case bool:
-			configBuilder += fmt.Sprintf(`		%q = %t`+"\n", k, v)
+			configBuilder.WriteString(fmt.Sprintf(`		%q = %t`+"\n", k, v))
 
 		case []any:
 			var quotedV []string
 			for _, v := range v {
 				quotedV = append(quotedV, fmt.Sprintf(`%q`, v))
 			}
-			configBuilder += fmt.Sprintf(`		%q = [%s]`+"\n", k, strings.Join(quotedV, ", "))
+			configBuilder.WriteString(fmt.Sprintf(`		%q = [%s]`+"\n", k, strings.Join(quotedV, ", ")))
 
 		case json.Number:
-			configBuilder += fmt.Sprintf(`		%q = %s`+"\n", k, v)
+			configBuilder.WriteString(fmt.Sprintf(`		%q = %s`+"\n", k, v))
 
 		case string:
-			configBuilder += fmt.Sprintf(`		%q = %q`+"\n", k, v)
+			configBuilder.WriteString(fmt.Sprintf(`		%q = %q`+"\n", k, v))
+
 		default:
 			// It's valid for identity attributes to be null, we can just omit it from config
 			if v == nil {
@@ -468,11 +472,10 @@ func appendImportBlockWithIdentity(config string, resourceName string, identityV
 		}
 	}
 
-	configBuilder += `` +
-		`	}` + "\n" +
-		`}` + "\n"
+	configBuilder.WriteString(`	}` + "\n")
+	configBuilder.WriteString(`}` + "\n")
 
-	return configBuilder
+	return config.Append(configBuilder.String())
 }
 
 func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestStep) error {

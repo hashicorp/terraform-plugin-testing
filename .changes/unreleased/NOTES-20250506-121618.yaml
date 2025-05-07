@@ -1,0 +1,5 @@
+kind: NOTES
+body: 'ImportState: extend auto-generated import blocks to work with `ConfigFile` and `ConfigDirectory`; adds `ConfigExact` flag to opt out'
+time: 2025-05-06T12:16:18.375025-04:00
+custom:
+    Issue: "494"
