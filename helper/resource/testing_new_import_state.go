@@ -458,8 +458,12 @@ func appendImportBlockWithIdentity(config string, resourceName string, identityV
 
 		case string:
 			configBuilder += fmt.Sprintf(`		%q = %q`+"\n", k, v)
-
 		default:
+			// It's valid for identity attributes to be null, we can just omit it from config
+			if v == nil {
+				break
+			}
+
 			panic(fmt.Sprintf("unexpected type %T for identity value %q", v, k))
 		}
 	}
