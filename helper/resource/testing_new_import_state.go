@@ -445,6 +445,11 @@ func appendImportBlockWithIdentity(config teststep.Config, resourceName string, 
 		resourceName))
 
 	for k, v := range identityValues {
+		// It's valid for identity attributes to be null, we can just omit it from config
+		if v == nil {
+			continue
+		}
+
 		switch v := v.(type) {
 		case bool:
 			configBuilder.WriteString(fmt.Sprintf(`		%q = %t`+"\n", k, v))
@@ -463,11 +468,6 @@ func appendImportBlockWithIdentity(config teststep.Config, resourceName string, 
 			configBuilder.WriteString(fmt.Sprintf(`		%q = %q`+"\n", k, v))
 
 		default:
-			// It's valid for identity attributes to be null, we can just omit it from config
-			if v == nil {
-				break
-			}
-
 			panic(fmt.Sprintf("unexpected type %T for identity value %q", v, k))
 		}
 	}
