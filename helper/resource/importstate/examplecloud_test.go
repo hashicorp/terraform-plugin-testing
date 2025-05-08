@@ -479,3 +479,120 @@ func examplecloudResourceWithEveryIdentitySchemaType() testprovider.Resource {
 		},
 	}
 }
+
+func examplecloudResourceWithNullIdentityAttr() testprovider.Resource {
+	return testprovider.Resource{
+		CreateResponse: &resource.CreateResponse{
+			NewState: tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"id":       tftypes.String,
+						"location": tftypes.String,
+						"name":     tftypes.String,
+					},
+				},
+				map[string]tftypes.Value{
+					"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+					"location": tftypes.NewValue(tftypes.String, "westeurope"),
+					"name":     tftypes.NewValue(tftypes.String, "somevalue"),
+				},
+			),
+			NewIdentity: teststep.Pointer(tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"id":                        tftypes.String,
+						"value_we_dont_always_need": tftypes.String,
+					},
+				},
+				map[string]tftypes.Value{
+					"id":                        tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+					"value_we_dont_always_need": tftypes.NewValue(tftypes.String, nil),
+				},
+			)),
+		},
+		ReadResponse: &resource.ReadResponse{
+			NewState: tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"id":       tftypes.String,
+						"location": tftypes.String,
+						"name":     tftypes.String,
+					},
+				},
+				map[string]tftypes.Value{
+					"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+					"location": tftypes.NewValue(tftypes.String, "westeurope"),
+					"name":     tftypes.NewValue(tftypes.String, "somevalue"),
+				},
+			),
+			NewIdentity: teststep.Pointer(tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"id":                        tftypes.String,
+						"value_we_dont_always_need": tftypes.String,
+					},
+				},
+				map[string]tftypes.Value{
+					"id":                        tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+					"value_we_dont_always_need": tftypes.NewValue(tftypes.String, nil),
+				},
+			)),
+		},
+		ImportStateResponse: &resource.ImportStateResponse{
+			State: tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"id":       tftypes.String,
+						"location": tftypes.String,
+						"name":     tftypes.String,
+					},
+				},
+				map[string]tftypes.Value{
+					"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+					"location": tftypes.NewValue(tftypes.String, "westeurope"),
+					"name":     tftypes.NewValue(tftypes.String, "somevalue"),
+				},
+			),
+			Identity: teststep.Pointer(tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"id":                        tftypes.String,
+						"value_we_dont_always_need": tftypes.String,
+					},
+				},
+				map[string]tftypes.Value{
+					"id":                        tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+					"value_we_dont_always_need": tftypes.NewValue(tftypes.String, nil),
+				},
+			)),
+		},
+		SchemaResponse: &resource.SchemaResponse{
+			Schema: &tfprotov6.Schema{
+				Block: &tfprotov6.SchemaBlock{
+					Attributes: []*tfprotov6.SchemaAttribute{
+						ComputedStringAttribute("id"),
+						RequiredStringAttribute("location"),
+						RequiredStringAttribute("name"),
+					},
+				},
+			},
+		},
+		IdentitySchemaResponse: &resource.IdentitySchemaResponse{
+			Schema: &tfprotov6.ResourceIdentitySchema{
+				Version: 1,
+				IdentityAttributes: []*tfprotov6.ResourceIdentitySchemaAttribute{
+					{
+						Name:              "id",
+						Type:              tftypes.String,
+						RequiredForImport: true,
+					},
+					{
+						Name:              "value_we_dont_always_need",
+						Type:              tftypes.String,
+						OptionalForImport: true,
+					},
+				},
+			},
+		},
+	}
+}
