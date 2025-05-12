@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'ImportState: Added `ImportStateKind` to control which method of import the `ImportState` test step uses. `ImportCommandWithID` (default, same behavior as today)
+  , `ImportBlockWithID`, and `ImportBlockWithResourceIdentity`.'
+time: 2025-05-12T11:07:45.563529-04:00
+custom:
+    Issue: "442"
