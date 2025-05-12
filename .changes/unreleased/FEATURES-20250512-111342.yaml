@@ -1,0 +1,5 @@
+kind: FEATURES
+body: 'ImportState: Added `ImportStateConfigExact` to opt-out of new import config generation for plannable import.'
+time: 2025-05-12T11:13:42.978209-04:00
+custom:
+    Issue: "494"

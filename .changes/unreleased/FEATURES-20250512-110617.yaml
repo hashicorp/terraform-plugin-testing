@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'ImportState: Added support for testing plannable import via Terraform configuration. Configuration is used from the previous test
+  step if available. `Config`, `ConfigFile`, and `ConfigDirectory` can also be used directly with `ImportState` if needed.'
+time: 2025-05-12T11:06:17.498469-04:00
+custom:
+    Issue: "442"
