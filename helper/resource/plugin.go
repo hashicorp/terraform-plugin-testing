@@ -123,6 +123,15 @@ func runProviderCommandApply(ctx context.Context, t testing.T, wd *plugintest.Wo
 	return runProviderCommand(ctx, t, wd, factories, fn)
 }
 
+func runProviderCommandApplyRefreshOnly(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, factories *providerFactories) error {
+	t.Helper()
+
+	fn := func() error {
+		return wd.Apply(ctx, tfexec.Refresh(true), tfexec.RefreshOnly(true))
+	}
+	return runProviderCommand(ctx, t, wd, factories, fn)
+}
+
 func runProviderCommandCreatePlan(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, factories *providerFactories) error {
 	t.Helper()
 
