@@ -15,13 +15,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
-	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func TestExpectIdentityValue_CheckState_ResourceNotFound(t *testing.T) {
+func TestExpectIdentityValueMatchesState_CheckState_ResourceNotFound(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -35,10 +34,9 @@ func TestExpectIdentityValue_CheckState_ResourceNotFound(t *testing.T) {
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectIdentityValue(
+					statecheck.ExpectIdentityValueMatchesState(
 						"examplecloud_thing.two",
 						tfjsonpath.New("id"),
-						knownvalue.StringExact("id-123"),
 					),
 				},
 				ExpectError: regexp.MustCompile("examplecloud_thing.two - Resource not found in state"),
@@ -47,7 +45,7 @@ func TestExpectIdentityValue_CheckState_ResourceNotFound(t *testing.T) {
 	})
 }
 
-func TestExpectIdentityValue_CheckState_No_Terraform_Identity_Support(t *testing.T) {
+func TestExpectIdentityValueMatchesState_CheckState_No_Terraform_Identity_Support(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -63,10 +61,9 @@ func TestExpectIdentityValue_CheckState_No_Terraform_Identity_Support(t *testing
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectIdentityValue(
+					statecheck.ExpectIdentityValueMatchesState(
 						"examplecloud_thing.one",
 						tfjsonpath.New("id"),
-						knownvalue.StringExact("id-123"),
 					),
 				},
 				ExpectError: regexp.MustCompile(`examplecloud_thing.one - Identity not found in state. Either the resource ` +
@@ -77,7 +74,7 @@ func TestExpectIdentityValue_CheckState_No_Terraform_Identity_Support(t *testing
 	})
 }
 
-func TestExpectIdentityValue_CheckState_No_Identity(t *testing.T) {
+func TestExpectIdentityValueMatchesState_CheckState_No_Identity(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -92,10 +89,9 @@ func TestExpectIdentityValue_CheckState_No_Identity(t *testing.T) {
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectIdentityValue(
+					statecheck.ExpectIdentityValueMatchesState(
 						"examplecloud_thing.one",
 						tfjsonpath.New("id"),
-						knownvalue.StringExact("id-123"),
 					),
 				},
 				ExpectError: regexp.MustCompile(`examplecloud_thing.one - Identity not found in state. Either the resource ` +
@@ -106,7 +102,7 @@ func TestExpectIdentityValue_CheckState_No_Identity(t *testing.T) {
 	})
 }
 
-func TestExpectIdentityValue_CheckState_String(t *testing.T) {
+func TestExpectIdentityValueMatchesState_CheckState_String_Matches(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -120,17 +116,17 @@ func TestExpectIdentityValue_CheckState_String(t *testing.T) {
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectIdentityValue(
+					statecheck.ExpectIdentityValueMatchesState(
 						"examplecloud_thing.one",
 						tfjsonpath.New("id"),
-						knownvalue.StringExact("id-123")),
+					),
 				},
 			},
 		},
 	})
 }
 
-func TestExpectIdentityValue_CheckState_String_KnownValueWrongType(t *testing.T) {
+func TestExpectIdentityValueMatchesState_CheckState_String_DoesntMatch(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -138,24 +134,24 @@ func TestExpectIdentityValue_CheckState_String_KnownValueWrongType(t *testing.T)
 			tfversion.SkipBelow(tfversion.Version1_12_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"examplecloud": examplecloudProviderWithResourceIdentity(),
+			"examplecloud": examplecloudProviderWithMismatchedResourceIdentity(),
 		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectIdentityValue(
+					statecheck.ExpectIdentityValueMatchesState(
 						"examplecloud_thing.one",
 						tfjsonpath.New("id"),
-						knownvalue.Bool(true)),
+					),
 				},
-				ExpectError: regexp.MustCompile("expected bool value for Bool check, got: string"),
+				ExpectError: regexp.MustCompile("expected identity and state value at path to match, but they differ: examplecloud_thing.one.id, identity value: id-123, state value: 321-di"),
 			},
 		},
 	})
 }
 
-func TestExpectIdentityValue_CheckState_String_KnownValueWrongValue(t *testing.T) {
+func TestExpectIdentityValueMatchesState_CheckState_List(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -169,85 +165,17 @@ func TestExpectIdentityValue_CheckState_String_KnownValueWrongValue(t *testing.T
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectIdentityValue(
-						"examplecloud_thing.one",
-						tfjsonpath.New("id"),
-						knownvalue.StringExact("321-id")),
-				},
-				ExpectError: regexp.MustCompile("expected value 321-id for StringExact check, got: id-123"),
-			},
-		},
-	})
-}
-
-func TestExpectIdentityValue_CheckState_List(t *testing.T) {
-	t.Parallel()
-
-	r.Test(t, r.TestCase{
-		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
-		},
-		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"examplecloud": examplecloudProviderWithResourceIdentity(),
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectIdentityValue(
-						"examplecloud_thing.one",
-						tfjsonpath.New("list_of_numbers").AtSliceIndex(0),
-						knownvalue.Int64Exact(1),
-					),
-					statecheck.ExpectIdentityValue(
-						"examplecloud_thing.one",
-						tfjsonpath.New("list_of_numbers").AtSliceIndex(1),
-						knownvalue.Int64Exact(2),
-					),
-					statecheck.ExpectIdentityValue(
-						"examplecloud_thing.one",
-						tfjsonpath.New("list_of_numbers").AtSliceIndex(2),
-						knownvalue.Int64Exact(3),
-					),
-					statecheck.ExpectIdentityValue(
-						"examplecloud_thing.one",
-						tfjsonpath.New("list_of_numbers").AtSliceIndex(3),
-						knownvalue.Int64Exact(4),
-					),
-				},
-			},
-		},
-	})
-}
-
-func TestExpectIdentityValue_CheckState_List_KnownValueWrongType(t *testing.T) {
-	t.Parallel()
-
-	r.Test(t, r.TestCase{
-		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
-		},
-		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"examplecloud": examplecloudProviderWithResourceIdentity(),
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `resource "examplecloud_thing" "one" {}
-				`,
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectIdentityValue(
+					statecheck.ExpectIdentityValueMatchesState(
 						"examplecloud_thing.one",
 						tfjsonpath.New("list_of_numbers"),
-						knownvalue.MapExact(map[string]knownvalue.Check{}),
 					),
 				},
-				ExpectError: regexp.MustCompile(`expected map\[string\]any value for MapExact check, got: \[\]interface {}`),
 			},
 		},
 	})
 }
 
-func TestExpectIdentityValue_CheckState_List_KnownValueWrongValue(t *testing.T) {
+func TestExpectIdentityValueMatchesState_CheckState_List_DoesntMatch(t *testing.T) {
 	t.Parallel()
 
 	r.Test(t, r.TestCase{
@@ -255,30 +183,24 @@ func TestExpectIdentityValue_CheckState_List_KnownValueWrongValue(t *testing.T) 
 			tfversion.SkipBelow(tfversion.Version1_12_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"examplecloud": examplecloudProviderWithResourceIdentity(),
+			"examplecloud": examplecloudProviderWithMismatchedResourceIdentity(),
 		},
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectIdentityValue(
+					statecheck.ExpectIdentityValueMatchesState(
 						"examplecloud_thing.one",
 						tfjsonpath.New("list_of_numbers"),
-						knownvalue.ListExact([]knownvalue.Check{
-							knownvalue.Int64Exact(4),
-							knownvalue.Int64Exact(3),
-							knownvalue.Int64Exact(2),
-							knownvalue.Int64Exact(1),
-						}),
 					),
 				},
-				ExpectError: regexp.MustCompile(`list element index 0: expected value 4 for Int64Exact check, got: 1`),
+				ExpectError: regexp.MustCompile(`expected identity and state value at path to match, but they differ: examplecloud_thing.one.list_of_numbers, identity value: \[1 2 3 4\], state value: \[4 3 2 1\]`),
 			},
 		},
 	})
 }
 
-func examplecloudProviderWithResourceIdentity() func() (tfprotov6.ProviderServer, error) {
+func examplecloudProviderWithMismatchedResourceIdentity() func() (tfprotov6.ProviderServer, error) {
 	return providerserver.NewProviderServer(testprovider.Provider{
 		Resources: map[string]testprovider.Resource{
 			"examplecloud_thing": {
@@ -293,14 +215,14 @@ func examplecloudProviderWithResourceIdentity() func() (tfprotov6.ProviderServer
 						},
 						map[string]tftypes.Value{
 							"name": tftypes.NewValue(tftypes.String, "test value"),
-							"id":   tftypes.NewValue(tftypes.String, "id-123"),
+							"id":   tftypes.NewValue(tftypes.String, "321-di"), // doesn't match identity -> id
 							"list_of_numbers": tftypes.NewValue(
 								tftypes.List{ElementType: tftypes.Number},
 								[]tftypes.Value{
-									tftypes.NewValue(tftypes.Number, 1),
-									tftypes.NewValue(tftypes.Number, 2),
-									tftypes.NewValue(tftypes.Number, 3),
-									tftypes.NewValue(tftypes.Number, 4),
+									tftypes.NewValue(tftypes.Number, 4), // doesn't match identity -> list_of_numbers[0]
+									tftypes.NewValue(tftypes.Number, 3), // doesn't match identity -> list_of_numbers[1]
+									tftypes.NewValue(tftypes.Number, 2), // doesn't match identity -> list_of_numbers[2]
+									tftypes.NewValue(tftypes.Number, 1), // doesn't match identity -> list_of_numbers[3]
 								},
 							),
 						},
@@ -337,14 +259,14 @@ func examplecloudProviderWithResourceIdentity() func() (tfprotov6.ProviderServer
 						},
 						map[string]tftypes.Value{
 							"name": tftypes.NewValue(tftypes.String, "test value"),
-							"id":   tftypes.NewValue(tftypes.String, "id-123"),
+							"id":   tftypes.NewValue(tftypes.String, "321-di"), // doesn't match identity -> id
 							"list_of_numbers": tftypes.NewValue(
 								tftypes.List{ElementType: tftypes.Number},
 								[]tftypes.Value{
-									tftypes.NewValue(tftypes.Number, 1),
-									tftypes.NewValue(tftypes.Number, 2),
-									tftypes.NewValue(tftypes.Number, 3),
-									tftypes.NewValue(tftypes.Number, 4),
+									tftypes.NewValue(tftypes.Number, 4), // doesn't match identity -> list_of_numbers[0]
+									tftypes.NewValue(tftypes.Number, 3), // doesn't match identity -> list_of_numbers[1]
+									tftypes.NewValue(tftypes.Number, 2), // doesn't match identity -> list_of_numbers[2]
+									tftypes.NewValue(tftypes.Number, 1), // doesn't match identity -> list_of_numbers[3]
 								},
 							),
 						},
@@ -403,52 +325,6 @@ func examplecloudProviderWithResourceIdentity() func() (tfprotov6.ProviderServer
 								{
 									Name:     "list_of_numbers",
 									Type:     tftypes.List{ElementType: tftypes.Number},
-									Computed: true,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	})
-}
-
-func examplecloudProviderNoIdentity() func() (tfprotov6.ProviderServer, error) {
-	return providerserver.NewProviderServer(testprovider.Provider{
-		Resources: map[string]testprovider.Resource{
-			"examplecloud_thing": {
-				CreateResponse: &resource.CreateResponse{
-					NewState: tftypes.NewValue(
-						tftypes.Object{
-							AttributeTypes: map[string]tftypes.Type{
-								"name": tftypes.String,
-							},
-						},
-						map[string]tftypes.Value{
-							"name": tftypes.NewValue(tftypes.String, "test value"),
-						},
-					),
-				},
-				ReadResponse: &resource.ReadResponse{
-					NewState: tftypes.NewValue(
-						tftypes.Object{
-							AttributeTypes: map[string]tftypes.Type{
-								"name": tftypes.String,
-							},
-						},
-						map[string]tftypes.Value{
-							"name": tftypes.NewValue(tftypes.String, "test value"),
-						},
-					),
-				},
-				SchemaResponse: &resource.SchemaResponse{
-					Schema: &tfprotov6.Schema{
-						Block: &tfprotov6.SchemaBlock{
-							Attributes: []*tfprotov6.SchemaAttribute{
-								{
-									Name:     "name",
-									Type:     tftypes.String,
 									Computed: true,
 								},
 							},
