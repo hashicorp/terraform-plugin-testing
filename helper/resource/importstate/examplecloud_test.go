@@ -596,3 +596,27 @@ func examplecloudResourceWithNullIdentityAttr() testprovider.Resource {
 		},
 	}
 }
+
+// This example resource, on update plans, will plan a different identity to test that
+// our testing framework assertions catch an identity that differs after import/refresh.
+func examplecloudResourceWithChangingIdentity() testprovider.Resource {
+	exampleCloudResource := examplecloudResource()
+
+	exampleCloudResource.PlanChangeFunc = func(ctx context.Context, req resource.PlanChangeRequest, resp *resource.PlanChangeResponse) {
+		// Only on update
+		if !req.PriorState.IsNull() && !req.ProposedNewState.IsNull() {
+			resp.PlannedIdentity = teststep.Pointer(tftypes.NewValue(
+				tftypes.Object{
+					AttributeTypes: map[string]tftypes.Type{
+						"id": tftypes.String,
+					},
+				},
+				map[string]tftypes.Value{
+					"id": tftypes.NewValue(tftypes.String, "easteurope/someothervalue"),
+				},
+			))
+		}
+	}
+
+	return exampleCloudResource
+}
