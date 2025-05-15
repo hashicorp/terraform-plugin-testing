@@ -1,0 +1,5 @@
+kind: FEATURES
+body: 'statecheck: Added `ExpectIdentityValueMatchesState` state check to assert that an identity value matches a state value at the same path.'
+time: 2025-05-13T11:55:26.406171-04:00
+custom:
+    Issue: "503"
