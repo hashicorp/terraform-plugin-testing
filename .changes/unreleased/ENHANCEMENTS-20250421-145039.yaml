@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: Adds `AdditionalCLIOptions.PlanOptions.NoRefresh` to test `terraform plan -refresh=false`
-time: 2025-04-21T14:50:39.764057-04:00
-custom:
-    Issue: "490"

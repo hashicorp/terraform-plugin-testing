@@ -1,5 +1,0 @@
-kind: FEATURES
-body: 'statecheck: Added `ExpectIdentityValueMatchesStateAtPath` state check to assert that an identity value matches a state value at different paths.'
-time: 2025-05-14T09:50:16.101201-04:00
-custom:
-    Issue: "503"
