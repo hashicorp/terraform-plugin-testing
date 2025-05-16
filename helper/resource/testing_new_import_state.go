@@ -99,7 +99,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	var priorIdentityValues map[string]any
 
 	if kind.plannable() && kind.resourceIdentity() {
-		priorIdentityValues = identityValuesFromState(stateJSON, resourceName)
+		priorIdentityValues = identityValuesFromStateValues(stateJSON.Values, resourceName)
 		if len(priorIdentityValues) == 0 {
 			return fmt.Errorf("importing resource %s: expected prior state to have resource identity values, got none", resourceName)
 		}
@@ -231,29 +231,12 @@ func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.Wo
 	}
 
 	if kind.resourceIdentity() {
-		if err := verifyIdentityValues(ctx, t, workingDir, providers, resourceName, priorIdentityValues); err != nil {
-			return err
+		newIdentityValues := identityValuesFromStateValues(plan.PlannedValues, resourceName)
+		if !cmp.Equal(priorIdentityValues, newIdentityValues) {
+			return fmt.Errorf("importing resource %s: expected identity values %v, got %v", resourceName, priorIdentityValues, newIdentityValues)
 		}
 	}
 
-	return nil
-}
-
-func verifyIdentityValues(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, priorIdentityValues map[string]any) error {
-	err := runProviderCommandApply(ctx, t, workingDir, providers)
-	if err != nil {
-		return fmt.Errorf("applying plan with import config: %s", err)
-	}
-
-	newStateJSON, err := runProviderCommandGetStateJSON(ctx, t, workingDir, providers)
-	if err != nil {
-		return fmt.Errorf("getting state after applying plan with import config: %s", err)
-	}
-
-	newIdentityValues := identityValuesFromState(newStateJSON, resourceName)
-	if !cmp.Equal(priorIdentityValues, newIdentityValues) {
-		return fmt.Errorf("importing resource %s: expected identity values %v, got %v", resourceName, priorIdentityValues, newIdentityValues)
-	}
 	return nil
 }
 
@@ -515,8 +498,7 @@ func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestS
 	return nil
 }
 
-func resourcesFromState(state *tfjson.State) []*tfjson.StateResource {
-	stateValues := state.Values
+func resourcesFromState(stateValues *tfjson.StateValues) []*tfjson.StateResource {
 	if stateValues == nil || stateValues.RootModule == nil {
 		return []*tfjson.StateResource{}
 	}
@@ -524,9 +506,9 @@ func resourcesFromState(state *tfjson.State) []*tfjson.StateResource {
 	return stateValues.RootModule.Resources
 }
 
-func identityValuesFromState(state *tfjson.State, resourceName string) map[string]any {
+func identityValuesFromStateValues(stateValues *tfjson.StateValues, resourceName string) map[string]any {
 	var resource *tfjson.StateResource
-	resources := resourcesFromState(state)
+	resources := resourcesFromState(stateValues)
 
 	for _, r := range resources {
 		if r.Address == resourceName {
