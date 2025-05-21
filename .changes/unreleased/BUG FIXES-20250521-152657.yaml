@@ -1,5 +1,0 @@
-kind: BUG FIXES
-body: 'echoprovider: Fixed bug where Terraform v1.12+ would return an error message indicating the provider doesn''t support `GetResourceIdentitySchemas`.'
-time: 2025-05-21T15:26:57.058404-04:00
-custom:
-    Issue: "512"

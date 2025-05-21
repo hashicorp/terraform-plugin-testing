@@ -1,3 +1,9 @@
+## 1.13.1 (May 21, 2025)
+
+BUG FIXES:
+
+* echoprovider: Fixed bug where Terraform v1.12+ would return an error message indicating the provider doesn't support `GetResourceIdentitySchemas`. ([#512](https://github.com/hashicorp/terraform-plugin-testing/issues/512))
+
 ## 1.13.0 (May 16, 2025)
 
 NOTES:
