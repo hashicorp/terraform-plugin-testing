@@ -11,6 +11,10 @@ This project follows the [support policy](https://golang.org/doc/devel/release.h
 
 Currently, that means Go **1.23** or later must be used when including this project as a dependency.
 
+## Documentation
+
+Visit the [Testing Terraform Plugins docs](https://developer.hashicorp.com/terraform/plugin/testing) to learn about how to best use this helper module.
+
 ## Contributing
 
 See [`.github/CONTRIBUTING.md`](https://github.com/hashicorp/terraform-plugin-testing/blob/main/.github/CONTRIBUTING.md)

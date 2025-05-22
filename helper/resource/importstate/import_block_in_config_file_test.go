@@ -38,7 +38,7 @@ func TestImportBlock_InConfigFile(t *testing.T) {
 				ResourceName:    "examplecloud_container.test",
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithID,
-				ConfigFile:      config.StaticFile(`testdata/2/examplecloud_container_import.tf`),
+				ConfigFile:      config.StaticFile(`testdata/2/examplecloud_container.tf`),
 			},
 		},
 	})
@@ -66,7 +66,39 @@ func TestImportBlock_WithResourceIdentity_InConfigFile(t *testing.T) {
 				ResourceName:    "examplecloud_container.test",
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithResourceIdentity,
-				ConfigFile:      config.StaticFile(`testdata/examplecloud_container_import_with_identity.tf`),
+				ConfigFile:      config.StaticFile(`testdata/2/examplecloud_container.tf`),
+			},
+		},
+	})
+}
+
+func TestImportBlock_InConfigFile_ConfigExactTrue(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithID requires Terraform 1.5.0 or later
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_container": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				ConfigFile: config.StaticFile(`testdata/1/examplecloud_container.tf`),
+			},
+			{
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithID,
+
+				// This content includes an import block with an ID so we will
+				// use the exact content
+				ConfigFile:             config.StaticFile(`testdata/examplecloud_container_with_exact_import_config_with_id.tf`),
+				ImportStateConfigExact: true,
 			},
 		},
 	})

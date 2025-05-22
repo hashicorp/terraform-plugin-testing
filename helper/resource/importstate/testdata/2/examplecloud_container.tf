@@ -5,10 +5,3 @@ resource "examplecloud_container" "test" {
   name     = "somevalue"
   location = "westeurope"
 }
-
-import {
-  to = examplecloud_container.test
-  identity = {
-    id = "examplecloud_container.test"
-  }
-}

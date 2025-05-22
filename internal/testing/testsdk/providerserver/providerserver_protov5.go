@@ -134,3 +134,11 @@ func (s Protov5ProviderServer) CloseEphemeralResource(ctx context.Context, req *
 func (s Protov5ProviderServer) ValidateEphemeralResourceConfig(ctx context.Context, req *tfprotov5.ValidateEphemeralResourceConfigRequest) (*tfprotov5.ValidateEphemeralResourceConfigResponse, error) {
 	return &tfprotov5.ValidateEphemeralResourceConfigResponse{}, nil
 }
+
+func (s Protov5ProviderServer) GetResourceIdentitySchemas(context.Context, *tfprotov5.GetResourceIdentitySchemasRequest) (*tfprotov5.GetResourceIdentitySchemasResponse, error) {
+	return &tfprotov5.GetResourceIdentitySchemasResponse{}, nil
+}
+
+func (s Protov5ProviderServer) UpgradeResourceIdentity(context.Context, *tfprotov5.UpgradeResourceIdentityRequest) (*tfprotov5.UpgradeResourceIdentityResponse, error) {
+	return &tfprotov5.UpgradeResourceIdentityResponse{}, nil
+}

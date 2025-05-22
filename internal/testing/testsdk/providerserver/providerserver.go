@@ -890,7 +890,7 @@ func (s ProviderServer) UpgradeResourceState(ctx context.Context, req *tfprotov6
 }
 
 func (s ProviderServer) UpgradeResourceIdentity(context.Context, *tfprotov6.UpgradeResourceIdentityRequest) (*tfprotov6.UpgradeResourceIdentityResponse, error) {
-	// TODO: Implement
+	// TODO: This isn't currently being used by the testing framework provider, so no need to implement it until then.
 	return nil, errors.New("UpgradeResourceIdentity is not currently implemented in testprovider")
 }
 
