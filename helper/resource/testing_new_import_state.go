@@ -25,7 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, testCaseWorkingDir *plugintest.WorkingDir, step TestStep, cfgRaw string, providers *providerFactories, stepNumber int) error {
+func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, testCaseWorkingDir *plugintest.WorkingDir, step TestStep, cfgRaw string, cfgDir string, cfgFile string, providers *providerFactories, stepNumber int) error {
 	t.Helper()
 
 	// step.ImportStateKind implicitly defaults to the zero-value (ImportCommandWithID) for backward compatibility
@@ -106,18 +106,26 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	var inlineConfig string
-	if step.Config != "" {
+	var directoryConfig config.TestStepConfigFunc
+	var fileConfig config.TestStepConfigFunc
+	if step.ConfigDirectory != nil || step.ConfigFile != nil || step.Config != "" {
+		directoryConfig = step.ConfigDirectory
+		fileConfig = step.ConfigFile
 		inlineConfig = step.Config
 	} else {
+		// use config from previous step
+		directoryConfig = config.TestStepConfigFunc(func(_ config.TestStepConfigRequest) string { return cfgDir })
+		fileConfig = config.TestStepConfigFunc(func(_ config.TestStepConfigRequest) string { return cfgFile })
 		inlineConfig = cfgRaw
 	}
+
 	testStepConfigRequest := config.TestStepConfigRequest{
 		StepNumber: stepNumber,
 		TestName:   t.Name(),
 	}
 	testStepConfig := teststep.Configuration(teststep.PrepareConfigurationRequest{
-		Directory:             step.ConfigDirectory,
-		File:                  step.ConfigFile,
+		Directory:             directoryConfig,
+		File:                  fileConfig,
 		Raw:                   inlineConfig,
 		TestStepConfigRequest: testStepConfigRequest,
 	}.Exec())

@@ -132,6 +132,8 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	// use this to track last step successfully applied
 	// acts as default for import tests
 	var appliedCfg string
+	var appliedDirCfg string
+	var appliedFileCfg string
 	var stepNumber int
 
 	for stepIndex, step := range c.Steps {
@@ -141,14 +143,16 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 		stepNumber = stepIndex + 1 // 1-based indexing for humans
 
+		currentTestStepConfigRequest := config.TestStepConfigRequest{
+			StepNumber: stepNumber,
+			TestName:   t.Name(),
+		}
+
 		configRequest := teststep.PrepareConfigurationRequest{
-			Directory: step.ConfigDirectory,
-			File:      step.ConfigFile,
-			Raw:       step.Config,
-			TestStepConfigRequest: config.TestStepConfigRequest{
-				StepNumber: stepNumber,
-				TestName:   t.Name(),
-			},
+			Directory:             step.ConfigDirectory,
+			File:                  step.ConfigFile,
+			Raw:                   step.Config,
+			TestStepConfigRequest: currentTestStepConfigRequest,
 		}.Exec()
 
 		cfg := teststep.Configuration(configRequest)
@@ -281,7 +285,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.ImportState {
 			logging.HelperResourceTrace(ctx, "TestStep is ImportState mode")
 
-			err := testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, providers, stepNumber)
+			err := testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, appliedDirCfg, appliedFileCfg, providers, stepNumber)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 				if err == nil {
@@ -429,6 +433,11 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			}
 
 			logging.HelperResourceDebug(ctx, "Finished TestStep")
+
+			// Store the ConfigDirectory and ConfigFile from the current step
+			// so they can be used by subsequent ImportState steps if not explicitly set.
+			appliedDirCfg = step.ConfigDirectory.Exec(currentTestStepConfigRequest)
+			appliedFileCfg = step.ConfigFile.Exec(currentTestStepConfigRequest)
 
 			continue
 		}
