@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
+	"github.com/hashicorp/terraform-plugin-testing/config"
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/datasource"
@@ -190,6 +191,60 @@ func TestImportCommand_ImportStateVerify(t *testing.T) {
 			},
 			{
 				ResourceName:      "examplecloud_thing.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestImportCommand_InConfigFile(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_container": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				ConfigFile: config.StaticFile(`testdata/1/examplecloud_container.tf`),
+			},
+			{
+				ResourceName:      "examplecloud_container.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestImportCommand_InConfigDirectory(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_container": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				ConfigDirectory: config.StaticDirectory(`testdata/1`),
+			},
+			{
+				ResourceName:      "examplecloud_container.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
