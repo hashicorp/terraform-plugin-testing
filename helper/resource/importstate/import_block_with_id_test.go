@@ -99,6 +99,58 @@ func TestImportBlock_WithID_ExpectError(t *testing.T) {
 	})
 }
 
+func TestImportBlock_WithID_ExpectNonEmptyPlan(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithID requires Terraform 1.5.0 or later
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_container": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "examplecloud_container" "test" {
+					location = "westeurope"
+					name     = "somevalue"
+				}`,
+			},
+			{
+				Config: `
+				resource "examplecloud_container" "test" {
+					location = "eastus"
+					name     = "somevalue"
+				}
+
+				import {
+					to = examplecloud_container.test
+					id = "westeurope/somevalue"
+				}
+				`,
+				ResourceName:           "examplecloud_container.test",
+				ImportState:            true,
+				ImportStateKind:        r.ImportBlockWithID,
+				ImportStateConfigExact: true,
+				ExpectNonEmptyPlan:     true,
+				ImportPlanChecks: r.ImportPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("examplecloud_container.test", plancheck.ResourceActionUpdate),
+						// The location address is imported as "westeurope/somevalue", which will be updated by the config to "eastus"
+						plancheck.ExpectKnownValue("examplecloud_container.test", tfjsonpath.New("location"), knownvalue.StringExact("eastus")),
+						plancheck.ExpectUnknownValue("examplecloud_container.test", tfjsonpath.New("id")),
+					},
+				},
+			},
+		},
+	})
+}
+
 func TestImportBlock_WithID_FailWhenNotSupported(t *testing.T) {
 	t.Parallel()
 

@@ -221,8 +221,9 @@ func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.Wo
 	switch {
 	case importing == nil:
 		return fmt.Errorf("importing resource %s: expected an import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, workingDir, providers))
-
-	case !actions.NoOp():
+	// By default we want to ensure there isn't a proposed plan after importing, but for some resources this is unavoidable.
+	// An example would be importing a resource that cannot read it's entire value back from the remote API.
+	case !step.ExpectNonEmptyPlan && !actions.NoOp():
 		return fmt.Errorf("importing resource %s: expected a no-op import operation, got %q action with plan \nstdout:\n\n%s", resourceChangeUnderTest.Address, actions, savedPlanRawStdout(ctx, t, workingDir, providers))
 	}
 
