@@ -517,6 +517,15 @@ type TestStep struct {
 	// resources in the root module path.
 	Taint []string
 
+	// TestBackendStates equivalent
+	BackendSmokeTest bool
+
+	// TestBackendStateLocks equivalent
+	BackendLockTest bool
+	// TestBackendStateLocks, but it also tests force unlock, maybe this should always happen?
+	// Any reason to not do this always?
+	ForceUnlockTest bool
+
 	//---------------------------------------------------------------
 	// Test modes. One of the following groups of settings must be
 	// set to determine what the test step will do. Ideally we would've

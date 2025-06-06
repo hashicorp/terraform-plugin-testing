@@ -444,3 +444,55 @@ func (wd *WorkingDir) Schemas(ctx context.Context) (*tfjson.ProviderSchemas, err
 
 	return providerSchemas, err
 }
+
+func (wd *WorkingDir) Workspaces(ctx context.Context) ([]string, error) {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI workspace list command")
+
+	// TODO: return current workspace (ignored here) as well? Not sure we need it
+	// TODO: I believe we need to add the reattach config to tfexec, not needed now since
+	// we're just testing Terraform core.
+	//
+	// TODO: Also the tf exec implementation of this just uses new lines for testing lol.
+	// Probably can't change that at this point
+	workspaces, _, err := wd.tf.WorkspaceList(context.Background())
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI workspace list command")
+
+	return workspaces, err
+}
+
+func (wd *WorkingDir) CreateWorkspace(ctx context.Context, workspace string) error {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI workspace new command")
+
+	// TODO: I believe we need to add the reattach config to tfexec, not needed now since
+	// we're just testing Terraform core.
+	err := wd.tf.WorkspaceNew(context.Background(), workspace)
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI workspace new command")
+
+	return err
+}
+
+func (wd *WorkingDir) SelectWorkspace(ctx context.Context, workspace string) error {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI workspace select command")
+
+	// TODO: I believe we need to add the reattach config to tfexec, not needed now since
+	// we're just testing Terraform core.
+	err := wd.tf.WorkspaceSelect(context.Background(), workspace)
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI workspace select command")
+
+	return err
+}
+
+func (wd *WorkingDir) DeleteWorkspace(ctx context.Context, workspace string, opts ...tfexec.WorkspaceDeleteCmdOption) error {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI workspace delete command")
+
+	// TODO: I believe we need to add the reattach config to tfexec, not needed now since
+	// we're just testing Terraform core.
+	err := wd.tf.WorkspaceDelete(context.Background(), workspace, opts...)
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI workspace delete command")
+
+	return err
+}

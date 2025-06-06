@@ -62,8 +62,17 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		protov6: c.ProtoV6ProviderFactories,
 	}
 
+	// TODO: If any of the test steps used BackendSmokeTest and tested an error, make sure we don't execute any more commands
+	// TODO: This is a temp fix, we probably should have an easier to understand behavior for backend testing, maybe completely separate from this?
+	var backendErrorTested bool
+
 	defer func() {
 		t.Helper()
+
+		if backendErrorTested {
+			wd.Close()
+			return
+		}
 
 		var statePreDestroy *terraform.State
 		var err error
@@ -348,6 +357,92 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 						map[string]interface{}{logging.KeyError: err},
 					)
 					t.Fatalf("Step %d/%d error running refresh: %s", stepNumber, len(c.Steps), err)
+				}
+			}
+
+			logging.HelperResourceDebug(ctx, "Finished TestStep")
+
+			continue
+		}
+
+		if step.BackendSmokeTest && cfg != nil {
+			logging.HelperResourceTrace(ctx, "TestStep is Backend mode")
+
+			err := testStepNewBackendSmokeTest(ctx, t, c, wd, step, providers, stepIndex, helper)
+			if step.ExpectError != nil {
+				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
+				if err == nil {
+					logging.HelperResourceError(ctx,
+						"Error running backend mode: expected an error but got none",
+					)
+					t.Fatalf("Step %d/%d error running backend mode: expected an error but got none", stepNumber, len(c.Steps))
+				}
+
+				backendErrorTested = true
+				if !step.ExpectError.MatchString(err.Error()) {
+					logging.HelperResourceError(ctx,
+						fmt.Sprintf("Error running backend mode: expected an error with pattern (%s)", step.ExpectError.String()),
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("Step %d/%d error running backend mode, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
+				}
+			} else {
+				if err != nil && c.ErrorCheck != nil {
+					backendErrorTested = true
+					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
+					err = c.ErrorCheck(err)
+					logging.HelperResourceDebug(ctx, "Called TestCase ErrorCheck")
+				}
+				if err != nil {
+					backendErrorTested = true
+					logging.HelperResourceError(ctx,
+						"Error running backend mode",
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("Step %d/%d error running backend mode: %s", stepNumber, len(c.Steps), err)
+				}
+			}
+
+			logging.HelperResourceDebug(ctx, "Finished TestStep")
+
+			continue
+		}
+
+		if step.BackendLockTest && cfg != nil {
+			logging.HelperResourceTrace(ctx, "TestStep is Backend lock mode")
+
+			err := testStepNewBackendLockTest(ctx, t, c, wd, step, providers, stepIndex, helper)
+			if step.ExpectError != nil {
+				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
+				if err == nil {
+					logging.HelperResourceError(ctx,
+						"Error running backend mode: expected an error but got none",
+					)
+					t.Fatalf("Step %d/%d error running backend mode: expected an error but got none", stepNumber, len(c.Steps))
+				}
+
+				backendErrorTested = true
+				if !step.ExpectError.MatchString(err.Error()) {
+					logging.HelperResourceError(ctx,
+						fmt.Sprintf("Error running backend mode: expected an error with pattern (%s)", step.ExpectError.String()),
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("Step %d/%d error running backend mode, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
+				}
+			} else {
+				if err != nil && c.ErrorCheck != nil {
+					backendErrorTested = true
+					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
+					err = c.ErrorCheck(err)
+					logging.HelperResourceDebug(ctx, "Called TestCase ErrorCheck")
+				}
+				if err != nil {
+					backendErrorTested = true
+					logging.HelperResourceError(ctx,
+						"Error running backend mode",
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("Step %d/%d error running backend mode: %s", stepNumber, len(c.Steps), err)
 				}
 			}
 
