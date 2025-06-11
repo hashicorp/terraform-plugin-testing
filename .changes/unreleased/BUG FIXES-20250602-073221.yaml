@@ -1,5 +1,0 @@
-kind: BUG FIXES
-body: 'helper/resource: Updated `ImportBlockWith*` import state modes to use the `ExpectNonEmpty` field to allow non-empty import plans to pass successfully.'
-time: 2025-06-02T07:32:21.384247-04:00
-custom:
-    Issue: "518"

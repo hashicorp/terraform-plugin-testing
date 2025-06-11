@@ -1,3 +1,10 @@
+## 1.13.2 (June 11, 2025)
+
+BUG FIXES:
+
+* helper/resource: Updated `ImportBlockWith*` import state modes to use the `ExpectNonEmpty` field to allow non-empty import plans to pass successfully. ([#518](https://github.com/hashicorp/terraform-plugin-testing/issues/518))
+* helper/resource: Fixed bug with import state mode where prior test config is not used for `ConfigFile` or `ConfigDirectory` ([#516](https://github.com/hashicorp/terraform-plugin-testing/issues/516))
+
 ## 1.13.1 (May 21, 2025)
 
 BUG FIXES:
