@@ -118,13 +118,13 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 
 	// If the current import state test step doesn't have configuration, use the prior test step config
 	if testStepConfig == nil {
+		if priorStepCfg == nil {
+			t.Fatal("Cannot import state with no specified config")
+		}
+
 		logging.HelperResourceTrace(ctx, "Using prior TestStep Config for import")
 
 		testStepConfig = priorStepCfg
-	}
-
-	if testStepConfig == nil {
-		t.Fatal("Cannot import state with no specified config")
 	}
 
 	switch {
