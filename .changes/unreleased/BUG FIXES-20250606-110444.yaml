@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: 'helper/resource: Fixed bug with import state mode where prior test config is not used for `ConfigFile` or `ConfigDirectory`'
+time: 2025-06-06T11:04:44.925152-04:00
+custom:
+    Issue: "516"
