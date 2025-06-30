@@ -152,17 +152,21 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 		}
 	}
 
-	if req.TestCaseHasExternalProviders && req.StepConfiguration != nil && req.StepConfiguration.HasConfigurationFiles() {
-		err := fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.Config")
-		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
-		return err
-	}
+	// TODO: Need to double check why this validation is even here in the first place
+	// My initial guess is that there is some logic later on that will do some weird stuff to ConfigDirectory/ConfigFile
+	// if this validation is not present.... But I don't see that documented anywhere :/
+	//
+	// if req.TestCaseHasExternalProviders && req.StepConfiguration != nil && req.StepConfiguration.HasConfigurationFiles() {
+	// 	err := fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.Config")
+	// 	logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
+	// 	return err
+	// }
 
-	if s.hasExternalProviders() && req.StepConfiguration != nil && req.StepConfiguration.HasConfigurationFiles() {
-		err := fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.Config")
-		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
-		return err
-	}
+	// if s.hasExternalProviders() && req.StepConfiguration != nil && req.StepConfiguration.HasConfigurationFiles() {
+	// 	err := fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.Config")
+	// 	logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
+	// 	return err
+	// }
 
 	// We need a 0-based step index for consistency
 	hasProviders, err := s.hasProviders(ctx, req.StepNumber-1, req.TestName)
