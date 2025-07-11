@@ -18,6 +18,9 @@ import (
 const (
 	rawConfigFileName     = "terraform_plugin_test.tf"
 	rawConfigFileNameJSON = rawConfigFileName + ".json"
+
+	rawQueryConfigFileName = "terraform_plugin_test.tfquery.hcl"
+	// rawQueryConfigFileNameJSON = rawConfigFileName + ".json"
 )
 
 var (
@@ -45,6 +48,7 @@ type Config interface {
 	HasProviderBlock(context.Context) (bool, error)
 	HasTerraformBlock(context.Context) (bool, error)
 	Write(context.Context, string) error
+	WriteQuery(context.Context, string) error
 	Append(string) Config
 }
 
