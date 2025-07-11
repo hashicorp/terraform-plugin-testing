@@ -12,11 +12,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/datasource"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/list"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/provider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 )
 
 var _ tfprotov6.ProviderServer = ProviderServer{}
+var _ tfprotov6.ProviderServerWithListResource = ProviderServer{}
 
 // NewProviderServer returns a lightweight protocol version 6 provider server
 // for consumption with ProtoV6ProviderFactories.
@@ -82,6 +84,12 @@ func (s ProviderServer) GetMetadata(ctx context.Context, request *tfprotov6.GetM
 
 	for typeName := range s.Provider.DataSourcesMap() {
 		resp.DataSources = append(resp.DataSources, tfprotov6.DataSourceMetadata{
+			TypeName: typeName,
+		})
+	}
+
+	for typeName := range s.Provider.ListResourcesMap() {
+		resp.ListResources = append(resp.ListResources, tfprotov6.ListResourceMetadata{
 			TypeName: typeName,
 		})
 	}
@@ -304,10 +312,11 @@ func (s ProviderServer) GetProviderSchema(ctx context.Context, req *tfprotov6.Ge
 		Functions:                map[string]*tfprotov6.Function{},
 		EphemeralResourceSchemas: map[string]*tfprotov6.Schema{},
 
-		DataSourceSchemas: map[string]*tfprotov6.Schema{},
-		Diagnostics:       providerResp.Diagnostics,
-		Provider:          providerResp.Schema,
-		ResourceSchemas:   map[string]*tfprotov6.Schema{},
+		DataSourceSchemas:   map[string]*tfprotov6.Schema{},
+		Diagnostics:         providerResp.Diagnostics,
+		ListResourceSchemas: map[string]*tfprotov6.Schema{},
+		Provider:            providerResp.Schema,
+		ResourceSchemas:     map[string]*tfprotov6.Schema{},
 		ServerCapabilities: &tfprotov6.ServerCapabilities{
 			PlanDestroy: true,
 		},
@@ -322,6 +331,17 @@ func (s ProviderServer) GetProviderSchema(ctx context.Context, req *tfprotov6.Ge
 		resp.Diagnostics = append(resp.Diagnostics, schemaResp.Diagnostics...)
 
 		resp.DataSourceSchemas[typeName] = schemaResp.Schema
+	}
+
+	for typeName, l := range s.Provider.ListResourcesMap() {
+		schemaReq := list.SchemaRequest{}
+		schemaResp := &list.SchemaResponse{}
+
+		l.Schema(ctx, schemaReq, schemaResp)
+
+		resp.Diagnostics = append(resp.Diagnostics, schemaResp.Diagnostics...)
+
+		resp.ListResourceSchemas[typeName] = schemaResp.Schema
 	}
 
 	for typeName, r := range s.Provider.ResourcesMap() {
@@ -1016,4 +1036,48 @@ func (s ProviderServer) CloseEphemeralResource(ctx context.Context, req *tfproto
 
 func (s ProviderServer) ValidateEphemeralResourceConfig(ctx context.Context, req *tfprotov6.ValidateEphemeralResourceConfigRequest) (*tfprotov6.ValidateEphemeralResourceConfigResponse, error) {
 	return &tfprotov6.ValidateEphemeralResourceConfigResponse{}, nil
+}
+
+func (s ProviderServer) ListResource(ctx context.Context, req *tfprotov6.ListResourceRequest) (*tfprotov6.ListResourceServerStream, error) {
+	resp := &tfprotov6.ListResourceServerStream{}
+
+	// Copy over identity if it's supported
+	identitySchemaReq := resource.IdentitySchemaRequest{}
+	identitySchemaResp := &resource.IdentitySchemaResponse{}
+
+	r, _ := ProviderResource(s.Provider, req.TypeName)
+	// TODO: diag
+	r.IdentitySchema(ctx, identitySchemaReq, identitySchemaResp)
+
+	results := func(push func(tfprotov6.ListResourceResult) bool) {
+		_, diag := ProviderListResource(s.Provider, req.TypeName)
+		if diag != nil {
+			push(tfprotov6.ListResourceResult{Diagnostics: []*tfprotov6.Diagnostic{diag}})
+			return
+		}
+
+		identityData := tftypes.NewValue(
+			tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id": tftypes.String,
+				},
+			},
+			map[string]tftypes.Value{
+				"id": tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+			},
+		)
+		identity, _ := IdentityValuetoDynamicValue(identitySchemaResp.Schema, identityData) // TODO: diag
+		push(tfprotov6.ListResourceResult{
+			Identity: &tfprotov6.ResourceIdentityData{
+				IdentityData: identity,
+			},
+		})
+	}
+
+	resp.Results = results
+	return resp, nil
+}
+
+func (s ProviderServer) ValidateListResourceConfig(ctx context.Context, req *tfprotov6.ValidateListResourceConfigRequest) (*tfprotov6.ValidateListResourceConfigResponse, error) {
+	return &tfprotov6.ValidateListResourceConfigResponse{}, nil
 }
