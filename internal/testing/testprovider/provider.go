@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/datasource"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/list"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/provider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 )
@@ -19,6 +20,7 @@ var _ provider.Provider = Provider{}
 type Provider struct {
 	ConfigureResponse      *provider.ConfigureResponse
 	DataSources            map[string]DataSource
+	ListResources          map[string]ListResource
 	Resources              map[string]Resource
 	SchemaResponse         *provider.SchemaResponse
 	StopResponse           *provider.StopResponse
@@ -39,6 +41,16 @@ func (p Provider) DataSourcesMap() map[string]datasource.DataSource {
 	}
 
 	return datasources
+}
+
+func (p Provider) ListResourcesMap() map[string]list.ListResource {
+	listResources := make(map[string]list.ListResource, len(p.ListResources))
+
+	for typeName, d := range p.ListResources {
+		listResources[typeName] = d
+	}
+
+	return listResources
 }
 
 func (p Provider) ResourcesMap() map[string]resource.Resource {
