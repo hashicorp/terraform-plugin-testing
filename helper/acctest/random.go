@@ -207,6 +207,7 @@ func inverseMask(bits, byteLen int) ([]byte, error) {
 const (
 	// CharSetAlphaNum is the alphanumeric character set for use with
 	// RandStringFromCharSet
+	// Test
 	CharSetAlphaNum = "abcdefghijklmnopqrstuvwxyz012346789"
 
 	// CharSetAlpha is the alphabetical character set for use with
