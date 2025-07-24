@@ -255,7 +255,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			testStepConfig = teststep.Configuration(confRequest)
 
 			if !step.Query {
-				fmt.Println("Writing pre-switch configuration:", rawCfg)
+				//fmt.Println("Writing pre-switch configuration:", rawCfg)
 				err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 			}
 
@@ -360,6 +360,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		}
 
 		if step.Query {
+			print("yes, this is a query step\n")
 			logging.HelperResourceTrace(ctx, "TestStep is Query mode")
 
 			queryConfigRequest := teststep.ConfigurationRequest{
@@ -603,7 +604,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 		testStepConfigDefer := teststep.Configuration(confRequest)
 
-		fmt.Println("Writing the reset to original configuration:", rawCfg)
+		//fmt.Println("Writing the reset to original configuration:", rawCfg)
 
 		err = wd.SetConfig(ctx, testStepConfigDefer, step.ConfigVariables)
 
