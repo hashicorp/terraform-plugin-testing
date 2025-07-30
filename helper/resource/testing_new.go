@@ -360,7 +360,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		}
 
 		if step.Query {
-			print("yes, this is a query step\n")
 			logging.HelperResourceTrace(ctx, "TestStep is Query mode")
 
 			queryConfigRequest := teststep.ConfigurationRequest{
