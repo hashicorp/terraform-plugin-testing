@@ -532,6 +532,8 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]string, error) {
 	var buffer bytes.Buffer
 	err := wd.tf.QueryJSON(context.Background(), &buffer)
 
+	// Marshall buffer? JSON.mashallto___ terraform-json.Query
+
 	if err != nil {
 		return nil, fmt.Errorf("error running terraform query command: %w", err)
 	}
