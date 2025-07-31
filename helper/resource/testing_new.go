@@ -255,7 +255,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			testStepConfig = teststep.Configuration(confRequest)
 
 			if !step.Query {
-				//fmt.Println("Writing pre-switch configuration:", rawCfg)
 				err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 			}
 
@@ -602,8 +601,6 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 		}.Exec()
 
 		testStepConfigDefer := teststep.Configuration(confRequest)
-
-		//fmt.Println("Writing the reset to original configuration:", rawCfg)
 
 		err = wd.SetConfig(ctx, testStepConfigDefer, step.ConfigVariables)
 
