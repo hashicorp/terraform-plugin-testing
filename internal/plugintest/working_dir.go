@@ -532,7 +532,19 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]string, error) {
 	var buffer bytes.Buffer
 	err := wd.tf.QueryJSON(context.Background(), &buffer)
 
-	// Marshall buffer? JSON.mashallto___ terraform-json.Query
+	//  terraform-exec also only exposes the raw json writer for now
+	// So we have to Marshall buffer something like JSON.mashallto___ for terraform-json.Query
+	/* The struct Terraform is using to encode a query result:
+	type QueryResult struct {
+		Address        string                     `json:"address"`
+		DisplayName    string                     `json:"display_name"`
+		Identity       map[string]json.RawMessage `json:"identity"`
+		ResourceType   string                     `json:"resource_type"`
+		ResourceObject map[string]json.RawMessage `json:"resource_object,omitempty"`
+		Config         string                     `json:"config,omitempty"`
+		ImportConfig   string                     `json:"import_config,omitempty"`
+	}
+	*/
 
 	if err != nil {
 		return nil, fmt.Errorf("error running terraform query command: %w", err)
