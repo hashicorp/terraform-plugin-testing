@@ -535,6 +535,7 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]string, error) {
 	//  terraform-exec also only exposes the raw json writer for now
 	// So we have to Marshall buffer something like JSON.mashallto___ for terraform-json.Query
 	/* The struct Terraform is using to encode a query result:
+
 	type QueryResult struct {
 		Address        string                     `json:"address"`
 		DisplayName    string                     `json:"display_name"`
@@ -544,6 +545,7 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]string, error) {
 		Config         string                     `json:"config,omitempty"`
 		ImportConfig   string                     `json:"import_config,omitempty"`
 	}
+
 	*/
 
 	if err != nil {
