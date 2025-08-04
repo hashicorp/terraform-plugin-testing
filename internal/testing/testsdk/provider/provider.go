@@ -9,12 +9,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/datasource"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/list"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 )
 
 type Provider interface {
 	Configure(context.Context, ConfigureRequest, *ConfigureResponse)
 	DataSourcesMap() map[string]datasource.DataSource
+	ListResourcesMap() map[string]list.ListResource
 	ResourcesMap() map[string]resource.Resource
 	Schema(context.Context, SchemaRequest, *SchemaResponse)
 	Stop(context.Context, StopRequest, *StopResponse)
