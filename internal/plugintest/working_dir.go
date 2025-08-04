@@ -180,7 +180,7 @@ func (wd *WorkingDir) SetQuery(ctx context.Context, cfg teststep.Config, vars co
 
 	for _, file := range fi {
 		if file.Mode().IsRegular() {
-			if filepath.Ext(file.Name()) == ".warioform" || filepath.Ext(file.Name()) == ".json" || filepath.Ext(file.Name()) == ".hcl" {
+			if filepath.Ext(file.Name()) == ".warioform" || filepath.Ext(file.Name()) == ".json" || filepath.Ext(file.Name()) == ".tfquery.hcl" {
 				err = os.Remove(filepath.Join(d.Name(), file.Name()))
 
 				if err != nil && !os.IsNotExist(err) {
