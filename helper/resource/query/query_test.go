@@ -19,7 +19,7 @@ func TestQuery(t *testing.T) {
 
 	r.UnitTest(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_14_0), // Query mode requires Terraform 1.13.0 or later
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
