@@ -72,7 +72,7 @@ func (c configurationFile) HasTerraformBlock(ctx context.Context) (bool, error) 
 }
 
 func (c configurationFile) WriteQuery(ctx context.Context, dest string) error {
-	panic("WriteQuery not supported for configurationDirectory")
+	panic("WriteQuery not supported for configurationFile")
 }
 
 // Write copies file from c.file to destination.
