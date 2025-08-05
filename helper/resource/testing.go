@@ -835,6 +835,9 @@ type TestStep struct {
 	// for performing import testing where the prior TestStep configuration
 	// contained a provider outside the one under test.
 	ExternalProviders map[string]ExternalProvider
+
+	// If true, the test step will run the query command
+	Query bool
 }
 
 // ConfigPlanChecks defines the different points in a Config TestStep when plan checks can be run.
