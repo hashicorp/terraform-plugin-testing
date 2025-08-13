@@ -5,7 +5,6 @@ package resource
 
 import (
 	"context"
-
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )

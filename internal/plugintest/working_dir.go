@@ -4,6 +4,7 @@
 package plugintest
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -21,6 +22,7 @@ import (
 const (
 	ConfigFileName = "terraform_plugin_test.tf"
 	PlanFileName   = "tfplan"
+	QueryFileName  = "terraform_plugin_test.tfquery.hcl"
 )
 
 // WorkingDir represents a distinct working directory that can be used for
@@ -36,6 +38,10 @@ type WorkingDir struct {
 	// configFilename is the full filename where the latest configuration
 	// was stored; empty until SetConfig is called.
 	configFilename string
+
+	// queryFilename is the full filename where the latest query configuration
+	// was stored; empty until SetQuery is called.
+	queryFilename string
 
 	// tf is the instance of tfexec.Terraform used for running Terraform commands
 	tf *tfexec.Terraform
@@ -101,7 +107,7 @@ func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config, vars c
 
 	for _, file := range fi {
 		if file.Mode().IsRegular() {
-			if filepath.Ext(file.Name()) == ".tf" || filepath.Ext(file.Name()) == ".json" {
+			if filepath.Ext(file.Name()) == ".tf" || filepath.Ext(file.Name()) == ".json" || filepath.Ext(file.Name()) == ".tfquery.hcl" {
 				err = os.Remove(filepath.Join(d.Name(), file.Name()))
 
 				if err != nil && !os.IsNotExist(err) {
@@ -128,6 +134,80 @@ func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config, vars c
 	// Write configuration
 	if cfg != nil {
 		err = cfg.Write(ctx, wd.baseDir)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	//Write configuration variables
+	err = vars.Write(wd.baseDir)
+
+	if err != nil {
+		return err
+	}
+
+	// Changing configuration invalidates any saved plan.
+	err = wd.ClearPlan(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SetQuery sets a new query configuration for the working directory.
+//
+// This must be called at least once before any call to Init or Query Destroy
+// to establish the query configuration. Any previously-set configuration is
+// discarded and any saved plan is cleared.
+func (wd *WorkingDir) SetQuery(ctx context.Context, cfg teststep.Config, vars config.Variables) error {
+	// Remove old config and variables files first
+	d, err := os.Open(wd.baseDir)
+
+	if err != nil {
+		return err
+	}
+
+	defer d.Close()
+
+	fi, err := d.Readdir(-1)
+
+	if err != nil {
+		return err
+	}
+
+	for _, file := range fi {
+		if file.Mode().IsRegular() {
+			if filepath.Ext(file.Name()) == ".warioform" || filepath.Ext(file.Name()) == ".json" || filepath.Ext(file.Name()) == ".tfquery.hcl" {
+				err = os.Remove(filepath.Join(d.Name(), file.Name()))
+
+				if err != nil && !os.IsNotExist(err) {
+					return err
+				}
+			}
+		}
+	}
+
+	logging.HelperResourceTrace(ctx, "Setting Terraform query configuration", map[string]any{logging.KeyTestTerraformConfiguration: cfg})
+
+	outFilename := filepath.Join(wd.baseDir, QueryFileName)
+
+	// This file has to be written otherwise wd.Init() will return an error.
+	err = os.WriteFile(outFilename, nil, 0700)
+
+	if err != nil {
+		return err
+	}
+
+	// wd.configFilename must be set otherwise wd.Init() will return an error.
+	wd.queryFilename = outFilename
+	wd.configFilename = outFilename
+
+	// Write configuration
+	if cfg != nil {
+		err = cfg.WriteQuery(ctx, wd.baseDir)
 
 		if err != nil {
 			return err
@@ -443,4 +523,22 @@ func (wd *WorkingDir) Schemas(ctx context.Context) (*tfjson.ProviderSchemas, err
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI providers schema command")
 
 	return providerSchemas, err
+}
+
+func (wd *WorkingDir) Query(ctx context.Context) ([]string, error) {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI providers query command")
+
+	// Query the provider using the Terraform CLI function
+	var buffer bytes.Buffer
+	err := wd.tf.QueryJSON(context.Background(), &buffer)
+
+	if err != nil {
+		return nil, fmt.Errorf("error running terraform query command: %w", err)
+	}
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI providers query command")
+
+	output := buffer.String()
+
+	return []string{output}, nil
 }
