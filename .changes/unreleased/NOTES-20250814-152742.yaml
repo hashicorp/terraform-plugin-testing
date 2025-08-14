@@ -1,0 +1,5 @@
+kind: NOTES
+body: Adds an opt-in compatibility flag for config mode tests to unlock upgrade from v1.5.1 to latest for specific providers.
+time: 2025-08-14T15:27:42.215486-04:00
+custom:
+    Issue: "496"
