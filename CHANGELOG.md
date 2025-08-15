@@ -1,3 +1,9 @@
+## 1.13.3 (August 15, 2025)
+
+NOTES:
+
+* Adds an opt-in compatibility flag for config mode tests to unlock upgrade from v1.5.1 to latest for specific providers. ([#496](https://github.com/hashicorp/terraform-plugin-testing/issues/496))
+
 ## 1.13.2 (June 11, 2025)
 
 BUG FIXES:
