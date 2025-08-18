@@ -7,9 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"sort"
-
-	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/hashicorp/terraform-plugin-testing/compare"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
@@ -83,8 +82,8 @@ func walkCollectionPath(obj any, paths []tfjsonpath.Path, results []any) ([]any,
 
 // CheckQuery implements the query check logic.
 func (e *compareValueCollection) CheckQuery(ctx context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
-	var resourceOne *tfjson.QueryResource
-	var resourceTwo *tfjson.QueryResource
+	var resourceOne *plugintest.QueryResult
+	var resourceTwo *plugintest.QueryResult
 
 	if req.Query == nil {
 		resp.Error = fmt.Errorf("query is nil")
@@ -92,24 +91,8 @@ func (e *compareValueCollection) CheckQuery(ctx context.Context, req CheckQueryR
 		return
 	}
 
-	if req.Query.Values == nil {
-		resp.Error = fmt.Errorf("query does not contain any query values")
-
-		return
-	}
-
-	if req.Query.Values.RootModule == nil {
-		resp.Error = fmt.Errorf("query does not contain a root module")
-
-		return
-	}
-
-	for _, r := range req.Query.Values.RootModule.Resources {
-		if e.resourceAddressOne == r.Address {
-			resourceOne = r
-
-			break
-		}
+	if e.resourceAddressOne == req.Query.Address {
+		resourceOne = req.Query
 	}
 
 	if resourceOne == nil {
@@ -124,7 +107,7 @@ func (e *compareValueCollection) CheckQuery(ctx context.Context, req CheckQueryR
 		return
 	}
 
-	resultOne, err := tfjsonpath.Traverse(resourceOne.AttributeValues, e.collectionPath[0])
+	resultOne, err := tfjsonpath.Traverse(resourceOne.ResourceObject, e.collectionPath[0])
 
 	if err != nil {
 		resp.Error = err
@@ -158,12 +141,8 @@ func (e *compareValueCollection) CheckQuery(ctx context.Context, req CheckQueryR
 		return
 	}
 
-	for _, r := range req.Query.Values.RootModule.Resources {
-		if e.resourceAddressTwo == r.Address {
-			resourceTwo = r
-
-			break
-		}
+	if e.resourceAddressTwo == req.Query.Address {
+		resourceTwo = req.Query
 	}
 
 	if resourceTwo == nil {
@@ -172,7 +151,7 @@ func (e *compareValueCollection) CheckQuery(ctx context.Context, req CheckQueryR
 		return
 	}
 
-	resultTwo, err := tfjsonpath.Traverse(resourceTwo.AttributeValues, e.attributePath)
+	resultTwo, err := tfjsonpath.Traverse(resourceTwo.ResourceObject, e.attributePath)
 
 	if err != nil {
 		resp.Error = err

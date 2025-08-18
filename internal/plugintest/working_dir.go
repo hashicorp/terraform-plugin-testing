@@ -6,6 +6,7 @@ package plugintest
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -525,6 +526,16 @@ func (wd *WorkingDir) Schemas(ctx context.Context) (*tfjson.ProviderSchemas, err
 	return providerSchemas, err
 }
 
+type QueryResult struct {
+	Address        string                     `json:"address"`
+	DisplayName    string                     `json:"display_name"`
+	Identity       map[string]json.RawMessage `json:"identity"`
+	ResourceType   string                     `json:"resource_type"`
+	ResourceObject map[string]json.RawMessage `json:"resource_object,omitempty"`
+	Config         string                     `json:"config,omitempty"`
+	ImportConfig   string                     `json:"import_config,omitempty"`
+}
+
 func (wd *WorkingDir) Query(ctx context.Context) ([]string, error) {
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI providers query command")
 
@@ -532,21 +543,15 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]string, error) {
 	var buffer bytes.Buffer
 	err := wd.tf.QueryJSON(context.Background(), &buffer)
 
-	//  terraform-exec also only exposes the raw json writer for now
-	// So we have to Marshall buffer something like JSON.mashallto___ for terraform-json.Query
-	/* The struct Terraform is using to encode a query result:
-
-	type QueryResult struct {
-		Address        string                     `json:"address"`
-		DisplayName    string                     `json:"display_name"`
-		Identity       map[string]json.RawMessage `json:"identity"`
-		ResourceType   string                     `json:"resource_type"`
-		ResourceObject map[string]json.RawMessage `json:"resource_object,omitempty"`
-		Config         string                     `json:"config,omitempty"`
-		ImportConfig   string                     `json:"import_config,omitempty"`
+	var results []QueryResult
+	if err := json.Unmarshal(buffer.Bytes(), &results); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal query result: %w", err)
 	}
 
-	*/
+	returned := make([]string, len(results))
+	for i, r := range results {
+		returned[i] = r.Address
+	}
 
 	if err != nil {
 		return nil, fmt.Errorf("error running terraform query command: %w", err)

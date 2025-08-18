@@ -6,14 +6,13 @@ package query
 import (
 	"context"
 	"errors"
-
-	tfjson "github.com/hashicorp/terraform-json"
+	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-testing/querycheck"
 )
 
-func runQueryChecks(ctx context.Context, t testing.T, query *tfjson.Query, queryChecks []querycheck.QueryCheck) error {
+func runQueryChecks(ctx context.Context, t testing.T, query *plugintest.QueryResult, queryChecks []querycheck.QueryCheck) error {
 	t.Helper()
 
 	var result []error

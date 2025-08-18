@@ -6,9 +6,8 @@ package querycheck
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"reflect"
-
-	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
@@ -23,7 +22,7 @@ type expectIdentityValueMatchesQueryAtPath struct {
 
 // CheckQuery implements the query check logic.
 func (e expectIdentityValueMatchesQueryAtPath) CheckQuery(ctx context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
-	var resource *tfjson.QueryResource
+	var resource *plugintest.QueryResult
 
 	if req.Query == nil {
 		resp.Error = fmt.Errorf("query is nil")
@@ -31,24 +30,14 @@ func (e expectIdentityValueMatchesQueryAtPath) CheckQuery(ctx context.Context, r
 		return
 	}
 
-	if req.Query.Values == nil {
-		resp.Error = fmt.Errorf("query does not contain any query values")
+	if len(req.Query.Address) == 0 {
+		resp.Error = fmt.Errorf("query does not contain any address values")
 
 		return
 	}
 
-	if req.Query.Values.RootModule == nil {
-		resp.Error = fmt.Errorf("query does not contain a root module")
-
-		return
-	}
-
-	for _, r := range req.Query.Values.RootModule.Resources {
-		if e.resourceAddress == r.Address {
-			resource = r
-
-			break
-		}
+	if e.resourceAddress == req.Query.Address {
+		resource = req.Query
 	}
 
 	if resource == nil {
@@ -57,13 +46,13 @@ func (e expectIdentityValueMatchesQueryAtPath) CheckQuery(ctx context.Context, r
 		return
 	}
 
-	if resource.IdentitySchemaVersion == nil || len(resource.IdentityValues) == 0 {
+	if resource.Identity == nil || len(resource.Identity) == 0 {
 		resp.Error = fmt.Errorf("%s - Identity not found in query. Either the resource does not support identity or the Terraform version running the test does not support identity. (must be v1.12+)", e.resourceAddress)
 
 		return
 	}
 
-	identityResult, err := tfjsonpath.Traverse(resource.IdentityValues, e.identityAttrPath)
+	identityResult, err := tfjsonpath.Traverse(resource.Identity, e.identityAttrPath)
 
 	if err != nil {
 		resp.Error = err
@@ -71,7 +60,7 @@ func (e expectIdentityValueMatchesQueryAtPath) CheckQuery(ctx context.Context, r
 		return
 	}
 
-	queryResult, err := tfjsonpath.Traverse(resource.AttributeValues, e.queryAttrPath)
+	queryResult, err := tfjsonpath.Traverse(resource.ResourceObject, e.queryAttrPath)
 
 	if err != nil {
 		resp.Error = err

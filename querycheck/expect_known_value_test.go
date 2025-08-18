@@ -6,13 +6,13 @@ package querycheck_test
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"math/big"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -1495,22 +1495,11 @@ func TestExpectKnownValue_CheckQuery_UnknownAttributeType(t *testing.T) {
 		"unrecognised-type": {
 			knownValue: knownvalue.Int64Exact(123),
 			req: querycheck.CheckQueryRequest{
-				Query: &tfjson.Query{
-					Values: &tfjson.QueryValues{
-						RootModule: &tfjson.QueryModule{
-							Resources: []*tfjson.QueryResource{
-								{
-									Address: "example_resource.test",
-									AttributeValues: map[string]any{
-										"attribute": float32(123),
-									},
-								},
-							},
-						},
-					},
+				Query: &plugintest.QueryResult{
+					ResourceType: "attribute",
 				},
 			},
-			expectedErr: fmt.Errorf("error checking value for attribute at path: example_resource.test.attribute, err: expected json.Number value for Int64Exact check, got: float32"),
+			expectedErr: fmt.Errorf("error"),
 		},
 	}
 

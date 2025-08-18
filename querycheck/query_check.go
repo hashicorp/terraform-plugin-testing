@@ -5,8 +5,7 @@ package querycheck
 
 import (
 	"context"
-
-	tfjson "github.com/hashicorp/terraform-json"
+	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
 // QueryCheck defines an interface for implementing test logic that checks a query file and then returns an error
@@ -19,7 +18,7 @@ type QueryCheck interface {
 // CheckQueryRequest is a request for an invoke of the CheckQuery function.
 type CheckQueryRequest struct {
 	// Query represents a parsed query file, retrieved via the `terraform show -json` command.
-	Query *tfjson.Query
+	Query *plugintest.QueryResult
 }
 
 // CheckQueryResponse is a response to an invoke of the CheckQuery function.

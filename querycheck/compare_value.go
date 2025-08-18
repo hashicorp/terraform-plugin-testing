@@ -6,10 +6,8 @@ package querycheck
 import (
 	"context"
 	"fmt"
-
-	tfjson "github.com/hashicorp/terraform-json"
-
 	"github.com/hashicorp/terraform-plugin-testing/compare"
+	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -32,7 +30,7 @@ func (e *compareValue) AddQueryValue(resourceAddress string, attributePath tfjso
 
 // CheckQuery implements the query check logic.
 func (e *compareValue) CheckQuery(ctx context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
-	var resource *tfjson.QueryResource
+	var resource *plugintest.QueryResult
 
 	if req.Query == nil {
 		resp.Error = fmt.Errorf("query is nil")
@@ -40,14 +38,8 @@ func (e *compareValue) CheckQuery(ctx context.Context, req CheckQueryRequest, re
 		return
 	}
 
-	if req.Query.Values == nil {
-		resp.Error = fmt.Errorf("query does not contain any query values")
-
-		return
-	}
-
-	if req.Query.Values.RootModule == nil {
-		resp.Error = fmt.Errorf("query does not contain a root module")
+	if len(req.Query.Address) == 0 {
+		resp.Error = fmt.Errorf("query does not contain any address values")
 
 		return
 	}
@@ -66,12 +58,8 @@ func (e *compareValue) CheckQuery(ctx context.Context, req CheckQueryRequest, re
 
 	resourceAddress := e.resourceAddresses[currentIndex]
 
-	for _, r := range req.Query.Values.RootModule.Resources {
-		if resourceAddress == r.Address {
-			resource = r
-
-			break
-		}
+	if resourceAddress == req.Query.Address {
+		resource = req.Query
 	}
 
 	if resource == nil {
@@ -88,7 +76,7 @@ func (e *compareValue) CheckQuery(ctx context.Context, req CheckQueryRequest, re
 
 	attributePath := e.attributePaths[currentIndex]
 
-	result, err := tfjsonpath.Traverse(resource.AttributeValues, attributePath)
+	result, err := tfjsonpath.Traverse(resource.ResourceObject, attributePath)
 
 	if err != nil {
 		resp.Error = err

@@ -6,11 +6,10 @@ package querycheck
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"maps"
 	"slices"
 	"sort"
-
-	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 )
@@ -24,7 +23,7 @@ type expectIdentity struct {
 
 // CheckQuery implements the query check logic.
 func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
-	var resource *tfjson.QueryResource
+	var resource *plugintest.QueryResult
 
 	if req.Query == nil {
 		resp.Error = fmt.Errorf("query is nil")
@@ -32,24 +31,8 @@ func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, r
 		return
 	}
 
-	if req.Query.Values == nil {
-		resp.Error = fmt.Errorf("query does not contain any query values")
-
-		return
-	}
-
-	if req.Query.Values.RootModule == nil {
-		resp.Error = fmt.Errorf("query does not contain a root module")
-
-		return
-	}
-
-	for _, r := range req.Query.Values.RootModule.Resources {
-		if e.resourceAddress == r.Address {
-			resource = r
-
-			break
-		}
+	if e.resourceAddress == req.Query.Address {
+		resource = req.Query
 	}
 
 	if resource == nil {
@@ -58,21 +41,21 @@ func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, r
 		return
 	}
 
-	if resource.IdentitySchemaVersion == nil || len(resource.IdentityValues) == 0 {
+	if resource.Identity == nil || len(resource.Identity) == 0 {
 		resp.Error = fmt.Errorf("%s - Identity not found in query. Either the resource does not support identity or the Terraform version running the test does not support identity. (must be v1.12+)", e.resourceAddress)
 
 		return
 	}
 
-	if len(resource.IdentityValues) != len(e.identity) {
+	if len(resource.Identity) != len(e.identity) {
 		deltaMsg := ""
-		if len(resource.IdentityValues) > len(e.identity) {
-			deltaMsg = createDeltaString(resource.IdentityValues, e.identity, "actual identity has extra attribute(s): ")
+		if len(resource.Identity) > len(e.identity) {
+			deltaMsg = createDeltaString(resource.Identity, e.identity, "actual identity has extra attribute(s): ")
 		} else {
-			deltaMsg = createDeltaString(e.identity, resource.IdentityValues, "actual identity is missing attribute(s): ")
+			deltaMsg = createDeltaString(e.identity, resource.Identity, "actual identity is missing attribute(s): ")
 		}
 
-		resp.Error = fmt.Errorf("%s - Expected %d attribute(s) in the actual identity object, got %d attribute(s): %s", e.resourceAddress, len(e.identity), len(resource.IdentityValues), deltaMsg)
+		resp.Error = fmt.Errorf("%s - Expected %d attribute(s) in the actual identity object, got %d attribute(s): %s", e.resourceAddress, len(e.identity), len(resource.Identity), deltaMsg)
 		return
 	}
 
@@ -87,7 +70,7 @@ func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, r
 	})
 
 	for _, k := range keys {
-		actualIdentityVal, ok := resource.IdentityValues[k]
+		actualIdentityVal, ok := resource.Identity[k]
 
 		if !ok {
 			resp.Error = fmt.Errorf("%s - missing attribute %q in actual identity object", e.resourceAddress, k)
