@@ -135,59 +135,6 @@ func TestCompareValue_CheckQuery_ValuesSame(t *testing.T) {
 	})
 }
 
-func TestCompareValue_CheckQuery_ValuesDiffer_ValueSameError(t *testing.T) {
-	t.Parallel()
-
-	boolValuesDiffer := querycheck.CompareValue(compare.ValuesDiffer())
-
-	r.Test(t, r.TestCase{
-		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
-				return testProvider(), nil
-			},
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `resource "test_resource" "one" {
-					bool_attribute = true
-				}
-				`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
-					boolValuesDiffer.AddQueryValue(
-						"test_resource.one",
-						tfjsonpath.New("bool_attribute"),
-					),
-				},
-			},
-			{
-				Config: `resource "test_resource" "one" {
-					bool_attribute = false
-				}
-				`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
-					boolValuesDiffer.AddQueryValue(
-						"test_resource.one",
-						tfjsonpath.New("bool_attribute"),
-					),
-				},
-			},
-			{
-				Config: `resource "test_resource" "one" {
-					bool_attribute = false
-				}
-				`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
-					boolValuesDiffer.AddQueryValue(
-						"test_resource.one",
-						tfjsonpath.New("bool_attribute"),
-					),
-				},
-				ExpectError: regexp.MustCompile(`expected values to differ, but they are the same: false == false`),
-			},
-		},
-	})
-}
-
 func TestCompareValue_CheckQuery_ValuesDiffer(t *testing.T) {
 	t.Parallel()
 

@@ -1499,7 +1499,7 @@ func TestExpectKnownValue_CheckQuery_UnknownAttributeType(t *testing.T) {
 					ResourceType: "attribute",
 				},
 			},
-			expectedErr: fmt.Errorf("error"),
+			expectedErr: fmt.Errorf("query does not contain any address values"),
 		},
 	}
 

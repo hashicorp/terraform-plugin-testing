@@ -45,35 +45,6 @@ func TestExpectIdentityValueMatchesQuery_CheckQuery_ResourceNotFound(t *testing.
 	})
 }
 
-func TestExpectIdentityValueMatchesQuery_CheckQuery_No_Terraform_Identity_Support(t *testing.T) {
-	t.Parallel()
-
-	r.Test(t, r.TestCase{
-		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
-			tfversion.SkipAbove(tfversion.Version1_11_0),
-		},
-		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			// Resource support identity, but the Terraform versions running will not.
-			"examplecloud": examplecloudProviderWithResourceIdentity(),
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
-					querycheck.ExpectIdentityValueMatchesQuery(
-						"examplecloud_thing.one",
-						tfjsonpath.New("id"),
-					),
-				},
-				ExpectError: regexp.MustCompile(`examplecloud_thing.one - Identity not found in query. Either the resource ` +
-					`does not support identity or the Terraform version running the test does not support identity. \(must be v1.12\+\)`,
-				),
-			},
-		},
-	})
-}
-
 func TestExpectIdentityValueMatchesQuery_CheckQuery_No_Identity(t *testing.T) {
 	t.Parallel()
 

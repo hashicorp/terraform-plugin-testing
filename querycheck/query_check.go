@@ -5,6 +5,7 @@ package querycheck
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 

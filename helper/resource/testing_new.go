@@ -681,7 +681,7 @@ func copyWorkingDir(ctx context.Context, t testing.T, stepNumber int, wd *plugin
 	dest := filepath.Join(workingDir, fmt.Sprintf("%s%s", "step_", strconv.Itoa(stepNumber)))
 
 	baseDir := wd.BaseDir()
-	rootBaseDir := strings.TrimLeft(baseDir, workingDir)
+	rootBaseDir := strings.TrimPrefix(baseDir, workingDir)
 
 	err := plugintest.CopyDir(workingDir, dest, rootBaseDir)
 	if err != nil {
