@@ -539,9 +539,11 @@ type QueryResult struct {
 func (wd *WorkingDir) Query(ctx context.Context) ([]string, error) {
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI providers query command")
 
+	args := []tfexec.QueryOption{tfexec.Reattach(wd.reattachInfo)}
+
 	// Query the provider using the Terraform CLI function
 	var buffer bytes.Buffer
-	err := wd.tf.QueryJSON(context.Background(), &buffer)
+	err := wd.tf.QueryJSON(context.Background(), &buffer, args...)
 
 	var results []QueryResult
 	if err := json.Unmarshal(buffer.Bytes(), &results); err != nil {
