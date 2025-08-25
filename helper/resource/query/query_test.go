@@ -47,12 +47,20 @@ func TestQuery(t *testing.T) {
 		},
 		Steps: []r.TestStep{
 			{
+				Config: `
+				resource "examplecloud_containerette" "primary" {
+					id = "westeurope/somevalue"
+					location = "westeurope"	
+					name = "somevalue"
+				}`,
+			},
+			{
 				Query: true,
 				Config: `
 				provider "examplecloud" {}
 				list "examplecloud_containerette" "test" {
 					provider = examplecloud
-
+			
 					config {
 						id = "bat"
 					}

@@ -8,12 +8,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/terraform-exec/tfexec"
+	tfjson "github.com/hashicorp/terraform-json"
 	"io"
 	"os"
 	"path/filepath"
-
-	"github.com/hashicorp/terraform-exec/tfexec"
-	tfjson "github.com/hashicorp/terraform-json"
+	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
@@ -543,17 +544,41 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]string, error) {
 
 	// Query the provider using the Terraform CLI function
 	var buffer bytes.Buffer
+
+	// This returns a slice of log messages but is not expressed as a valid JSON array, so we're going to convert the
+	// buffer to a string, split this on new line then process each line individually since we're only interested in
+	// the list/query log messages
 	err := wd.tf.QueryJSON(context.Background(), &buffer, args...)
 
-	var results []QueryResult
-	if err := json.Unmarshal(buffer.Bytes(), &results); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal query result: %w", err)
+	bufSplit := strings.Split(string(buffer.Bytes()), "\n")
+
+	returned := make([]Result, 0)
+	for _, line := range bufSplit {
+		if line == "" {
+			continue
+		}
+		d := json.NewDecoder(bytes.NewReader([]byte(line)))
+
+		mt := msgType{}
+		err := d.Decode(&mt)
+		if err != nil {
+			return nil, err
+		}
+
+		msg, err := unmarshalResult(mt.Type, []byte(line))
+		if err != nil {
+			// TODO
+		}
+
+		if msg != nil {
+			returned = append(returned, *msg)
+		}
 	}
 
-	returned := make([]string, len(results))
-	for i, r := range results {
-		returned[i] = r.Address
-	}
+	//returned := make([]string, len(results))
+	//for i, r := range results {
+	//	returned[i] = r.Address
+	//}
 
 	if err != nil {
 		return nil, fmt.Errorf("error running terraform query command: %w", err)
@@ -564,4 +589,44 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]string, error) {
 	output := buffer.String()
 
 	return []string{output}, nil
+}
+
+// Taken from https://github.com/hashicorp/terraform-json/pull/169/
+const (
+	MessageListResourceFound tfjson.LogMessageType = "list_resource_found"
+)
+
+type ListResourceFoundMessage struct {
+	baseLogMessage
+	Address        string                     `json:"address"`
+	DisplayName    string                     `json:"display_name"`
+	Identity       map[string]json.RawMessage `json:"identity"`
+	ResourceType   string                     `json:"resource_type"`
+	ResourceObject map[string]json.RawMessage `json:"resource_object,omitempty"`
+	Config         string                     `json:"config,omitempty"`
+	ImportConfig   string                     `json:"import_config,omitempty"`
+}
+
+type baseLogMessage struct {
+	Lvl  tfjson.LogMessageLevel `json:"@level"`
+	Msg  string                 `json:"@message"`
+	Time time.Time              `json:"@timestamp"`
+}
+
+type msgType struct {
+	Type tfjson.LogMessageType `json:"type"`
+}
+
+type Result struct {
+	ListResourceFoundMessage `json:"list_resource_found"`
+}
+
+func unmarshalResult(t tfjson.LogMessageType, b []byte) (*Result, error) {
+	v := Result{}
+	switch t {
+	case MessageListResourceFound:
+		return &v, json.Unmarshal(b, &v)
+	}
+
+	return nil, nil
 }
