@@ -376,7 +376,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				t.Fatalf("Step %d/%d error running init: %s", stepNumber, len(c.Steps), err)
 			}
 
-			var queryOut []string
+			var queryOut any
 			err = runProviderCommand(ctx, t, wd, providers, func() error {
 				var err error
 				queryOut, err = wd.Query(ctx)
@@ -388,7 +388,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			}
 
 			fmt.Printf("Step %d/%d Query Output:\n%s\n", stepNumber, len(c.Steps), queryOut)
+
 			continue
+
 		}
 
 		if cfg != nil {

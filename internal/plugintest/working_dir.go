@@ -8,17 +8,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-exec/tfexec"
-	tfjson "github.com/hashicorp/terraform-json"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-exec/tfexec"
+	tfjson "github.com/hashicorp/terraform-json"
+
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 const (
@@ -537,7 +539,7 @@ type QueryResult struct {
 	ImportConfig   string                     `json:"import_config,omitempty"`
 }
 
-func (wd *WorkingDir) Query(ctx context.Context) ([]string, error) {
+func (wd *WorkingDir) Query(ctx context.Context) (any, error) {
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI providers query command")
 
 	args := []tfexec.QueryOption{tfexec.Reattach(wd.reattachInfo)}
@@ -545,50 +547,64 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]string, error) {
 	// Query the provider using the Terraform CLI function
 	var buffer bytes.Buffer
 
+	var unmarshalled map[string]any
+
 	// This returns a slice of log messages but is not expressed as a valid JSON array, so we're going to convert the
 	// buffer to a string, split this on new line then process each line individually since we're only interested in
 	// the list/query log messages
-	err := wd.tf.QueryJSON(context.Background(), &buffer, args...)
+	_ = wd.tf.QueryJSON(context.Background(), &buffer, args...)
 
 	bufSplit := strings.Split(string(buffer.Bytes()), "\n")
 
-	returned := make([]Result, 0)
 	for _, line := range bufSplit {
 		if line == "" {
 			continue
 		}
-		d := json.NewDecoder(bytes.NewReader([]byte(line)))
-
-		mt := msgType{}
-		err := d.Decode(&mt)
+		err := json.Unmarshal([]byte(line), &unmarshalled)
 		if err != nil {
 			return nil, err
 		}
 
-		msg, err := unmarshalResult(mt.Type, []byte(line))
-		if err != nil {
-			// TODO
-		}
-
-		if msg != nil {
-			returned = append(returned, *msg)
+		traverse, _ := tfjsonpath.Traverse(unmarshalled, tfjsonpath.New("list_resource_found"))
+		if traverse != nil {
+			return traverse, nil
 		}
 	}
+	return bufSplit, nil
 
-	//returned := make([]string, len(results))
-	//for i, r := range results {
-	//	returned[i] = r.Address
+	//returned := make([]Result, 0)
+	//for _, line := range bufSplit {
+	//	if line == "" {
+	//		continue
+	//	}
+	//	d := json.NewDecoder(bytes.NewReader([]byte(line)))
+	//
+	//	mt := msgType{}
+	//	err := d.Decode(&mt)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//
+	//	msg, err := unmarshalResult(mt.Type, []byte(line))
+	//	if err != nil {
+	//		// TODO
+	//	}
+	//
+	//	if msg != nil {
+	//		returned = append(returned, *msg)
+	//	}
 	//}
-
-	if err != nil {
-		return nil, fmt.Errorf("error running terraform query command: %w", err)
-	}
-
-	logging.HelperResourceTrace(ctx, "Called Terraform CLI providers query command")
-
-	output := buffer.String()
-
-	return []string{output}, nil
+	//
+	////returned := make([]string, len(results))
+	////for i, r := range results {
+	////	returned[i] = r.Address
+	////}
+	//
+	//if err != nil {
+	//	return nil, fmt.Errorf("error running terraform query command: %w", err)
+	//}
+	//
+	//logging.HelperResourceTrace(ctx, "Called Terraform CLI providers query command")
 }
 
 // Taken from https://github.com/hashicorp/terraform-json/pull/169/
