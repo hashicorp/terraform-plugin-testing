@@ -25,7 +25,7 @@ func TestExpectIdentityValueMatchesQuery_CheckQuery_ResourceNotFound(t *testing.
 
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": examplecloudProviderWithResourceIdentity(),
@@ -50,7 +50,7 @@ func TestExpectIdentityValueMatchesQuery_CheckQuery_No_Identity(t *testing.T) {
 
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			// Resource does not support identity
@@ -66,7 +66,7 @@ func TestExpectIdentityValueMatchesQuery_CheckQuery_No_Identity(t *testing.T) {
 					),
 				},
 				ExpectError: regexp.MustCompile(`examplecloud_thing.one - Identity not found in query. Either the resource ` +
-					`does not support identity or the Terraform version running the test does not support identity. \(must be v1.12\+\)`,
+					`does not support identity or the Terraform version running the test does not support identity. \(must be v1.14\+\)`,
 				),
 			},
 		},
@@ -78,7 +78,7 @@ func TestExpectIdentityValueMatchesQuery_CheckQuery_String_Matches(t *testing.T)
 
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": examplecloudProviderWithResourceIdentity(),
@@ -102,7 +102,7 @@ func TestExpectIdentityValueMatchesQuery_CheckQuery_String_DoesntMatch(t *testin
 
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": examplecloudProviderWithMismatchedResourceIdentity(),
@@ -127,7 +127,7 @@ func TestExpectIdentityValueMatchesQuery_CheckQuery_List(t *testing.T) {
 
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": examplecloudProviderWithResourceIdentity(),
@@ -151,7 +151,7 @@ func TestExpectIdentityValueMatchesQuery_CheckQuery_List_DoesntMatch(t *testing.
 
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": examplecloudProviderWithMismatchedResourceIdentity(),

@@ -20,7 +20,7 @@ func TestExpectIdentity_CheckQuery_ResourceNotFound(t *testing.T) {
 
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": examplecloudProviderWithResourceIdentity(),
@@ -55,7 +55,7 @@ func TestExpectIdentity_CheckQuery(t *testing.T) {
 
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": examplecloudProviderWithResourceIdentity(),
@@ -89,7 +89,7 @@ func TestExpectIdentity_CheckQuery_KnownValueWrongType(t *testing.T) {
 
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": examplecloudProviderWithResourceIdentity(),
@@ -125,7 +125,7 @@ func TestExpectIdentity_CheckQuery_KnownValueWrongValue(t *testing.T) {
 
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": examplecloudProviderWithResourceIdentity(),
@@ -161,7 +161,7 @@ func TestExpectIdentity_CheckQuery_ExtraAttribute(t *testing.T) {
 
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": examplecloudProviderWithResourceIdentity(),
@@ -189,7 +189,7 @@ func TestExpectIdentity_CheckQuery_MissingAttribute(t *testing.T) {
 
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": examplecloudProviderWithResourceIdentity(),
@@ -226,7 +226,7 @@ func TestExpectIdentity_CheckQuery_MismatchedAttribute(t *testing.T) {
 
 	r.Test(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": examplecloudProviderWithResourceIdentity(),

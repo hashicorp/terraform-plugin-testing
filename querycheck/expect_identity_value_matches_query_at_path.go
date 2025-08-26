@@ -6,8 +6,9 @@ package querycheck
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"reflect"
+
+	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
@@ -47,7 +48,7 @@ func (e expectIdentityValueMatchesQueryAtPath) CheckQuery(ctx context.Context, r
 	}
 
 	if resource.Identity == nil || len(resource.Identity) == 0 {
-		resp.Error = fmt.Errorf("%s - Identity not found in query. Either the resource does not support identity or the Terraform version running the test does not support identity. (must be v1.12+)", e.resourceAddress)
+		resp.Error = fmt.Errorf("%s - Identity not found in query. Either the resource does not support identity or the Terraform version running the test does not support identity. (must be v1.14+)", e.resourceAddress)
 
 		return
 	}
@@ -85,7 +86,7 @@ func (e expectIdentityValueMatchesQueryAtPath) CheckQuery(ctx context.Context, r
 // ExpectIdentityValueMatchesQueryAtPath returns a query check that asserts that the specified identity attribute at the given resource
 // matches the specified attribute in query. This is useful when an identity attribute is in sync with a query attribute of a different path.
 //
-// This query check can only be used with managed resources that support resource identity. Resource identity is only supported in Terraform v1.12+
+// This query check can only be used with managed resources that support resource identity. Resource identity is only supported in Terraform v1.14+
 func ExpectIdentityValueMatchesQueryAtPath(resourceAddress string, identityAttrPath, queryAttrPath tfjsonpath.Path) QueryCheck {
 	return expectIdentityValueMatchesQueryAtPath{
 		resourceAddress:  resourceAddress,

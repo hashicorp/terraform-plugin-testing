@@ -18,9 +18,9 @@ func ExampleExpectIdentity() {
 	t.Parallel()
 
 	resource.Test(t, resource.TestCase{
-		// Resource identity support is only available in Terraform v1.12+
+		// Resource identity support is only available in Terraform v1.14+
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_12_0),
+			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		// Provider definition omitted. Assuming "test_resource" has an identity schema with "id" and "name" string attributes
 		Steps: []resource.TestStep{
