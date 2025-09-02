@@ -4,14 +4,12 @@
 package plugintest
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
@@ -20,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
-	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 const (
@@ -529,34 +526,33 @@ func (wd *WorkingDir) Schemas(ctx context.Context) (*tfjson.ProviderSchemas, err
 	return providerSchemas, err
 }
 
-type QueryResult struct {
-	Address        string                     `json:"address"`
-	DisplayName    string                     `json:"display_name"`
-	Identity       map[string]json.RawMessage `json:"identity"`
-	ResourceType   string                     `json:"resource_type"`
-	ResourceObject map[string]json.RawMessage `json:"resource_object,omitempty"`
-	Config         string                     `json:"config,omitempty"`
-	ImportConfig   string                     `json:"import_config,omitempty"`
-}
-
-func (wd *WorkingDir) Query(ctx context.Context) (any, error) {
+func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI providers query command")
 
 	args := []tfexec.QueryOption{tfexec.Reattach(wd.reattachInfo)}
 
-	// Query the provider using the Terraform CLI function
-	var buffer bytes.Buffer
+	var messages []tfjson.LogMsg
 
-	var unmarshalled map[string]any
+	// Query the provider using the Terraform CLI function
+	//var buffer bytes.Buffer
+
+	// var unmarshalled map[string]any
 
 	// This returns a slice of log messages but is not expressed as a valid JSON array, so we're going to convert the
 	// buffer to a string, split this on new line then process each line individually since we're only interested in
 	// the list/query log messages
-	_ = wd.tf.QueryJSON(context.Background(), &buffer, args...)
+	var logEmit *tfexec.LogMsgEmitter
+	var execErr, err error
 
-	bufSplit := strings.Split(string(buffer.Bytes()), "\n")
+	logEmit, execErr = wd.tf.QueryJSON(context.Background(), args...)
 
-	for _, line := range bufSplit {
+	if execErr != nil {
+		return nil, fmt.Errorf("error running terraform query command: %w", err)
+	}
+
+	//bufSplit := strings.Split(string(buffer.Bytes()), "\n")
+
+	/*for _, line := range bufSplit {
 		if line == "" {
 			continue
 		}
@@ -569,10 +565,24 @@ func (wd *WorkingDir) Query(ctx context.Context) (any, error) {
 		if traverse != nil {
 			return traverse, nil
 		}
-	}
-	return bufSplit, nil
+	}*/
 
-	//returned := make([]Result, 0)
+
+
+	var message tfjson.LogMsg
+	for message, err = logEmit.NextMessage(); err != nil || message != nil; {
+		messages = append(messages, message)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error running terraform query command: %w", err)
+	}
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI providers query command")
+
+	return messages, nil
+
+	// do a type onversion to list start data or list found message
+
 	//for _, line := range bufSplit {
 	//	if line == "" {
 	//		continue
@@ -594,17 +604,11 @@ func (wd *WorkingDir) Query(ctx context.Context) (any, error) {
 	//		returned = append(returned, *msg)
 	//	}
 	//}
-	//
-	////returned := make([]string, len(results))
-	////for i, r := range results {
-	////	returned[i] = r.Address
-	////}
-	//
-	//if err != nil {
-	//	return nil, fmt.Errorf("error running terraform query command: %w", err)
+
+	//returned := make([]string, len(results))
+	//for i, r := range results {
+	//	returned[i] = r.Address
 	//}
-	//
-	//logging.HelperResourceTrace(ctx, "Called Terraform CLI providers query command")
 }
 
 // Taken from https://github.com/hashicorp/terraform-json/pull/169/
@@ -637,8 +641,8 @@ type Result struct {
 	ListResourceFoundMessage `json:"list_resource_found"`
 }
 
-func unmarshalResult(t tfjson.LogMessageType, b []byte) (*Result, error) {
-	v := Result{}
+func unmarshalResult(t tfjson.LogMessageType, b []byte) (*tfjson.ListResourceFoundData, error) {
+	v := tfjson.ListResourceFoundData{}
 	switch t {
 	case MessageListResourceFound:
 		return &v, json.Unmarshal(b, &v)
