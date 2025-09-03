@@ -13,7 +13,7 @@ require (
 	github.com/hashicorp/hc-install v0.9.2
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/hashicorp/logutils v1.0.0
-	github.com/hashicorp/terraform-exec v0.23.1-0.20250902152613-b3bfedb74246
+	github.com/hashicorp/terraform-exec v0.23.2-0.20250903143921-c05687bce503
 	github.com/hashicorp/terraform-json v0.26.1-0.20250829125600-5c1a00f3ccc4
 	github.com/hashicorp/terraform-plugin-go v0.29.0-beta.1
 	github.com/hashicorp/terraform-plugin-log v0.9.0

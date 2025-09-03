@@ -567,13 +567,17 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 		}
 	}*/
 
-
-
 	var message tfjson.LogMsg
-	for message, err = logEmit.NextMessage(); err != nil || message != nil; {
+	var related bool
+
+	message, related, err = logEmit.NextMessage()
+
+	for err != nil || message != nil {
+		message, related, err = logEmit.NextMessage()
 		messages = append(messages, message)
 	}
-	if err != nil {
+
+	if related == true {
 		return nil, fmt.Errorf("error running terraform query command: %w", err)
 	}
 
