@@ -46,7 +46,7 @@ func TestQuery(t *testing.T) {
 			}),
 		},
 		Steps: []r.TestStep{
-			{
+			{ // config mode step 1, creates something we can list later, need tf file with terraform providers block
 				Config: `
 				resource "examplecloud_containerette" "primary" {
 					id = "westeurope/somevalue"
@@ -54,13 +54,18 @@ func TestQuery(t *testing.T) {
 					name = "somevalue"
 				}`,
 			},
-			{
+			{ // Query mode step 2, operates on .tfquery.hcl files (needs tf file with terraform providers block)
+				// ```provider "examplecloud" {}``` has a slightly different syntax for a .tfquery.hcl file
+				// provider bock simulates a real providers workflow
+				// "config" in this case means configuration of the list resource/filters
+				// run query in terraform itself maybe by moving this provider to the corner provider to check if it works
+
 				Query: true,
 				Config: `
-				provider "examplecloud" {}
+				provider "examplecloud" {} 
 				list "examplecloud_containerette" "test" {
 					provider = examplecloud
-			
+
 					config {
 						id = "bat"
 					}
