@@ -591,7 +591,7 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 
 	return messages, nil
 
-	// do a type onversion to list start data or list found message
+	// do a type conversion to list start data or list found message
 
 	//for _, line := range bufSplit {
 	//	if line == "" {

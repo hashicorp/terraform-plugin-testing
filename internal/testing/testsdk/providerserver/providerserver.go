@@ -1046,8 +1046,10 @@ func (s ProviderServer) ListResource(ctx context.Context, req *tfprotov6.ListRes
 	identitySchemaReq := resource.IdentitySchemaRequest{}
 	identitySchemaResp := &resource.IdentitySchemaResponse{}
 
-	r, _ := ProviderResource(s.Provider, req.TypeName)
-	// TODO: diag
+	r, err := ProviderResource(s.Provider, req.TypeName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve resource: %v", err)
+	}
 	r.IdentitySchema(ctx, identitySchemaReq, identitySchemaResp)
 
 	results := func(push func(tfprotov6.ListResourceResult) bool) {
@@ -1057,17 +1059,13 @@ func (s ProviderServer) ListResource(ctx context.Context, req *tfprotov6.ListRes
 			return
 		}
 
-		identityData := tftypes.NewValue(
-			tftypes.Object{
-				AttributeTypes: map[string]tftypes.Type{
-					"id": tftypes.String,
-				},
-			},
-			map[string]tftypes.Value{
-				"id": tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
-			},
-		)
-		identity, _ := IdentityValuetoDynamicValue(identitySchemaResp.Schema, identityData) // TODO: diag
+		var identityData tftypes.Value
+		identity, diag := IdentityValuetoDynamicValue(identitySchemaResp.Schema, identityData)
+		if diag != nil {
+			push(tfprotov6.ListResourceResult{Diagnostics: []*tfprotov6.Diagnostic{diag}})
+			return
+		}
+
 		push(tfprotov6.ListResourceResult{
 			Identity: &tfprotov6.ResourceIdentityData{
 				IdentityData: identity,
