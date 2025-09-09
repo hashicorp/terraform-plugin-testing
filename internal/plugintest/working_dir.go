@@ -533,11 +533,6 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 
 	var messages []tfjson.LogMsg
 
-	// Query the provider using the Terraform CLI function
-	//var buffer bytes.Buffer
-
-	// var unmarshalled map[string]any
-
 	// This returns a slice of log messages but is not expressed as a valid JSON array, so we're going to convert the
 	// buffer to a string, split this on new line then process each line individually since we're only interested in
 	// the list/query log messages
@@ -549,23 +544,6 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 	if execErr != nil {
 		return nil, fmt.Errorf("error running terraform query command: %w", err)
 	}
-
-	//bufSplit := strings.Split(string(buffer.Bytes()), "\n")
-
-	/*for _, line := range bufSplit {
-		if line == "" {
-			continue
-		}
-		err := json.Unmarshal([]byte(line), &unmarshalled)
-		if err != nil {
-			return nil, err
-		}
-
-		traverse, _ := tfjsonpath.Traverse(unmarshalled, tfjsonpath.New("list_resource_found"))
-		if traverse != nil {
-			return traverse, nil
-		}
-	}*/
 
 	var message tfjson.LogMsg
 	var related bool
@@ -590,35 +568,6 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI providers query command")
 
 	return messages, nil
-
-	// do a type conversion to list start data or list found message
-
-	//for _, line := range bufSplit {
-	//	if line == "" {
-	//		continue
-	//	}
-	//	d := json.NewDecoder(bytes.NewReader([]byte(line)))
-	//
-	//	mt := msgType{}
-	//	err := d.Decode(&mt)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//
-	//	msg, err := unmarshalResult(mt.Type, []byte(line))
-	//	if err != nil {
-	//		// TODO
-	//	}
-	//
-	//	if msg != nil {
-	//		returned = append(returned, *msg)
-	//	}
-	//}
-
-	//returned := make([]string, len(results))
-	//for i, r := range results {
-	//	returned[i] = r.Address
-	//}
 }
 
 // Taken from https://github.com/hashicorp/terraform-json/pull/169/

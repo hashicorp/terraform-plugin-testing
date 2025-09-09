@@ -8,6 +8,7 @@ import (
 	"iter"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 type ListResource interface {
@@ -16,6 +17,21 @@ type ListResource interface {
 }
 
 type ListRequest struct {
+	TypeName string
+	// Config is the configuration the user supplied for listing resource
+	// instances.
+	Config tftypes.Value
+
+	// IncludeResource indicates whether the provider should populate the
+	// [ListResult.Resource] field.
+	IncludeResource bool
+
+	// Limit specifies the maximum number of results that Terraform is
+	// expecting.
+	Limit int64
+
+	ResourceSchema         *tfprotov6.Schema
+	ResourceIdentitySchema *tfprotov6.ResourceIdentitySchema
 }
 
 type ListResultsStream struct {
@@ -23,6 +39,10 @@ type ListResultsStream struct {
 }
 
 type ListResult struct {
+	DisplayName string
+	Identity    *tftypes.Value
+	Resource    *tftypes.Value
+	Diagnostics []*tfprotov6.Diagnostic
 }
 
 type ValidateListConfigResponse struct {

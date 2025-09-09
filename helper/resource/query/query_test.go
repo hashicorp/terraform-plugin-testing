@@ -9,8 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
-	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/list"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/querycheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
@@ -24,21 +25,7 @@ func TestQuery(t *testing.T) {
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				ListResources: map[string]testprovider.ListResource{
-					"examplecloud_containerette": {
-						SchemaResponse: &list.SchemaResponse{
-							Schema: &tfprotov6.Schema{
-								Block: &tfprotov6.SchemaBlock{
-									Attributes: []*tfprotov6.SchemaAttribute{
-										ComputedStringAttribute("id"),
-									},
-								},
-							},
-						},
-						ListResultsStream: &list.ListResultsStream{
-							Results: func(push func(list.ListResult) bool) {
-							},
-						},
-					},
+					"examplecloud_containerette": examplecloudListResource(),
 				},
 				Resources: map[string]testprovider.Resource{
 					"examplecloud_containerette": examplecloudResource(),
@@ -67,9 +54,37 @@ func TestQuery(t *testing.T) {
 					provider = examplecloud
 
 					config {
-						id = "bat"
+						id = "westeurope/somevalue"
 					}
-				}`,
+				}
+				list "examplecloud_containerette" "test2" {
+					provider = examplecloud
+
+					config {
+						id = "foo"
+					}
+				}
+				`,
+				ConfigQueryChecks:  []querycheck.QueryCheck{
+					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
+						"id":   knownvalue.StringExact("westeurope/somevalue1"),
+ 					}),
+					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
+						"id":   knownvalue.StringExact("westeurope/somevalue2"),
+					}),
+					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
+						"id":   knownvalue.StringExact("westeurope/somevalue3"),
+					}),
+					querycheck.ExpectIdentity("examplecloud_containerette.test2", map[string]knownvalue.Check{
+						"id":   knownvalue.StringExact("westeurope/somevalue1"),
+					}),
+					querycheck.ExpectIdentity("examplecloud_containerette.test2", map[string]knownvalue.Check{
+						"id":   knownvalue.StringExact("westeurope/somevalue2"),
+					}),
+					querycheck.ExpectIdentity("examplecloud_containerette.test2", map[string]knownvalue.Check{
+						"id":   knownvalue.StringExact("westeurope/somevalue3"),
+					}),
+				},
 			},
 		},
 	})

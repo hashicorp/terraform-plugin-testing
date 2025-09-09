@@ -15,6 +15,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/go-version"
 	tfjson "github.com/hashicorp/terraform-json"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource/query"
 	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-testing/config"
@@ -376,15 +377,20 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				t.Fatalf("Step %d/%d error running init: %s", stepNumber, len(c.Steps), err)
 			}
 
-			var queryOut any
+			var queryOut []tfjson.LogMsg
 			err = runProviderCommand(ctx, t, wd, providers, func() error {
 				var err error
 				queryOut, err = wd.Query(ctx)
+
 				return err
 			})
 			if err != nil {
 				fmt.Printf("Step %d/%d Query Output:\n%s\n", stepNumber, len(c.Steps), queryOut)
 				t.Fatalf("Step %d/%d error running query: %s", stepNumber, len(c.Steps), err)
+			}
+			err = query.RunQueryChecks(ctx, t, &queryOut, step.ConfigQueryChecks)
+			if err != nil {
+				t.Fatalf("Step %d/%d error running query checks: %s", stepNumber, len(c.Steps), err)
 			}
 
 			fmt.Printf("Step %d/%d Query Output:\n%s\n", stepNumber, len(c.Steps), queryOut)
