@@ -5,12 +5,10 @@ package plugintest
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
@@ -568,44 +566,4 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI providers query command")
 
 	return messages, nil
-}
-
-// Taken from https://github.com/hashicorp/terraform-json/pull/169/
-const (
-	MessageListResourceFound tfjson.LogMessageType = "list_resource_found"
-)
-
-type ListResourceFoundMessage struct {
-	baseLogMessage
-	Address        string                     `json:"address"`
-	DisplayName    string                     `json:"display_name"`
-	Identity       map[string]json.RawMessage `json:"identity"`
-	ResourceType   string                     `json:"resource_type"`
-	ResourceObject map[string]json.RawMessage `json:"resource_object,omitempty"`
-	Config         string                     `json:"config,omitempty"`
-	ImportConfig   string                     `json:"import_config,omitempty"`
-}
-
-type baseLogMessage struct {
-	Lvl  tfjson.LogMessageLevel `json:"@level"`
-	Msg  string                 `json:"@message"`
-	Time time.Time              `json:"@timestamp"`
-}
-
-type msgType struct {
-	Type tfjson.LogMessageType `json:"type"`
-}
-
-type Result struct {
-	ListResourceFoundMessage `json:"list_resource_found"`
-}
-
-func unmarshalResult(t tfjson.LogMessageType, b []byte) (*tfjson.ListResourceFoundData, error) {
-	v := tfjson.ListResourceFoundData{}
-	switch t {
-	case MessageListResourceFound:
-		return &v, json.Unmarshal(b, &v)
-	}
-
-	return nil, nil
 }

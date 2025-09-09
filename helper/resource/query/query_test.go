@@ -65,24 +65,24 @@ func TestQuery(t *testing.T) {
 					}
 				}
 				`,
-				ConfigQueryChecks:  []querycheck.QueryCheck{
+				ConfigQueryChecks: []querycheck.QueryCheck{
 					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
-						"id":   knownvalue.StringExact("westeurope/somevalue1"),
- 					}),
-					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
-						"id":   knownvalue.StringExact("westeurope/somevalue2"),
+						"id": knownvalue.StringExact("westeurope/somevalue1"),
 					}),
 					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
-						"id":   knownvalue.StringExact("westeurope/somevalue3"),
+						"id": knownvalue.StringExact("westeurope/somevalue2"),
+					}),
+					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
+						"id": knownvalue.StringExact("westeurope/somevalue3"),
 					}),
 					querycheck.ExpectIdentity("examplecloud_containerette.test2", map[string]knownvalue.Check{
-						"id":   knownvalue.StringExact("westeurope/somevalue1"),
+						"id": knownvalue.StringExact("westeurope/somevalue1"),
 					}),
 					querycheck.ExpectIdentity("examplecloud_containerette.test2", map[string]knownvalue.Check{
-						"id":   knownvalue.StringExact("westeurope/somevalue2"),
+						"id": knownvalue.StringExact("westeurope/somevalue2"),
 					}),
 					querycheck.ExpectIdentity("examplecloud_containerette.test2", map[string]knownvalue.Check{
-						"id":   knownvalue.StringExact("westeurope/somevalue3"),
+						"id": knownvalue.StringExact("westeurope/somevalue3"),
 					}),
 				},
 			},
