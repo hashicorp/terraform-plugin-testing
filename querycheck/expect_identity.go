@@ -43,7 +43,7 @@ func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, r
 	}
 
 	if len(foundIdentities) == 0 {
-		resp.Error = fmt.Errorf("%s - Identity not found in query. Either the resource does not support query or the Terraform version running the test does not support query. (must be v1.14+)", e.resourceAddress)
+		resp.Error = fmt.Errorf("%s - Identity not found in query.", e.resourceAddress)
 
 		return
 	}
@@ -87,7 +87,7 @@ func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, r
 
 	var errCollection []error
 
-	errCollection = append(errCollection, fmt.Errorf("An identity with all the following attributes was not found:"))
+	errCollection = append(errCollection, fmt.Errorf("An identity with the following attributes was not found:"))
 
 	// wrap errors for each check
 	for attr, check := range e.check {
@@ -101,10 +101,9 @@ func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, r
 }
 
 // ExpectIdentity returns a query check that asserts that the identity at the given resource matches a known object, where each
-// map key represents an identity attribute name. The identity in query must exactly match the given object and any missing/extra
-// attributes will raise a diagnostic.
+// map key represents an identity attribute name. The identity in query must exactly match the given object.
 //
-// This query check can only be used with managed resources that support resource identity. Resource identity is only supported in Terraform v1.12+
+// This query check can only be used with managed resources that support resource identity and query. Query is only supported in Terraform v1.14+
 func ExpectIdentity(resourceAddress string, identity map[string]knownvalue.Check) QueryResultCheck {
 	return expectIdentity{
 		resourceAddress: resourceAddress,
