@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-var _ QueryCheck = expectIdentityValue{}
+var _ QueryResultCheck = expectIdentityValue{}
 
 type expectIdentityValue struct {
 	resourceAddress string
@@ -81,7 +81,7 @@ func (e expectIdentityValue) CheckQuery(ctx context.Context, req CheckQueryReque
 // matches a known value. This query check can only be used with managed resources that support resource identity.
 //
 // Resource identity is only supported in Terraform v1.12+
-func ExpectIdentityValue(resourceAddress string, attributePath tfjsonpath.Path, identityValue knownvalue.Check) QueryCheck {
+func ExpectIdentityValue(resourceAddress string, attributePath tfjsonpath.Path, identityValue knownvalue.Check) QueryResultCheck {
 	return expectIdentityValue{
 		resourceAddress: resourceAddress,
 		attributePath:   attributePath,

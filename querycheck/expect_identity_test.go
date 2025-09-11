@@ -28,7 +28,7 @@ func TestExpectIdentity_CheckQuery_ResourceNotFound(t *testing.T) {
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentity(
 						"examplecloud_thing.two",
 						map[string]knownvalue.Check{
@@ -65,7 +65,7 @@ func TestExpectIdentity_CheckQuery_No_Terraform_Identity_Support(t *testing.T) {
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentity(
 						"examplecloud_thing.one",
 						map[string]knownvalue.Check{
@@ -103,7 +103,7 @@ func TestExpectIdentity_CheckQuery_No_Identity(t *testing.T) {
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentity(
 						"examplecloud_thing.one",
 						map[string]knownvalue.Check{
@@ -152,7 +152,7 @@ func TestExpectIdentity_CheckQuery(t *testing.T) {
 						id = "bat"
 					}
 				}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentity(
 						"examplecloud_thing.one",
 						map[string]knownvalue.Check{
@@ -186,7 +186,7 @@ func TestExpectIdentity_CheckQuery_KnownValueWrongType(t *testing.T) {
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 
 					querycheck.ExpectIdentity(
 						"examplecloud_thing.one",
@@ -222,7 +222,7 @@ func TestExpectIdentity_CheckQuery_KnownValueWrongValue(t *testing.T) {
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 
 					querycheck.ExpectIdentity(
 						"examplecloud_thing.one",
@@ -258,7 +258,7 @@ func TestExpectIdentity_CheckQuery_ExtraAttribute(t *testing.T) {
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 
 					querycheck.ExpectIdentity(
 						"examplecloud_thing.one",
@@ -286,7 +286,7 @@ func TestExpectIdentity_CheckQuery_MissingAttribute(t *testing.T) {
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 
 					querycheck.ExpectIdentity(
 						"examplecloud_thing.one",
@@ -323,7 +323,7 @@ func TestExpectIdentity_CheckQuery_MismatchedAttribute(t *testing.T) {
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentity(
 						"examplecloud_thing.one",
 						map[string]knownvalue.Check{

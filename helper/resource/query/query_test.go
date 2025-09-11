@@ -55,7 +55,7 @@ func TestQuery(t *testing.T) {
 
 					config {
 						id = "westeurope/somevalue"
-					}
+ 					}
 				}
 				list "examplecloud_containerette" "test2" {
 					provider = examplecloud
@@ -65,15 +65,17 @@ func TestQuery(t *testing.T) {
 					}
 				}
 				`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
 						"id": knownvalue.StringExact("westeurope/somevalue1"),
 					}),
 					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
-						"id": knownvalue.StringExact("westeurope/somevalue2"),
+						"id":       knownvalue.StringExact("westeurope/somevalue2"),
+						"location": knownvalue.StringExact("westeurope2"),
 					}),
 					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
-						"id": knownvalue.StringExact("westeurope/somevalue3"),
+						"id":       knownvalue.StringExact("westeurope/somevalue3"),
+						"location": knownvalue.StringExact("westeurope3"),
 					}),
 					querycheck.ExpectIdentity("examplecloud_containerette.test2", map[string]knownvalue.Check{
 						"id": knownvalue.StringExact("westeurope/somevalue1"),
@@ -84,6 +86,54 @@ func TestQuery(t *testing.T) {
 					querycheck.ExpectIdentity("examplecloud_containerette.test2", map[string]knownvalue.Check{
 						"id": knownvalue.StringExact("westeurope/somevalue3"),
 					}),
+				},
+			},
+			{
+				Query: true,
+				Config: `
+				provider "examplecloud" {} 
+				list "examplecloud_containerette" "test" {
+					provider = examplecloud
+
+					config {
+						id = "westeurope/somevalue"
+ 					}
+				}
+				list "examplecloud_containerette" "test2" {
+					provider = examplecloud
+
+					config {
+						id = "foo"
+					}
+				}
+				`,
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
+					querycheck.ExpectLength("examplecloud_containerette.test", knownvalue.Int64Exact(3)),
+					querycheck.ExpectLength("examplecloud_containerette.test2", knownvalue.Int64Exact(3)),
+				},
+			},
+			{
+				Query: true,
+				Config: `
+				provider "examplecloud" {} 
+				list "examplecloud_containerette" "test" {
+					provider = examplecloud
+
+					config {
+						id = "westeurope/somevalue"
+ 					}
+				}
+				list "examplecloud_containerette" "test2" {
+					provider = examplecloud
+
+					config {
+						id = "foo"
+					}
+				}
+				`,
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
+					querycheck.ExpectLengthAtLeast("examplecloud_containerette.test", 2),
+					querycheck.ExpectLengthAtLeast("examplecloud_containerette.test2", 1),
 				},
 			},
 		},

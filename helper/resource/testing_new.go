@@ -389,7 +389,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				t.Fatalf("Step %d/%d error running query: %s", stepNumber, len(c.Steps), err)
 			}
 
-			err = query.RunQueryChecks(ctx, t, &queryOut, step.ConfigQueryChecks)
+			err = query.RunQueryChecks(ctx, t, &queryOut, step.ConfigQueryResultChecks)
 			if err != nil {
 				t.Fatalf("Step %d/%d error running query checks: %s", stepNumber, len(c.Steps), err)
 			}

@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/querycheck"
 )
 
-var _ querycheck.QueryCheck = &queryCheckSpy{}
+var _ querycheck.QueryResultCheck = &queryCheckSpy{}
 
 type queryCheckSpy struct {
 	err    error

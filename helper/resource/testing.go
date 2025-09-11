@@ -8,13 +8,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-testing/querycheck"
 	"log"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-testing/querycheck"
 
 	"github.com/mitchellh/go-testing-interface"
 
@@ -641,9 +642,9 @@ type TestStep struct {
 	// Custom state checks can be created by implementing the [statecheck.StateCheck] interface, or by using a StateCheck implementation from the provided [statecheck] package.
 	ConfigStateChecks []statecheck.StateCheck
 
-	// ConfigQueryChecks allow assertions to be made against the query file during a Config test using a query check.
-	// Custom query checks can be created by implementing the [querycheck.QueryCheck] interface, or by using a QueryCheck implementation from the provided [querycheck] package.
-	ConfigQueryChecks []querycheck.QueryCheck
+	// ConfigQueryResultChecks allow assertions to be made against the query file during a Config test using a query check.
+	// Custom query checks can be created by implementing the [querycheck.QueryResultCheck] interface, or by using a QueryResultCheck implementation from the provided [querycheck] package.
+	ConfigQueryResultChecks []querycheck.QueryResultCheck
 
 	// PlanOnly can be set to only run `plan` with this configuration, and not
 	// actually apply it. This is useful for ensuring config changes result in
@@ -864,15 +865,15 @@ type ConfigPlanChecks struct {
 type ConfigQueryChecks struct {
 	// PreApply runs all query checks in the slice. This occurs before the apply of a Config test is run. This slice cannot be populated
 	// with TestStep.QueryOnly, as there is no PreApply query run with that flag set. All errors by query checks in this slice are aggregated, reported, and will result in a test failure.
-	PreApply []querycheck.QueryCheck
+	PreApply []querycheck.QueryResultCheck
 
 	// PostApplyPreRefresh runs all query checks in the slice. This occurs after the apply and before the refresh of a Config test is run.
 	// All errors by query checks in this slice are aggregated, reported, and will result in a test failure.
-	PostApplyPreRefresh []querycheck.QueryCheck
+	PostApplyPreRefresh []querycheck.QueryResultCheck
 
 	// PostApplyPostRefresh runs all query checks in the slice. This occurs after the apply and refresh of a Config test are run.
 	// All errors by query checks in this slice are aggregated, reported, and will result in a test failure.
-	PostApplyPostRefresh []querycheck.QueryCheck
+	PostApplyPostRefresh []querycheck.QueryResultCheck
 }
 
 // ImportPlanChecks defines the different points in an Import TestStep when plan checks can be run.

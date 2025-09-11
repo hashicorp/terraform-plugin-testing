@@ -35,7 +35,7 @@ func TestExpectIdentityValue_CheckQuery_ResourceNotFound(t *testing.T) {
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentityValue(
 						"examplecloud_thing.two",
 						tfjsonpath.New("id"),
@@ -63,7 +63,7 @@ func TestExpectIdentityValue_CheckQuery_No_Terraform_Identity_Support(t *testing
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentityValue(
 						"examplecloud_thing.one",
 						tfjsonpath.New("id"),
@@ -92,7 +92,7 @@ func TestExpectIdentityValue_CheckQuery_No_Identity(t *testing.T) {
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentityValue(
 						"examplecloud_thing.one",
 						tfjsonpath.New("id"),
@@ -120,7 +120,7 @@ func TestExpectIdentityValue_CheckQuery_String(t *testing.T) {
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentityValue(
 						"examplecloud_thing.one",
 						tfjsonpath.New("id"),
@@ -144,7 +144,7 @@ func TestExpectIdentityValue_CheckQuery_String_KnownValueWrongType(t *testing.T)
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentityValue(
 						"examplecloud_thing.one",
 						tfjsonpath.New("id"),
@@ -169,7 +169,7 @@ func TestExpectIdentityValue_CheckQuery_String_KnownValueWrongValue(t *testing.T
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentityValue(
 						"examplecloud_thing.one",
 						tfjsonpath.New("id"),
@@ -194,7 +194,7 @@ func TestExpectIdentityValue_CheckQuery_List(t *testing.T) {
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentityValue(
 						"examplecloud_thing.one",
 						tfjsonpath.New("list_of_numbers").AtSliceIndex(0),
@@ -235,7 +235,7 @@ func TestExpectIdentityValue_CheckQuery_List_KnownValueWrongType(t *testing.T) {
 			{
 				Config: `resource "examplecloud_thing" "one" {}
 				`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentityValue(
 						"examplecloud_thing.one",
 						tfjsonpath.New("list_of_numbers"),
@@ -261,7 +261,7 @@ func TestExpectIdentityValue_CheckQuery_List_KnownValueWrongValue(t *testing.T) 
 		Steps: []r.TestStep{
 			{
 				Config: `resource "examplecloud_thing" "one" {}`,
-				ConfigQueryChecks: []querycheck.QueryCheck{
+				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentityValue(
 						"examplecloud_thing.one",
 						tfjsonpath.New("list_of_numbers"),

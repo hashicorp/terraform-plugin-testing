@@ -9,9 +9,9 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 )
 
-// QueryCheck defines an interface for implementing test logic that checks a query file and then returns an error
+// QueryResultCheck defines an interface for implementing test logic that checks a query file and then returns an error
 // if the query file does not match what is expected.
-type QueryCheck interface {
+type QueryResultCheck interface {
 	// CheckQuery should perform the query check.
 	CheckQuery(context.Context, CheckQueryRequest, *CheckQueryResponse)
 }
@@ -24,7 +24,7 @@ type CheckQueryRequest struct {
 
 // CheckQueryResponse is a response to an invoke of the CheckQuery function.
 type CheckQueryResponse struct {
-	// Error is used to report the failure of a query check assertion and is combined with other QueryCheck errors
+	// Error is used to report the failure of a query check assertion and is combined with other QueryResultCheck errors
 	// to be reported as a test failure.
 	Error error
 }

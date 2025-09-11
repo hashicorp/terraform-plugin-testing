@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/querycheck"
 )
 
-func RunQueryChecks(ctx context.Context, t testing.T, query *[]tfjson.LogMsg, queryChecks []querycheck.QueryCheck) error {
+func RunQueryChecks(ctx context.Context, t testing.T, query *[]tfjson.LogMsg, queryChecks []querycheck.QueryResultCheck) error {
 	t.Helper()
 
 	var result []error
