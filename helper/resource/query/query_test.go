@@ -37,7 +37,7 @@ func TestQuery(t *testing.T) {
 				Config: `
 				resource "examplecloud_containerette" "primary" {
 					id = "westeurope/somevalue"
-					location = "westeurope"	
+					location = "westeurope"
 					name = "somevalue"
 				}`,
 			},
@@ -67,7 +67,8 @@ func TestQuery(t *testing.T) {
 				`,
 				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
-						"id": knownvalue.StringExact("westeurope/somevalue1"),
+						"id":       knownvalue.StringExact("westeurope/somevalue1"),
+						"location": knownvalue.StringExact("westeurope"),
 					}),
 					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
 						"id":       knownvalue.StringExact("westeurope/somevalue2"),

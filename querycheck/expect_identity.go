@@ -51,6 +51,8 @@ func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, r
 	var err error
 
 	for _, resultIdentity := range foundIdentities {
+		var errCollection []error
+
 		for attribute := range e.check {
 			var val any
 			var ok bool
@@ -66,7 +68,7 @@ func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, r
 				resp.Error = fmt.Errorf("%s - expected json.RawMessage but got %T", e.resourceAddress, val)
 				return
 			}
-			err = json.Unmarshal(rawMessage, &unmarshed)
+			err = json.Unmarshal(rawMessage, &unmarshalledVal)
 
 			if err != nil {
 				resp.Error = fmt.Errorf("%s - Error decoding message type: %s", e.resourceAddress, err)
@@ -77,11 +79,23 @@ func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, r
 				errCollection = append(errCollection, fmt.Errorf("%s - %q identity attribute: %s\n", e.resourceAddress, e.check, err))
 			}
 		}
+
+		if errCollection == nil {
+			return
+		}
 	}
 
-	if !found {
-		resp.Error = fmt.Errorf("%s - %q identity attribute: %s", e.resourceAddress, e.check, err)
+	var errCollection []error
+
+	errCollection = append(errCollection, fmt.Errorf("An identity with all the following attributes was not found:"))
+
+	// wrap errors for each check
+	for attr, check := range e.check {
+		errCollection = append(errCollection, fmt.Errorf("Attribute %s: %s", attr, check))
 	}
+	errCollection = append(errCollection, fmt.Errorf("Address: %s\n", e.resourceAddress))
+
+	resp.Error = errors.Join(errCollection...)
 
 	return
 }
