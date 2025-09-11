@@ -21,7 +21,7 @@ type expectLengthAtLeast struct {
 // CheckQuery implements the query check logic.
 func (e expectLengthAtLeast) CheckQuery(ctx context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
 	if req.Query == nil {
-		resp.Error = fmt.Errorf("query is nil")
+		resp.Error = fmt.Errorf("Query is nil")
 		return
 	}
 

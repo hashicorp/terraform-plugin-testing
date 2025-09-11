@@ -26,7 +26,7 @@ func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, r
 	var foundIdentities []map[string]json.RawMessage
 
 	if req.Query == nil {
-		resp.Error = fmt.Errorf("query is nil")
+		resp.Error = fmt.Errorf("Query is nil")
 		return
 	}
 

@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
@@ -525,42 +526,39 @@ func (wd *WorkingDir) Schemas(ctx context.Context) (*tfjson.ProviderSchemas, err
 }
 
 func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
+	var messages []tfjson.LogMsg
+	var logEmit *tfexec.LogMsgEmitter
+	var execErr, err error
+	var message tfjson.LogMsg
+	var related bool
+
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI providers query command")
 
 	args := []tfexec.QueryOption{tfexec.Reattach(wd.reattachInfo)}
 
-	var messages []tfjson.LogMsg
-
-	// This returns a slice of log messages but is not expressed as a valid JSON array, so we're going to convert the
-	// buffer to a string, split this on new line then process each line individually since we're only interested in
-	// the list/query log messages
-	var logEmit *tfexec.LogMsgEmitter
-	var execErr, err error
-
 	logEmit, execErr = wd.tf.QueryJSON(context.Background(), args...)
 
 	if execErr != nil {
-		return nil, fmt.Errorf("error running terraform query command: %w", err)
+		return nil, fmt.Errorf("Error running terraform query command: %w", err)
 	}
-
-	var message tfjson.LogMsg
-	var related bool
 
 	message, related, err = logEmit.NextMessage()
 
 	if related == false && err != nil {
-		return nil, fmt.Errorf("error no messages found from terraform query command: %w", err)
+		return nil, fmt.Errorf("Error no messages found from terraform query command: %w", err)
 	}
-
-	// possibly use iterator pattern here
 
 	for err != nil || message != nil {
 		message, related, err = logEmit.NextMessage()
 		messages = append(messages, message)
+
+		if message != nil && strings.Contains(message.Message(), "Invalid provider configuration") {
+			return nil, fmt.Errorf("Provider requires explicit configuration. Add a provider block to the root module and configure the provider's required arguments as described in the provider documentation.")
+		}
 	}
 
 	if related == true {
-		return nil, fmt.Errorf("error running terraform query command: %w", err)
+		return nil, fmt.Errorf("Error running terraform query command: %w", err)
 	}
 
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI providers query command")
