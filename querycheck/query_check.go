@@ -19,7 +19,10 @@ type QueryResultCheck interface {
 // CheckQueryRequest is a request for an invoke of the CheckQuery function.
 type CheckQueryRequest struct {
 	// Query represents a parsed query file, retrieved via the `terraform show -json` command.
-	Query *[]tfjson.LogMsg
+	Query *[]tfjson.ListResourceFoundData
+
+	// CompletedQuery contains a summary of the completed query operation.
+	CompletedQuery *tfjson.ListCompleteData
 }
 
 // CheckQueryResponse is a response to an invoke of the CheckQuery function.

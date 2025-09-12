@@ -6,6 +6,7 @@ package query
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
@@ -18,9 +19,35 @@ func RunQueryChecks(ctx context.Context, t testing.T, query *[]tfjson.LogMsg, qu
 
 	var result []error
 
+	if query == nil || len(*query) == 0 {
+		// TODO return error
+	}
+
+	found := make([]tfjson.ListResourceFoundData, 0)
+	complete := tfjson.ListCompleteData{}
+
+	for _, msg := range *query {
+		switch v := msg.(type) {
+		case tfjson.ListResourceFoundMessage:
+			found = append(found, v.ListResourceFound)
+		case tfjson.ListCompleteMessage:
+			complete = v.ListComplete
+			// TODO diagnostics and errors?
+		}
+	}
+
+	// TODO check diagnostics in LogMsg to see if there are any errors we can return here?
+	var err error
+	if len(found) == 0 {
+		return fmt.Errorf("no resources found by query: %+v", err)
+	}
+
 	for _, queryCheck := range queryChecks {
 		resp := querycheck.CheckQueryResponse{}
-		queryCheck.CheckQuery(ctx, querycheck.CheckQueryRequest{Query: query}, &resp)
+		queryCheck.CheckQuery(ctx, querycheck.CheckQueryRequest{
+			Query:          &found,
+			CompletedQuery: &complete,
+		}, &resp)
 
 		result = append(result, resp.Error)
 	}

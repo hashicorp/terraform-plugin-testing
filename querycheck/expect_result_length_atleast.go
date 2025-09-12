@@ -6,9 +6,6 @@ package querycheck
 import (
 	"context"
 	"fmt"
-	"strings"
-
-	tfjson "github.com/hashicorp/terraform-json"
 )
 
 var _ QueryResultCheck = expectLengthAtLeast{}
@@ -19,31 +16,16 @@ type expectLengthAtLeast struct {
 }
 
 // CheckQuery implements the query check logic.
-func (e expectLengthAtLeast) CheckQuery(ctx context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
-	if req.Query == nil {
-		resp.Error = fmt.Errorf("Query is nil")
+func (e expectLengthAtLeast) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
+	if req.CompletedQuery == nil {
+		resp.Error = fmt.Errorf("no completed query information available")
 		return
 	}
 
-	for _, v := range *req.Query {
-		switch i := v.(type) {
-		case tfjson.ListCompleteMessage:
-			prefix := "list."
-
-			if strings.TrimPrefix(i.ListComplete.Address, prefix) == e.resourceAddress {
-				if i.ListComplete.Total < e.check {
-					resp.Error = fmt.Errorf("Query result of at least length %v - expected but got %v.", e.check, i.ListComplete.Total)
-					return
-				} else {
-					return
-				}
-			}
-		default:
-			continue
-		}
+	if req.CompletedQuery.Total < e.check {
+		resp.Error = fmt.Errorf("Query result of at least length %v - expected but got %v.", e.check, req.CompletedQuery.Total)
+		return
 	}
-
-	resp.Error = fmt.Errorf("%s - Address not found in query result.", e.resourceAddress)
 
 	return
 }

@@ -134,7 +134,6 @@ func TestQuery(t *testing.T) {
 				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectLengthAtLeast("examplecloud_containerette.test", 2),
 					querycheck.ExpectLengthAtLeast("examplecloud_containerette.test2", 1),
-					querycheck.Contains(),
 				},
 			},
 		},

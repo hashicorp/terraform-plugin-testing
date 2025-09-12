@@ -8,9 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 
-	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 )
 
@@ -23,42 +21,15 @@ type expectIdentity struct {
 
 // CheckQuery implements the query check logic.
 func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
-	var foundIdentities []map[string]json.RawMessage
-
-	if req.Query == nil {
-		resp.Error = fmt.Errorf("Query is nil")
-		return
-	}
-
-	for _, v := range *req.Query {
-		switch i := v.(type) {
-		case tfjson.ListResourceFoundMessage:
-			prefix := "list."
-			if strings.TrimPrefix(i.ListResourceFound.Address, prefix) == e.resourceAddress {
-				foundIdentities = append(foundIdentities, i.ListResourceFound.Identity)
-			}
-		default:
-			continue
-		}
-	}
-
-	if len(foundIdentities) == 0 {
-		resp.Error = fmt.Errorf("%s - Identity not found in query.", e.resourceAddress)
-
-		return
-	}
-
-	var err error
-
-	for _, resultIdentity := range foundIdentities {
+	for _, res := range *req.Query {
 		var errCollection []error
 
 		for attribute := range e.check {
 			var val any
-			var ok bool
 			var unmarshalledVal any
 
-			if val, ok = resultIdentity[attribute]; !ok {
+			val, ok := res.Identity[attribute]
+			if !ok {
 				resp.Error = fmt.Errorf("%s - expected attribute %q not in actual identity object", e.resourceAddress, attribute)
 				return
 			}
@@ -68,7 +39,7 @@ func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, r
 				resp.Error = fmt.Errorf("%s - expected json.RawMessage but got %T", e.resourceAddress, val)
 				return
 			}
-			err = json.Unmarshal(rawMessage, &unmarshalledVal)
+			err := json.Unmarshal(rawMessage, &unmarshalledVal)
 
 			if err != nil {
 				resp.Error = fmt.Errorf("%s - Error decoding message type: %s", e.resourceAddress, err)
@@ -79,7 +50,6 @@ func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, r
 				errCollection = append(errCollection, fmt.Errorf("%s - %q identity attribute: %s\n", e.resourceAddress, e.check, err))
 			}
 		}
-
 		if errCollection == nil {
 			return
 		}

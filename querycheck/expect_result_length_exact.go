@@ -8,9 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 
-	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 )
 
@@ -22,32 +20,18 @@ type expectLength struct {
 }
 
 // CheckQuery implements the query check logic.
-func (e expectLength) CheckQuery(ctx context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
-	if req.Query == nil {
-		resp.Error = fmt.Errorf("Query is nil")
+func (e expectLength) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
+	if req.CompletedQuery == nil {
+		resp.Error = fmt.Errorf("no completed query information available")
 		return
 	}
 
-	for _, v := range *req.Query {
-		switch i := v.(type) {
-		case tfjson.ListCompleteMessage:
-			prefix := "list."
-			lengthCheck := json.Number((strconv.Itoa(i.ListComplete.Total)))
+	lengthCheck := json.Number(strconv.Itoa(req.CompletedQuery.Total))
 
-			if strings.TrimPrefix(i.ListComplete.Address, prefix) == e.resourceAddress {
-				if err := e.check.CheckValue(lengthCheck); err != nil {
-					resp.Error = fmt.Errorf("Query result of length %v - expected but got %v.", e.check, i.ListComplete.Total)
-					return
-				} else {
-					return
-				}
-			}
-		default:
-			continue
-		}
+	if err := e.check.CheckValue(lengthCheck); err != nil {
+		resp.Error = fmt.Errorf("Query result of length %v - expected but got %v.", e.check, req.CompletedQuery.Total)
+		return
 	}
-
-	resp.Error = fmt.Errorf("%s - Address not found in query result.", e.resourceAddress)
 
 	return
 }
