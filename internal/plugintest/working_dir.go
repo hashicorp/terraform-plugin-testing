@@ -4,7 +4,6 @@
 package plugintest
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
