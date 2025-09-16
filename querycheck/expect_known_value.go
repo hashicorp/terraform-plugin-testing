@@ -70,7 +70,7 @@ func (e expectKnownValue) CheckQuery(_ context.Context, req CheckQueryRequest, r
 			for _, diag := range diags {
 				diagsStr += diag.Error() + "; "
 			}
-			resp.Error = fmt.Errorf(diagsStr)
+			resp.Error = fmt.Errorf("The following errors were found while checking values: %s" + diagsStr)
 			return
 		}
 	}
