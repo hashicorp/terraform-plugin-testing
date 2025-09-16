@@ -1053,7 +1053,7 @@ func (s ProviderServer) ListResource(ctx context.Context, req *tfprotov6.ListRes
 		return nil, fmt.Errorf("failed to retrieve resource: %v", err)
 	}
 	r.IdentitySchema(ctx, identitySchemaReq, identitySchemaResp)
-	if identitySchemaResp.Diagnostics != nil && len(identitySchemaResp.Diagnostics) > 0 {
+	if len(identitySchemaResp.Diagnostics) > 0 {
 		return nil, fmt.Errorf("failed to retrieve resource schema: %v", identitySchemaResp.Diagnostics)
 	}
 
@@ -1066,7 +1066,7 @@ func (s ProviderServer) ListResource(ctx context.Context, req *tfprotov6.ListRes
 	schemaResp := &list.SchemaResponse{}
 
 	listresource.Schema(ctx, schemaReq, schemaResp)
-	if schemaResp.Diagnostics != nil && len(schemaResp.Diagnostics) > 0 {
+	if len(schemaResp.Diagnostics) > 0 {
 		return nil, fmt.Errorf("failed to retrieve resource schema: %v", schemaResp.Diagnostics)
 	}
 

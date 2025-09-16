@@ -66,8 +66,6 @@ func (e expectIdentity) CheckQuery(ctx context.Context, req CheckQueryRequest, r
 	errCollection = append(errCollection, fmt.Errorf("Address: %s\n", e.resourceAddress))
 
 	resp.Error = errors.Join(errCollection...)
-
-	return
 }
 
 // ExpectIdentity returns a query check that asserts that the identity at the given resource matches a known object, where each

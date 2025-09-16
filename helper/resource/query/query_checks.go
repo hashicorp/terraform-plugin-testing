@@ -20,7 +20,7 @@ func RunQueryChecks(ctx context.Context, t testing.T, query *[]tfjson.LogMsg, qu
 	var result []error
 
 	if query == nil || len(*query) == 0 {
-		// TODO return error
+		result = append(result, fmt.Errorf("No query results found"))
 	}
 
 	found := make([]tfjson.ListResourceFoundData, 0)
@@ -33,6 +33,8 @@ func RunQueryChecks(ctx context.Context, t testing.T, query *[]tfjson.LogMsg, qu
 		case tfjson.ListCompleteMessage:
 			complete = v.ListComplete
 			// TODO diagnostics and errors?
+		default:
+			// ignore other message types
 		}
 	}
 

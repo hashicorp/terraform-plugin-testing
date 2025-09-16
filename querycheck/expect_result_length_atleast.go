@@ -26,8 +26,6 @@ func (e expectLengthAtLeast) CheckQuery(_ context.Context, req CheckQueryRequest
 		resp.Error = fmt.Errorf("Query result of at least length %v - expected but got %v.", e.check, req.CompletedQuery.Total)
 		return
 	}
-
-	return
 }
 
 // ExpectLengthAtLeast returns a query check that asserts that the length of the query result is at least the given value.

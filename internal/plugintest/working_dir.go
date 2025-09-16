@@ -544,7 +544,7 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 
 	message, related, err = logEmit.NextMessage()
 
-	if related == false && err != nil {
+	if !related && err != nil {
 		return nil, fmt.Errorf("Error no messages found from terraform query command: %w", err)
 	}
 
@@ -557,7 +557,7 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 		}
 	}
 
-	if related == true {
+	if related {
 		return nil, fmt.Errorf("Error running terraform query command: %w", err)
 	}
 

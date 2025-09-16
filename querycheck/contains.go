@@ -21,12 +21,10 @@ func (c contains) CheckQuery(_ context.Context, req CheckQueryRequest, resp *Che
 		if strings.EqualFold(c.check, res.DisplayName) {
 			return
 		}
-
 	}
 
 	resp.Error = fmt.Errorf("expected to find resource with display name %q in results but resource was not found", c.check)
 
-	return
 }
 
 // Contains returns a query check that asserts that a resource with a given display name exists within the returned results of the query.

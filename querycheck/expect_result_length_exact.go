@@ -32,8 +32,6 @@ func (e expectLength) CheckQuery(_ context.Context, req CheckQueryRequest, resp 
 		resp.Error = fmt.Errorf("Query result of length %v - expected but got %v.", e.check, req.CompletedQuery.Total)
 		return
 	}
-
-	return
 }
 
 // ExpectLength returns a query check that asserts that the length of the query result is exactly the given value.

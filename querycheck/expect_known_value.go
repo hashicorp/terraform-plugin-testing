@@ -7,9 +7,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
-	"strings"
 )
 
 var _ QueryResultCheck = expectKnownValue{}
@@ -63,11 +64,18 @@ func (e expectKnownValue) CheckQuery(_ context.Context, req CheckQueryRequest, r
 				}
 			}
 		}
+
+		if diags != nil {
+			var diagsStr string
+			for _, diag := range diags {
+				diagsStr += diag.Error() + "; "
+			}
+			resp.Error = fmt.Errorf(diagsStr)
+			return
+		}
 	}
 
 	resp.Error = fmt.Errorf("%s - the resource %s was not found", e.listResourceAddress, e.resourceName)
-
-	return
 }
 
 func ExpectKnownValue(listResourceAddress string, resourceName string, attributePath tfjsonpath.Path, knownValue knownvalue.Check) QueryResultCheck {
