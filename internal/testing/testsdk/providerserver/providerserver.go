@@ -1174,4 +1174,5 @@ func processListResult(req list.ListRequest, result list.ListResult) tfprotov6.L
 	listResourceResult.DisplayName = result.DisplayName
 
 	return listResourceResult
+
 }
