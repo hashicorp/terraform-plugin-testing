@@ -5,7 +5,6 @@ package querycheck
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -32,36 +31,18 @@ func (e expectKnownValue) CheckQuery(_ context.Context, req CheckQueryRequest, r
 				return
 			}
 
-			// Ideally we can do the check like below which is identical to the expect known value state check but... terraform-json hasn't
-			// defined the resource object as a map[string]interface, we so we need to iterate over it manually
-			//resource, err := tfjsonpath.Traverse(res.ResourceObject, e.attributePath)
-			//if err != nil {
-			//	resp.Error = err
-			//	return
-			//}
-			//
-			//if err := e.knownValue.CheckValue(resource); err != nil {
-			//	diags = append(diags, fmt.Errorf("error checking value for attribute at path: %s for resource %s, err: %s", e.attributePath.String(), e.resourceName, err))
-			//}
-			//
-			//if diags == nil {
-			//	return
-			//}
+			resource, err := tfjsonpath.Traverse(res.ResourceObject, e.attributePath)
+			if err != nil {
+				resp.Error = err
+				return
+			}
 
-			for k, v := range res.ResourceObject {
-				if k == e.attributePath.String() {
-					var val any
+			if err := e.knownValue.CheckValue(resource); err != nil {
+				diags = append(diags, fmt.Errorf("error checking value for attribute at path: %s for resource %s, err: %s", e.attributePath.String(), e.resourceName, err))
+			}
 
-					err := json.Unmarshal(v, &val)
-					if err != nil {
-						resp.Error = fmt.Errorf("%s - Error decoding message type: %s", e.listResourceAddress, err)
-						return
-					}
-
-					if err := e.knownValue.CheckValue(val); err != nil {
-						diags = append(diags, fmt.Errorf("error checking value for attribute at path: %s for resource %s, err: %s", e.attributePath.String(), e.resourceName, err))
-					}
-				}
+			if diags == nil {
+				return
 			}
 		}
 
@@ -78,6 +59,11 @@ func (e expectKnownValue) CheckQuery(_ context.Context, req CheckQueryRequest, r
 	resp.Error = fmt.Errorf("%s - the resource %s was not found", e.listResourceAddress, e.resourceName)
 }
 
+// ExpectKnownValue returns a query check that asserts the specified attribute values are present for a given resource object
+// returned by a list query. The resource object can only be identified by providing the list resource address as well as the
+// resource name (display name).
+//
+// This query check can only be used with managed resources that support resource identity and query. Query is only supported in Terraform v1.14+
 func ExpectKnownValue(listResourceAddress string, resourceName string, attributePath tfjsonpath.Path, knownValue knownvalue.Check) QueryResultCheck {
 	return expectKnownValue{
 		listResourceAddress: listResourceAddress,

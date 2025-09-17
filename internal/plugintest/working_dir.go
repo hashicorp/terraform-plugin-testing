@@ -6,13 +6,11 @@ package plugintest
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-exec/tfexec"
+	tfjson "github.com/hashicorp/terraform-json"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
-
-	"github.com/hashicorp/terraform-exec/tfexec"
-	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
@@ -527,38 +525,32 @@ func (wd *WorkingDir) Schemas(ctx context.Context) (*tfjson.ProviderSchemas, err
 
 func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 	var messages []tfjson.LogMsg
-	var logEmit *tfexec.LogMsgEmitter
-	var execErr, err error
-	var message tfjson.LogMsg
-	var related bool
+	var diags []tfjson.LogMsg
 
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI providers query command")
 
 	args := []tfexec.QueryOption{tfexec.Reattach(wd.reattachInfo)}
 
-	logEmit, execErr = wd.tf.QueryJSON(context.Background(), args...)
+	logs, err := wd.tf.QueryJSON(context.Background(), args...)
 
-	if execErr != nil {
-		return nil, fmt.Errorf("Error running terraform query command: %w", err)
+	if err != nil {
+		return nil, fmt.Errorf("running terraform query command: %w", err)
 	}
 
-	message, related, err = logEmit.NextMessage()
-
-	if !related && err != nil {
-		return nil, fmt.Errorf("Error no messages found from terraform query command: %w", err)
-	}
-
-	for err != nil || message != nil {
-		message, related, err = logEmit.NextMessage()
-		messages = append(messages, message)
-
-		if message != nil && strings.Contains(message.Message(), "Invalid provider configuration") {
-			return nil, fmt.Errorf("Provider requires explicit configuration. Add a provider block to the root module and configure the provider's required arguments as described in the provider documentation.")
+	for msg := range logs {
+		if msg.Err != nil {
+			return nil, fmt.Errorf("retrieving next message: %w", msg.Err)
 		}
+		if msg.Msg.Level() == tfjson.Error {
+			// TODO reimplement missing .tf config error
+			diags = append(diags, msg.Msg)
+			continue
+		}
+		messages = append(messages, msg.Msg)
 	}
 
-	if related {
-		return nil, fmt.Errorf("Error running terraform query command: %w", err)
+	if len(diags) > 0 {
+		return nil, fmt.Errorf("running terraform query command returned diagnostics: %+v", diags)
 	}
 
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI providers query command")

@@ -78,13 +78,16 @@ func TestQuery(t *testing.T) {
 						"location": knownvalue.StringExact("westeurope3"),
 					}),
 					querycheck.ExpectIdentity("examplecloud_containerette.test2", map[string]knownvalue.Check{
-						"id": knownvalue.StringExact("westeurope/somevalue1"),
+						"id":       knownvalue.StringExact("westeurope/somevalue1"),
+						"location": knownvalue.StringExact("westeurope"),
 					}),
 					querycheck.ExpectIdentity("examplecloud_containerette.test2", map[string]knownvalue.Check{
-						"id": knownvalue.StringExact("westeurope/somevalue2"),
+						"id":       knownvalue.StringExact("westeurope/somevalue2"),
+						"location": knownvalue.StringExact("westeurope"),
 					}),
 					querycheck.ExpectIdentity("examplecloud_containerette.test2", map[string]knownvalue.Check{
-						"id": knownvalue.StringExact("westeurope/somevalue3"),
+						"id":       knownvalue.StringExact("westeurope/somevalue3"),
+						"location": knownvalue.StringExact("westeurope"),
 					}),
 				},
 			},
