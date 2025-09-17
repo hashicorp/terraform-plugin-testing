@@ -538,9 +538,14 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 	}
 
 	for msg := range logs {
+		if msg.Msg == nil {
+			continue
+		}
+
 		if msg.Err != nil {
 			return nil, fmt.Errorf("retrieving next message: %w", msg.Err)
 		}
+
 		if msg.Msg.Level() == tfjson.Error {
 			// TODO reimplement missing .tf config error
 			diags = append(diags, msg.Msg)
