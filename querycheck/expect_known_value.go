@@ -23,7 +23,7 @@ type expectKnownValue struct {
 
 func (e expectKnownValue) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
 	for _, res := range req.Query {
-		diags := make([]error, 0)
+		var diags []error
 
 		if e.listResourceAddress == strings.TrimPrefix(res.Address, "list.") && e.resourceName == res.DisplayName {
 			if res.ResourceObject == nil {
@@ -51,7 +51,7 @@ func (e expectKnownValue) CheckQuery(_ context.Context, req CheckQueryRequest, r
 			for _, diag := range diags {
 				diagsStr += diag.Error() + "; "
 			}
-			resp.Error = fmt.Errorf("The following errors were found while checking values: %s" + diagsStr)
+			resp.Error = fmt.Errorf("the following errors were found while checking values: %s", diagsStr)
 			return
 		}
 	}
