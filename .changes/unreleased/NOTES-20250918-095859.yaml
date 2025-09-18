@@ -1,5 +1,0 @@
-kind: NOTES
-body: 'all: This Go module has been updated to Go 1.24 per the Go support policy. It is recommended to review the Go 1.24 release notes before upgrading.'
-time: 2025-09-18T09:58:59.693223+02:00
-custom:
-    Issue: "551"

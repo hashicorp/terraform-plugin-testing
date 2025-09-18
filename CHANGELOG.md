@@ -1,3 +1,11 @@
+## 1.14.0-beta.1 (September 18, 2025)
+
+NOTES:
+
+* Adds an opt-in compatibility flag for config mode tests to unlock upgrade from v1.5.1 to latest for specific providers. ([#496](https://github.com/hashicorp/terraform-plugin-testing/issues/496))
+* This beta pre-release adds a new query mode to support testing for list blocks which can be used with Terraform v1.14+ ([#531](https://github.com/hashicorp/terraform-plugin-testing/issues/531))
+* all: This Go module has been updated to Go 1.24 per the Go support policy. It is recommended to review the Go 1.24 release notes before upgrading. ([#551](https://github.com/hashicorp/terraform-plugin-testing/issues/551))
+
 ## 1.13.2 (June 11, 2025)
 
 BUG FIXES:

@@ -1,5 +1,0 @@
-kind: NOTES
-body: This beta pre-release adds a new query mode to support testing for list blocks which can be used with Terraform v1.14+
-time: 2025-09-18T09:41:32.329286+02:00
-custom:
-    Issue: "531"
