@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"iter"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -1040,45 +1041,138 @@ func (s ProviderServer) ValidateEphemeralResourceConfig(ctx context.Context, req
 }
 
 func (s ProviderServer) ListResource(ctx context.Context, req *tfprotov6.ListResourceRequest) (*tfprotov6.ListResourceServerStream, error) {
-	resp := &tfprotov6.ListResourceServerStream{}
+	resultStream := &tfprotov6.ListResourceServerStream{}
+	respStream := &list.ListResultsStream{}
 
 	// Copy over identity if it's supported
 	identitySchemaReq := resource.IdentitySchemaRequest{}
 	identitySchemaResp := &resource.IdentitySchemaResponse{}
 
-	r, _ := ProviderResource(s.Provider, req.TypeName)
-	// TODO: diag
+	r, err := ProviderResource(s.Provider, req.TypeName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve resource: %v", err)
+	}
 	r.IdentitySchema(ctx, identitySchemaReq, identitySchemaResp)
-
-	results := func(push func(tfprotov6.ListResourceResult) bool) {
-		_, diag := ProviderListResource(s.Provider, req.TypeName)
-		if diag != nil {
-			push(tfprotov6.ListResourceResult{Diagnostics: []*tfprotov6.Diagnostic{diag}})
-			return
-		}
-
-		identityData := tftypes.NewValue(
-			tftypes.Object{
-				AttributeTypes: map[string]tftypes.Type{
-					"id": tftypes.String,
-				},
-			},
-			map[string]tftypes.Value{
-				"id": tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
-			},
-		)
-		identity, _ := IdentityValuetoDynamicValue(identitySchemaResp.Schema, identityData) // TODO: diag
-		push(tfprotov6.ListResourceResult{
-			Identity: &tfprotov6.ResourceIdentityData{
-				IdentityData: identity,
-			},
-		})
+	if len(identitySchemaResp.Diagnostics) > 0 {
+		return nil, fmt.Errorf("failed to retrieve resource schema: %v", identitySchemaResp.Diagnostics)
 	}
 
-	resp.Results = results
-	return resp, nil
+	listresource, diag := ProviderListResource(s.Provider, req.TypeName)
+	if diag != nil {
+		return nil, fmt.Errorf("failed to retrieve resource identity schema: %v", err)
+	}
+
+	schemaReq := list.SchemaRequest{}
+	schemaResp := &list.SchemaResponse{}
+
+	listresource.Schema(ctx, schemaReq, schemaResp)
+	if len(schemaResp.Diagnostics) > 0 {
+		return nil, fmt.Errorf("failed to retrieve resource schema: %v", schemaResp.Diagnostics)
+	}
+
+	listReq := list.ListRequest{
+		TypeName:        req.TypeName,
+		IncludeResource: req.IncludeResource,
+		Limit:           req.Limit,
+		ResourceSchema:  schemaResp.Schema,
+	}
+
+	listReq.Config, diag = DynamicValueToValue(schemaResp.Schema, req.Config)
+	if diag != nil {
+		return nil, fmt.Errorf("failed to convert config to value: %v", err)
+	}
+
+	if identitySchemaResp.Schema != nil {
+		listReq.ResourceIdentitySchema = identitySchemaResp.Schema
+	}
+
+	listresource.List(ctx, listReq, respStream)
+
+	// If the provider returned a nil results stream, we return an empty stream.
+	if respStream.Results == nil {
+		resultStream.Results = func(push func(result tfprotov6.ListResourceResult) bool) {}
+	}
+
+	resultStream.Results = processListResults(listReq, respStream.Results)
+	return resultStream, nil
 }
 
 func (s ProviderServer) ValidateListResourceConfig(ctx context.Context, req *tfprotov6.ValidateListResourceConfigRequest) (*tfprotov6.ValidateListResourceConfigResponse, error) {
 	return &tfprotov6.ValidateListResourceConfigResponse{}, nil
+}
+
+func processListResults(req list.ListRequest, stream iter.Seq[list.ListResult]) iter.Seq[tfprotov6.ListResourceResult] {
+	return func(push func(tfprotov6.ListResourceResult) bool) {
+		for result := range stream {
+			if !push(processListResult(req, result)) {
+				return
+			}
+		}
+	}
+}
+
+// processListResult validates the content of a list.ListResult and returns a
+// ListResult
+func processListResult(req list.ListRequest, result list.ListResult) tfprotov6.ListResourceResult {
+	var listResourceResult tfprotov6.ListResourceResult
+	listResourceResult.Diagnostics = []*tfprotov6.Diagnostic{}
+	var diag *tfprotov6.Diagnostic
+
+	// Allow any non-error diags to pass through
+	if len(result.Diagnostics) > 0 && result.DisplayName == "" && result.Identity == nil && result.Resource == nil {
+		return tfprotov6.ListResourceResult{
+			Diagnostics: result.Diagnostics,
+		}
+	}
+
+	if result.Diagnostics != nil {
+		return tfprotov6.ListResourceResult{
+			Diagnostics: result.Diagnostics,
+		}
+	}
+
+	if result.Identity == nil {
+		return tfprotov6.ListResourceResult{
+			Diagnostics: []*tfprotov6.Diagnostic{
+				{
+					Severity: tfprotov6.DiagnosticSeverityError,
+					Summary:  "Incomplete List Result",
+					Detail: "When listing resources, an implementation issue was found. " +
+						"This is always a problem with the provider. Please report this to the provider developers.\n\n" +
+						"The \"Identity\" field is nil.\n\n",
+				},
+			},
+		}
+	}
+
+	if req.IncludeResource {
+		if result.Resource == nil {
+			listResourceResult.Diagnostics = append(listResourceResult.Diagnostics, &tfprotov6.Diagnostic{
+				Severity: tfprotov6.DiagnosticSeverityWarning,
+				Summary:  "Incomplete List Result",
+				Detail: "When listing resources, an implementation issue was found. " +
+					"This is always a problem with the provider. Please report this to the provider developers.\n\n" +
+					"The \"IncludeResource\" field in the ListRequest is true, but the \"Resource\" field in the ListResult is nil.\n\n",
+			})
+		}
+
+		listResourceResult.Resource, diag = ValuetoDynamicValue(req.ResourceSchema, *result.Resource)
+		listResourceResult.Diagnostics = append(listResourceResult.Diagnostics, diag)
+		return listResourceResult
+
+	}
+	listResourceResult.Identity = &tfprotov6.ResourceIdentityData{}
+
+	if result.Identity != nil {
+		listResourceResult.Identity.IdentityData, diag = IdentityValuetoDynamicValue(req.ResourceIdentitySchema, *result.Identity)
+		if diag != nil {
+			listResourceResult.Diagnostics = append(listResourceResult.Diagnostics, diag)
+			return listResourceResult
+		}
+	}
+
+	listResourceResult.DisplayName = result.DisplayName
+
+	return listResourceResult
+
 }

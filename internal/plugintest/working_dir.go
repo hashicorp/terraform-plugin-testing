@@ -4,15 +4,13 @@
 package plugintest
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-exec/tfexec"
+	tfjson "github.com/hashicorp/terraform-json"
 	"io"
 	"os"
 	"path/filepath"
-
-	"github.com/hashicorp/terraform-exec/tfexec"
-	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
@@ -525,20 +523,42 @@ func (wd *WorkingDir) Schemas(ctx context.Context) (*tfjson.ProviderSchemas, err
 	return providerSchemas, err
 }
 
-func (wd *WorkingDir) Query(ctx context.Context) ([]string, error) {
+func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
+	var messages []tfjson.LogMsg
+	var diags []tfjson.LogMsg
+
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI providers query command")
 
-	// Query the provider using the Terraform CLI function
-	var buffer bytes.Buffer
-	err := wd.tf.QueryJSON(context.Background(), &buffer)
+	args := []tfexec.QueryOption{tfexec.Reattach(wd.reattachInfo)}
+
+	logs, err := wd.tf.QueryJSON(context.Background(), args...)
 
 	if err != nil {
-		return nil, fmt.Errorf("error running terraform query command: %w", err)
+		return nil, fmt.Errorf("running terraform query command: %w", err)
+	}
+
+	for msg := range logs {
+		if msg.Msg == nil {
+			continue
+		}
+
+		if msg.Err != nil {
+			return nil, fmt.Errorf("retrieving message: %w", msg.Err)
+		}
+
+		if msg.Msg.Level() == tfjson.Error {
+			// TODO reimplement missing .tf config error
+			diags = append(diags, msg.Msg)
+			continue
+		}
+		messages = append(messages, msg.Msg)
+	}
+
+	if len(diags) > 0 {
+		return nil, fmt.Errorf("running terraform query command returned diagnostics: %+v", diags)
 	}
 
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI providers query command")
 
-	output := buffer.String()
-
-	return []string{output}, nil
+	return messages, nil
 }

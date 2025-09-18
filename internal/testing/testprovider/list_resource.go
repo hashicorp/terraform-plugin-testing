@@ -12,6 +12,7 @@ import (
 var _ list.ListResource = ListResource{}
 
 type ListResource struct {
+	IncludeResource            bool
 	SchemaResponse             *list.SchemaResponse
 	ListResultsStream          *list.ListResultsStream
 	ValidateListConfigResponse *list.ValidateListConfigResponse
@@ -24,5 +25,6 @@ func (r ListResource) Schema(ctx context.Context, req list.SchemaRequest, resp *
 	}
 }
 func (r ListResource) List(ctx context.Context, req list.ListRequest, stream *list.ListResultsStream) {
+	req.IncludeResource = r.IncludeResource
 	stream.Results = r.ListResultsStream.Results
 }

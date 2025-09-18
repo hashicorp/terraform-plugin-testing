@@ -31,11 +31,13 @@ func examplecloudResource() testprovider.Resource {
 			NewIdentity: teststep.Pointer(tftypes.NewValue(
 				tftypes.Object{
 					AttributeTypes: map[string]tftypes.Type{
-						"id": tftypes.String,
+						"id":       tftypes.String,
+						"location": tftypes.String,
 					},
 				},
 				map[string]tftypes.Value{
-					"id": tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+					"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+					"location": tftypes.NewValue(tftypes.String, "somelocation"),
 				},
 			)),
 		},
@@ -57,11 +59,13 @@ func examplecloudResource() testprovider.Resource {
 			NewIdentity: teststep.Pointer(tftypes.NewValue(
 				tftypes.Object{
 					AttributeTypes: map[string]tftypes.Type{
-						"id": tftypes.String,
+						"id":       tftypes.String,
+						"location": tftypes.String,
 					},
 				},
 				map[string]tftypes.Value{
-					"id": tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+					"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+					"location": tftypes.NewValue(tftypes.String, "westeurope"),
 				},
 			)),
 		},
@@ -83,11 +87,13 @@ func examplecloudResource() testprovider.Resource {
 			Identity: teststep.Pointer(tftypes.NewValue(
 				tftypes.Object{
 					AttributeTypes: map[string]tftypes.Type{
-						"id": tftypes.String,
+						"id":       tftypes.String,
+						"location": tftypes.String,
 					},
 				},
 				map[string]tftypes.Value{
-					"id": tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+					"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
+					"location": tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
 				},
 			)),
 		},
@@ -108,6 +114,11 @@ func examplecloudResource() testprovider.Resource {
 				IdentityAttributes: []*tfprotov6.ResourceIdentitySchemaAttribute{
 					{
 						Name:              "id",
+						Type:              tftypes.String,
+						RequiredForImport: true,
+					},
+					{
+						Name:              "location",
 						Type:              tftypes.String,
 						RequiredForImport: true,
 					},

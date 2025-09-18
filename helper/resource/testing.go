@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-testing/querycheck"
+
 	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
@@ -639,6 +641,10 @@ type TestStep struct {
 	// ConfigStateChecks allow assertions to be made against the state file during a Config (apply) test using a state check.
 	// Custom state checks can be created by implementing the [statecheck.StateCheck] interface, or by using a StateCheck implementation from the provided [statecheck] package.
 	ConfigStateChecks []statecheck.StateCheck
+
+	// QueryResultChecks allow assertions to be made against a collection of found resources that were returned by a query using a query check.
+	// Custom query checks can be created by implementing the [querycheck.QueryResultCheck] interface, or by using a QueryResultCheck implementation from the provided [querycheck] package.
+	QueryResultChecks []querycheck.QueryResultCheck
 
 	// PlanOnly can be set to only run `plan` with this configuration, and not
 	// actually apply it. This is useful for ensuring config changes result in

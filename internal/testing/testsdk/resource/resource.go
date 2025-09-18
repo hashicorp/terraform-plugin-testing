@@ -31,6 +31,7 @@ type CreateResponse struct {
 	Diagnostics []*tfprotov6.Diagnostic
 	NewState    tftypes.Value
 	NewIdentity *tftypes.Value
+	NewQuery    tftypes.Value
 }
 
 type DeleteRequest struct {
@@ -83,6 +84,7 @@ type ReadResponse struct {
 	Diagnostics []*tfprotov6.Diagnostic
 	NewState    tftypes.Value
 	NewIdentity *tftypes.Value
+	NewQuery    tftypes.Value
 }
 
 type SchemaRequest struct{}
