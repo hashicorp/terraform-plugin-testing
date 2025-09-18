@@ -111,8 +111,8 @@ func TestQuery(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectLength("examplecloud_containerette.test", knownvalue.Int64Exact(3)),
-					querycheck.ExpectLength("examplecloud_containerette.test2", knownvalue.Int64Exact(3)),
+					querycheck.ExpectLength("examplecloud_containerette.test", 3),
+					querycheck.ExpectLength("examplecloud_containerette.test2", 3),
 				},
 			},
 			{
