@@ -17,13 +17,13 @@ type expectLengthAtLeast struct {
 
 // CheckQuery implements the query check logic.
 func (e expectLengthAtLeast) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
-	if req.CompletedQuery == nil {
+	if req.QuerySummary == nil {
 		resp.Error = fmt.Errorf("no completed query information available")
 		return
 	}
 
-	if req.CompletedQuery.Total < e.check {
-		resp.Error = fmt.Errorf("Query result of at least length %v - expected but got %v.", e.check, req.CompletedQuery.Total)
+	if req.QuerySummary.Total < e.check {
+		resp.Error = fmt.Errorf("Query result of at least length %v - expected but got %v.", e.check, req.QuerySummary.Total)
 		return
 	}
 }

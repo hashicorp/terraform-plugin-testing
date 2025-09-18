@@ -64,7 +64,7 @@ func TestQuery(t *testing.T) {
 					}
 				}
 				`,
-				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
+				QueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
 						"id":       knownvalue.StringExact("westeurope/somevalue1"),
 						"location": knownvalue.StringExact("westeurope"),
@@ -110,7 +110,7 @@ func TestQuery(t *testing.T) {
 					}
 				}
 				`,
-				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
+				QueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectLength("examplecloud_containerette.test", knownvalue.Int64Exact(3)),
 					querycheck.ExpectLength("examplecloud_containerette.test2", knownvalue.Int64Exact(3)),
 				},
@@ -134,7 +134,7 @@ func TestQuery(t *testing.T) {
 					}
 				}
 				`,
-				ConfigQueryResultChecks: []querycheck.QueryResultCheck{
+				QueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectLengthAtLeast("examplecloud_containerette.test", 2),
 					querycheck.ExpectLengthAtLeast("examplecloud_containerette.test2", 1),
 				},

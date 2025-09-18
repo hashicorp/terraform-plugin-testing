@@ -17,7 +17,7 @@ type contains struct {
 }
 
 func (c contains) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
-	for _, res := range *req.Query {
+	for _, res := range req.Query {
 		if strings.EqualFold(c.check, res.DisplayName) {
 			return
 		}
@@ -27,10 +27,10 @@ func (c contains) CheckQuery(_ context.Context, req CheckQueryRequest, resp *Che
 
 }
 
-// Contains returns a query check that asserts that a resource with a given display name exists within the returned results of the query.
+// ContainsResourceWithName returns a query check that asserts that a resource with a given display name exists within the returned results of the query.
 //
 // This query check can only be used with managed resources that support query. Query is only supported in Terraform v1.14+
-func Contains(resourceAddress string, displayName string) QueryResultCheck {
+func ContainsResourceWithName(resourceAddress string, displayName string) QueryResultCheck {
 	return contains{
 		resourceAddress: resourceAddress,
 		check:           displayName,

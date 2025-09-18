@@ -23,7 +23,7 @@ type expectIdentity struct {
 
 // CheckQuery implements the query check logic.
 func (e expectIdentity) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
-	for _, res := range *req.Query {
+	for _, res := range req.Query {
 		var errCollection []error
 
 		if e.listResourceAddress != strings.TrimPrefix(res.Address, "list.") {

@@ -543,7 +543,7 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 		}
 
 		if msg.Err != nil {
-			return nil, fmt.Errorf("retrieving next message: %w", msg.Err)
+			return nil, fmt.Errorf("retrieving message: %w", msg.Err)
 		}
 
 		if msg.Msg.Level() == tfjson.Error {

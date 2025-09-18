@@ -22,7 +22,7 @@ type expectKnownValue struct {
 }
 
 func (e expectKnownValue) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
-	for _, res := range *req.Query {
+	for _, res := range req.Query {
 		diags := make([]error, 0)
 
 		if e.listResourceAddress == strings.TrimPrefix(res.Address, "list.") && e.resourceName == res.DisplayName {
