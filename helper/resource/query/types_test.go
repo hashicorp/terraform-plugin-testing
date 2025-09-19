@@ -41,6 +41,14 @@ func RequiredNumberAttribute(name string) *tfprotov6.SchemaAttribute {
 	}
 }
 
+func OptionalNumberAttribute(name string) *tfprotov6.SchemaAttribute {
+	return &tfprotov6.SchemaAttribute{
+		Name:     name,
+		Type:     tftypes.Number,
+		Optional: true,
+	}
+}
+
 func ComputedStringAttribute(name string) *tfprotov6.SchemaAttribute {
 	return &tfprotov6.SchemaAttribute{
 		Name:     name,

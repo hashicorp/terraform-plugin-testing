@@ -19,9 +19,9 @@ func examplecloudListResource() testprovider.ListResource {
 				Block: &tfprotov6.SchemaBlock{
 					Attributes: []*tfprotov6.SchemaAttribute{
 						{
-							Name:     "id",
+							Name:     "resource_group_name",
 							Type:     tftypes.String,
-							Computed: true,
+							Required: true,
 						},
 					},
 				},
@@ -33,57 +33,199 @@ func examplecloudListResource() testprovider.ListResource {
 					Resource: teststep.Pointer(tftypes.NewValue(
 						tftypes.Object{
 							AttributeTypes: map[string]tftypes.Type{
-								"id":       tftypes.String,
-								"location": tftypes.String,
-								"name":     tftypes.String,
+								"id":                  tftypes.String,
+								"location":            tftypes.String,
+								"name":                tftypes.String,
+								"resource_group_name": tftypes.String,
+								"instances":           tftypes.Number,
 							},
 						},
 						map[string]tftypes.Value{
-							"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue"),
-							"location": tftypes.NewValue(tftypes.String, "westeurope"),
-							"name":     tftypes.NewValue(tftypes.String, "somevalue"),
+							"id":                  tftypes.NewValue(tftypes.String, "foo/banane"),
+							"location":            tftypes.NewValue(tftypes.String, "westeurope"),
+							"name":                tftypes.NewValue(tftypes.String, "banane"),
+							"resource_group_name": tftypes.NewValue(tftypes.String, "foo"),
+							"instances":           tftypes.NewValue(tftypes.Number, 5),
 						},
 					)),
 					Identity: teststep.Pointer(tftypes.NewValue(
 						tftypes.Object{
 							AttributeTypes: map[string]tftypes.Type{
-								"id":       tftypes.String,
-								"location": tftypes.String,
+								"resource_group_name": tftypes.String,
+								"name":                tftypes.String,
 							},
 						},
 						map[string]tftypes.Value{
-							"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue1"),
-							"location": tftypes.NewValue(tftypes.String, "westeurope"),
+							"resource_group_name": tftypes.NewValue(tftypes.String, "foo"),
+							"name":                tftypes.NewValue(tftypes.String, "banane"),
 						},
 					)),
+					DisplayName: "banane",
 				})
 				push(list.ListResult{
-					Identity: teststep.Pointer(tftypes.NewValue(
+					Resource: teststep.Pointer(tftypes.NewValue(
 						tftypes.Object{
 							AttributeTypes: map[string]tftypes.Type{
-								"id":       tftypes.String,
-								"location": tftypes.String,
+								"id":                  tftypes.String,
+								"location":            tftypes.String,
+								"name":                tftypes.String,
+								"resource_group_name": tftypes.String,
+								"instances":           tftypes.Number,
 							},
 						},
 						map[string]tftypes.Value{
-							"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue2"),
-							"location": tftypes.NewValue(tftypes.String, "westeurope2"),
+							"id":                  tftypes.NewValue(tftypes.String, "foo/ananas"),
+							"location":            tftypes.NewValue(tftypes.String, "westeurope"),
+							"name":                tftypes.NewValue(tftypes.String, "ananas"),
+							"resource_group_name": tftypes.NewValue(tftypes.String, "foo"),
+							"instances":           tftypes.NewValue(tftypes.Number, 9000),
 						},
 					)),
+					Identity: teststep.Pointer(tftypes.NewValue(
+						tftypes.Object{
+							AttributeTypes: map[string]tftypes.Type{
+								"resource_group_name": tftypes.String,
+								"name":                tftypes.String,
+							},
+						},
+						map[string]tftypes.Value{
+							"resource_group_name": tftypes.NewValue(tftypes.String, "foo"),
+							"name":                tftypes.NewValue(tftypes.String, "ananas"),
+						},
+					)),
+					DisplayName: "ananas",
 				})
 				push(list.ListResult{
-					Identity: teststep.Pointer(tftypes.NewValue(
+					Resource: teststep.Pointer(tftypes.NewValue(
 						tftypes.Object{
 							AttributeTypes: map[string]tftypes.Type{
-								"id":       tftypes.String,
-								"location": tftypes.String,
+								"id":                  tftypes.String,
+								"location":            tftypes.String,
+								"name":                tftypes.String,
+								"resource_group_name": tftypes.String,
+								"instances":           tftypes.Number,
 							},
 						},
 						map[string]tftypes.Value{
-							"id":       tftypes.NewValue(tftypes.String, "westeurope/somevalue3"),
-							"location": tftypes.NewValue(tftypes.String, "westeurope3"),
+							"id":                  tftypes.NewValue(tftypes.String, "foo/kiwi"),
+							"location":            tftypes.NewValue(tftypes.String, "westeurope"),
+							"name":                tftypes.NewValue(tftypes.String, "kiwi"),
+							"resource_group_name": tftypes.NewValue(tftypes.String, "foo"),
+							"instances":           tftypes.NewValue(tftypes.Number, 88),
 						},
 					)),
+					Identity: teststep.Pointer(tftypes.NewValue(
+						tftypes.Object{
+							AttributeTypes: map[string]tftypes.Type{
+								"resource_group_name": tftypes.String,
+								"name":                tftypes.String,
+							},
+						},
+						map[string]tftypes.Value{
+							"resource_group_name": tftypes.NewValue(tftypes.String, "foo"),
+							"name":                tftypes.NewValue(tftypes.String, "kiwi"),
+						},
+					)),
+					DisplayName: "kiwi",
+				})
+				push(list.ListResult{
+					Resource: teststep.Pointer(tftypes.NewValue(
+						tftypes.Object{
+							AttributeTypes: map[string]tftypes.Type{
+								"id":                  tftypes.String,
+								"location":            tftypes.String,
+								"name":                tftypes.String,
+								"resource_group_name": tftypes.String,
+								"instances":           tftypes.Number,
+							},
+						},
+						map[string]tftypes.Value{
+							"id":                  tftypes.NewValue(tftypes.String, "bar/papaya"),
+							"location":            tftypes.NewValue(tftypes.String, "westeurope"),
+							"name":                tftypes.NewValue(tftypes.String, "banane"),
+							"resource_group_name": tftypes.NewValue(tftypes.String, "foo"),
+							"instances":           tftypes.NewValue(tftypes.Number, 3),
+						},
+					)),
+					Identity: teststep.Pointer(tftypes.NewValue(
+						tftypes.Object{
+							AttributeTypes: map[string]tftypes.Type{
+								"resource_group_name": tftypes.String,
+								"name":                tftypes.String,
+							},
+						},
+						map[string]tftypes.Value{
+							"resource_group_name": tftypes.NewValue(tftypes.String, "bar"),
+							"name":                tftypes.NewValue(tftypes.String, "papaya"),
+						},
+					)),
+					DisplayName: "papaya",
+				})
+				push(list.ListResult{
+					Resource: teststep.Pointer(tftypes.NewValue(
+						tftypes.Object{
+							AttributeTypes: map[string]tftypes.Type{
+								"id":                  tftypes.String,
+								"location":            tftypes.String,
+								"name":                tftypes.String,
+								"resource_group_name": tftypes.String,
+								"instances":           tftypes.Number,
+							},
+						},
+						map[string]tftypes.Value{
+							"id":                  tftypes.NewValue(tftypes.String, "bar/birne"),
+							"location":            tftypes.NewValue(tftypes.String, "westeurope"),
+							"name":                tftypes.NewValue(tftypes.String, "birne"),
+							"resource_group_name": tftypes.NewValue(tftypes.String, "foo"),
+							"instances":           tftypes.NewValue(tftypes.Number, 8564),
+						},
+					)),
+					Identity: teststep.Pointer(tftypes.NewValue(
+						tftypes.Object{
+							AttributeTypes: map[string]tftypes.Type{
+								"resource_group_name": tftypes.String,
+								"name":                tftypes.String,
+							},
+						},
+						map[string]tftypes.Value{
+							"resource_group_name": tftypes.NewValue(tftypes.String, "bar"),
+							"name":                tftypes.NewValue(tftypes.String, "birne"),
+						},
+					)),
+					DisplayName: "birne",
+				})
+				push(list.ListResult{
+					Resource: teststep.Pointer(tftypes.NewValue(
+						tftypes.Object{
+							AttributeTypes: map[string]tftypes.Type{
+								"id":                  tftypes.String,
+								"location":            tftypes.String,
+								"name":                tftypes.String,
+								"resource_group_name": tftypes.String,
+								"instances":           tftypes.Number,
+							},
+						},
+						map[string]tftypes.Value{
+							"id":                  tftypes.NewValue(tftypes.String, "bar/kirsche"),
+							"location":            tftypes.NewValue(tftypes.String, "westeurope"),
+							"name":                tftypes.NewValue(tftypes.String, "kirsche"),
+							"resource_group_name": tftypes.NewValue(tftypes.String, "foo"),
+							"instances":           tftypes.NewValue(tftypes.Number, 500),
+						},
+					)),
+					Identity: teststep.Pointer(tftypes.NewValue(
+						tftypes.Object{
+							AttributeTypes: map[string]tftypes.Type{
+								"resource_group_name": tftypes.String,
+								"name":                tftypes.String,
+							},
+						},
+						map[string]tftypes.Value{
+							"resource_group_name": tftypes.NewValue(tftypes.String, "bar"),
+							"name":                tftypes.NewValue(tftypes.String, "kirsche"),
+						},
+					)),
+					DisplayName: "kirsche",
 				})
 			},
 		},
