@@ -1,37 +1,34 @@
-package querycheck_test
+package querycheck
 
 import (
-	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
-	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
-	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
-	"github.com/hashicorp/terraform-plugin-testing/querycheck"
-	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 	"regexp"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
 func TestContainsResourceWithName(t *testing.T) {
 	t.Parallel()
 
-	r.UnitTest(t, r.TestCase{
+	UnitTest(t, TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				ListResources: map[string]testprovider.ListResource{
-
 					// TODO: define a simpler resource and list resource here or copy the `examplecloud_test.go` and `examplecloud_list_resource.go` files here for use
-
-					//"examplecloud_containerette": examplecloudListResource(),
+					"examplecloud_containerette": examplecloudListResource(),
 				},
 				Resources: map[string]testprovider.Resource{
-					//"examplecloud_containerette": examplecloudResource(),
+					"examplecloud_containerette": examplecloudResource(),
 				},
 			}),
 		},
-		Steps: []r.TestStep{
+		Steps: []TestStep{
 			// We'll skip the first test step where we simulate creating the resource that will be returned when we query for it for simplicity.
 			{
 				Query: true,
@@ -54,13 +51,13 @@ func TestContainsResourceWithName(t *testing.T) {
 					}
 				}
 				`,
-				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ContainsResourceWithName("examplecloud_containerette.test", "banane"),
-					querycheck.ContainsResourceWithName("examplecloud_containerette.test", "ananas"),
-					querycheck.ContainsResourceWithName("examplecloud_containerette.test", "kiwi"),
-					querycheck.ContainsResourceWithName("examplecloud_containerette.test2", "papaya"),
-					querycheck.ContainsResourceWithName("examplecloud_containerette.test2", "birne"),
-					querycheck.ContainsResourceWithName("examplecloud_containerette.test2", "kirsche"),
+				QueryResultChecks: []QueryResultCheck{
+					ContainsResourceWithName("examplecloud_containerette.test", "banane"),
+					ContainsResourceWithName("examplecloud_containerette.test", "ananas"),
+					ContainsResourceWithName("examplecloud_containerette.test", "kiwi"),
+					ContainsResourceWithName("examplecloud_containerette.test2", "papaya"),
+					ContainsResourceWithName("examplecloud_containerette.test2", "birne"),
+					ContainsResourceWithName("examplecloud_containerette.test2", "kirsche"),
 				},
 			},
 		},
@@ -71,24 +68,22 @@ func TestContainsResourceWithName(t *testing.T) {
 func TestContainsResourceWithName_NotFound(t *testing.T) {
 	t.Parallel()
 
-	r.UnitTest(t, r.TestCase{
+	UnitTest(t, TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_14_0),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				ListResources: map[string]testprovider.ListResource{
-
-					// TODO: define a resource and list resource here or copy the `examplecloud_test.go` and `examplecloud_list_resource.go` files here for use
-
-					//"examplecloud_containerette": examplecloudListResource(),
+					// TODO: define a simpler resource and list resource here or copy the `examplecloud_test.go` and `examplecloud_list_resource.go` files here for use
+					"examplecloud_containerette": examplecloudListResource(),
 				},
 				Resources: map[string]testprovider.Resource{
-					//"examplecloud_containerette": examplecloudResource(),
+					"examplecloud_containerette": examplecloudResource(),
 				},
 			}),
 		},
-		Steps: []r.TestStep{
+		Steps: []TestStep{
 			{
 				Query: true,
 				Config: `
@@ -110,8 +105,8 @@ func TestContainsResourceWithName_NotFound(t *testing.T) {
 					}
 				}
 				`,
-				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ContainsResourceWithName("examplecloud_containerette.test", "pflaume"),
+				QueryResultChecks: []QueryResultCheck{
+					ContainsResourceWithName("examplecloud_containerette.test", "pflaume"),
 				},
 				// TODO update expected error message to match what we output
 				ExpectError: regexp.MustCompile("examplecloud_containerette.test - there are no pflaumen here!"),
