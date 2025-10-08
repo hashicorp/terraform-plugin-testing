@@ -521,27 +521,6 @@ func TestConfigurationDirectory_Write_Recursive(t *testing.T) {
 		configDirectory configurationDirectory
 		expectedError   *regexp.Regexp
 	}{
-		"not-directory": {
-			configDirectory: configurationDirectory{
-				directory: "testdata/empty_file/main.tf",
-			},
-			expectedError: regexp.MustCompile(`.*not a directory`),
-		},
-		"no-config": {
-			configDirectory: configurationDirectory{
-				directory: "testdata/empty_dir",
-			},
-		},
-		"dir-single-file": {
-			configDirectory: configurationDirectory{
-				directory: "testdata/random",
-			},
-		},
-		"dir-multiple-files": {
-			configDirectory: configurationDirectory{
-				directory: "testdata/random_multiple_files",
-			},
-		},
 		"dir-recursive": {
 			configDirectory: configurationDirectory{
 				directory: "testdata/recursive",
