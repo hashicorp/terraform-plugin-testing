@@ -5,9 +5,11 @@ package teststep
 
 import (
 	"context"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -512,6 +514,76 @@ func TestConfigurationDirectory_Write(t *testing.T) {
 	}
 }
 
+func TestConfigurationDirectory_Write_Recursive(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		configDirectory configurationDirectory
+		expectedError   *regexp.Regexp
+	}{
+		"not-directory": {
+			configDirectory: configurationDirectory{
+				directory: "testdata/empty_file/main.tf",
+			},
+			expectedError: regexp.MustCompile(`.*not a directory`),
+		},
+		"no-config": {
+			configDirectory: configurationDirectory{
+				directory: "testdata/empty_dir",
+			},
+		},
+		"dir-single-file": {
+			configDirectory: configurationDirectory{
+				directory: "testdata/random",
+			},
+		},
+		"dir-multiple-files": {
+			configDirectory: configurationDirectory{
+				directory: "testdata/random_multiple_files",
+			},
+		},
+		"dir-recursive": {
+			configDirectory: configurationDirectory{
+				directory: "testdata/recursive",
+				recursive: true,
+			},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			tempDir := t.TempDir()
+
+			err := testCase.configDirectory.Write(context.Background(), tempDir)
+			if testCase.expectedError == nil && err != nil {
+				t.Errorf("unexpected error %s", err)
+			}
+
+			if testCase.expectedError != nil && err == nil {
+				t.Errorf("expected error but got none")
+			}
+
+			if testCase.expectedError != nil && err != nil {
+				if !testCase.expectedError.MatchString(err.Error()) {
+					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
+				}
+			}
+
+			if err == nil {
+				filepaths := readDirectory(t, testCase.configDirectory.directory)
+				tempDirEntries := readDirectory(t, tempDir)
+
+				diff := cmp.Diff(filepaths, tempDirEntries)
+				if len(diff) != 0 {
+					t.Fatalf("expected filepaths do not match actual filepaths: %v", diff)
+				}
+			}
+		})
+	}
+}
+
 func TestConfigurationDirectory_Write_AbsolutePath(t *testing.T) {
 	t.Parallel()
 
@@ -715,4 +787,23 @@ func filesOnly(entries []os.DirEntry) []os.DirEntry {
 		}
 	}
 	return files
+}
+
+func readDirectory(t *testing.T, root string) []string {
+	t.Helper()
+
+	contents := []string{}
+
+	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if !entry.IsDir() {
+			contents = append(contents, strings.TrimPrefix(path, root))
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("readDirectory: WalkDir: %v", err)
+
+	}
+
+	return contents
 }

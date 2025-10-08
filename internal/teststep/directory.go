@@ -15,6 +15,7 @@ var _ Config = configurationDirectory{}
 
 type configurationDirectory struct {
 	directory string
+	recursive bool
 
 	// appendedConfig is a map of filenames to content
 	appendedConfig map[string]string
