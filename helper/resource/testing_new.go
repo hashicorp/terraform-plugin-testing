@@ -389,11 +389,36 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			}
 
 			err = query.RunQueryChecks(ctx, t, queryOut, step.QueryResultChecks)
-			if err != nil {
-				t.Fatalf("Step %d/%d error running query checks: %s", stepNumber, len(c.Steps), err)
+
+			if step.ExpectError != nil {
+				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
+				if err == nil {
+					logging.HelperResourceError(ctx, "Error running query: expected an error but got none")
+					t.Fatalf("Step %d/%d error running query: expected an error but got none", stepNumber, len(c.Steps))
+				}
+				if !step.ExpectError.MatchString(err.Error()) {
+					logging.HelperResourceError(ctx, fmt.Sprintf("Error running query: expected an error with pattern (%s)", step.ExpectError.String()),
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("Step %d/%d error running query, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
+				}
+			} else {
+				if err != nil && c.ErrorCheck != nil {
+					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
+					err = c.ErrorCheck(err)
+					logging.HelperResourceDebug(ctx, "Called TestCase ErrorCheck")
+				}
+				if err != nil {
+					logging.HelperResourceError(ctx, "Error running query",
+						map[string]interface{}{logging.KeyError: err},
+					)
+					t.Fatalf("Step %d/%d error running query checks: %s", stepNumber, len(c.Steps), err)
+				}
+				fmt.Printf("Step %d/%d Query Output:\n%s\n", stepNumber, len(c.Steps), queryOut)
 			}
 
-			fmt.Printf("Step %d/%d Query Output:\n%s\n", stepNumber, len(c.Steps), queryOut)
+			logging.HelperResourceDebug(ctx, "Finished TestStep")
+
 			continue
 		}
 
