@@ -1,0 +1,5 @@
+kind: ENHANCEMENTS
+body: 'helper/resource: Adds `PostApplyFunc` test step hook to run generic post-apply logic for plan/apply testing.'
+time: 2025-10-14T16:26:59.267372-04:00
+custom:
+    Issue: "566"
