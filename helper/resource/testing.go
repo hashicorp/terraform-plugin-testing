@@ -671,6 +671,11 @@ type TestStep struct {
 	// SkipFunc is called after PreConfig but before applying the Config.
 	SkipFunc func() (bool, error)
 
+	// PostApplyFunc is called after the Config is applied and any plan, state,
+	// or query checks are run. This can be used to perform assertions against
+	// API values that are not stored in Terraform state.
+	PostApplyFunc func()
+
 	//---------------------------------------------------------------
 	// ImportState testing
 	//---------------------------------------------------------------
