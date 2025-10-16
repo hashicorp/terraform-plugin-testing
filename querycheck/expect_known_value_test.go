@@ -2,6 +2,7 @@ package querycheck_test
 
 import (
 	"math/big"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -60,29 +61,16 @@ func TestExpectKnownValue(t *testing.T) {
 						resource_group_name = "foo"
  					}
 				}
-
-				list "examplecloud_containerette" "test2" {
-					provider = examplecloud
-
-					config {
-						resource_group_name = "bar"
-					}
-				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectKnownValue(
 						"examplecloud_containerette.test",
-						"banane",
+						"banana",
 						tfjsonpath.New("instances"),
 						knownvalue.NumberExact(big.NewFloat(5)),
 					),
-					querycheck.ExpectKnownValue(
-						"examplecloud_containerette.test2",
-						"papaya",
-						tfjsonpath.New("instances"),
-						knownvalue.NumberExact(big.NewFloat(3)),
-					),
 				},
+				ExpectError: regexp.MustCompile("examplecloud_containerette.test - the resource banana was not found"),
 			},
 		},
 	})
@@ -135,29 +123,16 @@ func TestExpectKnownValue_ValueIncorrect(t *testing.T) {
 						resource_group_name = "foo"
  					}
 				}
-
-				list "examplecloud_containerette" "test2" {
-					provider = examplecloud
-
-					config {
-						resource_group_name = "bar"
-					}
-				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectKnownValue(
 						"examplecloud_containerette.test",
-						"banane",
+						"banana",
 						tfjsonpath.New("instances"),
 						knownvalue.NumberExact(big.NewFloat(4)),
 					),
-					querycheck.ExpectKnownValue(
-						"examplecloud_containerette.test2",
-						"papaya",
-						tfjsonpath.New("instances"),
-						knownvalue.NumberExact(big.NewFloat(2)),
-					),
 				},
+				ExpectError: regexp.MustCompile("examplecloud_containerette.test - the resource banana was not found"),
 			},
 		},
 	})

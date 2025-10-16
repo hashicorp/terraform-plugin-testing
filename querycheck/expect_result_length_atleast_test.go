@@ -1,6 +1,7 @@
 package querycheck_test
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -37,15 +38,15 @@ func TestResultLengthAtLeast(t *testing.T) {
 					provider = examplecloud
 			
 					config {
-						id = "westeurope/somevalue"
-					}
+						resource_group_name = "foo"
+ 					}
 				}
 				list "examplecloud_containerette" "test2" {
 					provider = examplecloud
 			
 					config {
-						id = "foo"
-					}
+						resource_group_name = "bar"
+ 					}
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
@@ -84,21 +85,21 @@ func TestResultLengthAtLeast_TooFewResults(t *testing.T) {
 					provider = examplecloud
 			
 					config {
-						id = "westeurope/somevalue"
-					}
+						resource_group_name = "foo"
+ 					}
 				}
 				list "examplecloud_containerette" "test2" {
 					provider = examplecloud
 			
 					config {
-						id = "foo"
-					}
+						resource_group_name = "bar"
+ 					}
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectLengthAtLeast("examplecloud_containerette.test", 1),
-					querycheck.ExpectLengthAtLeast("examplecloud_containerette.test2", 0),
+					querycheck.ExpectLengthAtLeast("examplecloud_containerette.test", 8),
 				},
+				ExpectError: regexp.MustCompile("Query result of at least length 8 - expected but got 6."),
 			},
 		},
 	})

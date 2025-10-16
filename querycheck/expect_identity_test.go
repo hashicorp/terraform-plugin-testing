@@ -1,6 +1,7 @@
 package querycheck_test
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -148,6 +149,7 @@ func TestExpectIdentity_NotFound(t *testing.T) {
 						"resource_group_name": knownvalue.StringExact("uwu"),
 					}),
 				},
+				ExpectError: regexp.MustCompile("an identity with the following attributes was not found\nattribute \"name\": owo\nattribute \"resource_group_name\": uwu\naddress: examplecloud_containerette.test"),
 			},
 		},
 	})

@@ -1,6 +1,7 @@
 package querycheck_test
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -37,20 +38,20 @@ func TestResultLengthExact(t *testing.T) {
 					provider = examplecloud
 			
 					config {
-						id = "westeurope/somevalue"
-					}
+						resource_group_name = "foo"
+ 					}
 				}
 				list "examplecloud_containerette" "test2" {
 					provider = examplecloud
 			
 					config {
-						id = "foo"
-					}
+						resource_group_name = "bar"
+ 					}
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectLength("examplecloud_containerette.test", 3),
-					querycheck.ExpectLength("examplecloud_containerette.test2", 3),
+					querycheck.ExpectLength("examplecloud_containerette.test", 6),
+					querycheck.ExpectLength("examplecloud_containerette.test2", 6),
 				},
 			},
 		},
@@ -84,21 +85,21 @@ func TestResultLengthExact_WrongAmount(t *testing.T) {
 					provider = examplecloud
 			
 					config {
-						id = "westeurope/somevalue"
-					}
+						resource_group_name = "foo"
+ 					}
 				}
 				list "examplecloud_containerette" "test2" {
 					provider = examplecloud
 			
 					config {
-						id = "foo"
-					}
+						resource_group_name = "bar"
+ 					}
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectLength("examplecloud_containerette.test", 2),
-					querycheck.ExpectLength("examplecloud_containerette.test2", 1),
 				},
+				ExpectError: regexp.MustCompile("number of found resources 2 - expected but got 6."),
 			},
 		},
 	})
