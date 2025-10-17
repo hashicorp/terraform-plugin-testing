@@ -842,3 +842,67 @@ func Test_ConfigStateChecks_Errors(t *testing.T) {
 		},
 	})
 }
+
+func Test_PostApplyFunc_Called(t *testing.T) {
+	t.Parallel()
+
+	spy1 := &stateCheckSpy{}
+	postFuncCalled := false
+	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"test_resource": {
+						CreateResponse: &resource.CreateResponse{
+							NewState: tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id": tftypes.String,
+									},
+								},
+								map[string]tftypes.Value{
+									"id": tftypes.NewValue(tftypes.String, "test"),
+								},
+							),
+						},
+						SchemaResponse: &resource.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "id",
+											Type:     tftypes.String,
+											Computed: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}),
+		},
+		Steps: []TestStep{
+			{
+				Config: `resource "test_resource" "test" {}`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					spy1,
+				},
+				PostApplyFunc: func() {
+					postFuncCalled = true
+				},
+			},
+		},
+	})
+
+	if !postFuncCalled {
+		t.Error("expected PostApplyFunc to be called at least once")
+	}
+
+	if !spy1.called {
+		t.Error("expected ConfigStateChecks spy1 to be called at least once")
+	}
+}
