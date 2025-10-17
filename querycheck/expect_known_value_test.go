@@ -79,7 +79,6 @@ func TestExpectKnownValue(t *testing.T) {
 	})
 }
 
-// Let's add a test case that checks the failure scenario when the value is incorrect.
 func TestExpectKnownValue_ValueIncorrect(t *testing.T) {
 	t.Parallel()
 
@@ -131,12 +130,12 @@ func TestExpectKnownValue_ValueIncorrect(t *testing.T) {
 				QueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectKnownValue(
 						"examplecloud_containerette.test",
-						"banana",
+						"banane",
 						tfjsonpath.New("instances"),
 						knownvalue.NumberExact(big.NewFloat(4)),
 					),
 				},
-				ExpectError: regexp.MustCompile("examplecloud_containerette.test - the resource banana was not found"),
+				ExpectError: regexp.MustCompile("the following errors were found while checking values: error checking value for attribute at path: instances for resource banane, err: expected value 4 for NumberExact check, got: 5;"),
 			},
 		},
 	})

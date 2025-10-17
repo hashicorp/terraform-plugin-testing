@@ -34,6 +34,18 @@ func TestExpectIdentity(t *testing.T) {
 			}),
 		},
 		Steps: []r.TestStep{
+			{ // config mode step 1 needs tf file with terraform providers block
+				// this step should provision all the resources that the query is support to list
+				// for simplicity we're only "provisioning" one here
+				Config: `
+				resource "examplecloud_containerette" "primary" {
+					name                = "banana"
+					resource_group_name = "foo"
+					location  			= "westeurope"
+			
+					instances = 5
+				}`,
+			},
 			{ // Query mode step 2, operates on .tfquery.hcl files (needs tf file with terraform providers block)
 				// ```provider "examplecloud" {}``` has a slightly different syntax for a .tfquery.hcl file
 				// provider bock simulates a real providers workflow
@@ -90,7 +102,6 @@ func TestExpectIdentity(t *testing.T) {
 	})
 }
 
-// Let's add a test case that checks the failure scenario when an identity is not found.
 func TestExpectIdentity_NotFound(t *testing.T) {
 	t.Parallel()
 

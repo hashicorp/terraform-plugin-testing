@@ -32,7 +32,18 @@ func TestContainsResourceWithName(t *testing.T) {
 			}),
 		},
 		Steps: []r.TestStep{
-			// We'll skip the first test step where we simulate creating the resource that will be returned when we query for it for simplicity.
+			{ // config mode step 1 needs tf file with terraform providers block
+				// this step should provision all the resources that the query is support to list
+				// for simplicity we're only "provisioning" one here
+				Config: `
+				resource "examplecloud_containerette" "primary" {
+					name                = "banana"
+					resource_group_name = "foo"
+					location  			= "westeurope"
+			
+					instances = 5
+				}`,
+			},
 			{
 				Query: true,
 				Config: `
@@ -67,7 +78,6 @@ func TestContainsResourceWithName(t *testing.T) {
 	})
 }
 
-// Let's add a test case that checks the failure scenario when a resource of a given name is not found.
 func TestContainsResourceWithName_NotFound(t *testing.T) {
 	t.Parallel()
 
@@ -86,6 +96,18 @@ func TestContainsResourceWithName_NotFound(t *testing.T) {
 			}),
 		},
 		Steps: []r.TestStep{
+			{ // config mode step 1 needs tf file with terraform providers block
+				// this step should provision all the resources that the query is support to list
+				// for simplicity we're only "provisioning" one here
+				Config: `
+				resource "examplecloud_containerette" "primary" {
+					name                = "banana"
+					resource_group_name = "foo"
+					location  			= "westeurope"
+			
+					instances = 5
+				}`,
+			},
 			{
 				Query: true,
 				Config: `

@@ -33,6 +33,18 @@ func TestResultLengthAtLeast(t *testing.T) {
 			}),
 		},
 		Steps: []r.TestStep{
+			{ // config mode step 1 needs tf file with terraform providers block
+				// this step should provision all the resources that the query is support to list
+				// for simplicity we're only "provisioning" one here
+				Config: `
+				resource "examplecloud_containerette" "primary" {
+					name                = "banana"
+					resource_group_name = "foo"
+					location  			= "westeurope"
+			
+					instances = 5
+				}`,
+			},
 			{
 				Query: true,
 				Config: `
@@ -61,7 +73,6 @@ func TestResultLengthAtLeast(t *testing.T) {
 	})
 }
 
-// Let's add a test case that checks the failure scenario when there are too few results.
 func TestResultLengthAtLeast_TooFewResults(t *testing.T) {
 	t.Parallel()
 
@@ -80,6 +91,18 @@ func TestResultLengthAtLeast_TooFewResults(t *testing.T) {
 			}),
 		},
 		Steps: []r.TestStep{
+			{ // config mode step 1 needs tf file with terraform providers block
+				// this step should provision all the resources that the query is support to list
+				// for simplicity we're only "provisioning" one here
+				Config: `
+				resource "examplecloud_containerette" "primary" {
+					name                = "banana"
+					resource_group_name = "foo"
+					location  			= "westeurope"
+			
+					instances = 5
+				}`,
+			},
 			{
 				Query: true,
 				Config: `

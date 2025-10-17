@@ -97,56 +97,6 @@ func TestQuery(t *testing.T) {
 					}),
 				},
 			},
-
-			// Commented out since these will fail now
-			//{
-			//	Query: true,
-			//	Config: `
-			//	provider "examplecloud" {}
-			//	list "examplecloud_containerette" "test" {
-			//		provider = examplecloud
-			//
-			//		config {
-			//			id = "westeurope/somevalue"
-			//		}
-			//	}
-			//	list "examplecloud_containerette" "test2" {
-			//		provider = examplecloud
-			//
-			//		config {
-			//			id = "foo"
-			//		}
-			//	}
-			//	`,
-			//	QueryResultChecks: []querycheck.QueryResultCheck{
-			//		querycheck.ExpectLength("examplecloud_containerette.test", 3),
-			//		querycheck.ExpectLength("examplecloud_containerette.test2", 3),
-			//	},
-			//},
-			//{
-			//	Query: true,
-			//	Config: `
-			//	provider "examplecloud" {}
-			//	list "examplecloud_containerette" "test" {
-			//		provider = examplecloud
-			//
-			//		config {
-			//			id = "westeurope/somevalue"
-			//		}
-			//	}
-			//	list "examplecloud_containerette" "test2" {
-			//		provider = examplecloud
-			//
-			//		config {
-			//			id = "foo"
-			//		}
-			//	}
-			//	`,
-			//	QueryResultChecks: []querycheck.QueryResultCheck{
-			//		querycheck.ExpectLengthAtLeast("examplecloud_containerette.test", 2),
-			//		querycheck.ExpectLengthAtLeast("examplecloud_containerette.test2", 1),
-			//	},
-			//},
 		},
 	})
 }
