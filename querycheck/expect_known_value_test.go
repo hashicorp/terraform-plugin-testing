@@ -58,7 +58,8 @@ func TestExpectKnownValue(t *testing.T) {
 				provider "examplecloud" {} 
 
 				list "examplecloud_containerette" "test" {
-					provider = examplecloud
+					provider         = examplecloud
+					include_resource = true
 
 					config {
 						resource_group_name = "foo"
@@ -68,12 +69,11 @@ func TestExpectKnownValue(t *testing.T) {
 				QueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectKnownValue(
 						"examplecloud_containerette.test",
-						"banana",
+						"banane",
 						tfjsonpath.New("instances"),
 						knownvalue.NumberExact(big.NewFloat(5)),
 					),
 				},
-				ExpectError: regexp.MustCompile("examplecloud_containerette.test - the resource banana was not found"),
 			},
 		},
 	})
@@ -120,7 +120,8 @@ func TestExpectKnownValue_ValueIncorrect(t *testing.T) {
 				provider "examplecloud" {} 
 
 				list "examplecloud_containerette" "test" {
-					provider = examplecloud
+					provider         = examplecloud
+					include_resource = true
 
 					config {
 						resource_group_name = "foo"

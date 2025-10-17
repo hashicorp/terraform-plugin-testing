@@ -1062,22 +1062,28 @@ func (s ProviderServer) ListResource(ctx context.Context, req *tfprotov6.ListRes
 		return nil, fmt.Errorf("failed to retrieve resource identity schema: %v", err)
 	}
 
-	schemaReq := list.SchemaRequest{}
-	schemaResp := &list.SchemaResponse{}
+	configSchemaReq := list.SchemaRequest{}
+	configSchemaResp := &list.SchemaResponse{}
 
-	listresource.Schema(ctx, schemaReq, schemaResp)
-	if len(schemaResp.Diagnostics) > 0 {
-		return nil, fmt.Errorf("failed to retrieve resource schema: %v", schemaResp.Diagnostics)
+	listresource.Schema(ctx, configSchemaReq, configSchemaResp)
+	if len(configSchemaResp.Diagnostics) > 0 {
+		return nil, fmt.Errorf("failed to retrieve resource schema: %v", configSchemaResp.Diagnostics)
+	}
+
+	resourceSchemaResp := &resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, resourceSchemaResp)
+	if resourceSchemaResp.Schema == nil {
+		return nil, fmt.Errorf("failed to retrieve resource schema: %v", resourceSchemaResp.Schema)
 	}
 
 	listReq := list.ListRequest{
 		TypeName:        req.TypeName,
 		IncludeResource: req.IncludeResource,
 		Limit:           req.Limit,
-		ResourceSchema:  schemaResp.Schema,
+		ResourceSchema:  resourceSchemaResp.Schema,
 	}
 
-	listReq.Config, diag = DynamicValueToValue(schemaResp.Schema, req.Config)
+	listReq.Config, diag = DynamicValueToValue(configSchemaResp.Schema, req.Config)
 	if diag != nil {
 		return nil, fmt.Errorf("failed to convert config to value: %v", err)
 	}
@@ -1157,8 +1163,9 @@ func processListResult(req list.ListRequest, result list.ListResult) tfprotov6.L
 		}
 
 		listResourceResult.Resource, diag = ValuetoDynamicValue(req.ResourceSchema, *result.Resource)
-		listResourceResult.Diagnostics = append(listResourceResult.Diagnostics, diag)
-		return listResourceResult
+		if diag != nil {
+			listResourceResult.Diagnostics = append(listResourceResult.Diagnostics, diag)
+		}
 
 	}
 	listResourceResult.Identity = &tfprotov6.ResourceIdentityData{}
@@ -1167,7 +1174,6 @@ func processListResult(req list.ListRequest, result list.ListResult) tfprotov6.L
 		listResourceResult.Identity.IdentityData, diag = IdentityValuetoDynamicValue(req.ResourceIdentitySchema, *result.Identity)
 		if diag != nil {
 			listResourceResult.Diagnostics = append(listResourceResult.Diagnostics, diag)
-			return listResourceResult
 		}
 	}
 
