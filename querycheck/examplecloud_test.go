@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package query_test
+package querycheck_test
 
 import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"

@@ -1,8 +1,10 @@
+// Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
 package querycheck_test
 
 import (
+	"math/big"
 	"regexp"
 	"testing"
 
@@ -10,11 +12,13 @@ import (
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/querycheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func TestContainsResourceWithName(t *testing.T) {
+func TestExpectKnownValue(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -44,41 +48,38 @@ func TestContainsResourceWithName(t *testing.T) {
 					instances = 5
 				}`,
 			},
-			{
+			{ // Query mode step 2, operates on .tfquery.hcl files (needs tf file with terraform providers block)
+				// ```provider "examplecloud" {}``` has a slightly different syntax for a .tfquery.hcl file
+				// provider bock simulates a real providers workflow
+				// "config" in this case means configuration of the list resource/filters
+
 				Query: true,
 				Config: `
 				provider "examplecloud" {} 
 
 				list "examplecloud_containerette" "test" {
-					provider = examplecloud
+					provider         = examplecloud
+					include_resource = true
 
 					config {
 						resource_group_name = "foo"
  					}
 				}
-
-				list "examplecloud_containerette" "test2" {
-					provider = examplecloud
-
-					config {
-						resource_group_name = "bar"
-					}
-				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ContainsResourceWithName("examplecloud_containerette.test", "banane"),
-					querycheck.ContainsResourceWithName("examplecloud_containerette.test", "ananas"),
-					querycheck.ContainsResourceWithName("examplecloud_containerette.test", "kiwi"),
-					querycheck.ContainsResourceWithName("examplecloud_containerette.test2", "papaya"),
-					querycheck.ContainsResourceWithName("examplecloud_containerette.test2", "birne"),
-					querycheck.ContainsResourceWithName("examplecloud_containerette.test2", "kirsche"),
+					querycheck.ExpectKnownValue(
+						"examplecloud_containerette.test",
+						"banane",
+						tfjsonpath.New("instances"),
+						knownvalue.NumberExact(big.NewFloat(5)),
+					),
 				},
 			},
 		},
 	})
 }
 
-func TestContainsResourceWithName_NotFound(t *testing.T) {
+func TestExpectKnownValue_ValueIncorrect(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -108,31 +109,33 @@ func TestContainsResourceWithName_NotFound(t *testing.T) {
 					instances = 5
 				}`,
 			},
-			{
+			{ // Query mode step 2, operates on .tfquery.hcl files (needs tf file with terraform providers block)
+				// ```provider "examplecloud" {}``` has a slightly different syntax for a .tfquery.hcl file
+				// provider bock simulates a real providers workflow
+				// "config" in this case means configuration of the list resource/filters
+
 				Query: true,
 				Config: `
 				provider "examplecloud" {} 
 
 				list "examplecloud_containerette" "test" {
-					provider = examplecloud
+					provider         = examplecloud
+					include_resource = true
 
 					config {
 						resource_group_name = "foo"
  					}
 				}
-
-				list "examplecloud_containerette" "test2" {
-					provider = examplecloud
-
-					config {
-						resource_group_name = "bar"
-					}
-				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ContainsResourceWithName("examplecloud_containerette.test", "pflaume"),
+					querycheck.ExpectKnownValue(
+						"examplecloud_containerette.test",
+						"banane",
+						tfjsonpath.New("instances"),
+						knownvalue.NumberExact(big.NewFloat(4)),
+					),
 				},
-				ExpectError: regexp.MustCompile("expected to find resource with display name \"pflaume\" in results but resource was not found"),
+				ExpectError: regexp.MustCompile("the following errors were found while checking values: error checking value for attribute at path: instances for resource banane, err: expected value 4 for NumberExact check, got: 5;"),
 			},
 		},
 	})
