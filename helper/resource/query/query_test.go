@@ -8,9 +8,11 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/list"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/querycheck"
@@ -103,7 +105,7 @@ func TestQuery(t *testing.T) {
 	})
 }
 
-func TestQuery_ValidationError(t *testing.T) {
+func TestQuery_ExpectError_ValidationError(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -113,7 +115,31 @@ func TestQuery_ValidationError(t *testing.T) {
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				ListResources: map[string]testprovider.ListResource{
-					"examplecloud_containerette": examplecloudListResourceDiagnostic(),
+					"examplecloud_containerette": {
+						IncludeResource: true,
+						SchemaResponse: &list.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "resource_group_name",
+											Type:     tftypes.String,
+											Required: true,
+										},
+									},
+								},
+							},
+						},
+						ValidateListConfigResponse: &list.ValidateListConfigResponse{
+							Diagnostics: []*tfprotov6.Diagnostic{
+								{
+									Severity: tfprotov6.DiagnosticSeverityError,
+									Summary:  "Diagnostic summary",
+									Detail:   "Diagnostic details",
+								},
+							},
+						},
+					},
 				},
 				Resources: map[string]testprovider.Resource{
 					"examplecloud_containerette": examplecloudResource(),
@@ -158,33 +184,7 @@ func TestQuery_ValidationError(t *testing.T) {
 					}
 				}
 				`,
-				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
-						"name":                knownvalue.StringExact("banane"),
-						"resource_group_name": knownvalue.StringExact("foo"),
-					}),
-					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
-						"name":                knownvalue.StringExact("ananas"),
-						"resource_group_name": knownvalue.StringExact("foo"),
-					}),
-					querycheck.ExpectIdentity("examplecloud_containerette.test", map[string]knownvalue.Check{
-						"name":                knownvalue.StringExact("kiwi"),
-						"resource_group_name": knownvalue.StringExact("foo"),
-					}),
-					querycheck.ExpectIdentity("examplecloud_containerette.test2", map[string]knownvalue.Check{
-						"name":                knownvalue.StringExact("papaya"),
-						"resource_group_name": knownvalue.StringExact("bar"),
-					}),
-					querycheck.ExpectIdentity("examplecloud_containerette.test2", map[string]knownvalue.Check{
-						"name":                knownvalue.StringExact("birne"),
-						"resource_group_name": knownvalue.StringExact("bar"),
-					}),
-					querycheck.ExpectIdentity("examplecloud_containerette.test2", map[string]knownvalue.Check{
-						"name":                knownvalue.StringExact("kirsche"),
-						"resource_group_name": knownvalue.StringExact("bar"),
-					}),
-				},
-				ExpectError: regexp.MustCompile(`Error: Invalid Attribute Value`),
+				ExpectError: regexp.MustCompile(`Diagnostic summary`),
 			},
 		},
 	})

@@ -28,6 +28,13 @@ func RunQueryChecks(ctx context.Context, t testing.T, query []tfjson.LogMsg, que
 
 	for _, msg := range query {
 		switch v := msg.(type) {
+		case tfjson.DiagnosticLogMessage:
+			if v.Diagnostic.Severity == tfjson.DiagnosticSeverityError {
+				// TODO reimplement missing .tf config error
+				result = append(result, fmt.Errorf("query error diagnostic - summary: %s, detail: %s", v.Diagnostic.Summary, v.Diagnostic.Detail))
+				continue
+			}
+
 		case tfjson.ListResourceFoundMessage:
 			found = append(found, v.ListResourceFound)
 		case tfjson.ListCompleteMessage:

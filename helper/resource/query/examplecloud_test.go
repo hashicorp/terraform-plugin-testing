@@ -6,7 +6,6 @@ package query_test
 import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
-
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"

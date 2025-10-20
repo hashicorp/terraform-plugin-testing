@@ -230,42 +230,5 @@ func examplecloudListResource() testprovider.ListResource {
 				})
 			},
 		},
-		ValidateListConfigResponse: &list.ValidateListConfigResponse{
-			Diagnostics: []*tfprotov6.Diagnostic{
-				{
-					Severity: tfprotov6.DiagnosticSeverityError,
-					Summary:  "Invalid Attribute Value",
-					Detail:   "Diagnostic details",
-				},
-			},
-		},
-	}
-}
-
-func examplecloudListResourceDiagnostic() testprovider.ListResource {
-	return testprovider.ListResource{
-		IncludeResource: true,
-		SchemaResponse: &list.SchemaResponse{
-			Schema: &tfprotov6.Schema{
-				Block: &tfprotov6.SchemaBlock{
-					Attributes: []*tfprotov6.SchemaAttribute{
-						{
-							Name:     "resource_group_name",
-							Type:     tftypes.String,
-							Required: true,
-						},
-					},
-				},
-			},
-		},
-		ValidateListConfigResponse: &list.ValidateListConfigResponse{
-			Diagnostics: []*tfprotov6.Diagnostic{
-				{
-					Severity: tfprotov6.DiagnosticSeverityError,
-					Summary:  "Invalid Attribute Value",
-					Detail:   "Diagnostic details",
-				},
-			},
-		},
 	}
 }
