@@ -18,6 +18,12 @@ type ListResource struct {
 	ValidateListConfigResponse *list.ValidateListConfigResponse
 }
 
+func (r ListResource) ValidateListConfig(ctx context.Context, req list.ValidateListConfigRequest, resp *list.ValidateListConfigResponse) {
+	if r.ValidateListConfigResponse != nil {
+		resp.Diagnostics = r.ValidateListConfigResponse.Diagnostics
+	}
+}
+
 func (r ListResource) Schema(ctx context.Context, req list.SchemaRequest, resp *list.SchemaResponse) {
 	if r.SchemaResponse != nil {
 		resp.Diagnostics = r.SchemaResponse.Diagnostics
