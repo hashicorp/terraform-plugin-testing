@@ -526,6 +526,7 @@ func (wd *WorkingDir) Schemas(ctx context.Context) (*tfjson.ProviderSchemas, err
 
 func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 	var messages []tfjson.LogMsg
+	var diags []tfjson.LogMsg
 
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI providers query command")
 
@@ -546,7 +547,16 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 			return nil, fmt.Errorf("retrieving message: %w", msg.Err)
 		}
 
+		if msg.Msg.Level() == tfjson.Error {
+			// TODO reimplement missing .tf config error
+			diags = append(diags, msg.Msg)
+			continue
+		}
 		messages = append(messages, msg.Msg)
+	}
+
+	if len(diags) > 0 {
+		return nil, fmt.Errorf("running terraform query command returned diagnostics: %+v", diags)
 	}
 
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI providers query command")
