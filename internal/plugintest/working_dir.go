@@ -346,11 +346,6 @@ func (wd *WorkingDir) CreatePlan(ctx context.Context, opts ...tfexec.PlanOption)
 	opts = append(opts, tfexec.Reattach(wd.reattachInfo))
 	opts = append(opts, tfexec.Out(PlanFileName))
 
-	// Capture output if progress capture is enabled
-	if wd.progressCaptureEnabled {
-		return wd.createPlanWithProgressCapture(ctx, opts...)
-	}
-
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan command")
 
 	hasChanges, err := wd.tf.Plan(context.Background(), opts...)
@@ -387,11 +382,6 @@ func (wd *WorkingDir) Apply(ctx context.Context, opts ...tfexec.ApplyOption) err
 	args = append(args, opts...)
 	if wd.HasSavedPlan() {
 		args = append(args, tfexec.DirOrPlan(PlanFileName))
-	}
-
-	// Capture output if progress capture is enabled
-	if wd.progressCaptureEnabled {
-		return wd.applyWithProgressCapture(ctx, args...)
 	}
 
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI apply command")
@@ -598,46 +588,4 @@ func (wd *WorkingDir) EnableProgressCapture() {
 // DisableProgressCapture disables capturing of action progress messages.
 func (wd *WorkingDir) DisableProgressCapture() {
 	wd.progressCaptureEnabled = false
-}
-
-// applyWithProgressCapture runs terraform apply while capturing action progress messages
-func (wd *WorkingDir) applyWithProgressCapture(ctx context.Context, opts ...tfexec.ApplyOption) error {
-	logging.HelperResourceTrace(ctx, "Calling Terraform CLI apply command with progress capture")
-
-	// TODO: Implement protocol-level progress capture
-	// For now, fall back to regular apply since stdout parsing doesn't work for action progress
-	err := wd.tf.Apply(context.Background(), opts...)
-
-	logging.HelperResourceTrace(ctx, "Called Terraform CLI apply command with progress capture")
-
-	return err
-}
-
-// createPlanWithProgressCapture runs terraform plan while capturing action progress messages
-func (wd *WorkingDir) createPlanWithProgressCapture(ctx context.Context, opts ...tfexec.PlanOption) error {
-	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan command with progress capture")
-
-	// TODO: Implement protocol-level progress capture
-	// For now, fall back to regular plan since stdout parsing doesn't work for action progress
-	hasChanges, err := wd.tf.Plan(context.Background(), opts...)
-
-	logging.HelperResourceTrace(ctx, "Called Terraform CLI plan command with progress capture")
-
-	if err != nil {
-		return err
-	}
-
-	if !hasChanges {
-		logging.HelperResourceTrace(ctx, "Created plan with no changes")
-		return nil
-	}
-
-	planStdout, err := wd.SavedPlanRawStdout(ctx)
-	if err != nil {
-		return fmt.Errorf("error retrieving formatted plan output: %w", err)
-	}
-
-	logging.HelperResourceTrace(ctx, "Created plan with changes", map[string]any{logging.KeyTestTerraformPlan: planStdout})
-
-	return nil
 }
