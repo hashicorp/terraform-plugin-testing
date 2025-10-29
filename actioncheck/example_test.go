@@ -9,7 +9,7 @@ import (
 )
 
 // Example of how to use action checks in a test case
-func ExampleActionChecks() {
+func ExampleExpectProgressMessageContains() {
 	// This is how you would use action checks in a real test
 	_ = resource.TestCase{
 		Steps: []resource.TestStep{

@@ -13,6 +13,7 @@ import (
 // NewProviderInterceptor creates a new provider interceptor for tfprotov5
 func NewProviderInterceptor(provider tfprotov5.ProviderServer, capture *ProgressCapture) tfprotov5.ProviderServer {
 	// Check if provider supports actions
+	//nolint:staticcheck // SA1019: ProviderServerWithActions is deprecated but still needed for compatibility
 	if actionProvider, ok := provider.(tfprotov5.ProviderServerWithActions); ok {
 		return &ActionProviderInterceptorV5{
 			ProviderServerWithActions: actionProvider,
@@ -30,6 +31,7 @@ func NewProviderInterceptor(provider tfprotov5.ProviderServer, capture *Progress
 // NewProviderInterceptorV6 creates a new provider interceptor for tfprotov6
 func NewProviderInterceptorV6(provider tfprotov6.ProviderServer, capture *ProgressCapture) tfprotov6.ProviderServer {
 	// Check if provider supports actions
+	//nolint:staticcheck // SA1019: ProviderServerWithActions is deprecated but still needed for compatibility
 	if actionProvider, ok := provider.(tfprotov6.ProviderServerWithActions); ok {
 		return &ActionProviderInterceptorV6{
 			ProviderServerWithActions: actionProvider,

@@ -12,6 +12,7 @@ import (
 )
 
 func TestExpectProgressMessageContains_Success(t *testing.T) {
+	t.Parallel()
 	check := actioncheck.ExpectProgressMessageContains("test_action", "expected content")
 
 	req := actioncheck.CheckActionRequest{
@@ -30,6 +31,7 @@ func TestExpectProgressMessageContains_Success(t *testing.T) {
 }
 
 func TestExpectProgressMessageContains_Failure(t *testing.T) {
+	t.Parallel()
 	check := actioncheck.ExpectProgressMessageContains("test_action", "missing content")
 
 	req := actioncheck.CheckActionRequest{
