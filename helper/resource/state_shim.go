@@ -56,7 +56,7 @@ func shimOutputState(so *tfjson.StateOutput) (*terraform.OutputState, error) {
 		os.Type = "string"
 		os.Value = v
 		return os, nil
-	case []interface{}:
+	case []any:
 		os.Type = "list"
 		if len(v) == 0 {
 			os.Value = v
@@ -65,7 +65,7 @@ func shimOutputState(so *tfjson.StateOutput) (*terraform.OutputState, error) {
 
 		switch firstElem := v[0].(type) {
 		case string:
-			elements := make([]interface{}, len(v))
+			elements := make([]any, len(v))
 			for i, el := range v {
 				strElement, ok := el.(string)
 				// If the type of the element doesn't match the first elem, it's a tuple, return the original value
@@ -77,7 +77,7 @@ func shimOutputState(so *tfjson.StateOutput) (*terraform.OutputState, error) {
 			}
 			os.Value = elements
 		case bool:
-			elements := make([]interface{}, len(v))
+			elements := make([]any, len(v))
 			for i, el := range v {
 				boolElement, ok := el.(bool)
 				// If the type of the element doesn't match the first elem, it's a tuple, return the original value
@@ -91,7 +91,7 @@ func shimOutputState(so *tfjson.StateOutput) (*terraform.OutputState, error) {
 			os.Value = elements
 		// unmarshalled number from JSON will always be json.Number
 		case json.Number:
-			elements := make([]interface{}, len(v))
+			elements := make([]any, len(v))
 			for i, el := range v {
 				numberElement, ok := el.(json.Number)
 				// If the type of the element doesn't match the first elem, it's a tuple, return the original value
@@ -103,15 +103,15 @@ func shimOutputState(so *tfjson.StateOutput) (*terraform.OutputState, error) {
 				elements[i] = numberElement
 			}
 			os.Value = elements
-		case []interface{}:
+		case []any:
 			os.Value = v
-		case map[string]interface{}:
+		case map[string]any:
 			os.Value = v
 		default:
 			return nil, fmt.Errorf("unexpected output list element type: %T", firstElem)
 		}
 		return os, nil
-	case map[string]interface{}:
+	case map[string]any:
 		os.Type = "map"
 		os.Value = v
 		return os, nil
@@ -242,7 +242,7 @@ func shimResourceState(res *tfjson.StateResource) (*terraform.ResourceState, err
 		Primary: &terraform.InstanceState{
 			ID:         instanceStateID,
 			Attributes: attributes,
-			Meta: map[string]interface{}{
+			Meta: map[string]any{
 				"schema_version": int(res.SchemaVersion),
 			},
 			Tainted: res.Tainted,
@@ -255,7 +255,7 @@ type shimmedFlatmap struct {
 	m map[string]string
 }
 
-func (sf *shimmedFlatmap) FromMap(attributes map[string]interface{}) error {
+func (sf *shimmedFlatmap) FromMap(attributes map[string]any) error {
 	if sf.m == nil {
 		sf.m = make(map[string]string, len(attributes))
 	}
@@ -263,7 +263,7 @@ func (sf *shimmedFlatmap) FromMap(attributes map[string]interface{}) error {
 	return sf.AddMap("", attributes)
 }
 
-func (sf *shimmedFlatmap) AddMap(prefix string, m map[string]interface{}) error {
+func (sf *shimmedFlatmap) AddMap(prefix string, m map[string]any) error {
 	for key, value := range m {
 		k := key
 		if prefix != "" {
@@ -288,7 +288,7 @@ func (sf *shimmedFlatmap) AddMap(prefix string, m map[string]interface{}) error 
 	return nil
 }
 
-func (sf *shimmedFlatmap) AddSlice(name string, elements []interface{}) error {
+func (sf *shimmedFlatmap) AddSlice(name string, elements []any) error {
 	for i, elem := range elements {
 		key := fmt.Sprintf("%s.%d", name, i)
 		err := sf.AddEntry(key, elem)
@@ -305,7 +305,7 @@ func (sf *shimmedFlatmap) AddSlice(name string, elements []interface{}) error {
 	return nil
 }
 
-func (sf *shimmedFlatmap) AddEntry(key string, value interface{}) error {
+func (sf *shimmedFlatmap) AddEntry(key string, value any) error {
 	switch el := value.(type) {
 	case nil:
 		// omit the entry
@@ -316,12 +316,12 @@ func (sf *shimmedFlatmap) AddEntry(key string, value interface{}) error {
 		sf.m[key] = el.String()
 	case string:
 		sf.m[key] = el
-	case map[string]interface{}:
+	case map[string]any:
 		err := sf.AddMap(key, el)
 		if err != nil {
 			return err
 		}
-	case []interface{}:
+	case []any:
 		err := sf.AddSlice(key, el)
 		if err != nil {
 			return err

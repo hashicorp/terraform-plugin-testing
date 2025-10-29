@@ -37,7 +37,7 @@ func TestTestNameContext(t *testing.T) {
 		t.Fatalf("unable to read multiple line JSON: %s", err)
 	}
 
-	expectedEntries := []map[string]interface{}{
+	expectedEntries := []map[string]any{
 		{
 			"@level":    "trace",
 			"@message":  "test message",
@@ -73,7 +73,7 @@ func TestTestStepNumberContext(t *testing.T) {
 		t.Fatalf("unable to read multiple line JSON: %s", err)
 	}
 
-	expectedEntries := []map[string]interface{}{
+	expectedEntries := []map[string]any{
 		{
 			"@level":           "trace",
 			"@message":         "test message",
@@ -109,7 +109,7 @@ func TestTestTerraformPathContext(t *testing.T) {
 		t.Fatalf("unable to read multiple line JSON: %s", err)
 	}
 
-	expectedEntries := []map[string]interface{}{
+	expectedEntries := []map[string]any{
 		{
 			"@level":              "trace",
 			"@message":            "test message",
@@ -145,7 +145,7 @@ func TestTestWorkingDirectoryContext(t *testing.T) {
 		t.Fatalf("unable to read multiple line JSON: %s", err)
 	}
 
-	expectedEntries := []map[string]interface{}{
+	expectedEntries := []map[string]any{
 		{
 			"@level":                 "trace",
 			"@message":               "test message",

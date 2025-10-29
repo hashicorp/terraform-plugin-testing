@@ -73,7 +73,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		if err != nil {
 			logging.HelperResourceError(ctx,
 				"Error determining whether configuration contains terraform block",
-				map[string]interface{}{logging.KeyError: err},
+				map[string]any{logging.KeyError: err},
 			)
 			t.Fatalf("Error determining whether configuration contains terraform block: %s", err)
 		}
@@ -83,7 +83,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		if err != nil {
 			logging.HelperResourceError(ctx,
 				"Error determining whether configuration contains provider block",
-				map[string]interface{}{logging.KeyError: err},
+				map[string]any{logging.KeyError: err},
 			)
 			t.Fatalf("Error determining whether configuration contains provider block: %s", err)
 		}
@@ -94,7 +94,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	if err != nil {
 		logging.HelperResourceError(ctx,
 			"Error generating merged configuration",
-			map[string]interface{}{logging.KeyError: err},
+			map[string]any{logging.KeyError: err},
 		)
 		t.Fatalf("Error generating merged configuration: %s", err)
 	}

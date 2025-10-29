@@ -19,7 +19,7 @@ func TestConfigValueFromHCL2Block(t *testing.T) {
 	tests := []struct {
 		Input  cty.Value
 		Schema *configschema.Block
-		Want   map[string]interface{}
+		Want   map[string]any
 	}{
 		{
 			cty.ObjectVal(map[string]cty.Value{
@@ -51,11 +51,11 @@ func TestConfigValueFromHCL2Block(t *testing.T) {
 					},
 				},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"name": "Ermintrude",
 				"age":  int(19),
-				"address": map[string]interface{}{
-					"street": []interface{}{"421 Shoreham Loop"},
+				"address": map[string]any{
+					"street": []any{"421 Shoreham Loop"},
 					"city":   "Fridgewater",
 					"state":  "MA",
 					"zip":    "91037",
@@ -92,7 +92,7 @@ func TestConfigValueFromHCL2Block(t *testing.T) {
 					},
 				},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"name": "Ermintrude",
 				"age":  int(19),
 			},
@@ -127,11 +127,11 @@ func TestConfigValueFromHCL2Block(t *testing.T) {
 					},
 				},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"name": "Ermintrude",
 				"age":  int(19),
-				"address": map[string]interface{}{
-					"street": []interface{}{"421 Shoreham Loop"},
+				"address": map[string]any{
+					"street": []any{"421 Shoreham Loop"},
 					"city":   "Fridgewater",
 					"state":  "MA",
 				},
@@ -149,9 +149,9 @@ func TestConfigValueFromHCL2Block(t *testing.T) {
 					},
 				},
 			},
-			map[string]interface{}{
-				"address": []interface{}{
-					map[string]interface{}{},
+			map[string]any{
+				"address": []any{
+					map[string]any{},
 				},
 			},
 		},
@@ -167,7 +167,7 @@ func TestConfigValueFromHCL2Block(t *testing.T) {
 					},
 				},
 			},
-			map[string]interface{}{},
+			map[string]any{},
 		},
 		{
 			cty.ObjectVal(map[string]cty.Value{
@@ -181,9 +181,9 @@ func TestConfigValueFromHCL2Block(t *testing.T) {
 					},
 				},
 			},
-			map[string]interface{}{
-				"address": []interface{}{
-					map[string]interface{}{},
+			map[string]any{
+				"address": []any{
+					map[string]any{},
 				},
 			},
 		},
@@ -199,7 +199,7 @@ func TestConfigValueFromHCL2Block(t *testing.T) {
 					},
 				},
 			},
-			map[string]interface{}{},
+			map[string]any{},
 		},
 		{
 			cty.ObjectVal(map[string]cty.Value{
@@ -213,9 +213,9 @@ func TestConfigValueFromHCL2Block(t *testing.T) {
 					},
 				},
 			},
-			map[string]interface{}{
-				"address": map[string]interface{}{
-					"foo": map[string]interface{}{},
+			map[string]any{
+				"address": map[string]any{
+					"foo": map[string]any{},
 				},
 			},
 		},
@@ -231,7 +231,7 @@ func TestConfigValueFromHCL2Block(t *testing.T) {
 					},
 				},
 			},
-			map[string]interface{}{},
+			map[string]any{},
 		},
 		{
 			cty.NullVal(cty.EmptyObject),
@@ -258,7 +258,7 @@ func TestConfigValueFromHCL2(t *testing.T) {
 
 	tests := []struct {
 		Input cty.Value
-		Want  interface{}
+		Want  any
 	}{
 		{
 			cty.True,
@@ -291,11 +291,11 @@ func TestConfigValueFromHCL2(t *testing.T) {
 					"zip":    cty.StringVal("91037"),
 				}),
 			}),
-			map[string]interface{}{
+			map[string]any{
 				"name": "Ermintrude",
 				"age":  int(19),
-				"address": map[string]interface{}{
-					"street": []interface{}{"421 Shoreham Loop"},
+				"address": map[string]any{
+					"street": []any{"421 Shoreham Loop"},
 					"city":   "Fridgewater",
 					"state":  "MA",
 					"zip":    "91037",
@@ -307,7 +307,7 @@ func TestConfigValueFromHCL2(t *testing.T) {
 				"foo": cty.StringVal("bar"),
 				"bar": cty.StringVal("baz"),
 			}),
-			map[string]interface{}{
+			map[string]any{
 				"foo": "bar",
 				"bar": "baz",
 			},
@@ -317,7 +317,7 @@ func TestConfigValueFromHCL2(t *testing.T) {
 				cty.StringVal("foo"),
 				cty.True,
 			}),
-			[]interface{}{
+			[]any{
 				"foo",
 				true,
 			},
@@ -349,7 +349,7 @@ func TestHCL2ValueFromConfigValue(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		Input interface{}
+		Input any
 		Want  cty.Value
 	}{
 		{
@@ -389,27 +389,27 @@ func TestHCL2ValueFromConfigValue(t *testing.T) {
 			cty.StringVal("\u00D6"), // NFC-normalized on entry into cty
 		},
 		{
-			[]interface{}{},
+			[]any{},
 			cty.EmptyTupleVal,
 		},
 		{
-			[]interface{}(nil),
+			[]any(nil),
 			cty.EmptyTupleVal,
 		},
 		{
-			[]interface{}{"hello", "world"},
+			[]any{"hello", "world"},
 			cty.TupleVal([]cty.Value{cty.StringVal("hello"), cty.StringVal("world")}),
 		},
 		{
-			map[string]interface{}{},
+			map[string]any{},
 			cty.EmptyObjectVal,
 		},
 		{
-			map[string]interface{}(nil),
+			map[string]any(nil),
 			cty.EmptyObjectVal,
 		},
 		{
-			map[string]interface{}{
+			map[string]any{
 				"foo": "bar",
 				"bar": "baz",
 			},

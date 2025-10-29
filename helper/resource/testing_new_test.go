@@ -170,19 +170,19 @@ func TestShimState(t *testing.T) {
 						Outputs: map[string]*terraform.OutputState{
 							"empty_list": {
 								Type:      "list",
-								Value:     []interface{}{},
+								Value:     []any{},
 								Sensitive: false,
 							},
 							"list_of_strings": {
 								Type: "list",
-								Value: []interface{}{
+								Value: []any{
 									"first", "second", "third",
 								},
 								Sensitive: false,
 							},
 							"map_of_strings": {
 								Type: "map",
-								Value: map[string]interface{}{
+								Value: map[string]any{
 									"hello": "world",
 									"foo":   "bar",
 								},
@@ -190,7 +190,7 @@ func TestShimState(t *testing.T) {
 							},
 							"list_of_int": {
 								Type: "list",
-								Value: []interface{}{
+								Value: []any{
 									json.Number("1"),
 									json.Number("4"),
 									json.Number("9"),
@@ -199,7 +199,7 @@ func TestShimState(t *testing.T) {
 							},
 							"list_of_float": {
 								Type: "list",
-								Value: []interface{}{
+								Value: []any{
 									json.Number("1.2"),
 									json.Number("4.2"),
 									json.Number("9.8"),
@@ -208,28 +208,28 @@ func TestShimState(t *testing.T) {
 							},
 							"list_of_bool": {
 								Type: "list",
-								Value: []interface{}{
+								Value: []any{
 									true, false, true,
 								},
 								Sensitive: false,
 							},
 							"tuple_one": {
 								Type: "list",
-								Value: []interface{}{
+								Value: []any{
 									true, json.Number("1.23"), "hello world",
 								},
 								Sensitive: false,
 							},
 							"tuple_two": {
 								Type: "list",
-								Value: []interface{}{
+								Value: []any{
 									"hello world", true, json.Number("1.23"),
 								},
 								Sensitive: false,
 							},
 							"tuple_three": {
 								Type: "list",
-								Value: []interface{}{
+								Value: []any{
 									json.Number("1.23"), "hello world", true,
 								},
 								Sensitive: false,
@@ -269,9 +269,9 @@ func TestShimState(t *testing.T) {
 						Outputs: map[string]*terraform.OutputState{
 							"list_of_lists": {
 								Type: "list",
-								Value: []interface{}{
-									[]interface{}{"one", "two"},
-									[]interface{}{"blue", "green", "red"},
+								Value: []any{
+									[]any{"one", "two"},
+									[]any{"blue", "green", "red"},
 								},
 								Sensitive: false,
 							},
@@ -318,13 +318,13 @@ func TestShimState(t *testing.T) {
 						Outputs: map[string]*terraform.OutputState{
 							"list_of_maps": {
 								Type: "list",
-								Value: []interface{}{
-									map[string]interface{}{
+								Value: []any{
+									map[string]any{
 										"allow_bool": true,
 										"port":       json.Number("443"),
 										"rule":       "allow",
 									},
-									map[string]interface{}{
+									map[string]any{
 										"allow_bool": false,
 										"port":       json.Number("80"),
 										"rule":       "deny",
@@ -369,8 +369,8 @@ func TestShimState(t *testing.T) {
 						Outputs: map[string]*terraform.OutputState{
 							"map_of_maps": {
 								Type: "map",
-								Value: map[string]interface{}{
-									"hello": map[string]interface{}{
+								Value: map[string]any{
+									"hello": map[string]any{
 										"whole": "world",
 									},
 									"foo": "bar",
@@ -441,7 +441,7 @@ func TestShimState(t *testing.T) {
 								Provider: "cloud",
 								Primary: &terraform.InstanceState{
 									ID: "123999",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 1,
 									},
 									Attributes: map[string]string{
@@ -517,7 +517,7 @@ func TestShimState(t *testing.T) {
 								Provider: "cloud",
 								Primary: &terraform.InstanceState{
 									ID: "123999",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 1,
 									},
 									Attributes: map[string]string{
@@ -623,7 +623,7 @@ func TestShimState(t *testing.T) {
 								Provider: "cloud",
 								Primary: &terraform.InstanceState{
 									ID: "123999",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 1,
 									},
 									Attributes: map[string]string{
@@ -710,7 +710,7 @@ func TestShimState(t *testing.T) {
 								Provider: "cloud",
 								Primary: &terraform.InstanceState{
 									ID: "123999",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -776,7 +776,7 @@ func TestShimState(t *testing.T) {
 								Provider: "cloud",
 								Primary: &terraform.InstanceState{
 									ID: "123999",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 1,
 									},
 									Attributes: map[string]string{
@@ -861,7 +861,7 @@ func TestShimState(t *testing.T) {
 								Provider: "cloud",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 1,
 									},
 									Attributes: map[string]string{
@@ -875,7 +875,7 @@ func TestShimState(t *testing.T) {
 								Provider: "cloud",
 								Primary: &terraform.InstanceState{
 									ID: "22222",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 1,
 									},
 									Attributes: map[string]string{
@@ -941,7 +941,7 @@ func TestShimState(t *testing.T) {
 								Provider: "cloud",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -955,7 +955,7 @@ func TestShimState(t *testing.T) {
 								Provider: "cloud",
 								Primary: &terraform.InstanceState{
 									ID: "22222",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1060,7 +1060,7 @@ func TestShimState(t *testing.T) {
 								Provider: "cloud",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1074,7 +1074,7 @@ func TestShimState(t *testing.T) {
 								Provider: "cloud",
 								Primary: &terraform.InstanceState{
 									ID: "22222",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{

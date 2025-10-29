@@ -35,7 +35,7 @@ func TestHelperResourceDebug(t *testing.T) {
 		t.Fatalf("unable to read multiple line JSON: %s", err)
 	}
 
-	expectedEntries := []map[string]interface{}{
+	expectedEntries := []map[string]any{
 		{
 			"@level":   "debug",
 			"@message": "test message",
@@ -68,7 +68,7 @@ func TestHelperResourceError(t *testing.T) {
 		t.Fatalf("unable to read multiple line JSON: %s", err)
 	}
 
-	expectedEntries := []map[string]interface{}{
+	expectedEntries := []map[string]any{
 		{
 			"@level":   "error",
 			"@message": "test message",
@@ -101,7 +101,7 @@ func TestHelperResourceTrace(t *testing.T) {
 		t.Fatalf("unable to read multiple line JSON: %s", err)
 	}
 
-	expectedEntries := []map[string]interface{}{
+	expectedEntries := []map[string]any{
 		{
 			"@level":   "trace",
 			"@message": "test message",
@@ -134,7 +134,7 @@ func TestHelperResourceWarn(t *testing.T) {
 		t.Fatalf("unable to read multiple line JSON: %s", err)
 	}
 
-	expectedEntries := []map[string]interface{}{
+	expectedEntries := []map[string]any{
 		{
 			"@level":   "warn",
 			"@message": "test message",

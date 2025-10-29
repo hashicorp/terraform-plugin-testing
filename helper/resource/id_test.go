@@ -23,7 +23,7 @@ func TestUniqueId(t *testing.T) {
 	iterations := 10000
 	ids := make(map[string]struct{})
 	var id, lastId string
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		id = UniqueId()
 
 		if _, ok := ids[id]; ok {

@@ -13,20 +13,20 @@ import (
 )
 
 func FailedStateRefreshFunc() StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		return nil, "", errors.New("failed")
 	}
 }
 
 func TimeoutStateRefreshFunc() StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		time.Sleep(100 * time.Second)
 		return nil, "", errors.New("failed")
 	}
 }
 
 func SuccessfulStateRefreshFunc() StateRefreshFunc {
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		return struct{}{}, "running", nil
 	}
 }
@@ -66,7 +66,7 @@ func InconsistentStateRefreshFunc() StateRefreshFunc {
 
 	r := NewStateGenerator(sequence)
 
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		idx, s, err := r.NextState()
 		if err != nil {
 			return nil, "", err
@@ -83,7 +83,7 @@ func UnknownPendingStateRefreshFunc() StateRefreshFunc {
 
 	r := NewStateGenerator(sequence)
 
-	return func() (interface{}, string, error) {
+	return func() (any, string, error) {
 		idx, s, err := r.NextState()
 		if err != nil {
 			return nil, "", err
@@ -122,7 +122,7 @@ func TestWaitForState_inconsistent_negative(t *testing.T) {
 
 	refreshCount := int64(0)
 	f := InconsistentStateRefreshFunc()
-	refresh := func() (interface{}, string, error) {
+	refresh := func() (any, string, error) {
 		atomic.AddInt64(&refreshCount, 1)
 		return f()
 	}
@@ -194,7 +194,7 @@ func TestWaitForState_cancel(t *testing.T) {
 
 	// make this refresh func block until we cancel it
 	cancel := make(chan struct{})
-	refresh := func() (interface{}, string, error) {
+	refresh := func() (any, string, error) {
 		<-cancel
 		return nil, "pending", nil
 	}
@@ -206,7 +206,7 @@ func TestWaitForState_cancel(t *testing.T) {
 		PollInterval: 10 * time.Second,
 	}
 
-	var obj interface{}
+	var obj any
 	var err error
 
 	waitDone := make(chan struct{})
@@ -289,7 +289,7 @@ func TestWaitForState_successEmpty(t *testing.T) {
 	conf := &StateChangeConf{
 		Pending: []string{"pending", "incomplete"},
 		Target:  []string{},
-		Refresh: func() (interface{}, string, error) {
+		Refresh: func() (any, string, error) {
 			return nil, "", nil
 		},
 		Timeout: 200 * time.Second,
@@ -311,7 +311,7 @@ func TestWaitForState_failureEmpty(t *testing.T) {
 		Pending:        []string{"pending", "incomplete"},
 		Target:         []string{},
 		NotFoundChecks: 1,
-		Refresh: func() (interface{}, string, error) {
+		Refresh: func() (any, string, error) {
 			return 42, "pending", nil
 		},
 		PollInterval: 10 * time.Millisecond,
@@ -356,7 +356,7 @@ func TestWaitForStateContext_cancel(t *testing.T) {
 
 	// make this refresh func block until we cancel it
 	ctx, cancel := context.WithCancel(context.Background())
-	refresh := func() (interface{}, string, error) {
+	refresh := func() (any, string, error) {
 		<-ctx.Done()
 		return nil, "pending", nil
 	}

@@ -76,7 +76,7 @@ func (wd *WorkingDir) Close() error {
 }
 
 func (wd *WorkingDir) SetReattachInfo(ctx context.Context, reattachInfo tfexec.ReattachInfo) {
-	logging.HelperResourceTrace(ctx, "Setting Terraform CLI reattach configuration", map[string]interface{}{"tf_reattach_config": reattachInfo})
+	logging.HelperResourceTrace(ctx, "Setting Terraform CLI reattach configuration", map[string]any{"tf_reattach_config": reattachInfo})
 	wd.reattachInfo = reattachInfo
 }
 

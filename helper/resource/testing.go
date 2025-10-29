@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"maps"
 	"os"
 	"regexp"
 	"strconv"
@@ -207,9 +208,7 @@ func filterSweepers(f string, source map[string]*Sweeper) map[string]*Sweeper {
 	for name := range source {
 		for _, s := range filterSlice {
 			if strings.Contains(strings.ToLower(name), s) {
-				for foundName, foundSweeper := range filterSweeperWithDependencies(name, source) {
-					sweepers[foundName] = foundSweeper
-				}
+				maps.Copy(sweepers, filterSweeperWithDependencies(name, source))
 			}
 		}
 	}
@@ -231,9 +230,7 @@ func filterSweeperWithDependencies(name string, source map[string]*Sweeper) map[
 	result[name] = currentSweeper
 
 	for _, dependency := range currentSweeper.Dependencies {
-		for foundName, foundSweeper := range filterSweeperWithDependencies(dependency, source) {
-			result[foundName] = foundSweeper
-		}
+		maps.Copy(result, filterSweeperWithDependencies(dependency, source))
 	}
 
 	return result
@@ -936,7 +933,7 @@ func Test(t testing.T, c TestCase) {
 	if err != nil {
 		logging.HelperResourceError(ctx,
 			"Test validation error",
-			map[string]interface{}{logging.KeyError: err},
+			map[string]any{logging.KeyError: err},
 		)
 		t.Fatalf("Test validation error: %s", err)
 	}
@@ -984,7 +981,7 @@ func Test(t testing.T, c TestCase) {
 	defer func(helper *plugintest.Helper) {
 		err := helper.Close()
 		if err != nil {
-			logging.HelperResourceError(ctx, "Unable to clean up temporary test files", map[string]interface{}{logging.KeyError: err})
+			logging.HelperResourceError(ctx, "Unable to clean up temporary test files", map[string]any{logging.KeyError: err})
 		}
 	}(helper)
 
@@ -2144,7 +2141,7 @@ func primaryInstanceState(s *terraform.State, name string) (*terraform.InstanceS
 // string address uses a precalculated TypeSet hash, which are integers and
 // typically are large and obviously not a list index
 func indexesIntoTypeSet(key string) bool {
-	for _, part := range strings.Split(key, ".") {
+	for part := range strings.SplitSeq(key, ".") {
 		if i, err := strconv.Atoi(part); err == nil && i > 100 {
 			return true
 		}

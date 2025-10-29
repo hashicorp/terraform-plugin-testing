@@ -77,7 +77,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if err != nil {
 			logging.HelperResourceError(ctx,
 				"Error retrieving state, there may be dangling resources",
-				map[string]interface{}{logging.KeyError: err},
+				map[string]any{logging.KeyError: err},
 			)
 			t.Fatalf("Error retrieving state, there may be dangling resources: %s", err.Error())
 			return
@@ -88,7 +88,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if err != nil {
 				logging.HelperResourceError(ctx,
 					"Error running post-test destroy, there may be dangling resources",
-					map[string]interface{}{logging.KeyError: err},
+					map[string]any{logging.KeyError: err},
 				)
 				t.Fatalf("Error running post-test destroy, there may be dangling resources: %s", err.Error())
 			}
@@ -111,7 +111,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if err != nil {
 			logging.HelperResourceError(ctx,
 				"TestCase error setting provider configuration",
-				map[string]interface{}{logging.KeyError: err},
+				map[string]any{logging.KeyError: err},
 			)
 			t.Fatalf("TestCase error setting provider configuration: %s", err)
 		}
@@ -123,7 +123,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if err != nil {
 			logging.HelperResourceError(ctx,
 				"TestCase error running init",
-				map[string]interface{}{logging.KeyError: err},
+				map[string]any{logging.KeyError: err},
 			)
 			t.Fatalf("TestCase error running init: %s", err.Error())
 		}
@@ -170,7 +170,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if err != nil {
 				logging.HelperResourceError(ctx,
 					"Error calling TestStep SkipFunc",
-					map[string]interface{}{logging.KeyError: err},
+					map[string]any{logging.KeyError: err},
 				)
 				t.Fatalf("Error calling TestStep SkipFunc: %s", err.Error())
 			}
@@ -190,7 +190,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if err != nil {
 				logging.HelperResourceError(ctx,
 					"TestStep error tainting resources",
-					map[string]interface{}{logging.KeyError: err},
+					map[string]any{logging.KeyError: err},
 				)
 				t.Fatalf("TestStep %d/%d error tainting resources: %s", stepNumber, len(c.Steps), err)
 			}
@@ -201,7 +201,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if err != nil {
 			logging.HelperResourceError(ctx,
 				"TestStep error checking for providers",
-				map[string]interface{}{logging.KeyError: err},
+				map[string]any{logging.KeyError: err},
 			)
 			t.Fatalf("TestStep %d/%d error checking for providers: %s", stepNumber, len(c.Steps), err)
 		}
@@ -221,7 +221,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				if err != nil {
 					logging.HelperResourceError(ctx,
 						"TestStep error determining whether configuration contains provider block",
-						map[string]interface{}{logging.KeyError: err},
+						map[string]any{logging.KeyError: err},
 					)
 					t.Fatalf("TestStep %d/%d error determining whether configuration contains provider block: %s", stepNumber, len(c.Steps), err)
 				}
@@ -234,7 +234,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if err != nil {
 				logging.HelperResourceError(ctx,
 					"TestStep error generating provider configuration",
-					map[string]interface{}{logging.KeyError: err},
+					map[string]any{logging.KeyError: err},
 				)
 				t.Fatalf("TestStep %d/%d error generating provider configuration: %s", stepNumber, len(c.Steps), err)
 			}
@@ -261,7 +261,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if err != nil {
 				logging.HelperResourceError(ctx,
 					"TestStep error setting provider configuration",
-					map[string]interface{}{logging.KeyError: err},
+					map[string]any{logging.KeyError: err},
 				)
 				t.Fatalf("TestStep %d/%d error setting test provider configuration: %s", stepNumber, len(c.Steps), err)
 			}
@@ -273,7 +273,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if err != nil {
 				logging.HelperResourceError(ctx,
 					"TestStep error running init",
-					map[string]interface{}{logging.KeyError: err},
+					map[string]any{logging.KeyError: err},
 				)
 				t.Fatalf("TestStep %d/%d running init: %s", stepNumber, len(c.Steps), err.Error())
 				return
@@ -295,7 +295,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				if !step.ExpectError.MatchString(err.Error()) {
 					logging.HelperResourceError(ctx,
 						fmt.Sprintf("Error running import: expected an error with pattern (%s)", step.ExpectError.String()),
-						map[string]interface{}{logging.KeyError: err},
+						map[string]any{logging.KeyError: err},
 					)
 					t.Fatalf("Step %d/%d error running import, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
 				}
@@ -308,7 +308,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				if err != nil {
 					logging.HelperResourceError(ctx,
 						"Error running import",
-						map[string]interface{}{logging.KeyError: err},
+						map[string]any{logging.KeyError: err},
 					)
 					t.Fatalf("Step %d/%d error running import: %s", stepNumber, len(c.Steps), err)
 				}
@@ -334,7 +334,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				if !step.ExpectError.MatchString(err.Error()) {
 					logging.HelperResourceError(ctx,
 						fmt.Sprintf("Error running refresh: expected an error with pattern (%s)", step.ExpectError.String()),
-						map[string]interface{}{logging.KeyError: err},
+						map[string]any{logging.KeyError: err},
 					)
 					t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
 				}
@@ -347,7 +347,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				if err != nil {
 					logging.HelperResourceError(ctx,
 						"Error running refresh",
-						map[string]interface{}{logging.KeyError: err},
+						map[string]any{logging.KeyError: err},
 					)
 					t.Fatalf("Step %d/%d error running refresh: %s", stepNumber, len(c.Steps), err)
 				}
@@ -371,7 +371,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				}
 				if !step.ExpectError.MatchString(err.Error()) {
 					logging.HelperResourceError(ctx, fmt.Sprintf("Error running query: expected an error with pattern (%s)", step.ExpectError.String()),
-						map[string]interface{}{logging.KeyError: err},
+						map[string]any{logging.KeyError: err},
 					)
 					t.Fatalf("Step %d/%d error running query, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
 				}
@@ -383,7 +383,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				}
 				if err != nil {
 					logging.HelperResourceError(ctx, "Error running query",
-						map[string]interface{}{logging.KeyError: err},
+						map[string]any{logging.KeyError: err},
 					)
 					t.Fatalf("Step %d/%d error running query checks: %s", stepNumber, len(c.Steps), err)
 				}
@@ -410,7 +410,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				if !step.ExpectError.MatchString(err.Error()) {
 					logging.HelperResourceError(ctx,
 						fmt.Sprintf("Expected an error with pattern (%s)", step.ExpectError.String()),
-						map[string]interface{}{logging.KeyError: err},
+						map[string]any{logging.KeyError: err},
 					)
 					t.Fatalf("Step %d/%d, expected an error with pattern, no match on: %s", stepNumber, len(c.Steps), err)
 				}
@@ -425,7 +425,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				if err != nil {
 					logging.HelperResourceError(ctx,
 						"Unexpected error",
-						map[string]interface{}{logging.KeyError: err},
+						map[string]any{logging.KeyError: err},
 					)
 					t.Fatalf("Step %d/%d error: %s", stepNumber, len(c.Steps), err)
 				}
@@ -440,7 +440,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				if err != nil {
 					logging.HelperResourceError(ctx,
 						"Error determining whether configuration contains terraform block",
-						map[string]interface{}{logging.KeyError: err},
+						map[string]any{logging.KeyError: err},
 					)
 					t.Fatalf("Error determining whether configuration contains terraform block: %s", err)
 				}
@@ -450,7 +450,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				if err != nil {
 					logging.HelperResourceError(ctx,
 						"Error determining whether configuration contains provider block",
-						map[string]interface{}{logging.KeyError: err},
+						map[string]any{logging.KeyError: err},
 					)
 					t.Fatalf("Error determining whether configuration contains provider block: %s", err)
 				}
@@ -461,7 +461,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			if err != nil {
 				logging.HelperResourceError(ctx,
 					"Error generating merged configuration",
-					map[string]interface{}{logging.KeyError: err},
+					map[string]any{logging.KeyError: err},
 				)
 				t.Fatalf("Error generating merged configuration: %s", err)
 			}
@@ -563,7 +563,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 		if err != nil {
 			logging.HelperResourceError(ctx,
 				"Error determining whether configuration contains provider block for import test config",
-				map[string]interface{}{logging.KeyError: err},
+				map[string]any{logging.KeyError: err},
 			)
 			t.Fatalf("Error determining whether configuration contains provider block for import test config: %s", err)
 		}
@@ -690,7 +690,7 @@ func copyWorkingDir(ctx context.Context, t testing.T, stepNumber int, wd *plugin
 	if err != nil {
 		logging.HelperResourceError(ctx,
 			"Unexpected error copying working directory files",
-			map[string]interface{}{logging.KeyError: err},
+			map[string]any{logging.KeyError: err},
 		)
 		t.Fatalf("TestStep %d/%d error copying working directory files: %s", stepNumber, err)
 	}

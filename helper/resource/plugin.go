@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"strings"
 	"sync"
@@ -39,14 +40,10 @@ type protov5ProviderFactories map[string]func() (tfprotov5.ProviderServer, error
 func (pf protov5ProviderFactories) merge(otherPfs ...protov5ProviderFactories) protov5ProviderFactories {
 	result := make(protov5ProviderFactories)
 
-	for name, providerFactory := range pf {
-		result[name] = providerFactory
-	}
+	maps.Copy(result, pf)
 
 	for _, otherPf := range otherPfs {
-		for name, providerFactory := range otherPf {
-			result[name] = providerFactory
-		}
+		maps.Copy(result, otherPf)
 	}
 
 	return result
@@ -67,14 +64,10 @@ type protov6ProviderFactories map[string]func() (tfprotov6.ProviderServer, error
 func (pf protov6ProviderFactories) merge(otherPfs ...protov6ProviderFactories) protov6ProviderFactories {
 	result := make(protov6ProviderFactories)
 
-	for name, providerFactory := range pf {
-		result[name] = providerFactory
-	}
+	maps.Copy(result, pf)
 
 	for _, otherPf := range otherPfs {
-		for name, providerFactory := range otherPf {
-			result[name] = providerFactory
-		}
+		maps.Copy(result, otherPf)
 	}
 
 	return result
@@ -95,14 +88,10 @@ type sdkProviderFactories map[string]func() (*schema.Provider, error)
 func (pf sdkProviderFactories) merge(otherPfs ...sdkProviderFactories) sdkProviderFactories {
 	result := make(sdkProviderFactories)
 
-	for name, providerFactory := range pf {
-		result[name] = providerFactory
-	}
+	maps.Copy(result, pf)
 
 	for _, otherPf := range otherPfs {
-		for name, providerFactory := range otherPf {
-			result[name] = providerFactory
-		}
+		maps.Copy(result, otherPf)
 	}
 
 	return result
@@ -214,14 +203,14 @@ func runProviderCommand(ctx context.Context, t testing.T, wd *plugintest.Working
 		providerName = strings.TrimPrefix(providerName, "terraform-provider-")
 		providerAddress := getProviderAddr(providerName)
 
-		logging.HelperResourceTrace(ctx, "Creating sdkv2 provider instance", map[string]interface{}{logging.KeyProviderAddress: providerAddress})
+		logging.HelperResourceTrace(ctx, "Creating sdkv2 provider instance", map[string]any{logging.KeyProviderAddress: providerAddress})
 
 		provider, err := factory()
 		if err != nil {
 			return fmt.Errorf("unable to create provider %q from factory: %w", providerName, err)
 		}
 
-		logging.HelperResourceTrace(ctx, "Created sdkv2 provider instance", map[string]interface{}{logging.KeyProviderAddress: providerAddress})
+		logging.HelperResourceTrace(ctx, "Created sdkv2 provider instance", map[string]any{logging.KeyProviderAddress: providerAddress})
 
 		// keep track of the running factory, so we can make sure it's
 		// shut down.
@@ -251,14 +240,14 @@ func runProviderCommand(ctx context.Context, t testing.T, wd *plugintest.Working
 			ProviderAddr:        providerAddress,
 		}
 
-		logging.HelperResourceTrace(ctx, "Starting sdkv2 provider instance server", map[string]interface{}{logging.KeyProviderAddress: providerAddress})
+		logging.HelperResourceTrace(ctx, "Starting sdkv2 provider instance server", map[string]any{logging.KeyProviderAddress: providerAddress})
 
 		config, closeCh, err := plugin.DebugServe(ctx, opts)
 		if err != nil {
 			return fmt.Errorf("unable to serve provider %q: %w", providerName, err)
 		}
 
-		logging.HelperResourceTrace(ctx, "Started sdkv2 provider instance server", map[string]interface{}{logging.KeyProviderAddress: providerAddress})
+		logging.HelperResourceTrace(ctx, "Started sdkv2 provider instance server", map[string]any{logging.KeyProviderAddress: providerAddress})
 
 		tfexecConfig := tfexec.ReattachConfig{
 			Protocol:        config.Protocol,
@@ -308,7 +297,7 @@ func runProviderCommand(ctx context.Context, t testing.T, wd *plugintest.Working
 			}
 		}
 
-		logging.HelperResourceTrace(ctx, "Creating tfprotov5 provider instance", map[string]interface{}{logging.KeyProviderAddress: providerAddress})
+		logging.HelperResourceTrace(ctx, "Creating tfprotov5 provider instance", map[string]any{logging.KeyProviderAddress: providerAddress})
 
 		provider, err := factory()
 		if err != nil {
@@ -320,7 +309,7 @@ func runProviderCommand(ctx context.Context, t testing.T, wd *plugintest.Working
 			provider = plugintest.NewProviderInterceptor(provider, wd.GetProgressCapture())
 		}
 
-		logging.HelperResourceTrace(ctx, "Created tfprotov5 provider instance", map[string]interface{}{logging.KeyProviderAddress: providerAddress})
+		logging.HelperResourceTrace(ctx, "Created tfprotov5 provider instance", map[string]any{logging.KeyProviderAddress: providerAddress})
 
 		// keep track of the running factory, so we can make sure it's
 		// shut down.
@@ -344,14 +333,14 @@ func runProviderCommand(ctx context.Context, t testing.T, wd *plugintest.Working
 			ProviderAddr:        providerAddress,
 		}
 
-		logging.HelperResourceTrace(ctx, "Starting tfprotov5 provider instance server", map[string]interface{}{logging.KeyProviderAddress: providerAddress})
+		logging.HelperResourceTrace(ctx, "Starting tfprotov5 provider instance server", map[string]any{logging.KeyProviderAddress: providerAddress})
 
 		config, closeCh, err := plugin.DebugServe(ctx, opts)
 		if err != nil {
 			return fmt.Errorf("unable to serve provider %q: %w", providerName, err)
 		}
 
-		logging.HelperResourceTrace(ctx, "Started tfprotov5 provider instance server", map[string]interface{}{logging.KeyProviderAddress: providerAddress})
+		logging.HelperResourceTrace(ctx, "Started tfprotov5 provider instance server", map[string]any{logging.KeyProviderAddress: providerAddress})
 
 		tfexecConfig := tfexec.ReattachConfig{
 			Protocol:        config.Protocol,
@@ -402,14 +391,14 @@ func runProviderCommand(ctx context.Context, t testing.T, wd *plugintest.Working
 			}
 		}
 
-		logging.HelperResourceTrace(ctx, "Creating tfprotov6 provider instance", map[string]interface{}{logging.KeyProviderAddress: providerAddress})
+		logging.HelperResourceTrace(ctx, "Creating tfprotov6 provider instance", map[string]any{logging.KeyProviderAddress: providerAddress})
 
 		provider, err := factory()
 		if err != nil {
 			return fmt.Errorf("unable to create provider %q from factory: %w", providerName, err)
 		}
 
-		logging.HelperResourceTrace(ctx, "Created tfprotov6 provider instance", map[string]interface{}{logging.KeyProviderAddress: providerAddress})
+		logging.HelperResourceTrace(ctx, "Created tfprotov6 provider instance", map[string]any{logging.KeyProviderAddress: providerAddress})
 
 		// Wrap provider to capture action progress messages if needed
 		if wd.IsProgressCaptureEnabled() {
@@ -434,14 +423,14 @@ func runProviderCommand(ctx context.Context, t testing.T, wd *plugintest.Working
 			ProviderAddr:        providerAddress,
 		}
 
-		logging.HelperResourceTrace(ctx, "Starting tfprotov6 provider instance server", map[string]interface{}{logging.KeyProviderAddress: providerAddress})
+		logging.HelperResourceTrace(ctx, "Starting tfprotov6 provider instance server", map[string]any{logging.KeyProviderAddress: providerAddress})
 
 		config, closeCh, err := plugin.DebugServe(ctx, opts)
 		if err != nil {
 			return fmt.Errorf("unable to serve provider %q: %w", providerName, err)
 		}
 
-		logging.HelperResourceTrace(ctx, "Started tfprotov6 provider instance server", map[string]interface{}{logging.KeyProviderAddress: providerAddress})
+		logging.HelperResourceTrace(ctx, "Started tfprotov6 provider instance server", map[string]any{logging.KeyProviderAddress: providerAddress})
 
 		tfexecConfig := tfexec.ReattachConfig{
 			Protocol:        config.Protocol,
@@ -483,7 +472,7 @@ func runProviderCommand(ctx context.Context, t testing.T, wd *plugintest.Working
 	// started.
 	err := f()
 	if err != nil {
-		logging.HelperResourceWarn(ctx, "Error running Terraform CLI command", map[string]interface{}{logging.KeyError: err})
+		logging.HelperResourceWarn(ctx, "Error running Terraform CLI command", map[string]any{logging.KeyError: err})
 	}
 
 	logging.HelperResourceTrace(ctx, "Called wrapped Terraform CLI command")

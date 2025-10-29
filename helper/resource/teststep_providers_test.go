@@ -2001,14 +2001,14 @@ func TestTest_TestStep_ExternalProvidersAndProviderFactories_NonHashiCorpNamespa
 						return &schema.Provider{
 							ResourcesMap: map[string]*schema.Resource{
 								"null_resource": {
-									CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+									CreateContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 										d.SetId("test")
 										return nil
 									},
-									DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+									DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 										return nil
 									},
-									ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+									ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 										return nil
 									},
 									Schema: map[string]*schema.Schema{
@@ -2104,14 +2104,14 @@ func TestTest_TestStep_ExternalProviders_To_ProviderFactories(t *testing.T) {
 						return &schema.Provider{
 							ResourcesMap: map[string]*schema.Resource{
 								"null_resource": {
-									CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+									CreateContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 										d.SetId("test")
 										return nil
 									},
-									DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+									DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 										return nil
 									},
-									ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+									ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 										return nil
 									},
 									Schema: map[string]*schema.Schema{
@@ -2154,14 +2154,14 @@ func TestTest_TestStep_ExternalProviders_To_ProviderFactories_StateUpgraders(t *
 						return &schema.Provider{
 							ResourcesMap: map[string]*schema.Resource{
 								"null_resource": {
-									CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+									CreateContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 										d.SetId("test")
 										return nil
 									},
-									DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+									DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 										return nil
 									},
-									ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+									ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 										return nil
 									},
 									Schema: map[string]*schema.Schema{
@@ -2179,7 +2179,7 @@ func TestTest_TestStep_ExternalProviders_To_ProviderFactories_StateUpgraders(t *
 												"id":       cty.String,
 												"triggers": cty.Map(cty.String),
 											}),
-											Upgrade: func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+											Upgrade: func(ctx context.Context, rawState map[string]any, meta any) (map[string]any, error) {
 												// null 3.1.3 sets the id attribute to a stringified random integer.
 												// Double check that our resource wasn't created by this TestStep.
 												id, ok := rawState["id"].(string)
@@ -2502,14 +2502,14 @@ func TestTest_TestStep_ProviderFactories_To_ExternalProviders(t *testing.T) {
 						return &schema.Provider{
 							ResourcesMap: map[string]*schema.Resource{
 								"null_resource": {
-									CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+									CreateContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 										d.SetId("test")
 										return nil
 									},
-									DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+									DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 										return nil
 									},
-									ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+									ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 										return nil
 									},
 									Schema: map[string]*schema.Schema{
@@ -2552,10 +2552,10 @@ func TestTest_TestStep_ProviderFactories_Import_Inline(t *testing.T) {
 						return &schema.Provider{
 							ResourcesMap: map[string]*schema.Resource{
 								"random_password": {
-									DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+									DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 										return nil
 									},
-									ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+									ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 										return nil
 									},
 									Schema: map[string]*schema.Schema{
@@ -2576,7 +2576,7 @@ func TestTest_TestStep_ProviderFactories_Import_Inline(t *testing.T) {
 										},
 									},
 									Importer: &schema.ResourceImporter{
-										StateContext: func(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+										StateContext: func(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 											val := d.Id()
 
 											d.SetId("none")
@@ -2623,10 +2623,10 @@ func TestTest_TestStep_ProviderFactories_Import_Inline_WithPersistMatch(t *testi
 				return &schema.Provider{
 					ResourcesMap: map[string]*schema.Resource{
 						"random_password": {
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
-							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
 							Schema: map[string]*schema.Schema{
@@ -2647,7 +2647,7 @@ func TestTest_TestStep_ProviderFactories_Import_Inline_WithPersistMatch(t *testi
 								},
 							},
 							Importer: &schema.ResourceImporter{
-								StateContext: func(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+								StateContext: func(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 									val := d.Id()
 
 									d.SetId("none")
@@ -2701,14 +2701,14 @@ func TestTest_TestStep_ProviderFactories_Import_Inline_WithoutPersist(t *testing
 				return &schema.Provider{
 					ResourcesMap: map[string]*schema.Resource{
 						"random_password": {
-							CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							CreateContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 								d.SetId("none")
 								return nil
 							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
-							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
 							Schema: map[string]*schema.Schema{
@@ -2729,7 +2729,7 @@ func TestTest_TestStep_ProviderFactories_Import_Inline_WithoutPersist(t *testing
 								},
 							},
 							Importer: &schema.ResourceImporter{
-								StateContext: func(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+								StateContext: func(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 									val := d.Id()
 
 									d.SetId("none")
@@ -3023,7 +3023,7 @@ func TestTest_TestStep_ProviderFactories_Refresh_Inline(t *testing.T) {
 				return &schema.Provider{
 					ResourcesMap: map[string]*schema.Resource{
 						"random_password": {
-							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) diag.Diagnostics {
+							CreateContext: func(ctx context.Context, d *schema.ResourceData, i any) diag.Diagnostics {
 								d.SetId("id")
 								err := d.Set("min_special", 10)
 								if err != nil {
@@ -3031,10 +3031,10 @@ func TestTest_TestStep_ProviderFactories_Refresh_Inline(t *testing.T) {
 								}
 								return nil
 							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
-							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							ReadContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 								err := d.Set("min_special", 2)
 								if err != nil {
 									panic(err)
@@ -3094,14 +3094,14 @@ func TestTest_TestStep_ProviderFactories_CopyWorkingDir_EachTestStep(t *testing.
 				return &schema.Provider{
 					ResourcesMap: map[string]*schema.Resource{
 						"random_password": {
-							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) diag.Diagnostics {
+							CreateContext: func(ctx context.Context, d *schema.ResourceData, i any) diag.Diagnostics {
 								d.SetId("id")
 								return nil
 							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
-							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							ReadContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
 							Schema: map[string]*schema.Schema{
@@ -3139,7 +3139,7 @@ func TestTest_TestStep_ProviderFactories_RefreshWithPlanModifier_Inline(t *testi
 					ResourcesMap: map[string]*schema.Resource{
 						"random_password": {
 							CustomizeDiff: customdiff.All(
-								func(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
+								func(ctx context.Context, d *schema.ResourceDiff, meta any) error {
 									special, ok := d.Get("special").(bool)
 									if !ok {
 										return fmt.Errorf("unexpected type %T for 'special' key", d.Get("special"))
@@ -3154,7 +3154,7 @@ func TestTest_TestStep_ProviderFactories_RefreshWithPlanModifier_Inline(t *testi
 									return nil
 								},
 							),
-							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) diag.Diagnostics {
+							CreateContext: func(ctx context.Context, d *schema.ResourceData, i any) diag.Diagnostics {
 								d.SetId("id")
 								err := d.Set("special", false)
 								if err != nil {
@@ -3162,10 +3162,10 @@ func TestTest_TestStep_ProviderFactories_RefreshWithPlanModifier_Inline(t *testi
 								}
 								return nil
 							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
-							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							ReadContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 								t := getTimeForTest()
 								if t.After(time.Now().Add(time.Hour * 1)) {
 									err := d.Set("special", true)
@@ -3223,7 +3223,7 @@ func TestTest_TestStep_ProviderFactories_Import_Inline_With_Data_Source(t *testi
 				return &schema.Provider{
 					DataSourcesMap: map[string]*schema.Resource{
 						"http": {
-							ReadContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) (diags diag.Diagnostics) {
+							ReadContext: func(ctx context.Context, d *schema.ResourceData, i any) (diags diag.Diagnostics) {
 								url, ok := d.Get("url").(string)
 								if !ok {
 									return diag.Errorf("unexpected type %T for 'url' key", d.Get("url"))
@@ -3264,7 +3264,7 @@ func TestTest_TestStep_ProviderFactories_Import_Inline_With_Data_Source(t *testi
 				return &schema.Provider{
 					ResourcesMap: map[string]*schema.Resource{
 						"random_string": {
-							CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							CreateContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 								d.SetId("none")
 								err := d.Set("length", 4)
 								if err != nil {
@@ -3276,10 +3276,10 @@ func TestTest_TestStep_ProviderFactories_Import_Inline_With_Data_Source(t *testi
 								}
 								return nil
 							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
-							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
 							Schema: map[string]*schema.Schema{
@@ -3300,7 +3300,7 @@ func TestTest_TestStep_ProviderFactories_Import_Inline_With_Data_Source(t *testi
 								},
 							},
 							Importer: &schema.ResourceImporter{
-								StateContext: func(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+								StateContext: func(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 									val := d.Id()
 
 									d.SetId(val)
@@ -3893,14 +3893,14 @@ func TestTest_TestStep_ProviderFactories_ConfigDirectory_StaticDirectory(t *test
 				return &schema.Provider{
 					ResourcesMap: map[string]*schema.Resource{
 						"random_id": {
-							CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							CreateContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 								d.SetId(time.Now().String())
 								return nil
 							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
-							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
 							Schema: map[string]*schema.Schema{},
@@ -3927,14 +3927,14 @@ func TestTest_TestStep_ProviderFactories_ConfigDirectory_TestNameDirectory(t *te
 				return &schema.Provider{
 					ResourcesMap: map[string]*schema.Resource{
 						"random_id": {
-							CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							CreateContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 								d.SetId(time.Now().String())
 								return nil
 							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
-							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
 							Schema: map[string]*schema.Schema{},
@@ -3961,14 +3961,14 @@ func TestTest_TestStep_ProviderFactories_ConfigDirectory_TestStepDirectory(t *te
 				return &schema.Provider{
 					ResourcesMap: map[string]*schema.Resource{
 						"random_id": {
-							CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							CreateContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 								d.SetId(time.Now().String())
 								return nil
 							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
-							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
 							Schema: map[string]*schema.Schema{},
@@ -4212,14 +4212,14 @@ func TestTest_TestStep_ProviderFactories_ConfigFile_StaticFile(t *testing.T) {
 				return &schema.Provider{
 					ResourcesMap: map[string]*schema.Resource{
 						"random_id": {
-							CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							CreateContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 								d.SetId(time.Now().String())
 								return nil
 							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
-							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
 							Schema: map[string]*schema.Schema{},
@@ -4246,14 +4246,14 @@ func TestTest_TestStep_ProviderFactories_ConfigFile_TestNameFile(t *testing.T) {
 				return &schema.Provider{
 					ResourcesMap: map[string]*schema.Resource{
 						"random_id": {
-							CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							CreateContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 								d.SetId(time.Now().String())
 								return nil
 							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
-							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
 							Schema: map[string]*schema.Schema{},
@@ -4280,14 +4280,14 @@ func TestTest_TestStep_ProviderFactories_ConfigFile_TestStepFile(t *testing.T) {
 				return &schema.Provider{
 					ResourcesMap: map[string]*schema.Resource{
 						"random_id": {
-							CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							CreateContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 								d.SetId(time.Now().String())
 								return nil
 							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
-							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
 							Schema: map[string]*schema.Schema{},
