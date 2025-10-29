@@ -1104,7 +1104,56 @@ func (s ProviderServer) ListResource(ctx context.Context, req *tfprotov6.ListRes
 }
 
 func (s ProviderServer) ValidateListResourceConfig(ctx context.Context, req *tfprotov6.ValidateListResourceConfigRequest) (*tfprotov6.ValidateListResourceConfigResponse, error) {
-	return &tfprotov6.ValidateListResourceConfigResponse{}, nil
+	// Copy over identity if it's supported
+	identitySchemaReq := resource.IdentitySchemaRequest{}
+	identitySchemaResp := &resource.IdentitySchemaResponse{}
+
+	r, err := ProviderResource(s.Provider, req.TypeName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve resource: %v", err)
+	}
+	r.IdentitySchema(ctx, identitySchemaReq, identitySchemaResp)
+	if len(identitySchemaResp.Diagnostics) > 0 {
+		return nil, fmt.Errorf("failed to retrieve resource schema: %v", identitySchemaResp.Diagnostics)
+	}
+
+	listresource, diag := ProviderListResource(s.Provider, req.TypeName)
+	if diag != nil {
+		return nil, fmt.Errorf("failed to retrieve resource identity schema: %v", err)
+	}
+
+	configSchemaReq := list.SchemaRequest{}
+	configSchemaResp := &list.SchemaResponse{}
+
+	listresource.Schema(ctx, configSchemaReq, configSchemaResp)
+	if len(configSchemaResp.Diagnostics) > 0 {
+		return nil, fmt.Errorf("failed to retrieve resource schema: %v", configSchemaResp.Diagnostics)
+	}
+
+	resourceSchemaResp := &resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, resourceSchemaResp)
+	if resourceSchemaResp.Schema == nil {
+		return nil, fmt.Errorf("failed to retrieve resource schema: %v", resourceSchemaResp.Schema)
+	}
+
+	var config tftypes.Value
+	config, diag = DynamicValueToValue(configSchemaResp.Schema, req.Config)
+	if diag != nil {
+		return nil, fmt.Errorf("failed to convert config to value: %v", err)
+	}
+
+	validateReq := list.ValidateListConfigRequest{
+		Config: config,
+	}
+	validateResp := &list.ValidateListConfigResponse{}
+
+	listresource.ValidateListConfig(ctx, validateReq, validateResp)
+
+	resp := &tfprotov6.ValidateListResourceConfigResponse{
+		Diagnostics: validateResp.Diagnostics,
+	}
+
+	return resp, nil
 }
 
 func processListResults(req list.ListRequest, stream iter.Seq[list.ListResult]) iter.Seq[tfprotov6.ListResourceResult] {

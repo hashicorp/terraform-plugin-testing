@@ -15,7 +15,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/go-version"
 	tfjson "github.com/hashicorp/terraform-json"
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource/query"
 	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-testing/config"
@@ -362,33 +361,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.Query {
 			logging.HelperResourceTrace(ctx, "TestStep is Query mode")
 
-			queryConfigRequest := teststep.ConfigurationRequest{
-				Raw: &step.Config,
-			}
-			err := wd.SetQuery(ctx, teststep.Configuration(queryConfigRequest), step.ConfigVariables)
-			if err != nil {
-				t.Fatalf("Step %d/%d error setting query: %s", stepNumber, len(c.Steps), err)
-			}
-
-			err = runProviderCommand(ctx, t, wd, providers, func() error {
-				return wd.Init(ctx)
-			})
-			if err != nil {
-				t.Fatalf("Step %d/%d error running init: %s", stepNumber, len(c.Steps), err)
-			}
-
-			var queryOut []tfjson.LogMsg
-			err = runProviderCommand(ctx, t, wd, providers, func() error {
-				var err error
-				queryOut, err = wd.Query(ctx)
-				return err
-			})
-			if err != nil {
-				fmt.Printf("Step %d/%d Query Output:\n%s\n", stepNumber, len(c.Steps), queryOut)
-				t.Fatalf("Step %d/%d error running query: %s", stepNumber, len(c.Steps), err)
-			}
-
-			err = query.RunQueryChecks(ctx, t, queryOut, step.QueryResultChecks)
+			err := testStepNewQuery(ctx, t, wd, step, providers)
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -414,7 +387,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					)
 					t.Fatalf("Step %d/%d error running query checks: %s", stepNumber, len(c.Steps), err)
 				}
-				fmt.Printf("Step %d/%d Query Output:\n%s\n", stepNumber, len(c.Steps), queryOut)
 			}
 
 			logging.HelperResourceDebug(ctx, "Finished TestStep")
