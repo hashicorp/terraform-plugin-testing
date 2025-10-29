@@ -327,7 +327,7 @@ func hcl2ValueFromFlatmapList(m map[string]string, prefix string, ty cty.Type) (
 	}
 
 	vals = make([]cty.Value, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		key := prefix + strconv.Itoa(i)
 		val, err := hcl2ValueFromFlatmapValue(m, key, ety)
 		if err != nil {
