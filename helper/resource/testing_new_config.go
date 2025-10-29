@@ -515,27 +515,13 @@ func runActionChecks(ctx context.Context, actionChecks []actioncheck.ActionCheck
 
 	// Fallback to expected action name if no messages captured
 	if len(actionNames) == 0 {
-		actionNames = []string{"aws_lambda_invoke.test"}
+		return nil // No actions were executed, nothing to check
 	}
 
 	var allErrors []error
 
 	for _, actionName := range actionNames {
 		messages := progressCapture.GetMessages(actionName)
-
-		// Debug: log what messages we found
-		logging.HelperResourceDebug(ctx, "Action check messages captured", map[string]any{
-			"action_name":   actionName,
-			"message_count": len(messages),
-		})
-
-		for i, msg := range messages {
-			logging.HelperResourceDebug(ctx, "Action message", map[string]any{
-				"action_name":   actionName,
-				"message_index": i,
-				"message":       msg.Message,
-			})
-		}
 
 		req := actioncheck.CheckActionRequest{
 			ActionName: actionName,
@@ -553,7 +539,7 @@ func runActionChecks(ctx context.Context, actionChecks []actioncheck.ActionCheck
 	}
 
 	if len(allErrors) > 0 {
-		return fmt.Errorf("action check failures: %v", allErrors)
+		return errors.Join(allErrors...)
 	}
 
 	return nil
