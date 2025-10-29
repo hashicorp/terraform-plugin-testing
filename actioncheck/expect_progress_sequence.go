@@ -31,7 +31,7 @@ func (e expectProgressSequence) CheckAction(ctx context.Context, req CheckAction
 	}
 
 	if sequenceIndex != len(e.expectedSequence) {
-		resp.Error = fmt.Errorf("expected action %s to have progress messages in sequence %v, but only found %d of %d expected messages", 
+		resp.Error = fmt.Errorf("expected action %s to have progress messages in sequence %v, but only found %d of %d expected messages",
 			e.actionName, e.expectedSequence, sequenceIndex, len(e.expectedSequence))
 	}
 }

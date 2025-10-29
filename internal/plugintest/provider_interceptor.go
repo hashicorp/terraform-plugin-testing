@@ -19,7 +19,7 @@ func NewProviderInterceptor(provider tfprotov5.ProviderServer, capture *Progress
 			capture:                   capture,
 		}
 	}
-	
+
 	// Return regular provider if no actions
 	return &ProviderInterceptorV5{
 		ProviderServer: provider,
@@ -36,7 +36,7 @@ func NewProviderInterceptorV6(provider tfprotov6.ProviderServer, capture *Progre
 			capture:                   capture,
 		}
 	}
-	
+
 	// Return regular provider if no actions
 	return &ProviderInterceptorV6{
 		ProviderServer: provider,
@@ -83,7 +83,7 @@ func (p *ActionProviderInterceptorV5) InvokeAction(ctx context.Context, req *tfp
 			if progress, ok := event.Type.(tfprotov5.ProgressInvokeActionEventType); ok {
 				p.capture.CaptureProgress(req.ActionType, progress.Message)
 			}
-			
+
 			// Continue with original event
 			if !yield(event) {
 				break
@@ -109,7 +109,7 @@ func (p *ActionProviderInterceptorV6) InvokeAction(ctx context.Context, req *tfp
 			if progress, ok := event.Type.(tfprotov6.ProgressInvokeActionEventType); ok {
 				p.capture.CaptureProgress(req.ActionType, progress.Message)
 			}
-			
+
 			// Continue with original event
 			if !yield(event) {
 				break

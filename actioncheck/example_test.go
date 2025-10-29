@@ -26,10 +26,10 @@ func ExampleActionChecks() {
 				ActionChecks: []actioncheck.ActionCheck{
 					// Check that the action produces a message containing log output
 					actioncheck.ExpectProgressMessageContains("aws_lambda_invoke.test", "Lambda function logs:"),
-					
+
 					// Check that we get exactly 2 progress messages (success + logs)
 					actioncheck.ExpectProgressCount("aws_lambda_invoke.test", 2),
-					
+
 					// Check that messages appear in the expected sequence
 					actioncheck.ExpectProgressSequence("aws_lambda_invoke.test", []string{
 						"invoked successfully",
