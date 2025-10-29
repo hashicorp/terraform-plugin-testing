@@ -14,6 +14,7 @@ import (
 type ListResource interface {
 	Schema(context.Context, SchemaRequest, *SchemaResponse)
 	List(context.Context, ListRequest, *ListResultsStream)
+	ValidateListConfig(context.Context, ValidateListConfigRequest, *ValidateListConfigResponse)
 }
 
 type ListRequest struct {
@@ -45,7 +46,12 @@ type ListResult struct {
 	Diagnostics []*tfprotov6.Diagnostic
 }
 
+type ValidateListConfigRequest struct {
+	Config tftypes.Value
+}
+
 type ValidateListConfigResponse struct {
+	Diagnostics []*tfprotov6.Diagnostic
 }
 
 type SchemaRequest struct{}
