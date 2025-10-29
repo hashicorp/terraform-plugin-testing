@@ -24,6 +24,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/hashicorp/terraform-plugin-testing/actioncheck"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
@@ -845,6 +846,11 @@ type TestStep struct {
 	// for performing import testing where the prior TestStep configuration
 	// contained a provider outside the one under test.
 	ExternalProviders map[string]ExternalProvider
+
+	// ActionChecks defines checks to run on action progress messages.
+	// These checks are executed after the TestStep completes and verify
+	// that actions produced the expected progress messages.
+	ActionChecks []actioncheck.ActionCheck
 
 	// If true, the test step will run the query command
 	Query bool
@@ -2164,4 +2170,46 @@ func checkIfIndexesIntoTypeSetPair(keyFirst, keySecond string, f TestCheckFunc) 
 		}
 		return err
 	}
+}
+
+// TestCheckProgressMessageContains returns an ActionCheck that verifies that at least one progress message contains the expected content.
+//
+// Example usage:
+//
+//	resource.TestStep{
+//		Config: testConfig,
+//		ActionChecks: []actioncheck.ActionCheck{
+//			resource.TestCheckProgressMessageContains("aws_lambda_invoke.test", "Lambda function logs:"),
+//		},
+//	}
+func TestCheckProgressMessageContains(actionName, expectedContent string) actioncheck.ActionCheck {
+	return actioncheck.ExpectProgressMessageContains(actionName, expectedContent)
+}
+
+// TestCheckProgressMessageCount returns an ActionCheck that verifies the expected number of progress messages.
+//
+// Example usage:
+//
+//	resource.TestStep{
+//		Config: testConfig,
+//		ActionChecks: []actioncheck.ActionCheck{
+//			resource.TestCheckProgressMessageCount("aws_lambda_invoke.test", 2),
+//		},
+//	}
+func TestCheckProgressMessageCount(actionName string, expectedCount int) actioncheck.ActionCheck {
+	return actioncheck.ExpectProgressCount(actionName, expectedCount)
+}
+
+// TestCheckProgressMessageSequence returns an ActionCheck that verifies progress messages appear in the expected sequence.
+//
+// Example usage:
+//
+//	resource.TestStep{
+//		Config: testConfig,
+//		ActionChecks: []actioncheck.ActionCheck{
+//			resource.TestCheckProgressMessageSequence("aws_lambda_invoke.test", []string{"Invoking", "completed successfully"}),
+//		},
+//	}
+func TestCheckProgressMessageSequence(actionName string, expectedSequence []string) actioncheck.ActionCheck {
+	return actioncheck.ExpectProgressSequence(actionName, expectedSequence)
 }

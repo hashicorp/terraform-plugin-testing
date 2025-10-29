@@ -315,6 +315,11 @@ func runProviderCommand(ctx context.Context, t testing.T, wd *plugintest.Working
 			return fmt.Errorf("unable to create provider %q from factory: %w", providerName, err)
 		}
 
+		// Wrap provider to capture action progress messages if needed
+		if wd.IsProgressCaptureEnabled() {
+			provider = plugintest.NewProviderInterceptor(provider, wd.GetProgressCapture())
+		}
+
 		logging.HelperResourceTrace(ctx, "Created tfprotov5 provider instance", map[string]interface{}{logging.KeyProviderAddress: providerAddress})
 
 		// keep track of the running factory, so we can make sure it's
@@ -405,6 +410,11 @@ func runProviderCommand(ctx context.Context, t testing.T, wd *plugintest.Working
 		}
 
 		logging.HelperResourceTrace(ctx, "Created tfprotov6 provider instance", map[string]interface{}{logging.KeyProviderAddress: providerAddress})
+
+		// Wrap provider to capture action progress messages if needed
+		if wd.IsProgressCaptureEnabled() {
+			provider = plugintest.NewProviderInterceptorV6(provider, wd.GetProgressCapture())
+		}
 
 		// keep track of the running factory, so we can make sure it's
 		// shut down.
