@@ -283,10 +283,11 @@ func (h *Helper) NewWorkingDir(ctx context.Context, t TestControl, wd string) (*
 	}
 
 	return &WorkingDir{
-		h:             h,
-		tf:            tf,
-		baseDir:       dir,
-		terraformExec: h.terraformExec,
+		h:               h,
+		tf:              tf,
+		baseDir:         dir,
+		terraformExec:   h.terraformExec,
+		progressCapture: NewProgressCapture(),
 	}, nil
 }
 

@@ -50,6 +50,12 @@ type WorkingDir struct {
 	// reattachInfo stores the gRPC socket info required for Terraform's
 	// plugin reattach functionality
 	reattachInfo tfexec.ReattachInfo
+
+	// progressCapture handles capturing action progress messages during test execution
+	progressCapture *ProgressCapture
+
+	// progressCaptureEnabled indicates whether to capture action progress messages
+	progressCaptureEnabled bool
 }
 
 // BaseDir returns the path to the root of the working directory tree.
@@ -336,10 +342,15 @@ func (wd *WorkingDir) planFilename() string {
 // CreatePlan runs "terraform plan" to create a saved plan file, which if successful
 // will then be used for the next call to Apply.
 func (wd *WorkingDir) CreatePlan(ctx context.Context, opts ...tfexec.PlanOption) error {
-	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan command")
-
 	opts = append(opts, tfexec.Reattach(wd.reattachInfo))
 	opts = append(opts, tfexec.Out(PlanFileName))
+
+	// Capture output if progress capture is enabled
+	if wd.progressCaptureEnabled {
+		return wd.createPlanWithProgressCapture(ctx, opts...)
+	}
+
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan command")
 
 	hasChanges, err := wd.tf.Plan(context.Background(), opts...)
 
@@ -375,6 +386,11 @@ func (wd *WorkingDir) Apply(ctx context.Context, opts ...tfexec.ApplyOption) err
 	args = append(args, opts...)
 	if wd.HasSavedPlan() {
 		args = append(args, tfexec.DirOrPlan(PlanFileName))
+	}
+
+	// Capture output if progress capture is enabled
+	if wd.progressCaptureEnabled {
+		return wd.applyWithProgressCapture(ctx, args...)
 	}
 
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI apply command")
@@ -561,4 +577,66 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI providers query command")
 
 	return messages, nil
+}
+
+// GetProgressCapture returns the progress capture instance for this working directory.
+func (wd *WorkingDir) GetProgressCapture() *ProgressCapture {
+	return wd.progressCapture
+}
+
+// IsProgressCaptureEnabled returns whether progress capture is enabled.
+func (wd *WorkingDir) IsProgressCaptureEnabled() bool {
+	return wd.progressCaptureEnabled
+}
+
+// EnableProgressCapture enables capturing of action progress messages during Terraform operations.
+func (wd *WorkingDir) EnableProgressCapture() {
+	wd.progressCaptureEnabled = true
+}
+
+// DisableProgressCapture disables capturing of action progress messages.
+func (wd *WorkingDir) DisableProgressCapture() {
+	wd.progressCaptureEnabled = false
+}
+
+// applyWithProgressCapture runs terraform apply while capturing action progress messages
+func (wd *WorkingDir) applyWithProgressCapture(ctx context.Context, opts ...tfexec.ApplyOption) error {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI apply command with progress capture")
+
+	// TODO: Implement protocol-level progress capture
+	// For now, fall back to regular apply since stdout parsing doesn't work for action progress
+	err := wd.tf.Apply(context.Background(), opts...)
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI apply command with progress capture")
+
+	return err
+}
+
+// createPlanWithProgressCapture runs terraform plan while capturing action progress messages
+func (wd *WorkingDir) createPlanWithProgressCapture(ctx context.Context, opts ...tfexec.PlanOption) error {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan command with progress capture")
+
+	// TODO: Implement protocol-level progress capture
+	// For now, fall back to regular plan since stdout parsing doesn't work for action progress
+	hasChanges, err := wd.tf.Plan(context.Background(), opts...)
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI plan command with progress capture")
+
+	if err != nil {
+		return err
+	}
+
+	if !hasChanges {
+		logging.HelperResourceTrace(ctx, "Created plan with no changes")
+		return nil
+	}
+
+	planStdout, err := wd.SavedPlanRawStdout(ctx)
+	if err != nil {
+		return fmt.Errorf("error retrieving formatted plan output: %w", err)
+	}
+
+	logging.HelperResourceTrace(ctx, "Created plan with changes", map[string]any{logging.KeyTestTerraformPlan: planStdout})
+
+	return nil
 }
