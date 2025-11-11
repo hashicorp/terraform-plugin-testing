@@ -7,6 +7,8 @@ import (
 	"context"
 
 	tfjson "github.com/hashicorp/terraform-json"
+
+	"github.com/hashicorp/terraform-plugin-testing/querycheck/queryfilter"
 )
 
 // QueryResultCheck defines an interface for implementing test logic to apply an assertion against a collection of found
@@ -14,6 +16,14 @@ import (
 type QueryResultCheck interface {
 	// CheckQuery should perform the query check.
 	CheckQuery(context.Context, CheckQueryRequest, *CheckQueryResponse)
+}
+
+// QueryResultCheckWithFilters is an interface type that extends QueryResultCheck to include declarative query filters.
+type QueryResultCheckWithFilters interface {
+	QueryResultCheck
+
+	// QueryFilters should return a slice of queryfilter.QueryFilter that will be applied to the check.
+	QueryFilters(context.Context) []queryfilter.QueryFilter
 }
 
 // CheckQueryRequest is a request for an invoke of the CheckQuery function.
