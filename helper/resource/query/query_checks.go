@@ -63,6 +63,11 @@ func runQueryFilters(ctx context.Context, filterCheck querycheck.QueryResultChec
 	filters := filterCheck.QueryFilters(ctx)
 	filteredResults := make([]tfjson.ListResourceFoundData, 0)
 
+	// If there are no filters, just return the original results
+	if len(filters) == 0 {
+		return queryResults, nil
+	}
+
 	for _, result := range queryResults {
 		keepResult := false
 

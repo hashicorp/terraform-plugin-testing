@@ -14,6 +14,8 @@ func (f filterByDisplayNameExact) Filter(ctx context.Context, req FilterQueryReq
 	}
 }
 
+// ByDisplayNameExact returns a query filter that only includes query items that match
+// the specified display name.
 func ByDisplayNameExact(displayName string) QueryFilter {
 	return filterByDisplayNameExact{
 		displayName: displayName,

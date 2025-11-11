@@ -9,6 +9,8 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 )
 
+// QueryFilter defines an interface for implementing declarative filtering logic to apply to query results before
+// the results are passed to a query check request.
 type QueryFilter interface {
 	Filter(context.Context, FilterQueryRequest, *FilterQueryResponse)
 }

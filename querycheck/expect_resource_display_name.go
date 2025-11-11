@@ -23,6 +23,10 @@ type expectResourceDisplayName struct {
 }
 
 func (e expectResourceDisplayName) QueryFilters(ctx context.Context) []queryfilter.QueryFilter {
+	if e.filter == nil {
+		return []queryfilter.QueryFilter{}
+	}
+
 	return []queryfilter.QueryFilter{
 		e.filter,
 	}

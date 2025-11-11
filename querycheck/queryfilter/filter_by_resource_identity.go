@@ -44,6 +44,11 @@ func (f filterByResourceIdentity) Filter(ctx context.Context, req FilterQueryReq
 	resp.Include = true
 }
 
+// ByResourceIdentity returns a query filter that only includes query items that match
+// the given resource identity.
+//
+// Errors thrown by the given known value checks are only used to filter out non-matching query
+// items and are otherwise ignored.
 func ByResourceIdentity(identity map[string]knownvalue.Check) QueryFilter {
 	return filterByResourceIdentity{
 		identity: identity,
