@@ -17,7 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func TestExpectResourceDisplayName(t *testing.T) {
+func TestExpectResourceDisplayNameExact(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -61,8 +61,8 @@ func TestExpectResourceDisplayName(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectResourceDisplayName("examplecloud_containerette.test", queryfilter.ByDisplayNameExact("ananas"), "ananas"),
-					querycheck.ExpectResourceDisplayName("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
+					querycheck.ExpectResourceDisplayNameExact("examplecloud_containerette.test", queryfilter.ByDisplayNameExact("ananas"), "ananas"),
+					querycheck.ExpectResourceDisplayNameExact("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
 						"name":                knownvalue.StringExact("ananas"),
 						"resource_group_name": knownvalue.StringExact("foo"),
 					}), "ananas"),
@@ -72,7 +72,7 @@ func TestExpectResourceDisplayName(t *testing.T) {
 	})
 }
 
-func TestExpectResourceDisplayName_TooManyResults(t *testing.T) {
+func TestExpectResourceDisplayNameExact_TooManyResults(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -116,7 +116,7 @@ func TestExpectResourceDisplayName_TooManyResults(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectResourceDisplayName("examplecloud_containerette.test", nil, "ananas"),
+					querycheck.ExpectResourceDisplayNameExact("examplecloud_containerette.test", nil, "ananas"),
 				},
 				ExpectError: regexp.MustCompile("examplecloud_containerette.test - more than 1 query result found after filtering"),
 			},
@@ -124,7 +124,7 @@ func TestExpectResourceDisplayName_TooManyResults(t *testing.T) {
 	})
 }
 
-func TestExpectResourceDisplayName_NoResults(t *testing.T) {
+func TestExpectResourceDisplayNameExact_NoResults(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -168,7 +168,7 @@ func TestExpectResourceDisplayName_NoResults(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectResourceDisplayName("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{}),
+					querycheck.ExpectResourceDisplayNameExact("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{}),
 						"ananas"),
 				},
 				ExpectError: regexp.MustCompile("examplecloud_containerette.test - no query results found after filtering"),
@@ -177,7 +177,7 @@ func TestExpectResourceDisplayName_NoResults(t *testing.T) {
 	})
 }
 
-func TestExpectResourceDisplayName_InvalidDisplayName(t *testing.T) {
+func TestExpectResourceDisplayNameExact_InvalidDisplayName(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -221,7 +221,7 @@ func TestExpectResourceDisplayName_InvalidDisplayName(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectResourceDisplayName("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
+					querycheck.ExpectResourceDisplayNameExact("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
 						"name":                knownvalue.StringExact("ananas"),
 						"resource_group_name": knownvalue.StringExact("foo"),
 					}), "invalid"),

@@ -13,16 +13,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/querycheck/queryfilter"
 )
 
-var _ QueryResultCheck = expectResourceDisplayName{}
-var _ QueryResultCheckWithFilters = expectResourceDisplayName{}
+var _ QueryResultCheck = expectResourceDisplayNameExact{}
+var _ QueryResultCheckWithFilters = expectResourceDisplayNameExact{}
 
-type expectResourceDisplayName struct {
+type expectResourceDisplayNameExact struct {
 	listResourceAddress string
 	filter              queryfilter.QueryFilter
 	displayName         string
 }
 
-func (e expectResourceDisplayName) QueryFilters(ctx context.Context) []queryfilter.QueryFilter {
+func (e expectResourceDisplayNameExact) QueryFilters(ctx context.Context) []queryfilter.QueryFilter {
 	if e.filter == nil {
 		return []queryfilter.QueryFilter{}
 	}
@@ -32,7 +32,7 @@ func (e expectResourceDisplayName) QueryFilters(ctx context.Context) []queryfilt
 	}
 }
 
-func (e expectResourceDisplayName) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
+func (e expectResourceDisplayNameExact) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
 	listRes := make([]tfjson.ListResourceFoundData, 0)
 	for _, result := range req.Query {
 		if strings.TrimPrefix(result.Address, "list.") == e.listResourceAddress {
@@ -57,11 +57,11 @@ func (e expectResourceDisplayName) CheckQuery(_ context.Context, req CheckQueryR
 	resp.Error = fmt.Errorf("expected to find resource with display name %q in results but resource was not found", e.displayName)
 }
 
-// ExpectResourceDisplayName returns a query check that asserts that a resource with a given display name exists within the returned results of the query.
+// ExpectResourceDisplayNameExact returns a query check that asserts that a resource with a given display name exists within the returned results of the query.
 //
 // This query check can only be used with managed resources that support query. Query is only supported in Terraform v1.14+
-func ExpectResourceDisplayName(listResourceAddress string, filter queryfilter.QueryFilter, displayName string) QueryResultCheck {
-	return expectResourceDisplayName{
+func ExpectResourceDisplayNameExact(listResourceAddress string, filter queryfilter.QueryFilter, displayName string) QueryResultCheck {
+	return expectResourceDisplayNameExact{
 		listResourceAddress: listResourceAddress,
 		filter:              filter,
 		displayName:         displayName,
