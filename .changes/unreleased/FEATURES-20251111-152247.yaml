@@ -1,0 +1,5 @@
+kind: FEATURES
+body: 'querycheck: Added `ExpectResourceDisplayNameExact` query check to assert a specific display name value on a filtered query result.'
+time: 2025-11-11T15:22:47.472876-05:00
+custom:
+    Issue: "573"
