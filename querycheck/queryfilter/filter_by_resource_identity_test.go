@@ -1,7 +1,9 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package queryfilter_test
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -13,6 +15,8 @@ import (
 )
 
 func TestByResourceIdentity(t *testing.T) {
+	t.Parallel()
+
 	testCases := map[string]struct {
 		identity      map[string]knownvalue.Check
 		queryItem     tfjson.ListResourceFoundData
@@ -143,7 +147,7 @@ func TestByResourceIdentity(t *testing.T) {
 
 			resp := &queryfilter.FilterQueryResponse{}
 
-			queryfilter.ByResourceIdentity(testCase.identity).Filter(context.TODO(), req, resp)
+			queryfilter.ByResourceIdentity(testCase.identity).Filter(t.Context(), req, resp)
 
 			if testCase.expectInclude != resp.Include {
 				t.Fatalf("expected included: %t, but got %t", testCase.expectInclude, resp.Include)

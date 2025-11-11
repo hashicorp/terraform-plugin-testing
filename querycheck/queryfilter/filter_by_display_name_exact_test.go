@@ -1,7 +1,9 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package queryfilter_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -11,6 +13,8 @@ import (
 )
 
 func TestByDisplayNameExact(t *testing.T) {
+	t.Parallel()
+
 	testCases := map[string]struct {
 		displayName   string
 		queryItem     tfjson.ListResourceFoundData
@@ -49,7 +53,7 @@ func TestByDisplayNameExact(t *testing.T) {
 
 			resp := &queryfilter.FilterQueryResponse{}
 
-			queryfilter.ByDisplayNameExact(testCase.displayName).Filter(context.TODO(), req, resp)
+			queryfilter.ByDisplayNameExact(testCase.displayName).Filter(t.Context(), req, resp)
 
 			if testCase.expectInclude != resp.Include {
 				t.Fatalf("expected included: %t, but got %t", testCase.expectInclude, resp.Include)

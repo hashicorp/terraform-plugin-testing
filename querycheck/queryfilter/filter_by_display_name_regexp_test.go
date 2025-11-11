@@ -1,7 +1,9 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package queryfilter_test
 
 import (
-	"context"
 	"regexp"
 	"testing"
 
@@ -12,6 +14,8 @@ import (
 )
 
 func TestByDisplayNameRegexp(t *testing.T) {
+	t.Parallel()
+
 	testCases := map[string]struct {
 		regexp        *regexp.Regexp
 		queryItem     tfjson.ListResourceFoundData
@@ -50,7 +54,7 @@ func TestByDisplayNameRegexp(t *testing.T) {
 
 			resp := &queryfilter.FilterQueryResponse{}
 
-			queryfilter.ByDisplayNameRegexp(testCase.regexp).Filter(context.TODO(), req, resp)
+			queryfilter.ByDisplayNameRegexp(testCase.regexp).Filter(t.Context(), req, resp)
 
 			if testCase.expectInclude != resp.Include {
 				t.Fatalf("expected included: %t, but got %t", testCase.expectInclude, resp.Include)
