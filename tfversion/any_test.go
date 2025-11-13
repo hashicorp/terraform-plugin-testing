@@ -74,7 +74,7 @@ func Test_Any_Error(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
 	plugintest.TestExpectTFatal(t, func() {
-		r.UnitTest(&hack.RuntimeT{}, r.TestCase{
+		r.UnitTest(&hack.MetaT{}, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
 					return nil, nil
