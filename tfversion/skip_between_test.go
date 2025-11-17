@@ -10,11 +10,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/hack"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
-
-	testinginterface "github.com/mitchellh/go-testing-interface"
 )
 
 func Test_SkipBetween_SkipTest(t *testing.T) { //nolint:paralleltest
@@ -59,7 +58,7 @@ func Test_SkipBetween_RunTest_AboveMax(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.3.0")
 
-	r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
+	r.UnitTest(&hack.MetaT{}, r.TestCase{
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},
@@ -78,7 +77,7 @@ func Test_SkipBetween_RunTest_EqToMin(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.2.0")
 
-	r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
+	r.UnitTest(&hack.MetaT{}, r.TestCase{
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{}),
 		},

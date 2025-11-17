@@ -9,12 +9,12 @@ import (
 	"fmt"
 
 	tfjson "github.com/hashicorp/terraform-json"
-	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/hack"
 	"github.com/hashicorp/terraform-plugin-testing/querycheck"
 )
 
-func RunQueryChecks(ctx context.Context, t testing.T, query []tfjson.LogMsg, queryChecks []querycheck.QueryResultCheck) error {
+func RunQueryChecks(ctx context.Context, t hack.BaseT, query []tfjson.LogMsg, queryChecks []querycheck.QueryResultCheck) error {
 	t.Helper()
 
 	var result []error
