@@ -48,7 +48,7 @@ func RandString(strlen int) string {
 // the charset provided
 func RandStringFromCharSet(strlen int, charSet string) string {
 	result := make([]byte, strlen)
-	for i := 0; i < strlen; i++ {
+	for i := range strlen {
 		result[i] = charSet[RandIntRange(0, len(charSet))]
 	}
 	return string(result)

@@ -6,6 +6,7 @@ package terraform
 import (
 	"fmt"
 	"log"
+	"maps"
 	"reflect"
 	"regexp"
 	"sort"
@@ -54,7 +55,7 @@ type InstanceDiff struct {
 	// plans but otherwise is completely ignored by Terraform core. It is
 	// meant to be used for additional data a resource may want to pass through.
 	// The value here must only contain Go primitives and collections.
-	Meta map[string]interface{}
+	Meta map[string]any
 }
 
 // Deprecated: This method is unintentionally exported by this Go module and not
@@ -501,7 +502,7 @@ func (d *InstanceDiff) applyCollectionDiff(path []string, attrs map[string]strin
 	if count != "" && count != hcl2shim.UnknownVariableValue &&
 		attrSchema.Type.Equals(cty.List(cty.String)) {
 		// insert empty strings into missing indexes
-		for i := 0; i < length; i++ {
+		for i := range length {
 			key := fmt.Sprintf("%s.%d", name, i)
 			if _, ok := result[key]; !ok {
 				result[key] = ""
@@ -628,13 +629,13 @@ func countFlatmapContainerValues(key string, attrs map[string]string) string {
 // supported for external consumption. It will be removed in the next major
 // version.
 type ResourceAttrDiff struct {
-	Old         string      // Old Value
-	New         string      // New Value
-	NewComputed bool        // True if new value is computed (unknown currently)
-	NewRemoved  bool        // True if this attribute is being removed
-	NewExtra    interface{} // Extra information for the provider
-	RequiresNew bool        // True if change requires new resource
-	Sensitive   bool        // True if the data should not be displayed in UI output
+	Old         string // Old Value
+	New         string // New Value
+	NewComputed bool   // True if new value is computed (unknown currently)
+	NewRemoved  bool   // True if this attribute is being removed
+	NewExtra    any    // Extra information for the provider
+	RequiresNew bool   // True if change requires new resource
+	Sensitive   bool   // True if the data should not be displayed in UI output
 	Type        diffAttrType
 }
 
@@ -811,9 +812,7 @@ func (d *InstanceDiff) CopyAttributes() map[string]*ResourceAttrDiff {
 	defer d.mu.Unlock()
 
 	attrs := make(map[string]*ResourceAttrDiff)
-	for k, v := range d.Attributes {
-		attrs[k] = v
-	}
+	maps.Copy(attrs, d.Attributes)
 
 	return attrs
 }

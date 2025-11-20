@@ -19,7 +19,7 @@ import (
 // test code.
 type TestControl interface {
 	Helper()
-	Log(args ...interface{})
+	Log(args ...any)
 	FailNow()
 	SkipNow()
 	Name() string
@@ -34,18 +34,18 @@ type testingT struct {
 	TestControl
 }
 
-func (t testingT) Logf(f string, args ...interface{}) {
+func (t testingT) Logf(f string, args ...any) {
 	t.Helper()
 	t.Log(fmt.Sprintf(f, args...))
 }
 
-func (t testingT) Fatalf(f string, args ...interface{}) {
+func (t testingT) Fatalf(f string, args ...any) {
 	t.Helper()
 	t.Log(fmt.Sprintf(f, args...))
 	t.FailNow()
 }
 
-func (t testingT) Skipf(f string, args ...interface{}) {
+func (t testingT) Skipf(f string, args ...any) {
 	t.Helper()
 	t.Log(fmt.Sprintf(f, args...))
 	t.SkipNow()
