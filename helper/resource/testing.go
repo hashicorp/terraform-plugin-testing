@@ -17,7 +17,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/querycheck"
 
-	"github.com/mitchellh/go-testing-interface"
+	testing "github.com/hashicorp/terraform-plugin-testing/internal/testing/hack"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -887,7 +887,7 @@ type RefreshPlanChecks struct {
 // tests to occur against the same resource or service (e.g. random naming).
 //
 // Test() function requirements and documentation also apply to this function.
-func ParallelTest(t testing.T, c TestCase) {
+func ParallelTest(t testing.BaseT, c TestCase) {
 	t.Helper()
 	t.Parallel()
 	Test(t, c)
@@ -899,7 +899,7 @@ func ParallelTest(t testing.T, c TestCase) {
 // set to some non-empty value. This is to avoid test cases surprising
 // a user by creating real resources.
 //
-// Use the ParallelTest() function to automatically set (*testing.T).Parallel()
+// Use the ParallelTest() function to automatically set (*testing.BaseT).Parallel()
 // to enable testing concurrency. Use the UnitTest() function to automatically
 // set the TestCase type IsUnitTest field.
 //
@@ -919,7 +919,7 @@ func ParallelTest(t testing.T, c TestCase) {
 //
 // Refer to the Env prefixed constants for additional details about these
 // environment variables, and others, that control testing functionality.
-func Test(t testing.T, c TestCase) {
+func Test(t testing.BaseT, c TestCase) {
 	t.Helper()
 
 	ctx := context.Background()
@@ -999,7 +999,7 @@ func Test(t testing.T, c TestCase) {
 // have any external dependencies.
 //
 // Test() function requirements and documentation also apply to this function.
-func UnitTest(t testing.T, c TestCase) {
+func UnitTest(t testing.BaseT, c TestCase) {
 	t.Helper()
 
 	c.IsUnitTest = true

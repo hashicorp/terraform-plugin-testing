@@ -11,9 +11,9 @@ import (
 
 	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
-	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-testing/config"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/hack"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
@@ -27,7 +27,7 @@ import (
 // changes. Those older versions will always show outputs being created.
 var expectNonEmptyPlanOutputChangesMinTFVersion = tfversion.Version0_14_0
 
-func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
+func testStepNewConfig(ctx context.Context, t hack.BaseT, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
 	t.Helper()
 
 	// When `refreshAfterApply` is true, a `Config`-mode test step will invoke

@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
-	testinginterface "github.com/mitchellh/go-testing-interface"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/hack"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
@@ -46,27 +46,33 @@ func Test_Any_SkipTest(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_PATH", "")
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
-	r.UnitTest(t, r.TestCase{
-		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
-				return nil, nil
+	var innerTest *testing.T
+	t.Run("a test that should be skipped", func(tt *testing.T) {
+		innerTest = tt
+		r.UnitTest(tt, r.TestCase{
+			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
+					return nil, nil
+				},
 			},
-		},
-		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.Any(
-				tfversion.SkipIf(version.Must(version.NewVersion("1.1.0"))),    //returns skip
-				tfversion.SkipBelow(version.Must(version.NewVersion("1.2.0"))), //returns skip
-			),
-		},
-		Steps: []r.TestStep{
-			{
-				Config: `variable "a" {
+			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+				tfversion.Any(
+					tfversion.SkipIf(version.Must(version.NewVersion("1.1.0"))),    //returns skip
+					tfversion.SkipBelow(version.Must(version.NewVersion("1.2.0"))), //returns skip
+				),
+			},
+			Steps: []r.TestStep{
+				{
+					Config: `variable "a" {
   					nullable = true
 					default  = "hello"
 				}`,
+				},
 			},
-		},
+		})
 	})
+
+	mustSkip(innerTest)
 }
 
 func Test_Any_Error(t *testing.T) { //nolint:paralleltest
@@ -74,7 +80,7 @@ func Test_Any_Error(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
 	plugintest.TestExpectTFatal(t, func() {
-		r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
+		r.UnitTest(&hack.MetaT{}, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
 					return nil, nil
@@ -94,4 +100,16 @@ func Test_Any_Error(t *testing.T) { //nolint:paralleltest
 			},
 		})
 	})
+}
+
+func mustSkip(t *testing.T) {
+	if !t.Skipped() {
+		t.Fatal("expected test to be skipped; it was not skipped")
+	}
+}
+
+func mustNotSkip(t *testing.T) {
+	if t.Skipped() {
+		t.Fatal("expected test not to be skipped; it was skipped")
+	}
 }
