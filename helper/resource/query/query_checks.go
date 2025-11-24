@@ -39,17 +39,19 @@ func RunQueryChecks(ctx context.Context, t testing.T, query []tfjson.LogMsg, que
 		}
 	}
 
+	var reqQueryData []tfjson.ListResourceFoundData
 	for _, queryCheck := range queryChecks {
+		reqQueryData = found
 		if filterCheck, ok := queryCheck.(querycheck.QueryResultCheckWithFilters); ok {
-			var err error
-			found, err = runQueryFilters(ctx, filterCheck, found)
+			filtered, err := runQueryFilters(ctx, filterCheck, reqQueryData)
 			if err != nil {
 				return err
 			}
+			reqQueryData = filtered
 		}
 		resp := querycheck.CheckQueryResponse{}
 		queryCheck.CheckQuery(ctx, querycheck.CheckQueryRequest{
-			Query:        found,
+			Query:        reqQueryData,
 			QuerySummary: &summary,
 		}, &resp)
 

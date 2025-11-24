@@ -50,22 +50,31 @@ func TestExpectResourceDisplayNameExact(t *testing.T) {
 			{
 				Query: true,
 				Config: `
-				provider "examplecloud" {} 
-
+				provider "examplecloud" {}
 				list "examplecloud_containerette" "test" {
 					provider = examplecloud
-
+			
 					config {
 						resource_group_name = "foo"
  					}
 				}
+				list "examplecloud_containerette" "test2" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "bar"
+ 					}
+				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectResourceDisplayNameExact("examplecloud_containerette.test", queryfilter.ByDisplayNameExact("ananas"), "ananas"),
 					querycheck.ExpectResourceDisplayNameExact("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
 						"name":                knownvalue.StringExact("ananas"),
 						"resource_group_name": knownvalue.StringExact("foo"),
 					}), "ananas"),
+					querycheck.ExpectResourceDisplayNameExact("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
+						"name":                knownvalue.StringExact("banane"),
+						"resource_group_name": knownvalue.StringExact("foo"),
+					}), "banane"),
 				},
 			},
 		},
