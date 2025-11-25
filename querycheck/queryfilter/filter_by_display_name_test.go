@@ -4,40 +4,64 @@
 package queryfilter_test
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	tfjson "github.com/hashicorp/terraform-json"
 
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/querycheck/queryfilter"
 )
 
-func TestByDisplayNameExact(t *testing.T) {
+func TestByDisplayName(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		displayName   string
+		displayName   knownvalue.StringCheck
 		queryItem     tfjson.ListResourceFoundData
 		expectInclude bool
 		expectedError error
 	}{
-		"nil-query-result": {
-			displayName:   "test",
+		"nil-query-result-exact": {
+			displayName:   knownvalue.StringExact("test"),
 			expectInclude: false,
 		},
-		"empty-display-name": {
-			displayName:   "",
+		"nil-query-result-regex": {
+			displayName:   knownvalue.StringRegexp(regexp.MustCompile("display")),
+			expectInclude: false,
+		},
+		"empty-display-name-exact": {
+			displayName:   knownvalue.StringExact(""),
 			expectInclude: true,
 		},
-		"included": {
-			displayName: "test",
+		"empty-display-name-regexp": {
+			displayName:   knownvalue.StringRegexp(regexp.MustCompile("")),
+			expectInclude: true,
+		},
+		"included-exact": {
+			displayName: knownvalue.StringExact("test"),
 			queryItem: tfjson.ListResourceFoundData{
 				DisplayName: "test",
 			},
 			expectInclude: true,
 		},
-		"not-included": {
-			displayName: "test",
+		"included-regex": {
+			displayName: knownvalue.StringRegexp(regexp.MustCompile("test")),
+			queryItem: tfjson.ListResourceFoundData{
+				DisplayName: "test",
+			},
+			expectInclude: true,
+		},
+		"not-included-exact": {
+			displayName: knownvalue.StringExact("test"),
+			queryItem: tfjson.ListResourceFoundData{
+				DisplayName: "testsss",
+			},
+			expectInclude: false,
+		},
+		"not-included-regex": {
+			displayName: knownvalue.StringRegexp(regexp.MustCompile("invalid")),
 			queryItem: tfjson.ListResourceFoundData{
 				DisplayName: "testsss",
 			},
@@ -53,7 +77,7 @@ func TestByDisplayNameExact(t *testing.T) {
 
 			resp := &queryfilter.FilterQueryResponse{}
 
-			queryfilter.ByDisplayNameExact(testCase.displayName).Filter(t.Context(), req, resp)
+			queryfilter.ByDisplayName(testCase.displayName).Filter(t.Context(), req, resp)
 
 			if testCase.expectInclude != resp.Include {
 				t.Fatalf("expected included: %t, but got %t", testCase.expectInclude, resp.Include)
