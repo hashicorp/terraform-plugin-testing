@@ -6,6 +6,7 @@ package knownvalue
 import "fmt"
 
 var _ Check = stringExact{}
+var _ StringCheck = stringFunc{}
 
 type stringExact struct {
 	value string
@@ -25,6 +26,10 @@ func (v stringExact) CheckValue(other any) error {
 	}
 
 	return nil
+}
+
+func (v stringExact) CheckString(value string) error {
+	return v.CheckValue(value)
 }
 
 // String returns the string representation of the value.

@@ -12,3 +12,13 @@ type Check interface {
 	// String should return a string representation of the type and value.
 	String() string
 }
+
+// StringCheck defines an interface that is implemented to determine whether the string type and value match. Individual
+// implementations determine how the match is performed (e.g., exact match, partial match).
+type StringCheck interface {
+	// CheckString should assert the given known string value against any expectations. Use the error
+	// return to signal unexpected values or implementation errors.
+	CheckString(value string) error
+	// String should return a string representation of the type and value.
+	String() string
+}
