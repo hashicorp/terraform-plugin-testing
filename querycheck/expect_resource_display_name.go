@@ -10,19 +10,20 @@ import (
 
 	tfjson "github.com/hashicorp/terraform-json"
 
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/querycheck/queryfilter"
 )
 
-var _ QueryResultCheck = expectResourceDisplayNameExact{}
-var _ QueryResultCheckWithFilters = expectResourceDisplayNameExact{}
+var _ QueryResultCheck = expectResourceDisplayName{}
+var _ QueryResultCheckWithFilters = expectResourceDisplayName{}
 
-type expectResourceDisplayNameExact struct {
+type expectResourceDisplayName struct {
 	listResourceAddress string
 	filter              queryfilter.QueryFilter
-	displayName         string
+	displayName         knownvalue.StringCheck
 }
 
-func (e expectResourceDisplayNameExact) QueryFilters(ctx context.Context) []queryfilter.QueryFilter {
+func (e expectResourceDisplayName) QueryFilters(ctx context.Context) []queryfilter.QueryFilter {
 	if e.filter == nil {
 		return []queryfilter.QueryFilter{}
 	}
@@ -32,7 +33,7 @@ func (e expectResourceDisplayNameExact) QueryFilters(ctx context.Context) []quer
 	}
 }
 
-func (e expectResourceDisplayNameExact) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
+func (e expectResourceDisplayName) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
 	listRes := make([]tfjson.ListResourceFoundData, 0)
 	for _, result := range req.Query {
 		if strings.TrimPrefix(result.Address, "list.") == e.listResourceAddress {
@@ -50,18 +51,18 @@ func (e expectResourceDisplayNameExact) CheckQuery(_ context.Context, req CheckQ
 		return
 	}
 	res := listRes[0]
-	if strings.EqualFold(e.displayName, res.DisplayName) {
+	if err := e.displayName.CheckString(res.DisplayName); err != nil {
+		resp.Error = fmt.Errorf("error checking value for display name %s, err: %s", e.displayName.String(), err)
 		return
 	}
 
-	resp.Error = fmt.Errorf("expected to find resource with display name %q in results but resource was not found", e.displayName)
 }
 
-// ExpectResourceDisplayNameExact returns a query check that asserts that a resource with a given display name exists within the returned results of the query.
+// ExpectResourceDisplayName returns a query check that asserts that a resource with a given display name exists within the returned results of the query.
 //
 // This query check can only be used with managed resources that support query. Query is only supported in Terraform v1.14+
-func ExpectResourceDisplayNameExact(listResourceAddress string, filter queryfilter.QueryFilter, displayName string) QueryResultCheck {
-	return expectResourceDisplayNameExact{
+func ExpectResourceDisplayName(listResourceAddress string, filter queryfilter.QueryFilter, displayName knownvalue.StringCheck) QueryResultCheck {
+	return expectResourceDisplayName{
 		listResourceAddress: listResourceAddress,
 		filter:              filter,
 		displayName:         displayName,

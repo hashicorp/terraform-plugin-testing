@@ -67,14 +67,14 @@ func TestExpectResourceDisplayNameExact(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectResourceDisplayNameExact("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
+					querycheck.ExpectResourceDisplayName("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
 						"name":                knownvalue.StringExact("ananas"),
 						"resource_group_name": knownvalue.StringExact("foo"),
-					}), "ananas"),
-					querycheck.ExpectResourceDisplayNameExact("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
+					}), knownvalue.StringExact("ananas")),
+					querycheck.ExpectResourceDisplayName("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
 						"name":                knownvalue.StringExact("banane"),
 						"resource_group_name": knownvalue.StringExact("foo"),
-					}), "banane"),
+					}), knownvalue.StringExact("banane")),
 				},
 			},
 		},
@@ -125,7 +125,7 @@ func TestExpectResourceDisplayNameExact_TooManyResults(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectResourceDisplayNameExact("examplecloud_containerette.test", nil, "ananas"),
+					querycheck.ExpectResourceDisplayName("examplecloud_containerette.test", nil, knownvalue.StringExact("ananas")),
 				},
 				ExpectError: regexp.MustCompile("examplecloud_containerette.test - more than 1 query result found after filtering"),
 			},
@@ -177,8 +177,8 @@ func TestExpectResourceDisplayNameExact_NoResults(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectResourceDisplayNameExact("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{}),
-						"ananas"),
+					querycheck.ExpectResourceDisplayName("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{}),
+						knownvalue.StringExact("ananas")),
 				},
 				ExpectError: regexp.MustCompile("examplecloud_containerette.test - no query results found after filtering"),
 			},
@@ -230,12 +230,12 @@ func TestExpectResourceDisplayNameExact_InvalidDisplayName(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectResourceDisplayNameExact("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
+					querycheck.ExpectResourceDisplayName("examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
 						"name":                knownvalue.StringExact("ananas"),
 						"resource_group_name": knownvalue.StringExact("foo"),
-					}), "invalid"),
+					}), knownvalue.StringExact("invalid")),
 				},
-				ExpectError: regexp.MustCompile("expected to find resource with display name \"invalid\" in results but resource was not found"),
+				ExpectError: regexp.MustCompile("error checking value for display name invalid, err: expected value invalid for StringExact check, got: ananas"),
 			},
 		},
 	})
