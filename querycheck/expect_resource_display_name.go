@@ -20,7 +20,7 @@ var _ QueryResultCheckWithFilters = expectResourceDisplayName{}
 type expectResourceDisplayName struct {
 	listResourceAddress string
 	filter              queryfilter.QueryFilter
-	displayName         knownvalue.StringCheck
+	displayName         knownvalue.Check
 }
 
 func (e expectResourceDisplayName) QueryFilters(ctx context.Context) []queryfilter.QueryFilter {
@@ -51,7 +51,7 @@ func (e expectResourceDisplayName) CheckQuery(_ context.Context, req CheckQueryR
 		return
 	}
 	res := listRes[0]
-	if err := e.displayName.CheckString(res.DisplayName); err != nil {
+	if err := e.displayName.CheckValue(res.DisplayName); err != nil {
 		resp.Error = fmt.Errorf("error checking value for display name %s, err: %s", e.displayName.String(), err)
 		return
 	}
@@ -61,7 +61,7 @@ func (e expectResourceDisplayName) CheckQuery(_ context.Context, req CheckQueryR
 // ExpectResourceDisplayName returns a query check that asserts that a resource with a given display name exists within the returned results of the query.
 //
 // This query check can only be used with managed resources that support query. Query is only supported in Terraform v1.14+
-func ExpectResourceDisplayName(listResourceAddress string, filter queryfilter.QueryFilter, displayName knownvalue.StringCheck) QueryResultCheck {
+func ExpectResourceDisplayName(listResourceAddress string, filter queryfilter.QueryFilter, displayName knownvalue.Check) QueryResultCheck {
 	return expectResourceDisplayName{
 		listResourceAddress: listResourceAddress,
 		filter:              filter,

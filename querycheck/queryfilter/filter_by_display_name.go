@@ -10,11 +10,11 @@ import (
 )
 
 type filterByDisplayName struct {
-	displayNameCheck knownvalue.StringCheck
+	displayNameCheck knownvalue.Check
 }
 
 func (f filterByDisplayName) Filter(ctx context.Context, req FilterQueryRequest, resp *FilterQueryResponse) {
-	if err := f.displayNameCheck.CheckString(req.QueryItem.DisplayName); err == nil {
+	if err := f.displayNameCheck.CheckValue(req.QueryItem.DisplayName); err == nil {
 		resp.Include = true
 		return
 	}
@@ -22,7 +22,7 @@ func (f filterByDisplayName) Filter(ctx context.Context, req FilterQueryRequest,
 
 // ByDisplayNameExact returns a query filter that only includes query items that match
 // the specified display name.
-func ByDisplayName(displayNameCheck knownvalue.StringCheck) QueryFilter {
+func ByDisplayName(displayNameCheck knownvalue.Check) QueryFilter {
 	return filterByDisplayName{
 		displayNameCheck: displayNameCheck,
 	}

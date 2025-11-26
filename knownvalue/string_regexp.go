@@ -9,7 +9,6 @@ import (
 )
 
 var _ Check = stringRegexp{}
-var _ StringCheck = stringRegexp{}
 
 type stringRegexp struct {
 	regex *regexp.Regexp
@@ -30,10 +29,6 @@ func (v stringRegexp) CheckValue(other any) error {
 	}
 
 	return nil
-}
-
-func (v stringRegexp) CheckString(value string) error {
-	return v.CheckValue(value)
 }
 
 // String returns the string representation of the value.

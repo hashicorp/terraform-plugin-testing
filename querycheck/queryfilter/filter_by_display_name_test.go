@@ -18,7 +18,7 @@ func TestByDisplayName(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		displayName   knownvalue.StringCheck
+		displayName   knownvalue.Check
 		queryItem     tfjson.ListResourceFoundData
 		expectInclude bool
 		expectedError error

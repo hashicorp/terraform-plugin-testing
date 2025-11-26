@@ -6,7 +6,6 @@ package knownvalue
 import "fmt"
 
 var _ Check = stringFunc{}
-var _ StringCheck = stringFunc{}
 
 type stringFunc struct {
 	checkFunc func(v string) error
@@ -22,10 +21,6 @@ func (v stringFunc) CheckValue(value any) error {
 	}
 
 	return v.checkFunc(val)
-}
-
-func (v stringFunc) CheckString(value string) error {
-	return v.CheckValue(value)
 }
 
 // String returns the string representation of the value.
