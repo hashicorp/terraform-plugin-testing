@@ -17,7 +17,7 @@ type QueryFilter interface {
 
 // FilterQueryRequest is a request to a filter function.
 type FilterQueryRequest struct {
-	// Query represents the parsed log messages relating to found resources returned by the `terraform query -json` command.
+	// QueryItem represents a single parsed log message relating to a found resource returned by the `terraform query -json` command.
 	QueryItem tfjson.ListResourceFoundData
 }
 
