@@ -6,6 +6,7 @@ package querycheck
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-testing/querycheck/queryfilter"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -13,19 +14,30 @@ import (
 )
 
 var _ QueryResultCheck = expectKnownValue{}
+var _ QueryResultCheckWithFilters = expectKnownValue{}
 
 type expectKnownValue struct {
 	listResourceAddress string
-	resourceName        string
+	filter              queryfilter.QueryFilter
 	attributePath       tfjsonpath.Path
 	knownValue          knownvalue.Check
+}
+
+func (e expectKnownValue) QueryFilters(ctx context.Context) []queryfilter.QueryFilter {
+	if e.filter == nil {
+		return []queryfilter.QueryFilter{}
+	}
+
+	return []queryfilter.QueryFilter{
+		e.filter,
+	}
 }
 
 func (e expectKnownValue) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
 	for _, res := range req.Query {
 		var diags []error
 
-		if e.listResourceAddress == strings.TrimPrefix(res.Address, "list.") && e.resourceName == res.DisplayName {
+		if e.listResourceAddress == strings.TrimPrefix(res.Address, "list.") {
 			if res.ResourceObject == nil {
 				resp.Error = fmt.Errorf("%s - no resource object was returned, ensure `include_resource` has been set to `true` in the list resource config`", e.listResourceAddress)
 				return
@@ -38,7 +50,7 @@ func (e expectKnownValue) CheckQuery(_ context.Context, req CheckQueryRequest, r
 			}
 
 			if err := e.knownValue.CheckValue(resource); err != nil {
-				diags = append(diags, fmt.Errorf("error checking value for attribute at path: %s for resource %s, err: %s", e.attributePath.String(), e.resourceName, err))
+				diags = append(diags, fmt.Errorf("error checking value for attribute at path: %s for resource with identity %s, err: %s", e.attributePath.String(), e.filter, err))
 			}
 
 			if diags == nil {
@@ -56,18 +68,18 @@ func (e expectKnownValue) CheckQuery(_ context.Context, req CheckQueryRequest, r
 		}
 	}
 
-	resp.Error = fmt.Errorf("%s - the resource %s was not found", e.listResourceAddress, e.resourceName)
+	resp.Error = fmt.Errorf("%s - the resource %s was not found", e.listResourceAddress, e.filter)
 }
 
 // ExpectKnownValue returns a query check that asserts the specified attribute values are present for a given resource object
-// returned by a list query. The resource object can only be identified by providing the list resource address as well as the
-// resource name (display name).
+// returned by a list query. The resource object can only be identified by providing the list resource address as well as
+// a query filter.
 //
 // This query check can only be used with managed resources that support resource identity and query. Query is only supported in Terraform v1.14+
-func ExpectKnownValue(listResourceAddress string, resourceName string, attributePath tfjsonpath.Path, knownValue knownvalue.Check) QueryResultCheck {
+func ExpectKnownValue(listResourceAddress string, filter queryfilter.QueryFilter, attributePath tfjsonpath.Path, knownValue knownvalue.Check) QueryResultCheck {
 	return expectKnownValue{
 		listResourceAddress: listResourceAddress,
-		resourceName:        resourceName,
+		filter:              filter,
 		attributePath:       attributePath,
 		knownValue:          knownValue,
 	}
