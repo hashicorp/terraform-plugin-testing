@@ -12,16 +12,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-var _ QueryResultCheck = expectKnownValue{}
-var _ QueryResultCheckWithFilters = expectKnownValue{}
+var _ QueryResultCheck = expectResourceKnownValues{}
+var _ QueryResultCheckWithFilters = expectResourceKnownValues{}
 
-type expectKnownValue struct {
+type expectResourceKnownValues struct {
 	listResourceAddress string
 	filter              queryfilter.QueryFilter
 	knownValues         []KnownValueCheck
 }
 
-func (e expectKnownValue) QueryFilters(ctx context.Context) []queryfilter.QueryFilter {
+func (e expectResourceKnownValues) QueryFilters(ctx context.Context) []queryfilter.QueryFilter {
 	if e.filter == nil {
 		return []queryfilter.QueryFilter{}
 	}
@@ -31,7 +31,7 @@ func (e expectKnownValue) QueryFilters(ctx context.Context) []queryfilter.QueryF
 	}
 }
 
-func (e expectKnownValue) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
+func (e expectResourceKnownValues) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
 	for _, res := range req.Query {
 		var diags []error
 
@@ -71,13 +71,13 @@ func (e expectKnownValue) CheckQuery(_ context.Context, req CheckQueryRequest, r
 	resp.Error = fmt.Errorf("%s - the resource %s was not found", e.listResourceAddress, e.filter)
 }
 
-// ExpectKnownValue returns a query check that asserts the specified attribute values are present for a given resource object
+// ExpectResourceKnownValues returns a query check that asserts the specified attribute values are present for a given resource object
 // returned by a list query. The resource object can only be identified by providing the list resource address as well as
 // a query filter.
 //
 // This query check can only be used with managed resources that support resource identity and query. Query is only supported in Terraform v1.14+
-func ExpectKnownValue(listResourceAddress string, filter queryfilter.QueryFilter, knownValues []KnownValueCheck) QueryResultCheck {
-	return expectKnownValue{
+func ExpectResourceKnownValues(listResourceAddress string, filter queryfilter.QueryFilter, knownValues []KnownValueCheck) QueryResultCheck {
+	return expectResourceKnownValues{
 		listResourceAddress: listResourceAddress,
 		filter:              filter,
 		knownValues:         knownValues,

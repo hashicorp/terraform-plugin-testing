@@ -19,7 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func TestExpectKnownValue(t *testing.T) {
+func TestExpectResourceKnownValues(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -68,7 +68,7 @@ func TestExpectKnownValue(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectKnownValue(
+					querycheck.ExpectResourceKnownValues(
 						"examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
 							"name":                knownvalue.StringExact("banane"),
 							"resource_group_name": knownvalue.StringExact("foo"),
@@ -89,7 +89,7 @@ func TestExpectKnownValue(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_ValueIncorrect(t *testing.T) {
+func TestExpectResourceKnownValues_ValueIncorrect(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -138,7 +138,7 @@ func TestExpectKnownValue_ValueIncorrect(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectKnownValue(
+					querycheck.ExpectResourceKnownValues(
 						"examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
 							"name":                knownvalue.StringExact("banane"),
 							"resource_group_name": knownvalue.StringExact("foo"),
