@@ -6,10 +6,10 @@ package querycheck
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-testing/querycheck/queryfilter"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/querycheck/queryfilter"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 

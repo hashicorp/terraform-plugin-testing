@@ -4,7 +4,6 @@
 package querycheck_test
 
 import (
-	"github.com/hashicorp/terraform-plugin-testing/querycheck/queryfilter"
 	"math/big"
 	"regexp"
 	"testing"
@@ -15,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/querycheck"
+	"github.com/hashicorp/terraform-plugin-testing/querycheck/queryfilter"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
