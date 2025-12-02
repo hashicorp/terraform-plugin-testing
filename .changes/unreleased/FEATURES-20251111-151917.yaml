@@ -1,0 +1,5 @@
+kind: FEATURES
+body: 'queryfilter: Introduces new `queryfilter` package with interface and built-in query check filtering functionality.'
+time: 2025-11-11T15:19:17.237154-05:00
+custom:
+    Issue: "573"
