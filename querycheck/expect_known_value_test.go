@@ -42,7 +42,7 @@ func TestExpectKnownValue(t *testing.T) {
 				// for simplicity we're only "provisioning" one here
 				Config: `
 				resource "examplecloud_containerette" "primary" {
-					name                = "banane"
+					name                = "banana"
 					resource_group_name = "foo"
 					location  			= "westeurope"
 			
@@ -72,9 +72,16 @@ func TestExpectKnownValue(t *testing.T) {
 						"examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
 							"name":                knownvalue.StringExact("banane"),
 							"resource_group_name": knownvalue.StringExact("foo"),
-						}),
-						tfjsonpath.New("instances"),
-						knownvalue.NumberExact(big.NewFloat(5)),
+						}), []querycheck.KnownValueCheck{
+							{
+								tfjsonpath.New("instances"),
+								knownvalue.NumberExact(big.NewFloat(5)),
+							},
+							{
+								tfjsonpath.New("location"),
+								knownvalue.StringExact("westeurope"),
+							},
+						},
 					),
 				},
 			},
@@ -105,7 +112,7 @@ func TestExpectKnownValue_ValueIncorrect(t *testing.T) {
 				// for simplicity we're only "provisioning" one here
 				Config: `
 				resource "examplecloud_containerette" "primary" {
-					name                = "banane"
+					name                = "banana"
 					resource_group_name = "foo"
 					location  			= "westeurope"
 			
@@ -135,9 +142,12 @@ func TestExpectKnownValue_ValueIncorrect(t *testing.T) {
 						"examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
 							"name":                knownvalue.StringExact("banane"),
 							"resource_group_name": knownvalue.StringExact("foo"),
-						}),
-						tfjsonpath.New("instances"),
-						knownvalue.NumberExact(big.NewFloat(4)),
+						}), []querycheck.KnownValueCheck{
+							{
+								tfjsonpath.New("instances"),
+								knownvalue.NumberExact(big.NewFloat(4)),
+							},
+						},
 					),
 				},
 				ExpectError: regexp.MustCompile("the following errors were found while checking values: error checking value for attribute at path: instances for resource with identity .*, err: expected value 4 for NumberExact check, got: 5;"),

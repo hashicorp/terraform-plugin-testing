@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/querycheck/queryfilter"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
@@ -19,8 +18,7 @@ var _ QueryResultCheckWithFilters = expectKnownValue{}
 type expectKnownValue struct {
 	listResourceAddress string
 	filter              queryfilter.QueryFilter
-	attributePath       tfjsonpath.Path
-	knownValue          knownvalue.Check
+	knownValues         []KnownValueCheck
 }
 
 func (e expectKnownValue) QueryFilters(ctx context.Context) []queryfilter.QueryFilter {
@@ -43,18 +41,20 @@ func (e expectKnownValue) CheckQuery(_ context.Context, req CheckQueryRequest, r
 				return
 			}
 
-			resource, err := tfjsonpath.Traverse(res.ResourceObject, e.attributePath)
-			if err != nil {
-				resp.Error = err
-				return
-			}
+			for _, c := range e.knownValues {
+				resource, err := tfjsonpath.Traverse(res.ResourceObject, c.Path)
+				if err != nil {
+					resp.Error = err
+					return
+				}
 
-			if err := e.knownValue.CheckValue(resource); err != nil {
-				diags = append(diags, fmt.Errorf("error checking value for attribute at path: %s for resource with identity %s, err: %s", e.attributePath.String(), e.filter, err))
-			}
+				if err := c.KnownValue.CheckValue(resource); err != nil {
+					diags = append(diags, fmt.Errorf("error checking value for attribute at path: %s for resource with identity %s, err: %s", c.Path.String(), e.filter, err))
+				}
 
-			if diags == nil {
-				return
+				if diags == nil {
+					return
+				}
 			}
 		}
 
@@ -76,11 +76,10 @@ func (e expectKnownValue) CheckQuery(_ context.Context, req CheckQueryRequest, r
 // a query filter.
 //
 // This query check can only be used with managed resources that support resource identity and query. Query is only supported in Terraform v1.14+
-func ExpectKnownValue(listResourceAddress string, filter queryfilter.QueryFilter, attributePath tfjsonpath.Path, knownValue knownvalue.Check) QueryResultCheck {
+func ExpectKnownValue(listResourceAddress string, filter queryfilter.QueryFilter, knownValues []KnownValueCheck) QueryResultCheck {
 	return expectKnownValue{
 		listResourceAddress: listResourceAddress,
 		filter:              filter,
-		attributePath:       attributePath,
-		knownValue:          knownValue,
+		knownValues:         knownValues,
 	}
 }
