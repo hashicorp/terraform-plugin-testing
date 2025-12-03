@@ -1,5 +1,0 @@
-kind: FEATURES
-body: 'querycheck: Adds `ExpectResourceKnownValues` query check to assert resource values on a filtered query result.'
-time: 2025-12-02T11:33:47.606282+01:00
-custom:
-    Issue: "583"

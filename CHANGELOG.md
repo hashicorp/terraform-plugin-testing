@@ -1,3 +1,15 @@
+## 1.14.0 (December 03, 2025)
+
+FEATURES:
+
+* queryfilter: Introduces new `queryfilter` package with interface and built-in query check filtering functionality. ([#573](https://github.com/hashicorp/terraform-plugin-testing/issues/573))
+* querycheck: Adds `ExpectResourceDisplayName` query check to assert a display name value on a filtered query result. ([#573](https://github.com/hashicorp/terraform-plugin-testing/issues/573))
+* querycheck: Adds `ExpectResourceKnownValues` query check to assert resource values on a filtered query result. ([#583](https://github.com/hashicorp/terraform-plugin-testing/issues/583))
+
+ENHANCEMENTS:
+
+* helper/resource: Adds `PostApplyFunc` test step hook to run generic post-apply logic for plan/apply testing. ([#566](https://github.com/hashicorp/terraform-plugin-testing/issues/566))
+
 ## 1.14.0-beta.1 (September 18, 2025)
 
 NOTES:
