@@ -144,6 +144,10 @@ func TestExpectResourceKnownValues_ValueIncorrect(t *testing.T) {
 							"resource_group_name": knownvalue.StringExact("foo"),
 						}), []querycheck.KnownValueCheck{
 							{
+								tfjsonpath.New("location"),
+								knownvalue.StringExact("westeurope"),
+							},
+							{
 								tfjsonpath.New("instances"),
 								knownvalue.NumberExact(big.NewFloat(4)),
 							},
