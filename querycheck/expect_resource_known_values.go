@@ -80,7 +80,6 @@ func (e expectResourceKnownValues) CheckQuery(_ context.Context, req CheckQueryR
 	}
 }
 
-// it's asserting that the resource object (identified by the filter) passes the given query checks".
 // ExpectResourceKnownValues returns a query check which asserts that a resource object identified by a query filter
 // passes the given query checks.
 //
