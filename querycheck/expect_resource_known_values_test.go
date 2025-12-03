@@ -14,11 +14,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/querycheck"
+	"github.com/hashicorp/terraform-plugin-testing/querycheck/queryfilter"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func TestExpectKnownValue(t *testing.T) {
+func TestExpectResourceKnownValues(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -67,11 +68,20 @@ func TestExpectKnownValue(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectKnownValue(
-						"examplecloud_containerette.test",
-						"banane",
-						tfjsonpath.New("instances"),
-						knownvalue.NumberExact(big.NewFloat(5)),
+					querycheck.ExpectResourceKnownValues(
+						"examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
+							"name":                knownvalue.StringExact("banane"),
+							"resource_group_name": knownvalue.StringExact("foo"),
+						}), []querycheck.KnownValueCheck{
+							{
+								tfjsonpath.New("instances"),
+								knownvalue.NumberExact(big.NewFloat(5)),
+							},
+							{
+								tfjsonpath.New("location"),
+								knownvalue.StringExact("westeurope"),
+							},
+						},
 					),
 				},
 			},
@@ -79,7 +89,7 @@ func TestExpectKnownValue(t *testing.T) {
 	})
 }
 
-func TestExpectKnownValue_ValueIncorrect(t *testing.T) {
+func TestExpectResourceKnownValues_ValueIncorrect(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -128,14 +138,23 @@ func TestExpectKnownValue_ValueIncorrect(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectKnownValue(
-						"examplecloud_containerette.test",
-						"banane",
-						tfjsonpath.New("instances"),
-						knownvalue.NumberExact(big.NewFloat(4)),
+					querycheck.ExpectResourceKnownValues(
+						"examplecloud_containerette.test", queryfilter.ByResourceIdentity(map[string]knownvalue.Check{
+							"name":                knownvalue.StringExact("banane"),
+							"resource_group_name": knownvalue.StringExact("foo"),
+						}), []querycheck.KnownValueCheck{
+							{
+								tfjsonpath.New("location"),
+								knownvalue.StringExact("westeurope"),
+							},
+							{
+								tfjsonpath.New("instances"),
+								knownvalue.NumberExact(big.NewFloat(4)),
+							},
+						},
 					),
 				},
-				ExpectError: regexp.MustCompile("the following errors were found while checking values: error checking value for attribute at path: instances for resource banane, err: expected value 4 for NumberExact check, got: 5;"),
+				ExpectError: regexp.MustCompile("the following errors were found while checking values: error checking value for attribute at path: instances for resource with identity .*, err: expected value 4 for NumberExact check, got: 5;"),
 			},
 		},
 	})
