@@ -1,4 +1,4 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2025
 // SPDX-License-Identifier: MPL-2.0
 
 package teststep
@@ -563,7 +563,7 @@ func TestConfigFile_Append(t *testing.T) {
 		"append content to a ConfigFile": {
 			filename:        `testdata/main.tf`, // Contains `// Hello world`
 			appendContent:   `terraform {}`,
-			expectedContent: "# Copyright (c) HashiCorp, Inc.\n# SPDX-License-Identifier: MPL-2.0\n\n// Hello world" + "\n" + "terraform {}",
+			expectedContent: "# Copyright IBM Corp. 2014, 2025\n# SPDX-License-Identifier: MPL-2.0\n\n// Hello world" + "\n" + "terraform {}",
 		},
 	}
 
