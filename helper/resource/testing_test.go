@@ -14,8 +14,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	testinginterface "github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/hack"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
@@ -133,7 +133,7 @@ func TestComposeTestCheckFunc(t *testing.T) {
 
 // mockT implements TestT for testing
 type mockT struct {
-	testinginterface.RuntimeT
+	hack.MetaT
 
 	ParallelCalled bool
 }

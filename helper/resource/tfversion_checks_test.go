@@ -10,9 +10,8 @@ import (
 	"github.com/hashicorp/go-version"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/hack"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
-
-	testinginterface "github.com/mitchellh/go-testing-interface"
 )
 
 func TestRunTFVersionChecks(t *testing.T) {
@@ -53,7 +52,7 @@ func TestRunTFVersionChecks(t *testing.T) {
 
 			if test.expectError {
 				plugintest.TestExpectTFatal(t, func() {
-					runTFVersionChecks(context.Background(), &testinginterface.RuntimeT{}, test.tfVersion, test.versionChecks)
+					runTFVersionChecks(context.Background(), &hack.MetaT{}, test.tfVersion, test.versionChecks)
 				})
 			} else {
 				runTFVersionChecks(context.Background(), t, test.tfVersion, test.versionChecks)

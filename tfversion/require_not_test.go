@@ -11,11 +11,10 @@ import (
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/hack"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
-
-	testinginterface "github.com/mitchellh/go-testing-interface"
 )
 
 func Test_RequireNot(t *testing.T) { //nolint:paralleltest
@@ -42,7 +41,7 @@ func Test_RequireNot_Error(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.1.0")
 
 	plugintest.TestExpectTFatal(t, func() {
-		r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
+		r.UnitTest(&hack.MetaT{}, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
 					return nil, nil
@@ -71,7 +70,7 @@ func Test_RequireNot_Prerelease_EqualCoreVersion(t *testing.T) { //nolint:parall
 	//
 	// Reference: https://github.com/hashicorp/terraform-plugin-testing/issues/303
 	plugintest.TestExpectTFatal(t, func() {
-		r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
+		r.UnitTest(&hack.MetaT{}, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},

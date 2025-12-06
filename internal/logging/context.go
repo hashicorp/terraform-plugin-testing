@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-log/tfsdklog"
 	helperlogging "github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
-	testing "github.com/mitchellh/go-testing-interface"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/hack"
 )
 
 // InitTestContext registers the terraform-plugin-log/tfsdklog test sink,
@@ -18,7 +18,7 @@ import (
 // The standard library log package handling is important as provider code
 // under test may be using that package or another logging library outside of
 // terraform-plugin-log.
-func InitTestContext(ctx context.Context, t testing.T) context.Context {
+func InitTestContext(ctx context.Context, t hack.BaseT) context.Context {
 	helperlogging.SetOutput(t)
 
 	ctx = tfsdklog.ContextWithTestLogging(ctx, t.Name())
