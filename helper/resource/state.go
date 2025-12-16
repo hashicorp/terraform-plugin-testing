@@ -6,6 +6,7 @@ package resource
 import (
 	"context"
 	"log"
+	"slices"
 	"time"
 )
 
@@ -24,7 +25,7 @@ var refreshGracePeriod = 30 * time.Second
 //
 // Deprecated: Copy this type to the provider codebase or use
 // github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.StateRefreshFunc.
-type StateRefreshFunc func() (result interface{}, state string, err error)
+type StateRefreshFunc func() (result any, state string, err error)
 
 // StateChangeConf is the configuration struct used for `WaitForState`.
 //
@@ -63,7 +64,7 @@ type StateChangeConf struct {
 //
 // Deprecated: Copy this method to the provider codebase or use
 // github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.StateChangeConf.
-func (conf *StateChangeConf) WaitForStateContext(ctx context.Context) (interface{}, error) {
+func (conf *StateChangeConf) WaitForStateContext(ctx context.Context) (any, error) {
 	log.Printf("[DEBUG] Waiting for state to become: %s", conf.Target)
 
 	notfoundTick := 0
@@ -79,7 +80,7 @@ func (conf *StateChangeConf) WaitForStateContext(ctx context.Context) (interface
 	}
 
 	type Result struct {
-		Result interface{}
+		Result any
 		State  string
 		Error  error
 		Done   bool
@@ -172,12 +173,9 @@ func (conf *StateChangeConf) WaitForStateContext(ctx context.Context) (interface
 					}
 				}
 
-				for _, allowed := range conf.Pending {
-					if currentState == allowed {
-						found = true
-						targetOccurence = 0
-						break
-					}
+				if slices.Contains(conf.Pending, currentState) {
+					found = true
+					targetOccurence = 0
 				}
 
 				if !found && len(conf.Pending) > 0 {
@@ -287,6 +285,6 @@ func (conf *StateChangeConf) WaitForStateContext(ctx context.Context) (interface
 // waiting the number of seconds specified in the timeout configuration.
 //
 // Deprecated: Please use WaitForStateContext to ensure proper plugin shutdown
-func (conf *StateChangeConf) WaitForState() (interface{}, error) {
+func (conf *StateChangeConf) WaitForState() (any, error) {
 	return conf.WaitForStateContext(context.Background())
 }

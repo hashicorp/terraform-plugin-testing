@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"maps"
 	"os"
 	"regexp"
 	"strconv"
@@ -24,6 +25,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/hashicorp/terraform-plugin-testing/actioncheck"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
@@ -206,9 +208,7 @@ func filterSweepers(f string, source map[string]*Sweeper) map[string]*Sweeper {
 	for name := range source {
 		for _, s := range filterSlice {
 			if strings.Contains(strings.ToLower(name), s) {
-				for foundName, foundSweeper := range filterSweeperWithDependencies(name, source) {
-					sweepers[foundName] = foundSweeper
-				}
+				maps.Copy(sweepers, filterSweeperWithDependencies(name, source))
 			}
 		}
 	}
@@ -230,9 +230,7 @@ func filterSweeperWithDependencies(name string, source map[string]*Sweeper) map[
 	result[name] = currentSweeper
 
 	for _, dependency := range currentSweeper.Dependencies {
-		for foundName, foundSweeper := range filterSweeperWithDependencies(dependency, source) {
-			result[foundName] = foundSweeper
-		}
+		maps.Copy(result, filterSweeperWithDependencies(dependency, source))
 	}
 
 	return result
@@ -846,6 +844,11 @@ type TestStep struct {
 	// contained a provider outside the one under test.
 	ExternalProviders map[string]ExternalProvider
 
+	// ActionChecks defines checks to run on action progress messages.
+	// These checks are executed after the TestStep completes and verify
+	// that actions produced the expected progress messages.
+	ActionChecks []actioncheck.ActionCheck
+
 	// If true, the test step will run the query command
 	Query bool
 }
@@ -930,7 +933,7 @@ func Test(t testing.T, c TestCase) {
 	if err != nil {
 		logging.HelperResourceError(ctx,
 			"Test validation error",
-			map[string]interface{}{logging.KeyError: err},
+			map[string]any{logging.KeyError: err},
 		)
 		t.Fatalf("Test validation error: %s", err)
 	}
@@ -978,7 +981,7 @@ func Test(t testing.T, c TestCase) {
 	defer func(helper *plugintest.Helper) {
 		err := helper.Close()
 		if err != nil {
-			logging.HelperResourceError(ctx, "Unable to clean up temporary test files", map[string]interface{}{logging.KeyError: err})
+			logging.HelperResourceError(ctx, "Unable to clean up temporary test files", map[string]any{logging.KeyError: err})
 		}
 	}(helper)
 
@@ -2138,7 +2141,7 @@ func primaryInstanceState(s *terraform.State, name string) (*terraform.InstanceS
 // string address uses a precalculated TypeSet hash, which are integers and
 // typically are large and obviously not a list index
 func indexesIntoTypeSet(key string) bool {
-	for _, part := range strings.Split(key, ".") {
+	for part := range strings.SplitSeq(key, ".") {
 		if i, err := strconv.Atoi(part); err == nil && i > 100 {
 			return true
 		}
@@ -2164,4 +2167,46 @@ func checkIfIndexesIntoTypeSetPair(keyFirst, keySecond string, f TestCheckFunc) 
 		}
 		return err
 	}
+}
+
+// TestCheckProgressMessageContains returns an ActionCheck that verifies that at least one progress message contains the expected content.
+//
+// Example usage:
+//
+//	resource.TestStep{
+//		Config: testConfig,
+//		ActionChecks: []actioncheck.ActionCheck{
+//			resource.TestCheckProgressMessageContains("aws_lambda_invoke.test", "Lambda function logs:"),
+//		},
+//	}
+func TestCheckProgressMessageContains(actionName, expectedContent string) actioncheck.ActionCheck {
+	return actioncheck.ExpectProgressMessageContains(actionName, expectedContent)
+}
+
+// TestCheckProgressMessageCount returns an ActionCheck that verifies the expected number of progress messages.
+//
+// Example usage:
+//
+//	resource.TestStep{
+//		Config: testConfig,
+//		ActionChecks: []actioncheck.ActionCheck{
+//			resource.TestCheckProgressMessageCount("aws_lambda_invoke.test", 2),
+//		},
+//	}
+func TestCheckProgressMessageCount(actionName string, expectedCount int) actioncheck.ActionCheck {
+	return actioncheck.ExpectProgressCount(actionName, expectedCount)
+}
+
+// TestCheckProgressMessageSequence returns an ActionCheck that verifies progress messages appear in the expected sequence.
+//
+// Example usage:
+//
+//	resource.TestStep{
+//		Config: testConfig,
+//		ActionChecks: []actioncheck.ActionCheck{
+//			resource.TestCheckProgressMessageSequence("aws_lambda_invoke.test", []string{"Invoking", "completed successfully"}),
+//		},
+//	}
+func TestCheckProgressMessageSequence(actionName string, expectedSequence []string) actioncheck.ActionCheck {
+	return actioncheck.ExpectProgressSequence(actionName, expectedSequence)
 }
