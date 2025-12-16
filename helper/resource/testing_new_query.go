@@ -8,14 +8,14 @@ import (
 	"fmt"
 
 	tfjson "github.com/hashicorp/terraform-json"
-	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource/query"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/hack"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 )
 
-func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {
+func testStepNewQuery(ctx context.Context, t hack.BaseT, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {
 	t.Helper()
 
 	queryConfigRequest := teststep.ConfigurationRequest{

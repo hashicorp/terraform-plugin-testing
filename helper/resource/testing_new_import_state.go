@@ -15,17 +15,17 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/hack"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, testCaseWorkingDir *plugintest.WorkingDir, step TestStep, priorStepCfg teststep.Config, providers *providerFactories, stepNumber int) error {
+func testStepNewImportState(ctx context.Context, t hack.BaseT, helper *plugintest.Helper, testCaseWorkingDir *plugintest.WorkingDir, step TestStep, priorStepCfg teststep.Config, providers *providerFactories, stepNumber int) error {
 	t.Helper()
 
 	// step.ImportStateKind implicitly defaults to the zero-value (ImportCommandWithID) for backward compatibility
@@ -183,7 +183,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 }
 
-func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, step TestStep, priorIdentityValues map[string]any) error {
+func testImportBlock(ctx context.Context, t hack.BaseT, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, step TestStep, priorIdentityValues map[string]any) error {
 	kind := step.ImportStateKind
 
 	err := runProviderCommandCreatePlan(ctx, t, workingDir, providers)
@@ -242,7 +242,7 @@ func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.Wo
 	return nil
 }
 
-func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, importId string, step TestStep, state *terraform.State) error {
+func testImportCommand(ctx context.Context, t hack.BaseT, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, importId string, step TestStep, state *terraform.State) error {
 	err := runProviderCommand(ctx, t, workingDir, providers, func() error {
 		return workingDir.Import(ctx, resourceName, importId)
 	})
@@ -463,7 +463,7 @@ func appendImportBlockWithIdentity(config teststep.Config, resourceName string, 
 	return config.Append(configBuilder.String())
 }
 
-func importStatePreconditions(t testing.T, helper *plugintest.Helper, step TestStep) error {
+func importStatePreconditions(t hack.BaseT, helper *plugintest.Helper, step TestStep) error {
 	t.Helper()
 
 	kind := step.ImportStateKind
@@ -526,7 +526,7 @@ func identityValuesFromStateValues(stateValues *tfjson.StateValues, resourceName
 	return resource.IdentityValues
 }
 
-func runImportStateCheckFunction(ctx context.Context, t testing.T, importState *terraform.State, step TestStep) {
+func runImportStateCheckFunction(ctx context.Context, t hack.BaseT, importState *terraform.State, step TestStep) {
 	t.Helper()
 
 	var states []*terraform.InstanceState
@@ -553,7 +553,7 @@ func runImportStateCheckFunction(ctx context.Context, t testing.T, importState *
 	logging.HelperResourceTrace(ctx, "Called TestStep ImportStateCheck")
 }
 
-func savedPlanRawStdout(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, providers *providerFactories) string {
+func savedPlanRawStdout(ctx context.Context, t hack.BaseT, wd *plugintest.WorkingDir, providers *providerFactories) string {
 	t.Helper()
 
 	var stdout string

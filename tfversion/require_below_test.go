@@ -11,11 +11,10 @@ import (
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/hack"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
-
-	testinginterface "github.com/mitchellh/go-testing-interface"
 )
 
 func Test_RequireBelow_Equal(t *testing.T) { //nolint:paralleltest
@@ -23,7 +22,7 @@ func Test_RequireBelow_Equal(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.7.0")
 
 	plugintest.TestExpectTFatal(t, func() {
-		r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
+		r.UnitTest(&hack.MetaT{}, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -70,7 +69,7 @@ func Test_RequireBelow_Higher(t *testing.T) { //nolint:paralleltest
 	t.Setenv("TF_ACC_TERRAFORM_VERSION", "1.4.0")
 
 	plugintest.TestExpectTFatal(t, func() {
-		r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
+		r.UnitTest(&hack.MetaT{}, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": func() (tfprotov6.ProviderServer, error) { //nolint:unparam // required signature
 					return nil, nil
@@ -99,7 +98,7 @@ func Test_RequireBelow_Prerelease_EqualCoreVersion(t *testing.T) { //nolint:para
 	//
 	// Reference: https://github.com/hashicorp/terraform-plugin-testing/issues/303
 	plugintest.TestExpectTFatal(t, func() {
-		r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
+		r.UnitTest(&hack.MetaT{}, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -166,7 +165,7 @@ func Test_RequireBelow_Prerelease_LowerCoreVersion(t *testing.T) { //nolint:para
 	// The 1.8.0-rc1 prerelease should always be considered to be
 	// above the 1.7.0 core version.
 	plugintest.TestExpectTFatal(t, func() {
-		r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
+		r.UnitTest(&hack.MetaT{}, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
@@ -189,7 +188,7 @@ func Test_RequireBelow_Prerelease_LowerPrerelease(t *testing.T) { //nolint:paral
 	// The 1.8.0-rc1 prerelease should always be considered to be
 	// above the 1.8.0-beta1 prerelease.
 	plugintest.TestExpectTFatal(t, func() {
-		r.UnitTest(&testinginterface.RuntimeT{}, r.TestCase{
+		r.UnitTest(&hack.MetaT{}, r.TestCase{
 			ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 				"test": providerserver.NewProviderServer(testprovider.Provider{}),
 			},
