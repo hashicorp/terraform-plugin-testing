@@ -57,6 +57,16 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		t.Fatalf("Error getting state: %s", err)
 	}
 
+	err = runProviderCommand(ctx, t, testCaseWorkingDir, providers, func() error {
+		schemas, err := testCaseWorkingDir.Schemas(ctx)
+		// todo: handle error
+		if err != nil {
+			return err
+		}
+		print(schemas)
+		return nil
+	})
+
 	// Determine the ID to import
 	var importId string
 	switch {

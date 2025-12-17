@@ -6,11 +6,13 @@ package resource
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	tfjson "github.com/hashicorp/terraform-json"
+	"github.com/zclconf/go-cty/cty"
 
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -1157,6 +1159,325 @@ func TestShimState(t *testing.T) {
 
 			if diff := cmp.Diff(tc.ExpectedState, shimmedState); diff != "" {
 				t.Fatalf("state mismatch:\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_jsonSchemaToCtyType(t *testing.T) {
+	tests := map[string]struct {
+		schema tfjson.Schema
+		want   cty.Type
+	}{
+		"Empty Schema": {
+			schema: tfjson.Schema{},
+			want:   cty.NilType,
+		},
+		"Nil Block": {
+			schema: tfjson.Schema{
+				Block: nil,
+			},
+			want: cty.NilType,
+		},
+		"Empty Attributes": {
+			schema: tfjson.Schema{
+				Block: &tfjson.SchemaBlock{
+					Attributes: map[string]*tfjson.SchemaAttribute{},
+				},
+			},
+			want: cty.EmptyObject,
+		},
+		"Primitive Attributes": {
+			schema: tfjson.Schema{
+				Block: &tfjson.SchemaBlock{
+					Attributes: map[string]*tfjson.SchemaAttribute{
+						"string_attr": {
+							AttributeType: cty.String,
+						},
+						"number_attr": {
+							AttributeType: cty.Number,
+						},
+						"bool_attr": {
+							AttributeType: cty.Bool,
+						},
+					},
+				},
+			},
+			want: cty.Object(map[string]cty.Type{
+				"string_attr": cty.String,
+				"number_attr": cty.Number,
+				"bool_attr":   cty.Bool,
+			}),
+		},
+		"Complex Attributes": {
+			schema: tfjson.Schema{
+				Block: &tfjson.SchemaBlock{
+					Attributes: map[string]*tfjson.SchemaAttribute{
+						"object_attr": {
+							AttributeType: cty.Object(map[string]cty.Type{
+								"string_attr": cty.String,
+								"number_attr": cty.Number,
+								"bool_attr":   cty.Bool,
+							}),
+						},
+						"list_attr": {
+							AttributeType: cty.List(cty.String),
+						},
+						"set_attr": {
+							AttributeType: cty.Set(cty.String),
+						},
+					},
+				},
+			},
+			want: cty.Object(map[string]cty.Type{
+				"object_attr": cty.Object(map[string]cty.Type{
+					"string_attr": cty.String,
+					"number_attr": cty.Number,
+					"bool_attr":   cty.Bool,
+				}),
+				"list_attr": cty.List(cty.String),
+				"set_attr":  cty.Set(cty.String),
+			}),
+		},
+		"Nested Blocks": {
+			schema: tfjson.Schema{
+				Block: &tfjson.SchemaBlock{
+					Attributes: map[string]*tfjson.SchemaAttribute{
+						"string_attr": {
+							AttributeType: cty.String,
+						},
+					},
+					NestedBlocks: map[string]*tfjson.SchemaBlockType{
+						"nested_single_block": {
+							NestingMode: tfjson.SchemaNestingModeSingle,
+							Block: &tfjson.SchemaBlock{
+								Attributes: map[string]*tfjson.SchemaAttribute{
+									"number_attr": {
+										AttributeType: cty.Number,
+									},
+								},
+							},
+						},
+						"nested_group_block": {
+							NestingMode: tfjson.SchemaNestingModeGroup,
+							Block: &tfjson.SchemaBlock{
+								Attributes: map[string]*tfjson.SchemaAttribute{
+									"number_attr": {
+										AttributeType: cty.Number,
+									},
+								},
+							},
+						},
+						"nested_set_block": {
+							NestingMode: tfjson.SchemaNestingModeSet,
+							Block: &tfjson.SchemaBlock{
+								Attributes: map[string]*tfjson.SchemaAttribute{
+									"number_attr": {
+										AttributeType: cty.Number,
+									},
+								},
+							},
+						},
+						"nested_list_block": {
+							NestingMode: tfjson.SchemaNestingModeList,
+							Block: &tfjson.SchemaBlock{
+								Attributes: map[string]*tfjson.SchemaAttribute{
+									"number_attr": {
+										AttributeType: cty.Number,
+									},
+								},
+							},
+						},
+						"nested_map_block": {
+							NestingMode: tfjson.SchemaNestingModeMap,
+							Block: &tfjson.SchemaBlock{
+								Attributes: map[string]*tfjson.SchemaAttribute{
+									"number_attr": {
+										AttributeType: cty.Number,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: cty.Object(map[string]cty.Type{
+				"string_attr": cty.String,
+				"nested_single_block": cty.Object(map[string]cty.Type{
+					"number_attr": cty.Number,
+				}),
+				"nested_group_block": cty.Object(map[string]cty.Type{
+					"number_attr": cty.Number,
+				}),
+				"nested_list_block": cty.List(cty.Object(map[string]cty.Type{
+					"number_attr": cty.Number,
+				})),
+				"nested_set_block": cty.Set(cty.Object(map[string]cty.Type{
+					"number_attr": cty.Number,
+				})),
+				"nested_map_block": cty.Map(cty.Object(map[string]cty.Type{
+					"number_attr": cty.Number,
+				})),
+			}),
+		},
+		"Nested Attributes": {
+			schema: tfjson.Schema{
+				Block: &tfjson.SchemaBlock{
+					Attributes: map[string]*tfjson.SchemaAttribute{
+						"string_attr": {
+							AttributeType: cty.String,
+						},
+						"nested_single_attr": {
+							AttributeNestedType: &tfjson.SchemaNestedAttributeType{
+								NestingMode: tfjson.SchemaNestingModeSingle,
+								Attributes: map[string]*tfjson.SchemaAttribute{
+									"number_attr": {
+										AttributeType: cty.Number,
+									},
+								},
+							},
+						},
+						// Maintainer Note: This is likely an invalid mode for nested attributes
+						// as the nesting modes in tfjson are shared between blocks and nested attributes.
+						"nested_group_attr": {
+							AttributeNestedType: &tfjson.SchemaNestedAttributeType{
+								NestingMode: tfjson.SchemaNestingModeGroup,
+								Attributes: map[string]*tfjson.SchemaAttribute{
+									"number_attr": {
+										AttributeType: cty.Number,
+									},
+								},
+							},
+						},
+						"nested_list_attr": {
+							AttributeNestedType: &tfjson.SchemaNestedAttributeType{
+								NestingMode: tfjson.SchemaNestingModeList,
+								Attributes: map[string]*tfjson.SchemaAttribute{
+									"number_attr": {
+										AttributeType: cty.Number,
+									},
+								},
+							},
+						},
+						"nested_set_attr": {
+							AttributeNestedType: &tfjson.SchemaNestedAttributeType{
+								NestingMode: tfjson.SchemaNestingModeSet,
+								Attributes: map[string]*tfjson.SchemaAttribute{
+									"number_attr": {
+										AttributeType: cty.Number,
+									},
+								},
+							},
+						},
+						"nested_map_attr": {
+							AttributeNestedType: &tfjson.SchemaNestedAttributeType{
+								NestingMode: tfjson.SchemaNestingModeMap,
+								Attributes: map[string]*tfjson.SchemaAttribute{
+									"number_attr": {
+										AttributeType: cty.Number,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: cty.Object(map[string]cty.Type{
+				"string_attr": cty.String,
+				"nested_single_attr": cty.Object(map[string]cty.Type{
+					"number_attr": cty.Number,
+				}),
+				"nested_group_attr": cty.Object(map[string]cty.Type{
+					"number_attr": cty.Number,
+				}),
+				"nested_list_attr": cty.List(cty.Object(map[string]cty.Type{
+					"number_attr": cty.Number,
+				})),
+				"nested_set_attr": cty.Set(cty.Object(map[string]cty.Type{
+					"number_attr": cty.Number,
+				})),
+				"nested_map_attr": cty.Map(cty.Object(map[string]cty.Type{
+					"number_attr": cty.Number,
+				})),
+			}),
+		},
+		"Nested Attributes - 2 Nesting Levels": {
+			schema: tfjson.Schema{
+				Block: &tfjson.SchemaBlock{
+					Attributes: map[string]*tfjson.SchemaAttribute{
+						"string_attr": {
+							AttributeType: cty.String,
+						},
+						"nested_list_attr": {
+							AttributeNestedType: &tfjson.SchemaNestedAttributeType{
+								NestingMode: tfjson.SchemaNestingModeList,
+								Attributes: map[string]*tfjson.SchemaAttribute{
+									"nested_set_attr": {
+										AttributeNestedType: &tfjson.SchemaNestedAttributeType{
+											NestingMode: tfjson.SchemaNestingModeSet,
+											Attributes: map[string]*tfjson.SchemaAttribute{
+												"number_attr": {
+													AttributeType: cty.Number,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: cty.Object(map[string]cty.Type{
+				"string_attr": cty.String,
+				"nested_list_attr": cty.List(cty.Object(map[string]cty.Type{
+					"nested_set_attr": cty.Set(cty.Object(map[string]cty.Type{
+						"number_attr": cty.Number,
+					})),
+				})),
+			}),
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			if got := jsonSchemaToCtyType(tt.schema); !got.Equals(tt.want) {
+				t.Errorf("got: %v,\n want: %v\n", got.GoString(), tt.want.GoString())
+			}
+		})
+	}
+}
+
+func Test_jsonStateToCtyValue(t *testing.T) {
+	tests := []struct {
+		name string
+		attr map[string]interface{}
+		typ  cty.Type
+		want cty.Value
+	}{
+		// TODO: Add test cases.
+		{
+			name: "test",
+			attr: map[string]interface{}{
+				"allow_bool": true,
+				"port":       json.Number("443"),
+				"rule":       "allow",
+			},
+			typ: cty.Object(map[string]cty.Type{
+				"allow_bool": cty.Bool,
+				"port":       cty.Number,
+				"rule":       cty.String,
+			}),
+			want: cty.ObjectVal(map[string]cty.Value{
+				"allow_bool": cty.BoolVal(true),
+				"port":       cty.NumberVal(big.NewFloat(443)),
+				"rule":       cty.StringVal("allow"),
+			}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := jsonStateToCtyValue(tt.attr, tt.typ); !got.RawEquals(tt.want) {
+				t.Errorf("jsonStateToCtyValue() = %v, want %v", got, tt.want)
 			}
 		})
 	}

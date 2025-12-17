@@ -5,6 +5,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,10 +13,13 @@ import (
 	"strconv"
 	"strings"
 
+	ctyjson "github.com/zclconf/go-cty/cty/json"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/go-version"
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
+	"github.com/zclconf/go-cty/cty"
 
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
@@ -696,4 +700,86 @@ func copyWorkingDir(ctx context.Context, t testing.T, stepNumber int, wd *plugin
 	}
 
 	t.Logf("Working directory and files have been copied to: %s", dest)
+}
+
+func jsonStateToCtyValue(attr map[string]interface{}, typ cty.Type) cty.Value {
+	marshal, err := json.Marshal(attr)
+	if err != nil {
+		// Todo: handle error
+		return cty.NilVal
+	}
+	unmarshal, err := ctyjson.Unmarshal(marshal, typ)
+	if err != nil {
+		// Todo: handle error
+		return cty.NilVal
+	}
+	return unmarshal
+}
+
+func jsonSchemaToCtyType(schema tfjson.Schema) cty.Type {
+	if schema.Block == nil {
+		return cty.NilType
+	}
+
+	return jsonSchemaBlockToCtyType(schema.Block)
+}
+
+func jsonSchemaBlockToCtyType(schemaBlock *tfjson.SchemaBlock) cty.Type {
+	if schemaBlock == nil {
+		return cty.NilType
+	}
+
+	ctyAttrs := make(map[string]cty.Type)
+	for name, block := range schemaBlock.NestedBlocks {
+		nestedBlockType := jsonSchemaBlockToCtyType(block.Block)
+
+		switch block.NestingMode {
+		case tfjson.SchemaNestingModeSingle, tfjson.SchemaNestingModeGroup:
+			ctyAttrs[name] = nestedBlockType
+		case tfjson.SchemaNestingModeList:
+			ctyAttrs[name] = cty.List(nestedBlockType)
+		case tfjson.SchemaNestingModeSet:
+			ctyAttrs[name] = cty.Set(nestedBlockType)
+		case tfjson.SchemaNestingModeMap:
+			ctyAttrs[name] = cty.Map(nestedBlockType)
+		}
+	}
+
+	for name, attr := range schemaBlock.Attributes {
+		if attr.AttributeType != cty.NilType {
+			ctyAttrs[name] = attr.AttributeType
+		} else {
+			ctyAttrs[name] = jsonSchemaNestedAttributeTypeToCtyType(attr.AttributeNestedType)
+		}
+	}
+
+	return cty.Object(ctyAttrs)
+}
+
+func jsonSchemaNestedAttributeTypeToCtyType(nestedType *tfjson.SchemaNestedAttributeType) cty.Type {
+	if nestedType == nil {
+		return cty.NilType
+	}
+
+	ctyAttrs := make(map[string]cty.Type)
+	for name, attr := range nestedType.Attributes {
+		if attr.AttributeType != cty.NilType {
+			ctyAttrs[name] = attr.AttributeType
+		} else {
+			ctyAttrs[name] = jsonSchemaNestedAttributeTypeToCtyType(attr.AttributeNestedType)
+		}
+	}
+
+	switch nestedType.NestingMode {
+	case tfjson.SchemaNestingModeSingle, tfjson.SchemaNestingModeGroup:
+		return cty.Object(ctyAttrs)
+	case tfjson.SchemaNestingModeList:
+		return cty.List(cty.Object(ctyAttrs))
+	case tfjson.SchemaNestingModeSet:
+		return cty.Set(cty.Object(ctyAttrs))
+	case tfjson.SchemaNestingModeMap:
+		return cty.Map(cty.Object(ctyAttrs))
+	}
+
+	return cty.NilType
 }
