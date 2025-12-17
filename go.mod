@@ -1,6 +1,10 @@
 module github.com/hashicorp/terraform-plugin-testing
 
-go 1.24.0
+go 1.24.10
+
+toolchain go1.24.11
+
+replace github.com/hashicorp/terraform-exec => /Users/sgoods/Hashicorp/terraform-exec
 
 require (
 	github.com/google/go-cmp v0.7.0

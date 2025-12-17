@@ -517,7 +517,7 @@ func (wd *WorkingDir) Refresh(ctx context.Context) error {
 func (wd *WorkingDir) Schemas(ctx context.Context) (*tfjson.ProviderSchemas, error) {
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI providers schema command")
 
-	providerSchemas, err := wd.tf.ProvidersSchema(context.Background())
+	providerSchemas, err := wd.tf.ProvidersSchema(context.Background(), tfexec.Reattach(wd.reattachInfo))
 
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI providers schema command")
 
