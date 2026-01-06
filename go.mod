@@ -1,6 +1,8 @@
 module github.com/hashicorp/terraform-plugin-testing
 
-go 1.24.0
+go 1.24.10
+
+toolchain go1.24.11
 
 require (
 	github.com/google/go-cmp v0.7.0
@@ -11,7 +13,7 @@ require (
 	github.com/hashicorp/hc-install v0.9.2
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/hashicorp/logutils v1.0.0
-	github.com/hashicorp/terraform-exec v0.24.0
+	github.com/hashicorp/terraform-exec v0.24.1-0.20260106235132-34cefc28ca08
 	github.com/hashicorp/terraform-json v0.27.2
 	github.com/hashicorp/terraform-plugin-go v0.29.1-0.20251107103451-b1dbec9688da
 	github.com/hashicorp/terraform-plugin-log v0.10.0
