@@ -14,15 +14,18 @@ var _ statestore.StateStore = &StateStore{}
 type StateStore struct {
 	configuredChunkSize int64
 
-	SchemaResponse          *statestore.SchemaResponse
-	ConfigureResponse       *statestore.ConfigureResponse
-	ValidateConfigResponse  *statestore.ValidateConfigResponse
-	GetStatesResponse       *statestore.GetStatesResponse
-	DeleteStateResponse     *statestore.DeleteStateResponse
-	LockStateResponse       *statestore.LockStateResponse
-	UnlockStateResponse     *statestore.UnlockStateResponse
-	ReadStateBytesResponse  *statestore.ReadStateBytesResponse
-	WriteStateBytesResponse *statestore.WriteStateBytesResponse
+	SchemaResponse         *statestore.SchemaResponse
+	ConfigureResponse      *statestore.ConfigureResponse
+	ValidateConfigResponse *statestore.ValidateConfigResponse
+
+	// Declaring a mock state store is slightly more complicated then other types since the implementation is likely
+	// needed to be stateful to work with multiple terraform commands.
+	GetStatesFunc       func(context.Context, statestore.GetStatesRequest, *statestore.GetStatesResponse)
+	DeleteStateFunc     func(context.Context, statestore.DeleteStateRequest, *statestore.DeleteStateResponse)
+	LockStateFunc       func(context.Context, statestore.LockStateRequest, *statestore.LockStateResponse)
+	UnlockStateFunc     func(context.Context, statestore.UnlockStateRequest, *statestore.UnlockStateResponse)
+	ReadStateBytesFunc  func(context.Context, statestore.ReadStateBytesRequest, *statestore.ReadStateBytesResponse)
+	WriteStateBytesFunc func(context.Context, statestore.WriteStateBytesRequest, *statestore.WriteStateBytesResponse)
 }
 
 func (s *StateStore) Schema(ctx context.Context, req statestore.SchemaRequest, resp *statestore.SchemaResponse) {
@@ -52,42 +55,38 @@ func (s *StateStore) ValidateConfig(ctx context.Context, req statestore.Validate
 	}
 }
 
-// TODO:PSS: Probably need to adjust some of these to be callback functions, rather then field responses.
 func (s *StateStore) GetStates(ctx context.Context, req statestore.GetStatesRequest, resp *statestore.GetStatesResponse) {
-	if s.GetStatesResponse != nil {
-		resp.Diagnostics = s.GetStatesResponse.Diagnostics
-		resp.StateIDs = s.GetStatesResponse.StateIDs
+	if s.GetStatesFunc != nil {
+		s.GetStatesFunc(ctx, req, resp)
 	}
 }
 
 func (s *StateStore) DeleteState(ctx context.Context, req statestore.DeleteStateRequest, resp *statestore.DeleteStateResponse) {
-	if s.DeleteStateResponse != nil {
-		resp.Diagnostics = s.DeleteStateResponse.Diagnostics
+	if s.DeleteStateFunc != nil {
+		s.DeleteStateFunc(ctx, req, resp)
 	}
 }
 
 func (s *StateStore) LockState(ctx context.Context, req statestore.LockStateRequest, resp *statestore.LockStateResponse) {
-	if s.LockStateResponse != nil {
-		resp.LockID = s.LockStateResponse.LockID
-		resp.Diagnostics = s.LockStateResponse.Diagnostics
+	if s.LockStateFunc != nil {
+		s.LockStateFunc(ctx, req, resp)
 	}
 }
 
 func (s *StateStore) UnlockState(ctx context.Context, req statestore.UnlockStateRequest, resp *statestore.UnlockStateResponse) {
-	if s.UnlockStateResponse != nil {
-		resp.Diagnostics = s.UnlockStateResponse.Diagnostics
+	if s.UnlockStateFunc != nil {
+		s.UnlockStateFunc(ctx, req, resp)
 	}
 }
 
 func (s *StateStore) ReadStateBytes(ctx context.Context, req statestore.ReadStateBytesRequest, resp *statestore.ReadStateBytesResponse) {
-	if s.ReadStateBytesResponse != nil {
-		resp.Diagnostics = s.ReadStateBytesResponse.Diagnostics
-		resp.StateBytes = s.ReadStateBytesResponse.StateBytes
+	if s.ReadStateBytesFunc != nil {
+		s.ReadStateBytesFunc(ctx, req, resp)
 	}
 }
 
 func (s *StateStore) WriteStateBytes(ctx context.Context, req statestore.WriteStateBytesRequest, resp *statestore.WriteStateBytesResponse) {
-	if s.WriteStateBytesResponse != nil {
-		resp.Diagnostics = s.WriteStateBytesResponse.Diagnostics
+	if s.WriteStateBytesFunc != nil {
+		s.WriteStateBytesFunc(ctx, req, resp)
 	}
 }

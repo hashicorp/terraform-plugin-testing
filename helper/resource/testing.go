@@ -848,6 +848,19 @@ type TestStep struct {
 
 	// If true, the test step will run the query command
 	Query bool
+
+	// The StateStore mode is used for testing state store implementations in a provider. The StateStore mode runs
+	// various Terraform CLI commands to ensure the configured state store operates in a manner expected by Terraform core.
+	//
+	// The StateStore mode expects state_store configuration to be provided using one of the Config, ConfigFile,
+	// or ConfigDirectory fields.
+	//
+	// TODO:PSS: List out all of the commands / assertions that are made
+	//
+	// TODO:PSS: Document what will be created/cleaned up in backend, mention the provider developer is responsible for setting/cleaning up
+	// the backend itself during test, but the testing mode should leave no artifacts in backend (all workspace modifications are deleted,
+	// default workspace is untouched).
+	StateStore bool
 }
 
 // ConfigPlanChecks defines the different points in a Config TestStep when plan checks can be run.
