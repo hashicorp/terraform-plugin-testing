@@ -15,6 +15,8 @@ import (
 // additional verification of the test mode.
 
 func TestTerraformBackend_local(t *testing.T) {
+	t.Parallel()
+
 	r.UnitTest(t, r.TestCase{
 		// MAINTAINER NOTE: Test steps won't run without a provider definition, so this is just
 		// needed to pass validation, as we're just testing Terraform core itself.
@@ -35,6 +37,8 @@ func TestTerraformBackend_local(t *testing.T) {
 }
 
 func TestTerraformBackend_local_empty_path_validation_error(t *testing.T) {
+	t.Parallel()
+
 	r.UnitTest(t, r.TestCase{
 		// MAINTAINER NOTE: Test steps won't run without a provider definition, so this is just
 		// needed to pass validation, as we're just testing Terraform core itself.
