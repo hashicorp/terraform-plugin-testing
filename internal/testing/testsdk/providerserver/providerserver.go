@@ -1487,7 +1487,7 @@ func (s ProviderServer) ReadStateBytes(ctx context.Context, req *tfprotov6.ReadS
 			chunk := tfprotov6.ReadStateByteChunk{
 				StateByteChunk: tfprotov6.StateByteChunk{
 					Bytes:       readBytes[:byteCount],
-					TotalLength: int64(totalLength),
+					TotalLength: totalLength,
 					Range: tfprotov6.StateByteRange{
 						Start: int64(rangeStart),
 						End:   int64(rangeStart + byteCount),
