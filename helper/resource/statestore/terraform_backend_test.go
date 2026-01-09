@@ -9,7 +9,7 @@ import (
 
 // MAINTAINER NOTE: While the StateStore mode is designed to test state store implementations, it can
 // also be used to test existing Terraform core backends, which we do in this test file just for
-// additional verification.
+// additional verification of the test mode.
 
 func TestTerraformBackend_local(t *testing.T) {
 	r.UnitTest(t, r.TestCase{

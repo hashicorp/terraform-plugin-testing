@@ -412,7 +412,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				initializationErrorOccurred = true
 			}
 
-			// Check if the error
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 				if err == nil {
