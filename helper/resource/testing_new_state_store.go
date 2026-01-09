@@ -36,37 +36,37 @@ func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.Work
 		return fmt.Errorf("Error running init: %w", err)
 	}
 
-	// Assert the only workspace created after initialization is the "default" one
+	// After initialization the only workspace created should be "default"
 	err = assertWorkspaces(ctx, t, wd, providers, []string{"default"})
 	if err != nil {
 		return fmt.Errorf("After init, expected the \"default\" workspace to be created: %w", err)
 	}
 
-	// ----- Create "foo" workspace and assert the state returned is empty
+	// ----- Create "foo" workspace
 	err = createAndAssertEmptyWorkspace(ctx, t, wd, providers, "foo")
 	if err != nil {
 		return fmt.Errorf("After creating a new workspace, the state should be empty: %w", err)
 	}
 
-	// ----- Create "bar" workspace and assert the state returned is empty
+	// ----- Create "bar" workspace
 	err = createAndAssertEmptyWorkspace(ctx, t, wd, providers, "bar")
 	if err != nil {
 		return fmt.Errorf("After creating a new workspace, the state should be empty: %w", err)
 	}
 
-	// ----- Apply test resources to the bar workspace and assert they are created successfully
+	// ----- Apply test resources to the "bar" workspace and assert they are saved successfully in state
 	err = applyTestResources(ctx, t, wd, step, providers, cfg, "bar")
 	if err != nil {
 		return err
 	}
 
-	// ----- Switch to the "foo" workspace and grab the state, ensuring it's still empty.
+	// ----- Assert the "foo" workspace is still empty
 	err = assertEmptyWorkspace(ctx, t, wd, providers, "foo")
 	if err != nil {
 		return fmt.Errorf("After writing a resource to \"bar\" state, failed assertion: %s", err)
 	}
 
-	// ----- Verify workspaces we get back are "default", "foo" (created during this test), and "bar" (created during this test).
+	// ----- Verify workspaces are "default", "foo" (created during this test), and "bar" (created during this test)
 	err = assertWorkspaces(ctx, t, wd, providers, []string{"bar", "default", "foo"})
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.Work
 		return err
 	}
 
-	// ----- Attempt to delete "default" workspace, assert error
+	// ----- Attempting to delete "default" workspace should return an error
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
 		return wd.SelectWorkspace(ctx, "foo")
 	})
@@ -98,7 +98,7 @@ func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.Work
 		return fmt.Errorf("After deleting, then recreating a new workspace, the state should be empty: %w", err)
 	}
 
-	// ----- Delete "bar" workspace again, force=true
+	// ----- Delete "bar" workspace
 	err = deleteWorkspace(ctx, t, wd, providers, "bar")
 	if err != nil {
 		return err
@@ -110,7 +110,7 @@ func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.Work
 		return err
 	}
 
-	// ----- Delete "foo" workspace, force=true
+	// ----- Delete "foo" workspace
 	err = deleteWorkspace(ctx, t, wd, providers, "foo")
 	if err != nil {
 		return err
@@ -129,22 +129,20 @@ func assertWorkspaces(ctx context.Context, t testing.T, wd *plugintest.WorkingDi
 	t.Helper()
 
 	var err error
-	workspaces := make([]string, 0)
+	actualWorkspaces := make([]string, 0)
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		workspaces, err = wd.Workspaces(ctx)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		actualWorkspaces, err = wd.Workspaces(ctx)
+		return err
 	})
 	if err != nil {
 		return fmt.Errorf("Error getting workspaces: %w", err)
 	}
 
-	slices.Sort(workspaces)
-	if !slices.Equal(expected, workspaces) {
-		return fmt.Errorf("Expected workspaces to be %#v, got: %#v", expected, workspaces)
+	slices.Sort(expected)
+	slices.Sort(actualWorkspaces)
+
+	if !slices.Equal(expected, actualWorkspaces) {
+		return fmt.Errorf("Expected workspaces to be %#v, got: %#v", expected, actualWorkspaces)
 	}
 
 	return nil
@@ -260,6 +258,7 @@ func applyTestResources(ctx context.Context, t testing.T, wd *plugintest.Working
 		return fmt.Errorf("Error creating test resource in %q workspace: %w", workspace, err)
 	}
 
+	// ----- Check if the resources exist in the state
 	var stateObj *tfjson.State
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
 		stateObj, err = wd.State(ctx)
@@ -269,7 +268,6 @@ func applyTestResources(ctx context.Context, t testing.T, wd *plugintest.Working
 		return fmt.Errorf("Error retrieving %q state: %w", workspace, err)
 	}
 
-	// ----- Check if the resources exist in the state
 	checkOutput := statecheck.ExpectKnownValue("terraform_data.tf_plugin_testing_resource_1", tfjsonpath.New("output"), knownvalue.StringExact(expectedOutput))
 	checkResp := statecheck.CheckStateResponse{}
 
