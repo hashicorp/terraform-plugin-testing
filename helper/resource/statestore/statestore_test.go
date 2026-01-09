@@ -260,19 +260,3 @@ func TestStateStore_invalid_write_state(t *testing.T) {
 		},
 	})
 }
-
-// What we can test so far w/ smoke test:
-// - State store validation
-// - State store configuration
-// - State store can write state
-// - State store can read state
-// - State store handles multiple workspaces
-
-// What is kind of awkward to test w/ smoke test
-// - State size / chunking. You can do this by just changing the config you pass in w/ StateStore (we always inject a single resource to verify state apply will work)
-// - Multiple applies to the same state (currently it just does one apply to the bar workspace)
-
-// What we can't test w/ smoke test
-// - State store locks
-// - State store unlocks
-// - State store locks with a ton of clients (i.e. load test)
