@@ -20,7 +20,7 @@ import (
 // This state store implementation uses an in-memory map for storing state in a filesystem-like manner.
 // This only works because the terraform-plugin-testing harness keeps provider instances running
 // throughout a Go test with multiple Terraform CLI command calls by using a reattach configuration.
-func exampleCloudStateStoreFS() *testprovider.StateStore {
+func exampleCloudValidStateStore() *testprovider.StateStore {
 	memFS := fstest.MapFS{}
 
 	return &testprovider.StateStore{
