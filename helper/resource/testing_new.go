@@ -62,7 +62,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		protov6: c.ProtoV6ProviderFactories,
 	}
 
-	// TODO:PSS: Should revisit this and see if it's necessary
 	// If any of the test steps used the StateStore mode and tested an error, make sure we don't execute any more commands with an invalid state store
 	var initializationErrorOccurred bool
 

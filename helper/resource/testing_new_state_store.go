@@ -16,13 +16,10 @@ import (
 	"github.com/mitchellh/go-testing-interface"
 )
 
-// TODO:PSS: I should go back through and review this logic, refactor, maybe add/remove any details we don't need
-// It's likely we will add lock testing somewhere here as well, so might be worth refactoring at the top-level
-//
-// 1. StateStore (true) + nothing else == Run basic smoke test
-// 2. StateStore (true) + VerifyLock (true) == Run concurrent lock test
-// 2. StateStore (true) + VerifyLock (true) + ForceUnlock (true) == Run concurrent lock test, then finish with a force unlock (maybe do this by default?)
-// 2. StateStore (true) + ??? == Run lock soak test (configurable)
+// testStepNewStateStore will run a series of Terraform commands with the goal of ensuring that the state store (defined in config):
+//   - Can be successfully initialized (validation and configuring)
+//   - Can read and write state
+//   - Supports workspaces (creating and deleting)
 func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, cfg teststep.Config) error {
 	t.Helper()
 
@@ -31,7 +28,7 @@ func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.Work
 		return fmt.Errorf("Error setting config: %w", err)
 	}
 
-	// ----- Validate and configure the state store
+	// ----- Validate and configure the state store by running init
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
 		return wd.Init(ctx)
 	})
@@ -39,7 +36,99 @@ func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.Work
 		return fmt.Errorf("Error running init: %w", err)
 	}
 
-	// ----- Retrieve all the workspaces
+	// Assert the only workspace created after initialization is the "default" one
+	err = assertWorkspaces(ctx, t, wd, providers, []string{"default"})
+	if err != nil {
+		return fmt.Errorf("After init, expected the \"default\" workspace to be created: %w", err)
+	}
+
+	// ----- Create "foo" workspace and assert the state returned is empty
+	err = createAndAssertEmptyWorkspace(ctx, t, wd, providers, "foo")
+	if err != nil {
+		return fmt.Errorf("After creating a new workspace, the state should be empty: %w", err)
+	}
+
+	// ----- Create "bar" workspace and assert the state returned is empty
+	err = createAndAssertEmptyWorkspace(ctx, t, wd, providers, "bar")
+	if err != nil {
+		return fmt.Errorf("After creating a new workspace, the state should be empty: %w", err)
+	}
+
+	// ----- Apply test resources to the bar workspace and assert they are created successfully
+	err = applyTestResources(ctx, t, wd, step, providers, cfg, "bar")
+	if err != nil {
+		return err
+	}
+
+	// ----- Switch to the "foo" workspace and grab the state, ensuring it's still empty.
+	err = assertEmptyWorkspace(ctx, t, wd, providers, "foo")
+	if err != nil {
+		return fmt.Errorf("After writing a resource to \"bar\" state, failed assertion: %s", err)
+	}
+
+	// ----- Verify workspaces we get back are "default", "foo" (created during this test), and "bar" (created during this test).
+	err = assertWorkspaces(ctx, t, wd, providers, []string{"bar", "default", "foo"})
+	if err != nil {
+		return err
+	}
+
+	// ----- Delete "bar" workspace
+	err = deleteWorkspace(ctx, t, wd, providers, "bar")
+	if err != nil {
+		return err
+	}
+
+	// ----- Attempt to delete "default" workspace, assert error
+	err = runProviderCommand(ctx, t, wd, providers, func() error {
+		return wd.SelectWorkspace(ctx, "foo")
+	})
+	if err != nil {
+		return fmt.Errorf("Error selecting \"foo\" workspace: %w", err)
+	}
+	err = runProviderCommand(ctx, t, wd, providers, func() error {
+		return wd.DeleteWorkspace(ctx, "default", tfexec.Force(true))
+	})
+	if err == nil {
+		return errors.New("Expected error when deleting \"default\" workspace")
+	}
+
+	// ----- Recreate the "bar" workspace and assert it is empty (i.e. no left over artifacts)
+	err = createAndAssertEmptyWorkspace(ctx, t, wd, providers, "bar")
+	if err != nil {
+		return fmt.Errorf("After deleting, then recreating a new workspace, the state should be empty: %w", err)
+	}
+
+	// ----- Delete "bar" workspace again, force=true
+	err = deleteWorkspace(ctx, t, wd, providers, "bar")
+	if err != nil {
+		return err
+	}
+
+	// ----- List workspaces and verify it's just "foo" and "default"
+	err = assertWorkspaces(ctx, t, wd, providers, []string{"default", "foo"})
+	if err != nil {
+		return err
+	}
+
+	// ----- Delete "foo" workspace, force=true
+	err = deleteWorkspace(ctx, t, wd, providers, "foo")
+	if err != nil {
+		return err
+	}
+
+	// ----- List workspaces and verify it's just "default" (which we did not modify)
+	err = assertWorkspaces(ctx, t, wd, providers, []string{"default"})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func assertWorkspaces(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, providers *providerFactories, expected []string) error {
+	t.Helper()
+
+	var err error
 	workspaces := make([]string, 0)
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
 		workspaces, err = wd.Workspaces(ctx)
@@ -53,255 +142,148 @@ func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.Work
 		return fmt.Errorf("Error getting workspaces: %w", err)
 	}
 
-	// Assert the only workspace created is the "default" one
-	// TODO:PSS: Might need to revisit this assertion for state stores. Not sure what the behavior will be during init, is this expected still?
-	// TODO:PSS: Is it possible to not support this for state stores or TF core backends? The cloud backend doesn't but that one is special :P
-	if len(workspaces) != 1 || workspaces[0] != "default" {
-		t.Fatalf("Expected a single workspace named \"default\" after initialization, got: %#v", workspaces)
-	}
-
-	// ----- Create "foo" workspace and assert the state returned is empty
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		return wd.CreateWorkspace(ctx, "foo")
-	})
-	if err != nil {
-		return fmt.Errorf("Error creating \"foo\" workspace: %w", err)
-	}
-
-	var fooState *tfjson.State
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		fooState, err = wd.State(ctx)
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("Error retrieving \"foo\" state: %w", err)
-	}
-
-	if fooState.Values != nil && fooState.Values.RootModule != nil && len(fooState.Values.RootModule.Resources) > 0 {
-		t.Fatalf("Expected the newly created \"foo\" state to be empty. Found %d resources.", len(fooState.Values.RootModule.Resources))
-	}
-
-	// ----- Create "bar" workspace and assert the state returned is empty
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		return wd.CreateWorkspace(ctx, "bar")
-	})
-	if err != nil {
-		return fmt.Errorf("Error creating \"bar\" workspace: %w", err)
-	}
-
-	var barState *tfjson.State
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		barState, err = wd.State(ctx)
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("Error retrieving \"bar\" state: %w", err)
-	}
-
-	if barState.Values != nil && barState.Values.RootModule != nil && len(barState.Values.RootModule.Resources) > 0 {
-		t.Fatalf("Expected the newly created \"bar\" state to be empty. Found %d resources.", len(barState.Values.RootModule.Resources))
-	}
-
-	// ----- Add a fake resource to the bar workspace
-	barConfig := `
-resource "terraform_data" "tf_plugin_testing_resource_bar" {
-  input = "this resource was injected by terraform-plugin-testing"
-}`
-
-	// TODO:PSS: I'm 99% sure this should work with all of config file/directory implementations
-	cfgWithBar := cfg.Append(barConfig)
-	err = wd.SetConfig(ctx, cfgWithBar, step.ConfigVariables)
-	if err != nil {
-		return fmt.Errorf("Error setting config: %w", err)
-	}
-
-	// ----- Apply bar workspace
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		return wd.Apply(ctx)
-	})
-	if err != nil {
-		return fmt.Errorf("Error creating fake resource in \"bar\" workspace: %w", err)
-	}
-
-	// ----- Grab the bar state again
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		barState, err = wd.State(ctx)
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("Error retrieving \"bar\" state: %w", err)
-	}
-
-	// ----- Check if the resource exists in the "bar" state
-	// TODO:PSS: Should we not use a statecheck here? Could just read the state manually...
-	checkOutput := statecheck.ExpectKnownValue(
-		"terraform_data.tf_plugin_testing_resource_bar",
-		tfjsonpath.New("output"),
-		knownvalue.StringExact("this resource was injected by terraform-plugin-testing"),
-	)
-
-	checkResp := statecheck.CheckStateResponse{}
-	checkOutput.CheckState(ctx, statecheck.CheckStateRequest{State: barState}, &checkResp)
-
-	if checkResp.Error != nil {
-		return fmt.Errorf("After writing a test resource instance object to \"bar\" and re-reading it, the object has vanished: %w", err)
-	}
-
-	// ----- Switch to the "foo" workspace and grab the state, ensuring it's still empty.
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		return wd.SelectWorkspace(ctx, "foo")
-	})
-	if err != nil {
-		return fmt.Errorf("Error creating \"foo\" workspace: %w", err)
-	}
-
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		fooState, err = wd.State(ctx)
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("Error retrieving \"foo\" state: %w", err)
-	}
-
-	if fooState.Values != nil && fooState.Values.RootModule != nil && len(fooState.Values.RootModule.Resources) > 0 {
-		t.Fatalf("After writing a resource to \"bar\" state, expected the \"foo\" state to be empty. Found %d resources in \"foo\".", len(fooState.Values.RootModule.Resources))
-	}
-
-	// ----- Verify when we list the workspaces we get back "default", "foo" (created during this test), and "bar" (created during this test).
-	workspaces = make([]string, 0)
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		workspaces, err = wd.Workspaces(ctx)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("Error getting workspaces: %w", err)
-	}
-
 	slices.Sort(workspaces)
-	expected := []string{"bar", "default", "foo"}
 	if !slices.Equal(expected, workspaces) {
-		t.Fatalf("Expected workspaces to be %#v, got: %#v", expected, workspaces)
+		return fmt.Errorf("Expected workspaces to be %#v, got: %#v", expected, workspaces)
 	}
 
-	// ----- Delete "bar" workspace
+	return nil
+}
 
-	// Switch to "foo" workspace so we can delete bar.
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		return wd.SelectWorkspace(ctx, "foo")
+func createAndAssertEmptyWorkspace(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, providers *providerFactories, workspace string) error {
+	t.Helper()
+
+	err := runProviderCommand(ctx, t, wd, providers, func() error {
+		return wd.CreateWorkspace(ctx, workspace)
 	})
 	if err != nil {
-		return fmt.Errorf("Error selecting \"foo\" workspace: %w", err)
+		return fmt.Errorf("Error creating %q workspace: %w", workspace, err)
 	}
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		return wd.DeleteWorkspace(ctx, "bar", tfexec.Force(true))
+
+	return assertEmptyWorkspace(ctx, t, wd, providers, workspace)
+}
+
+func assertEmptyWorkspace(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, providers *providerFactories, workspace string) error {
+	t.Helper()
+
+	err := runProviderCommand(ctx, t, wd, providers, func() error {
+		return wd.SelectWorkspace(ctx, workspace)
 	})
 	if err != nil {
-		return fmt.Errorf("Error deleting \"bar\" workspace: %w", err)
+		return fmt.Errorf("Error selecting %q workspace: %w", workspace, err)
 	}
 
-	// ----- Attempt to delete "default" workspace, assert error
+	var stateObj *tfjson.State
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		return wd.DeleteWorkspace(ctx, "default", tfexec.Force(true))
-	})
-	if err == nil {
-		return errors.New("Expected error when deleting \"default\" workspace")
-	}
-
-	// ----- Recreate the "bar" workspace
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		return wd.CreateWorkspace(ctx, "bar")
-	})
-	if err != nil {
-		return fmt.Errorf("Error creating \"bar\" workspace: %w", err)
-	}
-
-	// ----- Grab "bar" state and assert it is empty (i.e. no left over artifacts)
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		barState, err = wd.State(ctx)
+		stateObj, err = wd.State(ctx)
 		return err
 	})
 	if err != nil {
-		return fmt.Errorf("Error retrieving \"bar\" state: %w", err)
+		return fmt.Errorf("Error retrieving %q state: %w", workspace, err)
 	}
 
-	if barState.Values != nil && barState.Values.RootModule != nil && len(barState.Values.RootModule.Resources) > 0 {
-		t.Fatalf("Expected the newly created \"bar\" state to be empty. Found %d resources.", len(barState.Values.RootModule.Resources))
+	if stateObj.Values != nil && stateObj.Values.RootModule != nil && len(stateObj.Values.RootModule.Resources) > 0 {
+		return fmt.Errorf("Expected %q state to be empty. Found %d resources.", workspace, len(stateObj.Values.RootModule.Resources))
 	}
 
-	// ----- Delete "bar" workspace again, force=true
+	return nil
+}
 
-	// Switch to "foo" workspace so we can delete bar.
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		return wd.SelectWorkspace(ctx, "foo")
-	})
-	if err != nil {
-		return fmt.Errorf("Error selecting \"foo\" workspace: %w", err)
-	}
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		return wd.DeleteWorkspace(ctx, "bar", tfexec.Force(true))
-	})
-	if err != nil {
-		return fmt.Errorf("Error deleting \"bar\" workspace: %w", err)
-	}
+func deleteWorkspace(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, providers *providerFactories, workspace string) error {
+	t.Helper()
 
-	// ----- List workspaces and verify it's just "foo" and "default"
-	workspaces = make([]string, 0)
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		workspaces, err = wd.Workspaces(ctx)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("Error getting workspaces: %w", err)
-	}
-
-	slices.Sort(workspaces)
-	expected = []string{"default", "foo"}
-	if !slices.Equal(expected, workspaces) {
-		t.Fatalf("Expected workspaces to be %#v, got: %#v", expected, workspaces)
-	}
-
-	// ----- Delete "foo" workspace, force=true
-
-	// Switch to "default" workspace so we can delete bar.
-	err = runProviderCommand(ctx, t, wd, providers, func() error {
+	// Select "default" workspace so we can delete the requested workspace
+	err := runProviderCommand(ctx, t, wd, providers, func() error {
 		return wd.SelectWorkspace(ctx, "default")
 	})
 	if err != nil {
 		return fmt.Errorf("Error selecting \"default\" workspace: %w", err)
 	}
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		return wd.DeleteWorkspace(ctx, "foo", tfexec.Force(true))
+		return wd.DeleteWorkspace(ctx, workspace, tfexec.Force(true))
 	})
 	if err != nil {
-		return fmt.Errorf("Error deleting \"foo\" workspace: %w", err)
+		return fmt.Errorf("Error deleting %q workspace: %w", workspace, err)
 	}
 
-	// ----- List workspaces and verify it's just "default" (which we did not modify)
-	workspaces = make([]string, 0)
+	return nil
+}
+
+// This is the primary place that state storage is being tested, we create two test resources (using the built-in terraform_data resource) with
+// two different "terraform apply" commands, then check the state for their presence.
+func applyTestResources(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, cfg teststep.Config, workspace string) error {
+	t.Helper()
+
+	err := runProviderCommand(ctx, t, wd, providers, func() error {
+		return wd.SelectWorkspace(ctx, workspace)
+	})
+	if err != nil {
+		return fmt.Errorf("Error selecting %q workspace: %w", workspace, err)
+	}
+
+	// ----- Apply test resource 1 to workspace
+	expectedOutput := "this resource was injected by terraform-plugin-testing"
+	testResourceCfg1 := fmt.Sprintf(`
+		resource "terraform_data" "tf_plugin_testing_resource_1" {
+			input = %q
+		}`, expectedOutput)
+
+	cfg = cfg.Append(testResourceCfg1)
+	err = wd.SetConfig(ctx, cfg, step.ConfigVariables)
+	if err != nil {
+		return fmt.Errorf("Error setting config: %w", err)
+	}
+
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		workspaces, err = wd.Workspaces(ctx)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return wd.Apply(ctx)
 	})
 	if err != nil {
-		return fmt.Errorf("Error getting workspaces: %w", err)
+		return fmt.Errorf("Error creating test resource in %q workspace: %w", workspace, err)
 	}
 
-	slices.Sort(workspaces)
-	expected = []string{"default"}
-	if !slices.Equal(expected, workspaces) {
-		t.Fatalf("Expected workspaces to be %#v, got: %#v", expected, workspaces)
+	// ----- Apply test resource 2 to workspace
+	testResourceCfg2 := fmt.Sprintf(`
+		resource "terraform_data" "tf_plugin_testing_resource_2" {
+			input = %q
+		}`, expectedOutput)
+
+	cfg = cfg.Append(testResourceCfg2)
+	err = wd.SetConfig(ctx, cfg, step.ConfigVariables)
+	if err != nil {
+		return fmt.Errorf("Error setting config: %w", err)
+	}
+
+	err = runProviderCommand(ctx, t, wd, providers, func() error {
+		return wd.Apply(ctx)
+	})
+	if err != nil {
+		return fmt.Errorf("Error creating test resource in %q workspace: %w", workspace, err)
+	}
+
+	var stateObj *tfjson.State
+	err = runProviderCommand(ctx, t, wd, providers, func() error {
+		stateObj, err = wd.State(ctx)
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("Error retrieving %q state: %w", workspace, err)
+	}
+
+	// ----- Check if the resources exist in the state
+	checkOutput := statecheck.ExpectKnownValue("terraform_data.tf_plugin_testing_resource_1", tfjsonpath.New("output"), knownvalue.StringExact(expectedOutput))
+	checkResp := statecheck.CheckStateResponse{}
+
+	checkOutput.CheckState(ctx, statecheck.CheckStateRequest{State: stateObj}, &checkResp)
+	if checkResp.Error != nil {
+		return fmt.Errorf("After writing a test resource instance object to %q state and re-reading it, the object has vanished: %w", workspace, checkResp.Error)
+	}
+
+	checkOutput = statecheck.ExpectKnownValue("terraform_data.tf_plugin_testing_resource_2", tfjsonpath.New("output"), knownvalue.StringExact(expectedOutput))
+	checkResp = statecheck.CheckStateResponse{}
+
+	checkOutput.CheckState(ctx, statecheck.CheckStateRequest{State: stateObj}, &checkResp)
+	if checkResp.Error != nil {
+		return fmt.Errorf("After writing a test resource instance object to %q state and re-reading it, the object has vanished: %w", workspace, checkResp.Error)
 	}
 
 	return nil

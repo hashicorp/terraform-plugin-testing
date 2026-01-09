@@ -13,6 +13,45 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
+func TestStateStore_inmem_no_lock(t *testing.T) {
+	// Setting this environment variable ensures TF core uses pluggable state storage during init.
+	// This is only temporary while PSS is experimental.
+	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
+
+	r.UnitTest(t, r.TestCase{
+		// State stores currently are only available in alpha releases or built from source
+		// with experiments enabled: `go install -ldflags="-X main.experimentsAllowed=yes" .`
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_15_0),
+			tfversion.SkipIfNotPrerelease(),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				StateStores: map[string]*testprovider.StateStore{
+					"examplecloud_inmem": exampleCloudValidStateStore(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				StateStore: true,
+				Config: `
+					terraform {
+					  required_providers {
+					  	examplecloud = {
+						  source = "registry.terraform.io/hashicorp/examplecloud"
+						}
+					  }
+					  state_store "examplecloud_inmem" {
+					  	provider "examplecloud" {}
+					  }
+					}
+				`,
+			},
+		},
+	})
+}
+
 func TestStateStore_validation_error(t *testing.T) {
 	// Setting this environment variable ensures TF core uses pluggable state storage during init.
 	// This is only temporary while PSS is experimental.
@@ -134,10 +173,14 @@ func TestStateStore_configure_error(t *testing.T) {
 	})
 }
 
-func TestStateStore_inmem(t *testing.T) {
+func TestStateStore_workspace_delete_error(t *testing.T) {
 	// Setting this environment variable ensures TF core uses pluggable state storage during init.
 	// This is only temporary while PSS is experimental.
 	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
+
+	// Simulating an invalid state store that doesn't support deleting workspaces
+	stateStoreImpl := exampleCloudValidStateStore()
+	stateStoreImpl.DeleteStateFunc = nil
 
 	r.UnitTest(t, r.TestCase{
 		// State stores currently are only available in alpha releases or built from source
@@ -149,7 +192,7 @@ func TestStateStore_inmem(t *testing.T) {
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				StateStores: map[string]*testprovider.StateStore{
-					"examplecloud_inmem": exampleCloudStateStoreFS(),
+					"examplecloud_inmem": stateStoreImpl,
 				},
 			}),
 		},
@@ -168,6 +211,51 @@ func TestStateStore_inmem(t *testing.T) {
 					  }
 					}
 				`,
+				ExpectError: regexp.MustCompile(`Workspace "bar" already exists`),
+			},
+		},
+	})
+}
+
+func TestStateStore_invalid_write_state(t *testing.T) {
+	// Setting this environment variable ensures TF core uses pluggable state storage during init.
+	// This is only temporary while PSS is experimental.
+	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
+
+	// Simulating an invalid state store that doesn't support writing state
+	stateStoreImpl := exampleCloudValidStateStore()
+	stateStoreImpl.WriteStateBytesFunc = nil
+
+	r.UnitTest(t, r.TestCase{
+		// State stores currently are only available in alpha releases or built from source
+		// with experiments enabled: `go install -ldflags="-X main.experimentsAllowed=yes" .`
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_15_0),
+			tfversion.SkipIfNotPrerelease(),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				StateStores: map[string]*testprovider.StateStore{
+					"examplecloud_inmem": stateStoreImpl,
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				StateStore: true,
+				Config: `
+					terraform {
+					  required_providers {
+					  	examplecloud = {
+						  source = "registry.terraform.io/hashicorp/examplecloud"
+						}
+					  }
+					  state_store "examplecloud_inmem" {
+					  	provider "examplecloud" {}
+					  }
+					}
+				`,
+				ExpectError: regexp.MustCompile(`After init, expected the "default" workspace to be created`),
 			},
 		},
 	})

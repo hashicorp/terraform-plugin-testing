@@ -855,11 +855,10 @@ type TestStep struct {
 	// The StateStore mode expects state_store configuration to be provided using one of the Config, ConfigFile,
 	// or ConfigDirectory fields.
 	//
-	// TODO:PSS: List out all of the commands / assertions that are made
-	//
-	// TODO:PSS: Document what will be created/cleaned up in backend, mention the provider developer is responsible for setting/cleaning up
-	// the backend itself during test, but the testing mode should leave no artifacts in backend (all workspace modifications are deleted,
-	// default workspace is untouched).
+	// StateStore mode tests that the provided state store:
+	//   - Can be successfully initialized (validation and configuring)
+	//   - Can read and write state
+	//   - Supports workspaces (creating and deleting)
 	StateStore bool
 }
 
