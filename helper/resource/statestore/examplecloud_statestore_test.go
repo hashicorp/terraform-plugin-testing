@@ -71,7 +71,7 @@ func exampleCloudValidStateStore() *testprovider.StateStore {
 
 				resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
 					Severity: tfprotov6.DiagnosticSeverityError,
-					Summary:  fmt.Sprintf("Error state %q at path %q", req.StateID, stateFilePath),
+					Summary:  fmt.Sprintf("Error reading state %q at path %q", req.StateID, stateFilePath),
 					Detail:   err.Error(),
 				})
 				return
