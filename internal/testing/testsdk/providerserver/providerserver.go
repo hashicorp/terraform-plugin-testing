@@ -1457,22 +1457,12 @@ func (s ProviderServer) ReadStateBytes(ctx context.Context, req *tfprotov6.ReadS
 	totalLength := reader.Size()
 	rangeStart := 0
 
-	// TODO:PSS: Refactor -> Is there really no built-in to do this in Golang's standard library?
 	resp.Chunks = func(yield func(tfprotov6.ReadStateByteChunk) bool) {
 		for {
-			var diags []*tfprotov6.Diagnostic
 			readBytes := make([]byte, chunkSize)
 			byteCount, err := reader.Read(readBytes)
 			if err != nil && !errors.Is(err, io.EOF) {
-				ok := yield(tfprotov6.ReadStateByteChunk{
-					StateByteChunk: tfprotov6.StateByteChunk{
-						Bytes:       nil,
-						TotalLength: 0,
-						Range: tfprotov6.StateByteRange{
-							Start: 0,
-							End:   0,
-						},
-					},
+				chunkWithDiag := tfprotov6.ReadStateByteChunk{
 					Diagnostics: []*tfprotov6.Diagnostic{
 						{
 							Severity: tfprotov6.DiagnosticSeverityError,
@@ -1483,39 +1473,31 @@ func (s ProviderServer) ReadStateBytes(ctx context.Context, req *tfprotov6.ReadS
 							),
 						},
 					},
-				})
-				if !ok {
+				}
+				if !yield(chunkWithDiag) {
 					return
 				}
 			}
 
 			if byteCount == 0 {
-				// The previous iteration read the last byte of the data.
-				//
-				// We haven't used `yield` here, as yield doesn't return false.... for some reason (need to learn why).
-				// We need to return here to stop the iterator.
-
-				// There is nothing to close here?
-
+				// We've sent all of the bytes in the reader
 				return
 			}
 
-			ok := yield(tfprotov6.ReadStateByteChunk{
+			chunk := tfprotov6.ReadStateByteChunk{
 				StateByteChunk: tfprotov6.StateByteChunk{
-					Bytes:       readBytes[0:byteCount],
+					Bytes:       readBytes[:byteCount],
 					TotalLength: int64(totalLength),
 					Range: tfprotov6.StateByteRange{
 						Start: int64(rangeStart),
 						End:   int64(rangeStart + byteCount),
 					},
 				},
-				Diagnostics: diags,
-			})
-			if !ok {
+			}
+			if !yield(chunk) {
 				return
 			}
 
-			// Track progress to ensure Range values are correct.
 			rangeStart += byteCount
 		}
 	}
@@ -1526,25 +1508,26 @@ func (s ProviderServer) ReadStateBytes(ctx context.Context, req *tfprotov6.ReadS
 func (s ProviderServer) WriteStateBytes(ctx context.Context, req *tfprotov6.WriteStateBytesStream) (*tfprotov6.WriteStateBytesResponse, error) {
 	resp := &tfprotov6.WriteStateBytesResponse{}
 
-	// TODO:PSS: Refactor?
-	var buf bytes.Buffer
-	var chunkErr error
+	var stateBuffer bytes.Buffer
 	var typeName string
 	var stateId string
 
 	for chunk := range req.Chunks {
 		if chunk.Err != nil {
-			chunkErr = chunk.Err
-			break
+			resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+				Severity: tfprotov6.DiagnosticSeverityError,
+				Summary:  "Error writing state",
+				Detail:   fmt.Sprintf("An unexpected GRPC error occurred receieving state data from Terraform: %s", chunk.Err),
+			})
+			return resp, nil
 		}
 
-		// Can this be peeked using iter.Pull() ?
 		if chunk.Meta != nil {
 			typeName = chunk.Meta.TypeName
 			stateId = chunk.Meta.StateId
 		}
 
-		_, err := buf.Write(chunk.Bytes)
+		_, err := stateBuffer.Write(chunk.Bytes)
 		if err != nil {
 			resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
 				Severity: tfprotov6.DiagnosticSeverityError,
@@ -1555,16 +1538,7 @@ func (s ProviderServer) WriteStateBytes(ctx context.Context, req *tfprotov6.Writ
 		}
 	}
 
-	if chunkErr != nil {
-		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
-			Severity: tfprotov6.DiagnosticSeverityError,
-			Summary:  "Error writing state",
-			Detail:   fmt.Sprintf("An unexpected GRPC error occurred receieving state data from Terraform: %s", chunkErr),
-		})
-		return resp, nil
-	}
-
-	if buf.Len() == 0 {
+	if stateBuffer.Len() == 0 {
 		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
 			Severity: tfprotov6.DiagnosticSeverityError,
 			Summary:  "Error writing state",
@@ -1583,7 +1557,7 @@ func (s ProviderServer) WriteStateBytes(ctx context.Context, req *tfprotov6.Writ
 
 	writeStateBytesReq := statestore.WriteStateBytesRequest{
 		StateID:    stateId,
-		StateBytes: buf.Bytes(),
+		StateBytes: stateBuffer.Bytes(),
 	}
 	writeStateBytesResp := &statestore.WriteStateBytesResponse{}
 
