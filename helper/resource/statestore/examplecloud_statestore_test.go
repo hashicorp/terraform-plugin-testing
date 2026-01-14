@@ -86,12 +86,7 @@ func exampleCloudValidStateStore() *testprovider.StateStore {
 				return
 			}
 
-			lockInfo, lockInfoDiags := newLockInfo(req)
-			if len(lockInfoDiags) > 0 {
-				resp.Diagnostics = append(resp.Diagnostics, lockInfoDiags...)
-				return
-			}
-
+			lockInfo := newLockInfo(req)
 			lockInfoBytes, err := json.Marshal(lockInfo)
 			if err != nil {
 				resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
@@ -199,7 +194,7 @@ func (l *lockInfo) String() string {
 `, l.ID, l.Operation, l.Who)
 }
 
-func newLockInfo(req statestore.LockStateRequest) (*lockInfo, []*tfprotov6.Diagnostic) {
+func newLockInfo(req statestore.LockStateRequest) lockInfo {
 	rngSource := rand.New(rand.NewSource(time.Now().UnixNano()))
 	buf := make([]byte, 16)
 	rngSource.Read(buf)
@@ -213,9 +208,9 @@ func newLockInfo(req statestore.LockStateRequest) (*lockInfo, []*tfprotov6.Diagn
 	}
 	host, _ := os.Hostname()
 
-	return &lockInfo{
+	return lockInfo{
 		ID:        id,
 		Who:       fmt.Sprintf("%s@%s", userName, host),
 		Operation: req.Operation,
-	}, nil
+	}
 }
