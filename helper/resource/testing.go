@@ -862,7 +862,7 @@ type TestStep struct {
 	StateStore bool
 
 	// VerifyStateStoreLock is used in combination with the StateStore mode and runs various Terraform CLI commands that test
-	// that a state store implementations in a provider supports locking and unlocking.
+	// that a state store implementation in a provider supports locking and unlocking.
 	//
 	// VerifyStateStoreLock asserts that the provided state store:
 	//   - Supports locking, acquired during `terraform apply`
