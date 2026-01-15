@@ -305,14 +305,14 @@ func TestTest_TestCase_ExternalProvidersAndProviderFactories_NonHashiCorpNamespa
 				return &schema.Provider{
 					ResourcesMap: map[string]*schema.Resource{
 						"null_resource": {
-							CreateContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							CreateContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 								d.SetId("test")
 								return nil
 							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
-							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							ReadContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
 							Schema: map[string]*schema.Schema{

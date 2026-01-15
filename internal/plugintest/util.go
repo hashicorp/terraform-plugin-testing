@@ -159,7 +159,7 @@ func CopyDir(src, dest, baseDirName string) error {
 func TestExpectTFatal(t *testing.T, testLogic func()) {
 	t.Helper()
 
-	var recoverIface interface{}
+	var recoverIface any
 
 	func() {
 		defer func() {

@@ -13,6 +13,7 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/hashicorp/terraform-plugin-testing/actioncheck"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -29,6 +30,18 @@ var expectNonEmptyPlanOutputChangesMinTFVersion = tfversion.Version0_14_0
 
 func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
 	t.Helper()
+
+	// Enable progress capture if action checks are defined - do this early before any provider operations
+	var progressCaptureEnabled bool
+	if len(step.ActionChecks) > 0 {
+		wd.EnableProgressCapture()
+		progressCaptureEnabled = true
+		defer func() {
+			if progressCaptureEnabled {
+				wd.DisableProgressCapture()
+			}
+		}()
+	}
 
 	// When `refreshAfterApply` is true, a `Config`-mode test step will invoke
 	// a refresh before successful completion. This is a compatibility measure
@@ -60,7 +73,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		if err != nil {
 			logging.HelperResourceError(ctx,
 				"Error determining whether configuration contains terraform block",
-				map[string]interface{}{logging.KeyError: err},
+				map[string]any{logging.KeyError: err},
 			)
 			t.Fatalf("Error determining whether configuration contains terraform block: %s", err)
 		}
@@ -70,7 +83,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		if err != nil {
 			logging.HelperResourceError(ctx,
 				"Error determining whether configuration contains provider block",
-				map[string]interface{}{logging.KeyError: err},
+				map[string]any{logging.KeyError: err},
 			)
 			t.Fatalf("Error determining whether configuration contains provider block: %s", err)
 		}
@@ -81,7 +94,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	if err != nil {
 		logging.HelperResourceError(ctx,
 			"Error generating merged configuration",
-			map[string]interface{}{logging.KeyError: err},
+			map[string]any{logging.KeyError: err},
 		)
 		t.Fatalf("Error generating merged configuration: %s", err)
 	}
@@ -469,6 +482,64 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				}
 			}
 		}
+	}
+
+	// Run action checks if any are defined
+	if len(step.ActionChecks) > 0 {
+		logging.HelperResourceDebug(ctx, "Running TestStep ActionChecks")
+
+		if err := runActionChecks(ctx, step.ActionChecks, wd); err != nil {
+			return fmt.Errorf("action checks failed: %w", err)
+		}
+
+		logging.HelperResourceDebug(ctx, "Completed TestStep ActionChecks")
+	}
+
+	return nil
+}
+
+// runActionChecks executes all action checks for the test step.
+func runActionChecks(ctx context.Context, actionChecks []actioncheck.ActionCheck, wd *plugintest.WorkingDir) error {
+	progressCapture := wd.GetProgressCapture()
+
+	// IMPORTANT: Unlike StateChecks and PlanChecks which retrieve persisted data
+	// (state files, plan files) after Terraform operations complete, ActionChecks
+	// capture ephemeral progress messages that occur DURING action execution.
+	//
+	// StateChecks work because: wd.State() -> wd.tf.Show() -> reads state file
+	// PlanChecks work because: wd.SavedPlan() -> wd.tf.ShowPlanFile() -> reads plan file
+	// ActionChecks work because: provider interception -> capture gRPC progress messages
+
+	// Get all captured action names dynamically
+	actionNames := progressCapture.GetAllActionNames()
+
+	// Fallback to expected action name if no messages captured
+	if len(actionNames) == 0 {
+		return nil // No actions were executed, nothing to check
+	}
+
+	var allErrors []error
+
+	for _, actionName := range actionNames {
+		messages := progressCapture.GetMessages(actionName)
+
+		req := actioncheck.CheckActionRequest{
+			ActionName: actionName,
+			Messages:   messages,
+		}
+
+		for _, check := range actionChecks {
+			resp := &actioncheck.CheckActionResponse{}
+			check.CheckAction(ctx, req, resp)
+
+			if resp.Error != nil {
+				allErrors = append(allErrors, resp.Error)
+			}
+		}
+	}
+
+	if len(allErrors) > 0 {
+		return errors.Join(allErrors...)
 	}
 
 	return nil

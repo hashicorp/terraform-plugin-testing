@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 )
 
-func unmarshalJSON(data []byte, v interface{}) error {
+func unmarshalJSON(data []byte, v any) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.UseNumber()
 	return dec.Decode(v)

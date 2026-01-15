@@ -256,15 +256,15 @@ func TestRunProviderCommand(t *testing.T) {
 				return &schema.Provider{
 					ResourcesMap: map[string]*schema.Resource{
 						"examplecloud_thing": {
-							CreateContext: func(ctx context.Context, d *schema.ResourceData, i interface{}) diag.Diagnostics {
+							CreateContext: func(ctx context.Context, d *schema.ResourceData, i any) diag.Diagnostics {
 								d.SetId("id")
 
 								return nil
 							},
-							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							DeleteContext: func(_ context.Context, _ *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
-							ReadContext: func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+							ReadContext: func(_ context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 								return nil
 							},
 							Schema: map[string]*schema.Schema{

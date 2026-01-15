@@ -59,7 +59,7 @@ func TestTestCheckTypeSetElemAttr(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -95,7 +95,7 @@ func TestTestCheckTypeSetElemAttr(t *testing.T) {
 								Deposed: []*terraform.InstanceState{
 									{
 										ID: "11111",
-										Meta: map[string]interface{}{
+										Meta: map[string]any{
 											"schema_version": 0,
 										},
 										Attributes: map[string]string{
@@ -131,7 +131,7 @@ func TestTestCheckTypeSetElemAttr(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -166,7 +166,7 @@ func TestTestCheckTypeSetElemAttr(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -201,7 +201,7 @@ func TestTestCheckTypeSetElemAttr(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -235,7 +235,7 @@ func TestTestCheckTypeSetElemAttr(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -272,7 +272,7 @@ func TestTestCheckTypeSetElemAttr(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -307,7 +307,7 @@ func TestTestCheckTypeSetElemAttr(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -345,7 +345,7 @@ func TestTestCheckTypeSetElemAttr(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -379,7 +379,7 @@ func TestTestCheckTypeSetElemAttr(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -462,7 +462,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "3579",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -502,7 +502,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -566,7 +566,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "3579",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -606,7 +606,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -645,7 +645,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -659,7 +659,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "3579",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -699,7 +699,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -716,7 +716,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "3579",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -752,7 +752,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -769,7 +769,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "3579",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -809,7 +809,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -826,7 +826,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "3579",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -866,7 +866,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -883,7 +883,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "3579",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -920,7 +920,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -937,7 +937,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "3579",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -974,7 +974,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -990,7 +990,7 @@ func TestTestCheckTypeSetElemAttrPair(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "3579",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1087,7 +1087,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1123,7 +1123,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Deposed: []*terraform.InstanceState{
 									{
 										ID: "11111",
-										Meta: map[string]interface{}{
+										Meta: map[string]any{
 											"schema_version": 0,
 										},
 										Attributes: map[string]string{
@@ -1159,7 +1159,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1194,7 +1194,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1229,7 +1229,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1266,7 +1266,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1302,7 +1302,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1341,7 +1341,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1377,7 +1377,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1417,7 +1417,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1456,7 +1456,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1495,7 +1495,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1535,7 +1535,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1573,7 +1573,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1612,7 +1612,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1649,7 +1649,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1689,7 +1689,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1727,7 +1727,7 @@ func TestTestMatchTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1826,7 +1826,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1862,7 +1862,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Deposed: []*terraform.InstanceState{
 									{
 										ID: "11111",
-										Meta: map[string]interface{}{
+										Meta: map[string]any{
 											"schema_version": 0,
 										},
 										Attributes: map[string]string{
@@ -1898,7 +1898,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1933,7 +1933,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -1968,7 +1968,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2005,7 +2005,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2041,7 +2041,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2080,7 +2080,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2116,7 +2116,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2164,7 +2164,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2215,7 +2215,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2255,7 +2255,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2294,7 +2294,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2333,7 +2333,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2373,7 +2373,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2411,7 +2411,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2450,7 +2450,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2487,7 +2487,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2527,7 +2527,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{
@@ -2565,7 +2565,7 @@ func TestTestCheckTypeSetElemNestedAttrs(t *testing.T) {
 								Provider: "example",
 								Primary: &terraform.InstanceState{
 									ID: "11111",
-									Meta: map[string]interface{}{
+									Meta: map[string]any{
 										"schema_version": 0,
 									},
 									Attributes: map[string]string{

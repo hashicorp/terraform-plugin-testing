@@ -5,6 +5,7 @@ package terraform
 
 import (
 	"fmt"
+	"maps"
 	"reflect"
 	"sort"
 	"strconv"
@@ -44,8 +45,8 @@ type InstanceInfo struct {
 // version.
 type ResourceConfig struct {
 	ComputedKeys []string
-	Raw          map[string]interface{}
-	Config       map[string]interface{}
+	Raw          map[string]any
+	Config       map[string]any
 }
 
 // NewResourceConfigRaw constructs a ResourceConfig whose content is exactly
@@ -58,7 +59,7 @@ type ResourceConfig struct {
 // Deprecated: This function is unintentionally exported by this Go module and
 // not supported for external consumption. It will be removed in the next major
 // version. Use real Terraform configuration instead.
-func NewResourceConfigRaw(raw map[string]interface{}) *ResourceConfig {
+func NewResourceConfigRaw(raw map[string]any) *ResourceConfig {
 	v := hcl2shim.HCL2ValueFromConfigValue(raw)
 
 	// This is a little weird but we round-trip the value through the hcl2shim
@@ -69,7 +70,7 @@ func NewResourceConfigRaw(raw map[string]interface{}) *ResourceConfig {
 	// config maps were always distinct, and thus you could in principle mutate
 	// one without affecting the other. (I sure hope nobody was doing that, though!)
 	//nolint:forcetypeassert
-	cfg := hcl2shim.ConfigValueFromHCL2(v).(map[string]interface{})
+	cfg := hcl2shim.ConfigValueFromHCL2(v).(map[string]any)
 
 	return &ResourceConfig{
 		Raw:    raw,
@@ -110,7 +111,7 @@ func NewResourceConfigShimmed(val cty.Value, schema *configschema.Block) *Resour
 		// a child block can be partially unknown.
 		ret.ComputedKeys = newResourceConfigShimmedComputedKeys(val, "")
 	} else {
-		ret.Config = make(map[string]interface{})
+		ret.Config = make(map[string]any)
 	}
 	ret.Raw = ret.Config
 
@@ -186,17 +187,13 @@ func (c *ResourceConfig) DeepCopy() *ResourceConfig {
 	if c.Config != nil {
 		copied.Config = make(map[string]any, len(c.Config))
 
-		for key, value := range c.Config {
-			copied.Config[key] = value
-		}
+		maps.Copy(copied.Config, c.Config)
 	}
 
 	if c.Raw != nil {
 		copied.Raw = make(map[string]any, len(c.Raw))
 
-		for key, value := range c.Raw {
-			copied.Raw[key] = value
-		}
+		maps.Copy(copied.Raw, c.Raw)
 	}
 
 	return copied
@@ -217,7 +214,7 @@ func (c *ResourceConfig) Equal(c2 *ResourceConfig) bool {
 	// We don't compare "raw" because it is never used again after
 	// initialization and for all intents and purposes they are equal
 	// if the exported properties are equal.
-	check := [][2]interface{}{
+	check := [][2]any{
 		{c.ComputedKeys, c2.ComputedKeys},
 		{c.Raw, c2.Raw},
 		{c.Config, c2.Config},
@@ -240,7 +237,7 @@ func (c *ResourceConfig) Equal(c2 *ResourceConfig) bool {
 // Deprecated: This method is unintentionally exported by this Go module and not
 // supported for external consumption. It will be removed in the next major
 // version.
-func (c *ResourceConfig) Get(k string) (interface{}, bool) {
+func (c *ResourceConfig) Get(k string) (any, bool) {
 	// We aim to get a value from the configuration. If it is computed,
 	// then we return the pure raw value.
 	source := c.Config
@@ -260,7 +257,7 @@ func (c *ResourceConfig) Get(k string) (interface{}, bool) {
 // Deprecated: This method is unintentionally exported by this Go module and not
 // supported for external consumption. It will be removed in the next major
 // version.
-func (c *ResourceConfig) GetRaw(k string) (interface{}, bool) {
+func (c *ResourceConfig) GetRaw(k string) (any, bool) {
 	return c.get(k, c.Raw)
 }
 
@@ -287,14 +284,14 @@ func (c *ResourceConfig) IsComputed(k string) bool {
 }
 
 func (c *ResourceConfig) get(
-	k string, raw map[string]interface{}) (interface{}, bool) {
+	k string, raw map[string]any) (any, bool) {
 	parts := strings.Split(k, ".")
 	if len(parts) == 1 && parts[0] == "" {
 		parts = nil
 	}
 
-	var current interface{} = raw
-	var previous interface{} = nil
+	var current any = raw
+	var previous any = nil
 	for i, part := range parts {
 		if current == nil {
 			return nil, false
@@ -347,7 +344,7 @@ func (c *ResourceConfig) get(
 			// This happens when map keys contain "." and have a common
 			// prefix so were split as path components above.
 			actualKey := strings.Join(parts[i-1:], ".")
-			if prevMap, ok := previous.(map[string]interface{}); ok {
+			if prevMap, ok := previous.(map[string]any); ok {
 				v, ok := prevMap[actualKey]
 				return v, ok
 			}

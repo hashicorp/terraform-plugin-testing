@@ -444,7 +444,7 @@ func testCheckTypeSetElemPair(is *terraform.InstanceState, attr, value string) e
 // in the instance state. Currently, the function accepts a "values" param of type
 // map[string]string or map[string]*regexp.Regexp.
 // Returns true if all attributes match, else false.
-func testCheckTypeSetElemNestedAttrsInState(is *terraform.InstanceState, attrParts []string, matchCount int, values interface{}) bool {
+func testCheckTypeSetElemNestedAttrsInState(is *terraform.InstanceState, attrParts []string, matchCount int, values any) bool {
 	matches := make(map[string]int)
 
 	for stateKey, stateValue := range is.Attributes {
