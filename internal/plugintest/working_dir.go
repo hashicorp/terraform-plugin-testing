@@ -51,6 +51,12 @@ type WorkingDir struct {
 	// reattachInfo stores the gRPC socket info required for Terraform's
 	// plugin reattach functionality
 	reattachInfo tfexec.ReattachInfo
+
+	// progressCapture handles capturing action progress messages during test execution
+	progressCapture *ProgressCapture
+
+	// progressCaptureEnabled indicates whether to capture action progress messages
+	progressCaptureEnabled bool
 }
 
 // BaseDir returns the path to the root of the working directory tree.
@@ -70,7 +76,7 @@ func (wd *WorkingDir) Close() error {
 }
 
 func (wd *WorkingDir) SetReattachInfo(ctx context.Context, reattachInfo tfexec.ReattachInfo) {
-	logging.HelperResourceTrace(ctx, "Setting Terraform CLI reattach configuration", map[string]interface{}{"tf_reattach_config": reattachInfo})
+	logging.HelperResourceTrace(ctx, "Setting Terraform CLI reattach configuration", map[string]any{"tf_reattach_config": reattachInfo})
 	wd.reattachInfo = reattachInfo
 }
 
@@ -337,10 +343,10 @@ func (wd *WorkingDir) planFilename() string {
 // CreatePlan runs "terraform plan" to create a saved plan file, which if successful
 // will then be used for the next call to Apply.
 func (wd *WorkingDir) CreatePlan(ctx context.Context, opts ...tfexec.PlanOption) error {
-	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan command")
-
 	opts = append(opts, tfexec.Reattach(wd.reattachInfo))
 	opts = append(opts, tfexec.Out(PlanFileName))
+
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI plan command")
 
 	hasChanges, err := wd.tf.Plan(context.Background(), opts...)
 
@@ -562,4 +568,24 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI providers query command")
 
 	return messages, nil
+}
+
+// GetProgressCapture returns the progress capture instance for this working directory.
+func (wd *WorkingDir) GetProgressCapture() *ProgressCapture {
+	return wd.progressCapture
+}
+
+// IsProgressCaptureEnabled returns whether progress capture is enabled.
+func (wd *WorkingDir) IsProgressCaptureEnabled() bool {
+	return wd.progressCaptureEnabled
+}
+
+// EnableProgressCapture enables capturing of action progress messages during Terraform operations.
+func (wd *WorkingDir) EnableProgressCapture() {
+	wd.progressCaptureEnabled = true
+}
+
+// DisableProgressCapture disables capturing of action progress messages.
+func (wd *WorkingDir) DisableProgressCapture() {
+	wd.progressCaptureEnabled = false
 }

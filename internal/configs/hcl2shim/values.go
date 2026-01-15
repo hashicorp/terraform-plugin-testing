@@ -35,7 +35,7 @@ const UnknownVariableValue = "74D93920-ED26-11E3-AC10-0800200C9A66"
 // terraform.ResourceConfig before calling to a legacy provider, since
 // helper/schema (the old provider SDK) is particularly sensitive to these
 // subtle differences within its validation code.
-func ConfigValueFromHCL2Block(v cty.Value, schema *configschema.Block) map[string]interface{} {
+func ConfigValueFromHCL2Block(v cty.Value, schema *configschema.Block) map[string]any {
 	if v.IsNull() {
 		return nil
 	}
@@ -47,7 +47,7 @@ func ConfigValueFromHCL2Block(v cty.Value, schema *configschema.Block) map[strin
 	}
 
 	atys := v.Type().AttributeTypes()
-	ret := make(map[string]interface{})
+	ret := make(map[string]any)
 
 	for name := range schema.Attributes {
 		if _, exists := atys[name]; !exists {
@@ -87,7 +87,7 @@ func ConfigValueFromHCL2Block(v cty.Value, schema *configschema.Block) map[strin
 				continue
 			}
 
-			elems := make([]interface{}, 0, l)
+			elems := make([]any, 0, l)
 			for it := bv.ElementIterator(); it.Next(); {
 				_, ev := it.Element()
 				if !ev.IsKnown() {
@@ -104,7 +104,7 @@ func ConfigValueFromHCL2Block(v cty.Value, schema *configschema.Block) map[strin
 				continue
 			}
 
-			elems := make(map[string]interface{})
+			elems := make(map[string]any)
 			for it := bv.ElementIterator(); it.Next(); {
 				ek, ev := it.Element()
 				if !ev.IsKnown() {
@@ -127,7 +127,7 @@ func ConfigValueFromHCL2Block(v cty.Value, schema *configschema.Block) map[strin
 // This function will transform a cty null value into a Go nil value, which
 // isn't a possible outcome of the HCL/HIL-based decoder and so callers may
 // need to detect and reject any null values.
-func ConfigValueFromHCL2(v cty.Value) interface{} {
+func ConfigValueFromHCL2(v cty.Value) any {
 	if !v.IsKnown() {
 		return UnknownVariableValue
 	}
@@ -165,7 +165,7 @@ func ConfigValueFromHCL2(v cty.Value) interface{} {
 	}
 
 	if v.Type().IsListType() || v.Type().IsSetType() || v.Type().IsTupleType() {
-		l := make([]interface{}, 0, v.LengthInt())
+		l := make([]any, 0, v.LengthInt())
 		it := v.ElementIterator()
 		for it.Next() {
 			_, ev := it.Element()
@@ -175,7 +175,7 @@ func ConfigValueFromHCL2(v cty.Value) interface{} {
 	}
 
 	if v.Type().IsMapType() || v.Type().IsObjectType() {
-		l := make(map[string]interface{})
+		l := make(map[string]any)
 		it := v.ElementIterator()
 		for it.Next() {
 			ek, ev := it.Element()
@@ -196,7 +196,7 @@ func ConfigValueFromHCL2(v cty.Value) interface{} {
 // HCL2ValueFromConfigValue is the opposite of configValueFromHCL2: it takes
 // a value as would be returned from the old interpolator and turns it into
 // a cty.Value so it can be used within, for example, an HCL2 EvalContext.
-func HCL2ValueFromConfigValue(v interface{}) cty.Value {
+func HCL2ValueFromConfigValue(v any) cty.Value {
 	if v == nil {
 		return cty.NullVal(cty.DynamicPseudoType)
 	}
@@ -213,13 +213,13 @@ func HCL2ValueFromConfigValue(v interface{}) cty.Value {
 		return cty.NumberIntVal(int64(tv))
 	case float64:
 		return cty.NumberFloatVal(tv)
-	case []interface{}:
+	case []any:
 		vals := make([]cty.Value, len(tv))
 		for i, ev := range tv {
 			vals[i] = HCL2ValueFromConfigValue(ev)
 		}
 		return cty.TupleVal(vals)
-	case map[string]interface{}:
+	case map[string]any:
 		vals := map[string]cty.Value{}
 		for k, ev := range tv {
 			vals[k] = HCL2ValueFromConfigValue(ev)

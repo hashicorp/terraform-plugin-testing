@@ -29,7 +29,7 @@ func RetryContext(ctx context.Context, timeout time.Duration, f RetryFunc) error
 		Target:     []string{"success"},
 		Timeout:    timeout,
 		MinTimeout: 500 * time.Millisecond,
-		Refresh: func() (interface{}, string, error) {
+		Refresh: func() (any, string, error) {
 			rerr := f()
 
 			resultErrMu.Lock()

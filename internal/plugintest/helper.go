@@ -188,7 +188,7 @@ func (h *Helper) NewWorkingDir(ctx context.Context, t TestControl, wd string) (*
 		logging.HelperResourceTrace(
 			ctx,
 			fmt.Sprintf("Setting terraform-exec log level via %s environment variable, if Terraform CLI is version 0.15 or later", EnvTfAccLog),
-			map[string]interface{}{logging.KeyTestTerraformLogLevel: tfAccLog},
+			map[string]any{logging.KeyTestTerraformLogLevel: tfAccLog},
 		)
 
 		err := tf.SetLog(tfAccLog)
@@ -198,7 +198,7 @@ func (h *Helper) NewWorkingDir(ctx context.Context, t TestControl, wd string) (*
 				logging.HelperResourceError(
 					ctx,
 					"Unable to set terraform-exec log level",
-					map[string]interface{}{logging.KeyError: err.Error()},
+					map[string]any{logging.KeyError: err.Error()},
 				)
 				return nil, fmt.Errorf("unable to set terraform-exec log level (%s): %w", tfAccLog, err)
 			}
@@ -206,7 +206,7 @@ func (h *Helper) NewWorkingDir(ctx context.Context, t TestControl, wd string) (*
 			logging.HelperResourceWarn(
 				ctx,
 				fmt.Sprintf("Unable to set terraform-exec log level via %s environment variable, as Terraform CLI is version 0.14 or earlier. It will default to TRACE.", EnvTfAccLog),
-				map[string]interface{}{logging.KeyTestTerraformLogLevel: "TRACE"},
+				map[string]any{logging.KeyTestTerraformLogLevel: "TRACE"},
 			)
 		}
 	}
@@ -215,7 +215,7 @@ func (h *Helper) NewWorkingDir(ctx context.Context, t TestControl, wd string) (*
 		logging.HelperResourceTrace(
 			ctx,
 			fmt.Sprintf("Setting terraform-exec core log level via %s environment variable, if Terraform CLI is version 0.15 or later", EnvTfLogCore),
-			map[string]interface{}{
+			map[string]any{
 				logging.KeyTestTerraformLogCoreLevel: tfLogCore,
 			},
 		)
@@ -226,7 +226,7 @@ func (h *Helper) NewWorkingDir(ctx context.Context, t TestControl, wd string) (*
 			logging.HelperResourceError(
 				ctx,
 				"Unable to set terraform-exec core log level",
-				map[string]interface{}{logging.KeyError: err.Error()},
+				map[string]any{logging.KeyError: err.Error()},
 			)
 			return nil, fmt.Errorf("unable to set terraform-exec core log level (%s): %w", tfLogCore, err)
 		}
@@ -236,7 +236,7 @@ func (h *Helper) NewWorkingDir(ctx context.Context, t TestControl, wd string) (*
 		logging.HelperResourceTrace(
 			ctx,
 			fmt.Sprintf("Setting terraform-exec provider log level via %s environment variable, if Terraform CLI is version 0.15 or later", EnvTfLogProvider),
-			map[string]interface{}{
+			map[string]any{
 				logging.KeyTestTerraformLogCoreLevel: tfLogProvider,
 			},
 		)
@@ -247,7 +247,7 @@ func (h *Helper) NewWorkingDir(ctx context.Context, t TestControl, wd string) (*
 			logging.HelperResourceError(
 				ctx,
 				"Unable to set terraform-exec provider log level",
-				map[string]interface{}{logging.KeyError: err.Error()},
+				map[string]any{logging.KeyError: err.Error()},
 			)
 			return nil, fmt.Errorf("unable to set terraform-exec provider log level (%s): %w", tfLogProvider, err)
 		}
@@ -274,7 +274,7 @@ func (h *Helper) NewWorkingDir(ctx context.Context, t TestControl, wd string) (*
 		logging.HelperResourceTrace(
 			ctx,
 			fmt.Sprintf("Setting terraform-exec log path via %s environment variable", logPathEnvVar),
-			map[string]interface{}{logging.KeyTestTerraformLogPath: logPath},
+			map[string]any{logging.KeyTestTerraformLogPath: logPath},
 		)
 
 		if err := tf.SetLogPath(logPath); err != nil {
@@ -283,10 +283,11 @@ func (h *Helper) NewWorkingDir(ctx context.Context, t TestControl, wd string) (*
 	}
 
 	return &WorkingDir{
-		h:             h,
-		tf:            tf,
-		baseDir:       dir,
-		terraformExec: h.terraformExec,
+		h:               h,
+		tf:              tf,
+		baseDir:         dir,
+		terraformExec:   h.terraformExec,
+		progressCapture: NewProgressCapture(),
 	}, nil
 }
 
