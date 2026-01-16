@@ -1281,7 +1281,7 @@ func (s ProviderServer) ConfigureStateStore(ctx context.Context, req *tfprotov6.
 	}
 	configureResp := &statestore.ConfigureResponse{
 		// Round-trip the core-provided chunk size as the default
-		ServerCapabilities: tfprotov6.StateStoreServerCapabilities{
+		ServerCapabilities: &tfprotov6.StateStoreServerCapabilities{
 			ChunkSize: req.Capabilities.ChunkSize,
 		},
 	}
@@ -1294,8 +1294,8 @@ func (s ProviderServer) ConfigureStateStore(ctx context.Context, req *tfprotov6.
 	return resp, nil
 }
 
-func (s ProviderServer) ValidateStateStoreConfig(ctx context.Context, req *tfprotov6.ValidateStateStoreRequest) (*tfprotov6.ValidateStateStoreResponse, error) {
-	resp := &tfprotov6.ValidateStateStoreResponse{}
+func (s ProviderServer) ValidateStateStoreConfig(ctx context.Context, req *tfprotov6.ValidateStateStoreConfigRequest) (*tfprotov6.ValidateStateStoreConfigResponse, error) {
+	resp := &tfprotov6.ValidateStateStoreConfigResponse{}
 
 	store, diag := ProviderStateStore(s.Provider, req.TypeName)
 
@@ -1353,7 +1353,7 @@ func (s ProviderServer) GetStates(ctx context.Context, req *tfprotov6.GetStatesR
 	store.GetStates(ctx, getStatesReq, getStatesResp)
 
 	resp.Diagnostics = getStatesResp.Diagnostics
-	resp.StateId = getStatesResp.StateIDs
+	resp.StateIDs = getStatesResp.StateIDs
 
 	return resp, nil
 }
@@ -1370,7 +1370,7 @@ func (s ProviderServer) DeleteState(ctx context.Context, req *tfprotov6.DeleteSt
 	}
 
 	deleteStateReq := statestore.DeleteStateRequest{
-		StateID: req.StateId,
+		StateID: req.StateID,
 	}
 	deleteStateResp := &statestore.DeleteStateResponse{}
 
@@ -1393,7 +1393,7 @@ func (s ProviderServer) LockState(ctx context.Context, req *tfprotov6.LockStateR
 	}
 
 	lockStateReq := statestore.LockStateRequest{
-		StateID:   req.StateId,
+		StateID:   req.StateID,
 		Operation: req.Operation,
 	}
 	lockStateResp := &statestore.LockStateResponse{}
@@ -1401,7 +1401,7 @@ func (s ProviderServer) LockState(ctx context.Context, req *tfprotov6.LockStateR
 	store.LockState(ctx, lockStateReq, lockStateResp)
 
 	resp.Diagnostics = lockStateResp.Diagnostics
-	resp.LockId = lockStateResp.LockID
+	resp.LockID = lockStateResp.LockID
 
 	return resp, nil
 }
@@ -1418,8 +1418,8 @@ func (s ProviderServer) UnlockState(ctx context.Context, req *tfprotov6.UnlockSt
 	}
 
 	lockStateReq := statestore.UnlockStateRequest{
-		StateID: req.StateId,
-		LockID:  req.LockId,
+		StateID: req.StateID,
+		LockID:  req.LockID,
 	}
 	lockStateResp := &statestore.UnlockStateResponse{}
 
@@ -1441,7 +1441,7 @@ func (s ProviderServer) ReadStateBytes(ctx context.Context, req *tfprotov6.ReadS
 	}
 
 	readStateBytesReq := statestore.ReadStateBytesRequest{
-		StateID: req.StateId,
+		StateID: req.StateID,
 	}
 	readStateBytesResp := &statestore.ReadStateBytesResponse{}
 
@@ -1468,7 +1468,7 @@ func (s ProviderServer) ReadStateBytes(ctx context.Context, req *tfprotov6.ReadS
 							Severity: tfprotov6.DiagnosticSeverityError,
 							Summary:  "Error reading state",
 							Detail: fmt.Sprintf("An unexpected error occurred while reading state data for %s: %s",
-								req.StateId,
+								req.StateID,
 								err,
 							),
 						},
@@ -1512,19 +1512,15 @@ func (s ProviderServer) WriteStateBytes(ctx context.Context, req *tfprotov6.Writ
 	var typeName string
 	var stateId string
 
-	for chunk := range req.Chunks {
-		if chunk.Err != nil {
-			resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
-				Severity: tfprotov6.DiagnosticSeverityError,
-				Summary:  "Error writing state",
-				Detail:   fmt.Sprintf("An unexpected GRPC error occurred receieving state data from Terraform: %s", chunk.Err),
-			})
+	for chunk, diags := range req.Chunks {
+		if len(diags) > 0 {
+			resp.Diagnostics = append(resp.Diagnostics, diags...)
 			return resp, nil
 		}
 
 		if chunk.Meta != nil {
 			typeName = chunk.Meta.TypeName
-			stateId = chunk.Meta.StateId
+			stateId = chunk.Meta.StateID
 		}
 
 		_, err := stateBuffer.Write(chunk.Bytes)

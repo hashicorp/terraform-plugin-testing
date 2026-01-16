@@ -36,12 +36,12 @@ type SchemaResponse struct {
 
 type ConfigureRequest struct {
 	Config             tftypes.Value
-	ClientCapabilities tfprotov6.StateStoreClientCapabilities
+	ClientCapabilities *tfprotov6.ConfigureStateStoreClientCapabilities
 }
 
 type ConfigureResponse struct {
 	Diagnostics        []*tfprotov6.Diagnostic
-	ServerCapabilities tfprotov6.StateStoreServerCapabilities
+	ServerCapabilities *tfprotov6.StateStoreServerCapabilities
 }
 
 type ValidateConfigRequest struct {
