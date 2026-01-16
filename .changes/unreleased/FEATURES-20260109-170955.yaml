@@ -1,0 +1,5 @@
+kind: FEATURES
+body: 'helper/resource: Added new `StateStore` testing mode to `TestStep`, which can be used to smoke test Terraform state storage.'
+time: 2026-01-09T17:09:55.56054-05:00
+custom:
+    Issue: "591"

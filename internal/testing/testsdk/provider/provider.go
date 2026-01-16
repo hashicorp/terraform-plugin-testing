@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/datasource"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/list"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/statestore"
 )
 
 type Provider interface {
@@ -18,6 +19,7 @@ type Provider interface {
 	DataSourcesMap() map[string]datasource.DataSource
 	ListResourcesMap() map[string]list.ListResource
 	ResourcesMap() map[string]resource.Resource
+	StateStoresMap() map[string]statestore.StateStore
 	Schema(context.Context, SchemaRequest, *SchemaResponse)
 	Stop(context.Context, StopRequest, *StopResponse)
 	ValidateConfig(context.Context, ValidateConfigRequest, *ValidateConfigResponse)

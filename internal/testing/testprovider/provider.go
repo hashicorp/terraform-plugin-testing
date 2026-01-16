@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/list"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/provider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/statestore"
 )
 
 var _ provider.Provider = Provider{}
@@ -22,6 +23,7 @@ type Provider struct {
 	DataSources            map[string]DataSource
 	ListResources          map[string]ListResource
 	Resources              map[string]Resource
+	StateStores            map[string]*StateStore
 	SchemaResponse         *provider.SchemaResponse
 	StopResponse           *provider.StopResponse
 	ValidateConfigResponse *provider.ValidateConfigResponse
@@ -61,6 +63,16 @@ func (p Provider) ResourcesMap() map[string]resource.Resource {
 	}
 
 	return resources
+}
+
+func (p Provider) StateStoresMap() map[string]statestore.StateStore {
+	stateStores := make(map[string]statestore.StateStore, len(p.StateStores))
+
+	for typeName, s := range p.StateStores {
+		stateStores[typeName] = s
+	}
+
+	return stateStores
 }
 
 func (p Provider) Stop(ctx context.Context, req provider.StopRequest, resp *provider.StopResponse) {

@@ -4,10 +4,13 @@
 package providerserver
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"iter"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -16,11 +19,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/list"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/provider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/statestore"
 )
 
 var _ tfprotov6.ProviderServer = ProviderServer{}
-
-// var _ tfprotov6.ProviderServerWithListResource = ProviderServer{}
 
 // NewProviderServer returns a lightweight protocol version 6 provider server
 // for consumption with ProtoV6ProviderFactories.
@@ -319,6 +321,7 @@ func (s ProviderServer) GetProviderSchema(ctx context.Context, req *tfprotov6.Ge
 		ListResourceSchemas: map[string]*tfprotov6.Schema{},
 		Provider:            providerResp.Schema,
 		ResourceSchemas:     map[string]*tfprotov6.Schema{},
+		StateStoreSchemas:   map[string]*tfprotov6.Schema{},
 		ServerCapabilities: &tfprotov6.ServerCapabilities{
 			PlanDestroy: true,
 		},
@@ -355,6 +358,17 @@ func (s ProviderServer) GetProviderSchema(ctx context.Context, req *tfprotov6.Ge
 		resp.Diagnostics = append(resp.Diagnostics, schemaResp.Diagnostics...)
 
 		resp.ResourceSchemas[typeName] = schemaResp.Schema
+	}
+
+	for typeName, s := range s.Provider.StateStoresMap() {
+		schemaReq := statestore.SchemaRequest{}
+		schemaResp := &statestore.SchemaResponse{}
+
+		s.Schema(ctx, schemaReq, schemaResp)
+
+		resp.Diagnostics = append(resp.Diagnostics, schemaResp.Diagnostics...)
+
+		resp.StateStoreSchemas[typeName] = schemaResp.Schema
 	}
 
 	return resp, nil
@@ -912,7 +926,6 @@ func (s ProviderServer) UpgradeResourceState(ctx context.Context, req *tfprotov6
 }
 
 func (s ProviderServer) UpgradeResourceIdentity(context.Context, *tfprotov6.UpgradeResourceIdentityRequest) (*tfprotov6.UpgradeResourceIdentityResponse, error) {
-	// TODO: This isn't currently being used by the testing framework provider, so no need to implement it until then.
 	return nil, errors.New("UpgradeResourceIdentity is not currently implemented in testprovider")
 }
 
@@ -1230,4 +1243,323 @@ func processListResult(req list.ListRequest, result list.ListResult) tfprotov6.L
 
 	return listResourceResult
 
+}
+
+func (s ProviderServer) ConfigureStateStore(ctx context.Context, req *tfprotov6.ConfigureStateStoreRequest) (*tfprotov6.ConfigureStateStoreResponse, error) {
+	resp := &tfprotov6.ConfigureStateStoreResponse{}
+
+	store, diag := ProviderStateStore(s.Provider, req.TypeName)
+
+	if diag != nil {
+		resp.Diagnostics = append(resp.Diagnostics, diag)
+
+		return resp, nil
+	}
+
+	schemaReq := statestore.SchemaRequest{}
+	schemaResp := &statestore.SchemaResponse{}
+
+	store.Schema(ctx, schemaReq, schemaResp)
+
+	resp.Diagnostics = schemaResp.Diagnostics
+
+	if len(resp.Diagnostics) > 0 {
+		return resp, nil
+	}
+
+	config, diag := DynamicValueToValue(schemaResp.Schema, req.Config)
+
+	if diag != nil {
+		resp.Diagnostics = append(resp.Diagnostics, diag)
+
+		return resp, nil
+	}
+
+	configureReq := statestore.ConfigureRequest{
+		Config:             config,
+		ClientCapabilities: req.Capabilities,
+	}
+	configureResp := &statestore.ConfigureResponse{
+		// Round-trip the core-provided chunk size as the default
+		ServerCapabilities: &tfprotov6.StateStoreServerCapabilities{
+			ChunkSize: req.Capabilities.ChunkSize,
+		},
+	}
+
+	store.Configure(ctx, configureReq, configureResp)
+
+	resp.Diagnostics = configureResp.Diagnostics
+	resp.Capabilities = configureResp.ServerCapabilities
+
+	return resp, nil
+}
+
+func (s ProviderServer) ValidateStateStoreConfig(ctx context.Context, req *tfprotov6.ValidateStateStoreConfigRequest) (*tfprotov6.ValidateStateStoreConfigResponse, error) {
+	resp := &tfprotov6.ValidateStateStoreConfigResponse{}
+
+	store, diag := ProviderStateStore(s.Provider, req.TypeName)
+
+	if diag != nil {
+		resp.Diagnostics = append(resp.Diagnostics, diag)
+
+		return resp, nil
+	}
+
+	schemaReq := statestore.SchemaRequest{}
+	schemaResp := &statestore.SchemaResponse{}
+
+	store.Schema(ctx, schemaReq, schemaResp)
+
+	resp.Diagnostics = schemaResp.Diagnostics
+
+	if len(resp.Diagnostics) > 0 {
+		return resp, nil
+	}
+
+	config, diag := DynamicValueToValue(schemaResp.Schema, req.Config)
+
+	if diag != nil {
+		resp.Diagnostics = append(resp.Diagnostics, diag)
+
+		return resp, nil
+	}
+
+	validateReq := statestore.ValidateConfigRequest{
+		Config: config,
+	}
+	validateResp := &statestore.ValidateConfigResponse{}
+
+	store.ValidateConfig(ctx, validateReq, validateResp)
+
+	resp.Diagnostics = validateResp.Diagnostics
+
+	return resp, nil
+}
+
+func (s ProviderServer) GetStates(ctx context.Context, req *tfprotov6.GetStatesRequest) (*tfprotov6.GetStatesResponse, error) {
+	resp := &tfprotov6.GetStatesResponse{}
+
+	store, diag := ProviderStateStore(s.Provider, req.TypeName)
+
+	if diag != nil {
+		resp.Diagnostics = append(resp.Diagnostics, diag)
+
+		return resp, nil
+	}
+
+	getStatesReq := statestore.GetStatesRequest{}
+	getStatesResp := &statestore.GetStatesResponse{}
+
+	store.GetStates(ctx, getStatesReq, getStatesResp)
+
+	resp.Diagnostics = getStatesResp.Diagnostics
+	resp.StateIDs = getStatesResp.StateIDs
+
+	return resp, nil
+}
+
+func (s ProviderServer) DeleteState(ctx context.Context, req *tfprotov6.DeleteStateRequest) (*tfprotov6.DeleteStateResponse, error) {
+	resp := &tfprotov6.DeleteStateResponse{}
+
+	store, diag := ProviderStateStore(s.Provider, req.TypeName)
+
+	if diag != nil {
+		resp.Diagnostics = append(resp.Diagnostics, diag)
+
+		return resp, nil
+	}
+
+	deleteStateReq := statestore.DeleteStateRequest{
+		StateID: req.StateID,
+	}
+	deleteStateResp := &statestore.DeleteStateResponse{}
+
+	store.DeleteState(ctx, deleteStateReq, deleteStateResp)
+
+	resp.Diagnostics = deleteStateResp.Diagnostics
+
+	return resp, nil
+}
+
+func (s ProviderServer) LockState(ctx context.Context, req *tfprotov6.LockStateRequest) (*tfprotov6.LockStateResponse, error) {
+	resp := &tfprotov6.LockStateResponse{}
+
+	store, diag := ProviderStateStore(s.Provider, req.TypeName)
+
+	if diag != nil {
+		resp.Diagnostics = append(resp.Diagnostics, diag)
+
+		return resp, nil
+	}
+
+	lockStateReq := statestore.LockStateRequest{
+		StateID:   req.StateID,
+		Operation: req.Operation,
+	}
+	lockStateResp := &statestore.LockStateResponse{}
+
+	store.LockState(ctx, lockStateReq, lockStateResp)
+
+	resp.Diagnostics = lockStateResp.Diagnostics
+	resp.LockID = lockStateResp.LockID
+
+	return resp, nil
+}
+
+func (s ProviderServer) UnlockState(ctx context.Context, req *tfprotov6.UnlockStateRequest) (*tfprotov6.UnlockStateResponse, error) {
+	resp := &tfprotov6.UnlockStateResponse{}
+
+	store, diag := ProviderStateStore(s.Provider, req.TypeName)
+
+	if diag != nil {
+		resp.Diagnostics = append(resp.Diagnostics, diag)
+
+		return resp, nil
+	}
+
+	lockStateReq := statestore.UnlockStateRequest{
+		StateID: req.StateID,
+		LockID:  req.LockID,
+	}
+	lockStateResp := &statestore.UnlockStateResponse{}
+
+	store.UnlockState(ctx, lockStateReq, lockStateResp)
+
+	resp.Diagnostics = lockStateResp.Diagnostics
+
+	return resp, nil
+}
+
+func (s ProviderServer) ReadStateBytes(ctx context.Context, req *tfprotov6.ReadStateBytesRequest) (*tfprotov6.ReadStateBytesStream, error) {
+	resp := &tfprotov6.ReadStateBytesStream{}
+
+	store, diag := ProviderStateStore(s.Provider, req.TypeName)
+
+	if diag != nil {
+		resp.Chunks = slices.Values([]tfprotov6.ReadStateByteChunk{{Diagnostics: []*tfprotov6.Diagnostic{diag}}})
+		return resp, nil
+	}
+
+	readStateBytesReq := statestore.ReadStateBytesRequest{
+		StateID: req.StateID,
+	}
+	readStateBytesResp := &statestore.ReadStateBytesResponse{}
+
+	store.ReadStateBytes(ctx, readStateBytesReq, readStateBytesResp)
+
+	if len(readStateBytesResp.Diagnostics) > 0 {
+		resp.Chunks = slices.Values([]tfprotov6.ReadStateByteChunk{{Diagnostics: readStateBytesResp.Diagnostics}})
+		return resp, nil
+	}
+
+	chunkSize := store.ConfiguredChunkSize()
+	reader := bytes.NewReader(readStateBytesResp.StateBytes)
+	totalLength := reader.Size()
+	rangeStart := 0
+
+	resp.Chunks = func(yield func(tfprotov6.ReadStateByteChunk) bool) {
+		for {
+			readBytes := make([]byte, chunkSize)
+			byteCount, err := reader.Read(readBytes)
+			if err != nil && !errors.Is(err, io.EOF) {
+				chunkWithDiag := tfprotov6.ReadStateByteChunk{
+					Diagnostics: []*tfprotov6.Diagnostic{
+						{
+							Severity: tfprotov6.DiagnosticSeverityError,
+							Summary:  "Error reading state",
+							Detail: fmt.Sprintf("An unexpected error occurred while reading state data for %s: %s",
+								req.StateID,
+								err,
+							),
+						},
+					},
+				}
+				if !yield(chunkWithDiag) {
+					return
+				}
+			}
+
+			if byteCount == 0 {
+				// We've sent all of the bytes in the reader
+				return
+			}
+
+			chunk := tfprotov6.ReadStateByteChunk{
+				StateByteChunk: tfprotov6.StateByteChunk{
+					Bytes:       readBytes[:byteCount],
+					TotalLength: totalLength,
+					Range: tfprotov6.StateByteRange{
+						Start: int64(rangeStart),
+						End:   int64(rangeStart + byteCount),
+					},
+				},
+			}
+			if !yield(chunk) {
+				return
+			}
+
+			rangeStart += byteCount
+		}
+	}
+
+	return resp, nil
+}
+
+func (s ProviderServer) WriteStateBytes(ctx context.Context, req *tfprotov6.WriteStateBytesStream) (*tfprotov6.WriteStateBytesResponse, error) {
+	resp := &tfprotov6.WriteStateBytesResponse{}
+
+	var stateBuffer bytes.Buffer
+	var typeName string
+	var stateId string
+
+	for chunk, diags := range req.Chunks {
+		if len(diags) > 0 {
+			resp.Diagnostics = append(resp.Diagnostics, diags...)
+			return resp, nil
+		}
+
+		if chunk.Meta != nil {
+			typeName = chunk.Meta.TypeName
+			stateId = chunk.Meta.StateID
+		}
+
+		_, err := stateBuffer.Write(chunk.Bytes)
+		if err != nil {
+			resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+				Severity: tfprotov6.DiagnosticSeverityError,
+				Summary:  "Error writing state",
+				Detail:   fmt.Sprintf("An unexpected error occurred receieving state data from Terraform: %s", err),
+			})
+			return resp, nil
+		}
+	}
+
+	if stateBuffer.Len() == 0 {
+		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+			Severity: tfprotov6.DiagnosticSeverityError,
+			Summary:  "Error writing state",
+			Detail:   "No state data was received from Terraform. This is a bug and should be reported.",
+		})
+		return resp, nil
+	}
+
+	store, diag := ProviderStateStore(s.Provider, typeName)
+
+	if diag != nil {
+		resp.Diagnostics = append(resp.Diagnostics, diag)
+
+		return resp, nil
+	}
+
+	writeStateBytesReq := statestore.WriteStateBytesRequest{
+		StateID:    stateId,
+		StateBytes: stateBuffer.Bytes(),
+	}
+	writeStateBytesResp := &statestore.WriteStateBytesResponse{}
+
+	store.WriteStateBytes(ctx, writeStateBytesReq, writeStateBytesResp)
+
+	resp.Diagnostics = writeStateBytesResp.Diagnostics
+
+	return resp, nil
 }

@@ -563,3 +563,45 @@ func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 
 	return messages, nil
 }
+
+func (wd *WorkingDir) Workspaces(ctx context.Context) ([]string, error) {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI workspace list command")
+
+	workspaces, _, err := wd.tf.WorkspaceList(context.Background(), tfexec.Reattach(wd.reattachInfo))
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI workspace list command")
+
+	return workspaces, err
+}
+
+func (wd *WorkingDir) CreateWorkspace(ctx context.Context, workspace string) error {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI workspace new command")
+
+	err := wd.tf.WorkspaceNew(context.Background(), workspace, tfexec.Reattach(wd.reattachInfo))
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI workspace new command")
+
+	return err
+}
+
+func (wd *WorkingDir) SelectWorkspace(ctx context.Context, workspace string) error {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI workspace select command")
+
+	err := wd.tf.WorkspaceSelect(context.Background(), workspace, tfexec.Reattach(wd.reattachInfo))
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI workspace select command")
+
+	return err
+}
+
+func (wd *WorkingDir) DeleteWorkspace(ctx context.Context, workspace string, opts ...tfexec.WorkspaceDeleteCmdOption) error {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI workspace delete command")
+
+	opts = append(opts, tfexec.Reattach(wd.reattachInfo))
+
+	err := wd.tf.WorkspaceDelete(context.Background(), workspace, opts...)
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI workspace delete command")
+
+	return err
+}

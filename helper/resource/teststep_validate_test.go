@@ -503,6 +503,13 @@ func TestTestStepValidate(t *testing.T) {
 			testStepValidateRequest: testStepValidateRequest{TestCaseHasProviders: true},
 			expectedError:           errors.New("TestStep RefreshPlanChecks.PostRefresh must only be specified with RefreshState"),
 		},
+		"state-store-mode-missing-config": {
+			testStep: TestStep{
+				StateStore: true,
+			},
+			testStepValidateRequest: testStepValidateRequest{},
+			expectedError:           fmt.Errorf("TestStep missing Config or ConfigDirectory or ConfigFile or ImportState or RefreshState"),
+		},
 	}
 
 	for name, test := range tests {
