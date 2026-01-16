@@ -41,6 +41,35 @@ func TestTerraformBackend_local(t *testing.T) {
 	})
 }
 
+func TestTerraformBackend_local_no_lock_support(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		// StateStore test mode uses `terraform_data`
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_4_0),
+		},
+		// MAINTAINER NOTE: Test steps won't run without a provider definition, so this is just
+		// needed to pass validation, as we're just testing Terraform core itself.
+		ExternalProviders: map[string]r.ExternalProvider{
+			"terraform": {Source: "terraform.io/builtin/terraform"},
+		},
+		Steps: []r.TestStep{
+			{
+				StateStore: true,
+				// The local backend doesn't support locking, so this is just a negative test
+				VerifyStateStoreLock: true,
+				Config: `
+					terraform {
+					  backend "local" {}
+					}
+				`,
+				ExpectError: regexp.MustCompile(`Failed client lock assertion: Expected an error when attempting to apply to locked "default" state, but received none`),
+			},
+		},
+	})
+}
+
 func TestTerraformBackend_local_empty_path_validation_error(t *testing.T) {
 	t.Parallel()
 

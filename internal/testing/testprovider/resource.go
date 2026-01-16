@@ -12,7 +12,11 @@ import (
 var _ resource.Resource = Resource{}
 
 type Resource struct {
-	CreateResponse      *resource.CreateResponse
+	CreateResponse *resource.CreateResponse
+	// Some tests need more control over logic run during Create, the struct defined CreateResponse
+	// will be passed to this function if available
+	CreateFunc func(context.Context, resource.CreateRequest, *resource.CreateResponse)
+
 	DeleteResponse      *resource.DeleteResponse
 	ImportStateResponse *resource.ImportStateResponse
 
@@ -33,6 +37,10 @@ func (r Resource) Create(ctx context.Context, req resource.CreateRequest, resp *
 		resp.Diagnostics = r.CreateResponse.Diagnostics
 		resp.NewState = r.CreateResponse.NewState
 		resp.NewIdentity = r.CreateResponse.NewIdentity
+	}
+
+	if r.CreateFunc != nil {
+		r.CreateFunc(ctx, req, resp)
 	}
 }
 
