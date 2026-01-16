@@ -38,7 +38,10 @@ func (s *StateStore) Schema(ctx context.Context, req statestore.SchemaRequest, r
 func (s *StateStore) Configure(ctx context.Context, req statestore.ConfigureRequest, resp *statestore.ConfigureResponse) {
 	if s.ConfigureResponse != nil {
 		resp.Diagnostics = s.ConfigureResponse.Diagnostics
-		resp.ServerCapabilities = s.ConfigureResponse.ServerCapabilities
+
+		if s.ConfigureResponse.ServerCapabilities != nil {
+			resp.ServerCapabilities = s.ConfigureResponse.ServerCapabilities
+		}
 	}
 
 	// Store configured chunk size
