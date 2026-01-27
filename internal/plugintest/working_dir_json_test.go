@@ -57,7 +57,7 @@ func tstProvider() *schema.Provider {
 	}
 }
 
-func resourceTstTCreate(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func resourceTstTCreate(ctx context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 	strVal, ok := d.Get("s").(string)
 	if !ok {
 		return diag.Errorf("unexpected type %T for 's' key", d.Get("s"))
@@ -66,14 +66,14 @@ func resourceTstTCreate(ctx context.Context, d *schema.ResourceData, _ interface
 	return nil
 }
 
-func resourceTstTRead(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func resourceTstTRead(ctx context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 	if err := d.Set("s", d.Id()); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
 }
 
-func resourceTstTDelete(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func resourceTstTDelete(ctx context.Context, d *schema.ResourceData, _ any) diag.Diagnostics {
 	d.SetId("")
 	return nil
 }

@@ -56,20 +56,20 @@ func (c TestCase) validate(ctx context.Context, t testing.T) error {
 
 	if len(c.Steps) == 0 {
 		err := fmt.Errorf("TestCase missing Steps")
-		logging.HelperResourceError(ctx, "TestCase validation error", map[string]interface{}{logging.KeyError: err})
+		logging.HelperResourceError(ctx, "TestCase validation error", map[string]any{logging.KeyError: err})
 		return err
 	}
 
 	for name := range c.ExternalProviders {
 		if _, ok := c.Providers[name]; ok {
 			err := fmt.Errorf("TestCase provider %q set in both ExternalProviders and Providers", name)
-			logging.HelperResourceError(ctx, "TestCase validation error", map[string]interface{}{logging.KeyError: err})
+			logging.HelperResourceError(ctx, "TestCase validation error", map[string]any{logging.KeyError: err})
 			return err
 		}
 
 		if _, ok := c.ProviderFactories[name]; ok {
 			err := fmt.Errorf("TestCase provider %q set in both ExternalProviders and ProviderFactories", name)
-			logging.HelperResourceError(ctx, "TestCase validation error", map[string]interface{}{logging.KeyError: err})
+			logging.HelperResourceError(ctx, "TestCase validation error", map[string]any{logging.KeyError: err})
 			return err
 		}
 	}
@@ -104,7 +104,7 @@ func (c TestCase) validate(ctx context.Context, t testing.T) error {
 
 		if err != nil {
 			err := fmt.Errorf("TestStep %d/%d validation error: %w", stepNumber, len(c.Steps), err)
-			logging.HelperResourceError(ctx, "TestCase validation error", map[string]interface{}{logging.KeyError: err})
+			logging.HelperResourceError(ctx, "TestCase validation error", map[string]any{logging.KeyError: err})
 			return err
 		}
 	}

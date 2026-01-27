@@ -17,8 +17,8 @@ import (
 // github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry.NotFoundError.
 type NotFoundError struct {
 	LastError    error
-	LastRequest  interface{}
-	LastResponse interface{}
+	LastRequest  any
+	LastResponse any
 	Message      string
 	Retries      int
 }
