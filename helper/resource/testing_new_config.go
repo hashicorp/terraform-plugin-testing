@@ -267,8 +267,11 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 	// do a plan
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		opts := []tfexec.PlanOption{
-			tfexec.Refresh(false),
+		var opts []tfexec.PlanOption
+		if refreshAfterApply {
+			opts = append(opts, tfexec.Refresh(true))
+		} else {
+			opts = append(opts, tfexec.Refresh(false))
 		}
 		if step.Destroy {
 			opts = append(opts, tfexec.Destroy(true))
