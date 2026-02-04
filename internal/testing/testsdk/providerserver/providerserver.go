@@ -1490,7 +1490,7 @@ func (s ProviderServer) ReadStateBytes(ctx context.Context, req *tfprotov6.ReadS
 					TotalLength: totalLength,
 					Range: tfprotov6.StateByteRange{
 						Start: int64(rangeStart),
-						End:   int64(rangeStart + byteCount),
+						End:   int64(rangeStart + byteCount - 1),
 					},
 				},
 			}

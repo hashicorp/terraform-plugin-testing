@@ -407,6 +407,11 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			logging.HelperResourceTrace(ctx, "TestStep is StateStore mode")
 
 			err := testStepNewStateStore(ctx, t, wd, step, providers, cfg)
+			if err == nil && step.VerifyStateStoreLock {
+				logging.HelperResourceTrace(ctx, "TestStep is running VerifyStateStoreLock logic")
+				err = testStepVerifyStateStoreLock(ctx, t, step, providers, cfg, helper)
+			}
+
 			if err != nil {
 				// Ensure the TestStep doesn't run any Terraform commands that expect the backend/state store to be initialized
 				initializationErrorOccurred = true
