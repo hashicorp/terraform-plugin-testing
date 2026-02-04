@@ -510,6 +510,14 @@ func TestTestStepValidate(t *testing.T) {
 			testStepValidateRequest: testStepValidateRequest{},
 			expectedError:           fmt.Errorf("TestStep missing Config or ConfigDirectory or ConfigFile or ImportState or RefreshState"),
 		},
+		"verify-state-store-without-state-store-mode": {
+			testStep: TestStep{
+				VerifyStateStoreLock: true,
+			},
+			testStepConfig:          "# not empty",
+			testStepValidateRequest: testStepValidateRequest{},
+			expectedError:           fmt.Errorf("TestStep StateStore field must be set to true when VerifyStateStoreLock is true"),
+		},
 	}
 
 	for name, test := range tests {

@@ -860,6 +860,15 @@ type TestStep struct {
 	//   - Can read and write state
 	//   - Supports workspaces (creating and deleting)
 	StateStore bool
+
+	// VerifyStateStoreLock is used in combination with the StateStore mode and runs various Terraform CLI commands that test
+	// that a state store implementation in a provider supports locking and unlocking.
+	//
+	// VerifyStateStoreLock asserts that the provided state store:
+	//   - Supports locking, acquired during `terraform apply`
+	//   - Prevents clients from acquiring a lock for an already locked state by returning an error message.
+	//   - Supports unlocking, by releasing a previously locked state after an operation is complete.
+	VerifyStateStoreLock bool
 }
 
 // ConfigPlanChecks defines the different points in a Config TestStep when plan checks can be run.
