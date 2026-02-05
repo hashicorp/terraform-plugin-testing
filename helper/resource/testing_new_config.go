@@ -471,7 +471,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		logging.HelperResourceDebug(ctx, "Called TestCase PostApplyFunc")
 	}
 
-	if refreshAfterApply && !step.Destroy && !step.PlanOnly {
+	if refreshAfterApply && !step.Destroy && !step.PlanOnly && !step.ExpectNonEmptyPlan {
 		if len(c.Steps) > stepIndex+1 {
 			// If the next step is a refresh, then we have no need to refresh here
 			if !c.Steps[stepIndex+1].RefreshState {
