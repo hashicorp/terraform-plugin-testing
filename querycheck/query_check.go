@@ -32,7 +32,13 @@ type CheckQueryRequest struct {
 	Query []tfjson.ListResourceFoundData
 
 	// QuerySummary contains a summary of the completed query operation
+	//
+	// Deprecated: QuerySummary contains incomplete information when multiple list blocks are specified in a query.
+	// QuerySummaries should be used instead.
 	QuerySummary *tfjson.ListCompleteData
+
+	// QuerySummaries contains the summaries of each list block in a query operation
+	QuerySummaries []tfjson.ListCompleteData
 }
 
 // CheckQueryResponse is a response to an invoke of the CheckQuery function.
