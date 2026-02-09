@@ -25,6 +25,7 @@ func RunQueryChecks(ctx context.Context, t testing.T, query []tfjson.LogMsg, que
 	}
 
 	found := make([]tfjson.ListResourceFoundData, 0)
+	summaries := make([]tfjson.ListCompleteData, 0)
 	summary := tfjson.ListCompleteData{}
 
 	for _, msg := range query {
@@ -32,6 +33,7 @@ func RunQueryChecks(ctx context.Context, t testing.T, query []tfjson.LogMsg, que
 		case tfjson.ListResourceFoundMessage:
 			found = append(found, v.ListResourceFound)
 		case tfjson.ListCompleteMessage:
+			summaries = append(summaries, v.ListComplete)
 			summary = v.ListComplete
 			// TODO diagnostics and errors?
 		default:
@@ -51,8 +53,9 @@ func RunQueryChecks(ctx context.Context, t testing.T, query []tfjson.LogMsg, que
 		}
 		resp := querycheck.CheckQueryResponse{}
 		queryCheck.CheckQuery(ctx, querycheck.CheckQueryRequest{
-			Query:        reqQueryData,
-			QuerySummary: &summary,
+			Query:          reqQueryData,
+			QuerySummary:   &summary,
+			QuerySummaries: summaries,
 		}, &resp)
 
 		result = append(result, resp.Error)

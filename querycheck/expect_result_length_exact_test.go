@@ -73,6 +73,66 @@ func TestResultLengthExact(t *testing.T) {
 	})
 }
 
+func TestResultLengthExact_Multiple(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_14_0),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				ListResources: map[string]testprovider.ListResource{
+					"examplecloud_containerette": examplecloudListResource(),
+					"examplecloud_bananette":     examplecloudListResourceBananette(),
+				},
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_containerette": examplecloudResource(),
+					"examplecloud_bananette":     examplecloudResourceBananette(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{ // config mode step 1 needs tf file with terraform providers block
+				// this step should provision all the resources that the query is support to list
+				// for simplicity we're only "provisioning" one here
+				Config: `
+				resource "examplecloud_containerette" "primary" {
+					name                = "banana"
+					resource_group_name = "foo"
+					location  			= "westeurope"
+			
+					instances = 5
+				}`,
+			},
+			{
+				Query: true,
+				Config: `
+				provider "examplecloud" {}
+				list "examplecloud_containerette" "test" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "foo"
+ 					}
+				}
+				list "examplecloud_bananette" "test" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "bar"
+ 					}
+				}
+				`,
+				QueryResultChecks: []querycheck.QueryResultCheck{
+					querycheck.ExpectLength("examplecloud_containerette.test", 6),
+					querycheck.ExpectLength("examplecloud_bananette.test", 1),
+				},
+			},
+		},
+	})
+}
+
 func TestResultLengthExact_WrongAmount(t *testing.T) {
 	t.Parallel()
 
@@ -126,6 +186,64 @@ func TestResultLengthExact_WrongAmount(t *testing.T) {
 					querycheck.ExpectLength("examplecloud_containerette.test", 2),
 				},
 				ExpectError: regexp.MustCompile("number of found resources 2 - expected but got 6."),
+			},
+		},
+	})
+}
+
+func TestResultLengthExact_WrongResourceAddress(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_14_0),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				ListResources: map[string]testprovider.ListResource{
+					"examplecloud_containerette": examplecloudListResource(),
+				},
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_containerette": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{ // config mode step 1 needs tf file with terraform providers block
+				// this step should provision all the resources that the query is support to list
+				// for simplicity we're only "provisioning" one here
+				Config: `
+				resource "examplecloud_containerette" "primary" {
+					name                = "banana"
+					resource_group_name = "foo"
+					location  			= "westeurope"
+			
+					instances = 5
+				}`,
+			},
+			{
+				Query: true,
+				Config: `
+				provider "examplecloud" {}
+				list "examplecloud_containerette" "test" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "foo"
+ 					}
+				}
+				list "examplecloud_containerette" "test2" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "bar"
+ 					}
+				}
+				`,
+				QueryResultChecks: []querycheck.QueryResultCheck{
+					querycheck.ExpectLength("examplecloud_containerette.test3", 6),
+				},
+				ExpectError: regexp.MustCompile("the list block examplecloud_containerette.test3 was not found in the query results"),
 			},
 		},
 	})
