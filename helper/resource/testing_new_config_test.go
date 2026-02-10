@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
@@ -905,4 +906,59 @@ func Test_PostApplyFunc_Called(t *testing.T) {
 	if !spy1.called {
 		t.Error("expected ConfigStateChecks spy1 to be called at least once")
 	}
+}
+
+// This regression test ensures that the combination of Config, Destroy, and Check never result in
+// a "Saved Plan is Stale" error message, which occurs when the state serial does not match the plan.
+//
+// This can occur when the refresh that is only done to produce the shimmed "Check" state produces a new state serial.
+// Running a fresh plan after refreshing solves that issue, which was introduced in: https://github.com/hashicorp/terraform-plugin-testing/pull/602
+func Test_Destroy_Checks_Avoid_Stale_Plan(t *testing.T) {
+	t.Parallel()
+
+	UnitTest(t, TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"test": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"test_resource": {
+						CreateResponse: &resource.CreateResponse{
+							NewState: tftypes.NewValue(
+								tftypes.Object{
+									AttributeTypes: map[string]tftypes.Type{
+										"id": tftypes.String,
+									},
+								},
+								map[string]tftypes.Value{
+									"id": tftypes.NewValue(tftypes.String, "test"),
+								},
+							),
+						},
+						SchemaResponse: &resource.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "id",
+											Type:     tftypes.String,
+											Computed: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}),
+		},
+		Steps: []TestStep{
+			{
+				Config:  `resource "test_resource" "test" {}`,
+				Destroy: true,
+				Check:   func(s *terraform.State) error { return nil },
+			},
+		},
+	})
 }
