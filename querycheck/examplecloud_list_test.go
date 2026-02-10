@@ -231,3 +231,59 @@ func examplecloudListResource() testprovider.ListResource {
 		},
 	}
 }
+
+func examplecloudListResourceBananette() testprovider.ListResource {
+	return testprovider.ListResource{
+		IncludeResource: true,
+		SchemaResponse: &list.SchemaResponse{
+			Schema: &tfprotov6.Schema{
+				Block: &tfprotov6.SchemaBlock{
+					Attributes: []*tfprotov6.SchemaAttribute{
+						{
+							Name:     "resource_group_name",
+							Type:     tftypes.String,
+							Required: true,
+						},
+					},
+				},
+			},
+		},
+		ListResultsStream: &list.ListResultsStream{
+			Results: func(push func(list.ListResult) bool) {
+				push(list.ListResult{
+					Resource: teststep.Pointer(tftypes.NewValue(
+						tftypes.Object{
+							AttributeTypes: map[string]tftypes.Type{
+								"id":                  tftypes.String,
+								"location":            tftypes.String,
+								"name":                tftypes.String,
+								"resource_group_name": tftypes.String,
+								"instances":           tftypes.Number,
+							},
+						},
+						map[string]tftypes.Value{
+							"id":                  tftypes.NewValue(tftypes.String, "foo/banane"),
+							"location":            tftypes.NewValue(tftypes.String, "westeurope"),
+							"name":                tftypes.NewValue(tftypes.String, "banane"),
+							"resource_group_name": tftypes.NewValue(tftypes.String, "foo"),
+							"instances":           tftypes.NewValue(tftypes.Number, 5),
+						},
+					)),
+					Identity: teststep.Pointer(tftypes.NewValue(
+						tftypes.Object{
+							AttributeTypes: map[string]tftypes.Type{
+								"resource_group_name": tftypes.String,
+								"name":                tftypes.String,
+							},
+						},
+						map[string]tftypes.Value{
+							"resource_group_name": tftypes.NewValue(tftypes.String, "foo"),
+							"name":                tftypes.NewValue(tftypes.String, "banane"),
+						},
+					)),
+					DisplayName: "banane",
+				})
+			},
+		},
+	}
+}
