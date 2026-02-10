@@ -18,7 +18,7 @@ type expectLength struct {
 
 // CheckQuery implements the query check logic.
 func (e expectLength) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
-	if req.QuerySummary == nil && req.QuerySummaries == nil {
+	if req.QuerySummary == nil && len(req.QuerySummaries) == 0 {
 		resp.Error = fmt.Errorf("no query summary information available")
 		return
 	}
