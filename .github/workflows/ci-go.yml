@@ -43,6 +43,7 @@ jobs:
         env:
           TF_ACC: "1"
           TF_ACC_LOG: "TRACE"
+          TF_LOG: "TRACE"
       - name: Remove wildcard suffix from TF version
         id: tf_version
         run: |
