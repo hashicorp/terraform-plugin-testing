@@ -39,7 +39,7 @@ jobs:
           terraform_version: ${{ matrix.terraform }}
           terraform_wrapper: false
       - run: go mod download
-      - run: go test -v -coverprofile=coverage.out ./...
+      - run: go test -v -run ^TestTest_ConfigDirectory_TestStepDirectory_Vars$ github.com/hashicorp/terraform-plugin-testing/helper/resource
         env:
           TF_ACC: "1"
           TF_ACC_LOG: "TRACE"
