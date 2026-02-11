@@ -42,6 +42,7 @@ jobs:
       - run: go test -v -coverprofile=coverage.out ./...
         env:
           TF_ACC: "1"
+          TF_ACC_LOG: "TRACE"
       - name: Remove wildcard suffix from TF version
         id: tf_version
         run: |
