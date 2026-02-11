@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: 'querycheck: Fix behaviour of `ExpectLengthAtLeast` querycheck to match on the provided resource address before comparing the count'
+time: 2026-02-11T12:28:25.372146+01:00
+custom:
+    Issue: "607"
