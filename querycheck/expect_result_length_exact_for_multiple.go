@@ -9,21 +9,22 @@ import (
 	"regexp"
 )
 
-var _ QueryResultCheck = regexExpectLength{}
+var _ QueryResultCheck = expectLengthForMultiple{}
 
-type regexExpectLength struct {
+type expectLengthForMultiple struct {
 	regex *regexp.Regexp
 	check int
 }
 
 // CheckQuery implements the query check logic.
-func (e regexExpectLength) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
+func (e expectLengthForMultiple) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
 	if req.QuerySummary == nil && req.QuerySummaries == nil {
 		resp.Error = fmt.Errorf("no query summary information available")
 		return
 	}
 
 	total := 0
+	matchFound := false
 	for _, summary := range req.QuerySummaries {
 		matches, err := regexp.MatchString(e.regex.String(), summary.Address)
 		if err != nil {
@@ -33,21 +34,26 @@ func (e regexExpectLength) CheckQuery(_ context.Context, req CheckQueryRequest, 
 
 		if matches {
 			total += summary.Total
+			matchFound = true
 		}
 	}
 
-	if total == e.check {
+	if !matchFound {
+		resp.Error = fmt.Errorf("no list resources matching the provided regex pattern %s were found in the query results", e.regex.String())
 		return
 	}
 
-	resp.Error = fmt.Errorf("number of found resources matching regex %s - expected %v but got %v.", e.regex.String(), e.check, total)
+	if total != e.check {
+		resp.Error = fmt.Errorf("number of found resources %v - expected but got %v.", e.check, total)
+	}
 }
 
-// ExpectLength returns a query check that asserts that the length of the query result is exactly the given value.
+// ExpectLengthForMultiple returns a query check that asserts that the sum of query result lengths
+// produced by multiple list blocks is exactly the given value.
 //
 // This query check can only be used with managed resources that support query. Query is only supported in Terraform v1.14+
-func RegexExpectLength(regex *regexp.Regexp, length int) QueryResultCheck {
-	return regexExpectLength{
+func ExpectLengthForMultiple(regex *regexp.Regexp, length int) QueryResultCheck {
+	return expectLengthForMultiple{
 		regex: regex,
 		check: length,
 	}

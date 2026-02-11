@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func TestResultLengthExactRegex_Multiple(t *testing.T) {
+func TestResultLengthExactForMultiple(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -85,14 +85,14 @@ func TestResultLengthExactRegex_Multiple(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.RegexExpectLength(regexp.MustCompile("examplecloud_(.*)ette.test[1-9]"), 12),
+					querycheck.ExpectLengthForMultiple(regexp.MustCompile("examplecloud_(.*)ette.test[1-9]"), 12),
 				},
 			},
 		},
 	})
 }
 
-func TestResultLengthExactRegex_WrongAmount(t *testing.T) {
+func TestResultLengthExactForMultiple_WrongAmount(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -162,9 +162,87 @@ func TestResultLengthExactRegex_WrongAmount(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.RegexExpectLength(regexp.MustCompile("examplecloud_(.*)ette.test[1-9]"), 10),
+					querycheck.ExpectLengthForMultiple(regexp.MustCompile("examplecloud_(.*)ette.test[1-9]"), 10),
 				},
-				ExpectError: regexp.MustCompile("number of found resources matching regex .* - expected 10 but got 12."),
+				ExpectError: regexp.MustCompile("number of found resources 10 - expected but got 12."),
+			},
+		},
+	})
+}
+
+func TestResultLengthExactForMultiple_NoMatches(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_14_0),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				ListResources: map[string]testprovider.ListResource{
+					"examplecloud_containerette": examplecloudListResource(),
+					"examplecloud_bananette":     examplecloudListResourceBananette(),
+				},
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_containerette": examplecloudResource(),
+					"examplecloud_bananette":     examplecloudResourceBananette(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{ // config mode step 1 needs tf file with terraform providers block
+				// this step should provision all the resources that the query is support to list
+				// for simplicity we're only "provisioning" one here
+				Config: `
+				resource "examplecloud_containerette" "primary" {
+					name                = "banana"
+					resource_group_name = "foo"
+					location  			= "westeurope"
+			
+					instances = 5
+				}`,
+			},
+			{
+				Query: true,
+				Config: `
+				provider "examplecloud" {}
+
+				list "examplecloud_containerette" "test" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "foo"
+ 					}
+				}
+
+				list "examplecloud_bananette" "test" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "bar"
+ 					}
+				}
+
+				list "examplecloud_containerette" "test2" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "foo"
+ 					}
+				}
+
+				list "examplecloud_containerette" "test3" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "foo"
+ 					}
+				}
+				`,
+				QueryResultChecks: []querycheck.QueryResultCheck{
+					querycheck.ExpectLengthForMultiple(regexp.MustCompile("examplecloud_(.*)ette.test[4-9]"), 10),
+				},
+				ExpectError: regexp.MustCompile("no list resources matching the provided regex pattern .* were found in the query results"),
 			},
 		},
 	})
