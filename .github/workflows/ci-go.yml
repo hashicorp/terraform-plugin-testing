@@ -39,11 +39,9 @@ jobs:
           terraform_version: ${{ matrix.terraform }}
           terraform_wrapper: false
       - run: go mod download
-      - run: go test -v -coverprofile=coverage.out -run ^TestTest_ConfigDirectory_TestStepDirectory_Vars$ github.com/hashicorp/terraform-plugin-testing/helper/resource
+      - run: go test -v -coverprofile=coverage.out ./...
         env:
           TF_ACC: "1"
-          TF_ACC_LOG: "TRACE"
-          TF_LOG: "TRACE"
       - name: Remove wildcard suffix from TF version
         id: tf_version
         run: |
