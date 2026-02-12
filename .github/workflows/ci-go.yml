@@ -42,6 +42,7 @@ jobs:
       - run: go test -v -coverprofile=coverage.out ./...
         env:
           TF_ACC: "1"
+          TF_LOG: "TRACE"
           TF_ACC_LOG: "TRACE"
           TF_LOG_PATH_MASK: "${{ github.workspace }}/%s.log"
       - name: Upload test logs on failure
