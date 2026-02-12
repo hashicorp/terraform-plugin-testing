@@ -43,7 +43,7 @@ jobs:
         env:
           TF_ACC: "1"
           TF_ACC_LOG: "TRACE"
-          TF_LOG_PATH_MASK: "./%s.log"
+          TF_LOG_PATH_MASK: "${{ github.workspace }}/%s.log"
       - name: Upload test logs on failure
         if: failure()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
