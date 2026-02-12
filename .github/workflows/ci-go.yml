@@ -48,7 +48,7 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: go-${{ matrix.go-version }}-terraform-${{ matrix.terraform }}-test-logs
-          path: ./*.log
+          path: "**/*.log"
           if-no-files-found: warn
       - name: Remove wildcard suffix from TF version
         id: tf_version
