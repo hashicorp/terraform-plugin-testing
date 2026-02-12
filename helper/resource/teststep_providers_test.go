@@ -3483,7 +3483,8 @@ func TestTest_ConfigDirectory_TestStepDirectory(t *testing.T) {
 // configuration files that are copied from the test step directory in test step 1
 // are removed prior to running test step 2.
 func TestTest_ConfigDirectory_TestStepDirectory_StepNotHardcoded(t *testing.T) {
-	t.Parallel()
+	t.Setenv("TF_ACC_LOG", "TRACE")
+	t.Setenv("TF_ACC_LOG_PATH", "./TestTest_ConfigDirectory_TestStepDirectory_StepNotHardcoded.log")
 
 	Test(t, TestCase{
 		Steps: []TestStep{
@@ -3530,7 +3531,8 @@ func TestTest_ConfigDirectory_StaticDirectory_MultipleFiles(t *testing.T) {
 }
 
 func TestTest_ConfigDirectory_StaticDirectory_MultipleFiles_Vars(t *testing.T) {
-	t.Parallel()
+	t.Setenv("TF_ACC_LOG", "TRACE")
+	t.Setenv("TF_ACC_LOG_PATH", "./TestTest_ConfigDirectory_StaticDirectory_MultipleFiles_Vars.log")
 
 	Test(t, TestCase{
 		Steps: []TestStep{
@@ -4044,7 +4046,7 @@ func TestTest_ConfigFile_TestNameFile(t *testing.T) {
 
 func TestTest_ConfigFile_TestNameFile_Vars(t *testing.T) {
 	t.Setenv("TF_ACC_LOG", "TRACE")
-	t.Setenv("TF_ACC_LOG_PATH", "./config_test_out.log")
+	t.Setenv("TF_ACC_LOG_PATH", "./TestTest_ConfigFile_TestNameFile_Vars.log")
 
 	Test(t, TestCase{
 		Steps: []TestStep{

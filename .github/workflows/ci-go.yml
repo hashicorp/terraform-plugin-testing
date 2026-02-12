@@ -26,6 +26,7 @@ jobs:
     name: test (Go ${{ matrix.go-version }} / TF ${{ matrix.terraform }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         go-version: [ '1.25', '1.24' ]
         terraform: ${{ fromJSON(vars.TF_VERSIONS_PROTOCOL_V5) }}
@@ -42,6 +43,13 @@ jobs:
       - run: go test -v -coverprofile=coverage.out ./...
         env:
           TF_ACC: "1"
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: go-${{ matrix.go-version }}-terraform-${{ matrix.terraform }}-test-logs
+          path: ./*.log
+          if-no-files-found: warn
       - name: Remove wildcard suffix from TF version
         id: tf_version
         run: |
