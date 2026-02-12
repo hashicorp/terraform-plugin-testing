@@ -42,7 +42,7 @@ jobs:
       - run: go test -v -coverprofile=coverage.out ./...
         env:
           TF_ACC: "1"
-          TF_ACC_LOG: "DEBUG"
+          TF_ACC_LOG: "TRACE"
           TF_LOG_PATH_MASK: "./%s.log"
       - name: Upload test logs on failure
         if: failure()
