@@ -4043,7 +4043,8 @@ func TestTest_ConfigFile_TestNameFile(t *testing.T) {
 }
 
 func TestTest_ConfigFile_TestNameFile_Vars(t *testing.T) {
-	t.Parallel()
+	t.Setenv("TF_ACC_LOG", "TRACE")
+	t.Setenv("TF_ACC_LOG_PATH", "./config_test_out.log")
 
 	Test(t, TestCase{
 		Steps: []TestStep{
