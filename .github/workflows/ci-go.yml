@@ -26,6 +26,7 @@ jobs:
     name: test (Go ${{ matrix.go-version }} / TF ${{ matrix.terraform }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         go-version: [ '1.25', '1.24' ]
         terraform: ${{ fromJSON(vars.TF_VERSIONS_PROTOCOL_V5) }}
