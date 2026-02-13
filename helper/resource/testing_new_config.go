@@ -191,7 +191,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				return wd.CreatePlan(ctx, opts...)
 			})
 			if err != nil {
-				return fmt.Errorf("Error running pre-apply plan: %w", err)
+				return fmt.Errorf("Error running destroy plan after step.Check shimmed state was retrieved: %w", err)
 			}
 		}
 
