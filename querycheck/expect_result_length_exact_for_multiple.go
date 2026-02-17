@@ -9,16 +9,16 @@ import (
 	"regexp"
 )
 
-var _ QueryResultCheck = expectLengthForMultiple{}
+var _ QueryResultCheck = expectTotalLengthForMatching{}
 
-type expectLengthForMultiple struct {
+type expectTotalLengthForMatching struct {
 	regex *regexp.Regexp
 	check int
 }
 
 // CheckQuery implements the query check logic.
-func (e expectLengthForMultiple) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
-	if req.QuerySummary == nil && req.QuerySummaries == nil {
+func (e expectTotalLengthForMatching) CheckQuery(_ context.Context, req CheckQueryRequest, resp *CheckQueryResponse) {
+	if req.QuerySummary == nil && len(req.QuerySummaries) == 0 {
 		resp.Error = fmt.Errorf("no query summary information available")
 		return
 	}
@@ -26,13 +26,7 @@ func (e expectLengthForMultiple) CheckQuery(_ context.Context, req CheckQueryReq
 	total := 0
 	matchFound := false
 	for _, summary := range req.QuerySummaries {
-		matches, err := regexp.MatchString(e.regex.String(), summary.Address)
-		if err != nil {
-			resp.Error = fmt.Errorf("invalid regex pattern provided: %s, error: %s", e.regex.String(), err)
-			return
-		}
-
-		if matches {
+		if e.regex.MatchString(summary.Address) {
 			total += summary.Total
 			matchFound = true
 		}
@@ -44,16 +38,16 @@ func (e expectLengthForMultiple) CheckQuery(_ context.Context, req CheckQueryReq
 	}
 
 	if total != e.check {
-		resp.Error = fmt.Errorf("number of found resources %v - expected but got %v.", e.check, total)
+		resp.Error = fmt.Errorf("expected total of found resources to be %d, got %d", e.check, total)
 	}
 }
 
-// ExpectLengthForMultiple returns a query check that asserts that the sum of query result lengths
+// ExpectTotalLengthForMatching returns a query check that asserts that the sum of query result lengths
 // produced by multiple list blocks is exactly the given value.
 //
 // This query check can only be used with managed resources that support query. Query is only supported in Terraform v1.14+
-func ExpectLengthForMultiple(regex *regexp.Regexp, length int) QueryResultCheck {
-	return expectLengthForMultiple{
+func ExpectTotalLengthForMatching(regex *regexp.Regexp, length int) QueryResultCheck {
+	return expectTotalLengthForMatching{
 		regex: regex,
 		check: length,
 	}
