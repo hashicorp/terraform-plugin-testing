@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func TestResultLengthExactForMultiple(t *testing.T) {
+func TestResultTotalLengthForMatching(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -92,7 +92,7 @@ func TestResultLengthExactForMultiple(t *testing.T) {
 	})
 }
 
-func TestResultLengthExactForMultiple_WrongAmount(t *testing.T) {
+func TestResultTotalLengthForMatching_WrongAmount(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -164,13 +164,13 @@ func TestResultLengthExactForMultiple_WrongAmount(t *testing.T) {
 				QueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectTotalLengthForMatching(regexp.MustCompile("examplecloud_(.*)ette.test[1-9]"), 10),
 				},
-				ExpectError: regexp.MustCompile("number of found resources 10 - expected but got 12."),
+				ExpectError: regexp.MustCompile("expected total of found resources to be 10, got 12"),
 			},
 		},
 	})
 }
 
-func TestResultLengthExactForMultiple_NoMatches(t *testing.T) {
+func TestResultTotalLengthForMatching_NoMatches(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
