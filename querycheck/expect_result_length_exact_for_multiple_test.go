@@ -85,7 +85,7 @@ func TestResultLengthExactForMultiple(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectLengthForMultiple(regexp.MustCompile("examplecloud_(.*)ette.test[1-9]"), 12),
+					querycheck.ExpectTotalLengthForMatching(regexp.MustCompile("examplecloud_(.*)ette.test[1-9]"), 12),
 				},
 			},
 		},
@@ -162,7 +162,7 @@ func TestResultLengthExactForMultiple_WrongAmount(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectLengthForMultiple(regexp.MustCompile("examplecloud_(.*)ette.test[1-9]"), 10),
+					querycheck.ExpectTotalLengthForMatching(regexp.MustCompile("examplecloud_(.*)ette.test[1-9]"), 10),
 				},
 				ExpectError: regexp.MustCompile("number of found resources 10 - expected but got 12."),
 			},
@@ -240,7 +240,7 @@ func TestResultLengthExactForMultiple_NoMatches(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectLengthForMultiple(regexp.MustCompile("examplecloud_(.*)ette.test[4-9]"), 10),
+					querycheck.ExpectTotalLengthForMatching(regexp.MustCompile("examplecloud_(.*)ette.test[4-9]"), 10),
 				},
 				ExpectError: regexp.MustCompile("no list resources matching the provided regex pattern .* were found in the query results"),
 			},
