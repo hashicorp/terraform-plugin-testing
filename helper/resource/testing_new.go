@@ -290,6 +290,10 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		}
 
 		if step.ImportState {
+			// TODO if step.GenerateConfig is true:
+			// 1. update the resource address in the import block
+			// 2. Run plan with -generate-config-out option
+
 			logging.HelperResourceTrace(ctx, "TestStep is ImportState mode")
 
 			err := testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, providers, stepNumber)

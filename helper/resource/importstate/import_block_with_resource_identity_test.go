@@ -44,6 +44,7 @@ func TestImportBlock_WithResourceIdentity(t *testing.T) {
 				ResourceName:    "examplecloud_container.test",
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithResourceIdentity,
+				GenerateConfig:  true,
 			},
 		},
 	})
