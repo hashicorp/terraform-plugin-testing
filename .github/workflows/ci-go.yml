@@ -1,6 +1,8 @@
 # Continuous integration handling for Go
 name: ci-go
 
+# test
+
 on:
   pull_request:
     paths:
