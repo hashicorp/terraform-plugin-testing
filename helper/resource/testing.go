@@ -869,6 +869,10 @@ type TestStep struct {
 	//   - Prevents clients from acquiring a lock for an already locked state by returning an error message.
 	//   - Supports unlocking, by releasing a previously locked state after an operation is complete.
 	VerifyStateStoreLock bool
+
+	// GenerateConfig will generate resource blocks when set to true. This can
+	// only be used with the `ImportState` and `Query` testing modes.
+	GenerateConfig bool
 }
 
 // ConfigPlanChecks defines the different points in a Config TestStep when plan checks can be run.

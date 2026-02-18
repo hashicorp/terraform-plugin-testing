@@ -62,6 +62,10 @@ func (s Protov5ProviderServer) ConfigureProvider(ctx context.Context, req *tfpro
 	return &tfprotov5.ConfigureProviderResponse{}, nil
 }
 
+func (s Protov5ProviderServer) GenerateResourceConfig(ctx context.Context, req *tfprotov5.GenerateResourceConfigRequest) (*tfprotov5.GenerateResourceConfigResponse, error) {
+	return &tfprotov5.GenerateResourceConfigResponse{}, nil
+}
+
 func (s Protov5ProviderServer) GetProviderSchema(ctx context.Context, req *tfprotov5.GetProviderSchemaRequest) (*tfprotov5.GetProviderSchemaResponse, error) {
 	providerReq := provider.Protov5SchemaRequest{}
 	providerResp := &provider.Protov5SchemaResponse{}
