@@ -1,0 +1,5 @@
+kind: FEATURES
+body: 'querycheck: Add new `ExpectLengthForMultiple` querycheck for validating the number of found resources for multiple list blocks'
+time: 2026-02-11T12:28:45.926523+01:00
+custom:
+    Issue: "607"

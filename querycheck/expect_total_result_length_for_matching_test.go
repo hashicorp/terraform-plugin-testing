@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func TestResultLengthAtLeast(t *testing.T) {
+func TestResultTotalLengthForMatching(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -26,57 +26,7 @@ func TestResultLengthAtLeast(t *testing.T) {
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				ListResources: map[string]testprovider.ListResource{
 					"examplecloud_containerette": examplecloudListResource(),
-				},
-				Resources: map[string]testprovider.Resource{
-					"examplecloud_containerette": examplecloudResource(),
-				},
-			}),
-		},
-		Steps: []r.TestStep{
-			{ // config mode step 1 needs tf file with terraform providers block
-				// this step should provision all the resources that the query is support to list
-				// for simplicity we're only "provisioning" one here
-				Config: `
-				resource "examplecloud_containerette" "primary" {
-					name                = "banana"
-					resource_group_name = "foo"
-					location  			= "westeurope"
-			
-					instances = 5
-				}`,
-			},
-			{
-				Query: true,
-				Config: `
-				provider "examplecloud" {}
-				list "examplecloud_containerette" "test" {
-					provider = examplecloud
-			
-					config {
-						resource_group_name = "foo"
- 					}
-				}
-				`,
-				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectLengthAtLeast("examplecloud_containerette.test", 2),
-				},
-			},
-		},
-	})
-}
-
-func TestResultLengthAtLeast_Multiple(t *testing.T) {
-	t.Parallel()
-
-	r.UnitTest(t, r.TestCase{
-		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_14_0),
-		},
-		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
-				ListResources: map[string]testprovider.ListResource{
-					"examplecloud_containerette": examplecloudListResource(),
-					"examplecloud_bananette":     examplecloudListResource(),
+					"examplecloud_bananette":     examplecloudListResourceBananette(),
 				},
 				Resources: map[string]testprovider.Resource{
 					"examplecloud_containerette": examplecloudResource(),
@@ -101,6 +51,7 @@ func TestResultLengthAtLeast_Multiple(t *testing.T) {
 				Query: true,
 				Config: `
 				provider "examplecloud" {}
+
 				list "examplecloud_containerette" "test" {
 					provider = examplecloud
 			
@@ -108,6 +59,7 @@ func TestResultLengthAtLeast_Multiple(t *testing.T) {
 						resource_group_name = "foo"
  					}
 				}
+
 				list "examplecloud_bananette" "test" {
 					provider = examplecloud
 			
@@ -115,17 +67,32 @@ func TestResultLengthAtLeast_Multiple(t *testing.T) {
 						resource_group_name = "bar"
  					}
 				}
+
+				list "examplecloud_containerette" "test2" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "foo"
+ 					}
+				}
+
+				list "examplecloud_containerette" "test3" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "foo"
+ 					}
+				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectLengthAtLeast("examplecloud_containerette.test", 6),
-					querycheck.ExpectLengthAtLeast("examplecloud_bananette.test", 2),
+					querycheck.ExpectTotalLengthForMatching(regexp.MustCompile("examplecloud_(.*)ette.test[1-9]"), 12),
 				},
 			},
 		},
 	})
 }
 
-func TestResultLengthAtLeast_TooFewResults(t *testing.T) {
+func TestResultTotalLengthForMatching_WrongAmount(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -136,9 +103,11 @@ func TestResultLengthAtLeast_TooFewResults(t *testing.T) {
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				ListResources: map[string]testprovider.ListResource{
 					"examplecloud_containerette": examplecloudListResource(),
+					"examplecloud_bananette":     examplecloudListResourceBananette(),
 				},
 				Resources: map[string]testprovider.Resource{
 					"examplecloud_containerette": examplecloudResource(),
+					"examplecloud_bananette":     examplecloudResourceBananette(),
 				},
 			}),
 		},
@@ -159,7 +128,32 @@ func TestResultLengthAtLeast_TooFewResults(t *testing.T) {
 				Query: true,
 				Config: `
 				provider "examplecloud" {}
+
 				list "examplecloud_containerette" "test" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "foo"
+ 					}
+				}
+
+				list "examplecloud_bananette" "test" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "bar"
+ 					}
+				}
+
+				list "examplecloud_containerette" "test2" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "foo"
+ 					}
+				}
+
+				list "examplecloud_containerette" "test3" {
 					provider = examplecloud
 			
 					config {
@@ -168,15 +162,15 @@ func TestResultLengthAtLeast_TooFewResults(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectLengthAtLeast("examplecloud_containerette.test", 8),
+					querycheck.ExpectTotalLengthForMatching(regexp.MustCompile("examplecloud_(.*)ette.test[1-9]"), 10),
 				},
-				ExpectError: regexp.MustCompile("Query result of at least length 8 - expected but got 6."),
+				ExpectError: regexp.MustCompile("expected total of found resources to be 10, got 12"),
 			},
 		},
 	})
 }
 
-func TestResultLengthAtLeast_WrongResourceAddress(t *testing.T) {
+func TestResultTotalLengthForMatching_NoMatches(t *testing.T) {
 	t.Parallel()
 
 	r.UnitTest(t, r.TestCase{
@@ -187,9 +181,11 @@ func TestResultLengthAtLeast_WrongResourceAddress(t *testing.T) {
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				ListResources: map[string]testprovider.ListResource{
 					"examplecloud_containerette": examplecloudListResource(),
+					"examplecloud_bananette":     examplecloudListResourceBananette(),
 				},
 				Resources: map[string]testprovider.Resource{
 					"examplecloud_containerette": examplecloudResource(),
+					"examplecloud_bananette":     examplecloudResourceBananette(),
 				},
 			}),
 		},
@@ -210,7 +206,32 @@ func TestResultLengthAtLeast_WrongResourceAddress(t *testing.T) {
 				Query: true,
 				Config: `
 				provider "examplecloud" {}
+
 				list "examplecloud_containerette" "test" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "foo"
+ 					}
+				}
+
+				list "examplecloud_bananette" "test" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "bar"
+ 					}
+				}
+
+				list "examplecloud_containerette" "test2" {
+					provider = examplecloud
+			
+					config {
+						resource_group_name = "foo"
+ 					}
+				}
+
+				list "examplecloud_containerette" "test3" {
 					provider = examplecloud
 			
 					config {
@@ -219,9 +240,9 @@ func TestResultLengthAtLeast_WrongResourceAddress(t *testing.T) {
 				}
 				`,
 				QueryResultChecks: []querycheck.QueryResultCheck{
-					querycheck.ExpectLengthAtLeast("examplecloud_containerette.test2", 8),
+					querycheck.ExpectTotalLengthForMatching(regexp.MustCompile("examplecloud_(.*)ette.test[4-9]"), 10),
 				},
-				ExpectError: regexp.MustCompile("the list block examplecloud_containerette.test2 was not found in the query results"),
+				ExpectError: regexp.MustCompile("no list resources matching the provided regex pattern .* were found in the query results"),
 			},
 		},
 	})
