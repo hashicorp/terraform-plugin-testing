@@ -44,21 +44,27 @@ func DiscoverConfig(ctx context.Context, sourceDir string) (*Config, error) {
 	}
 
 	var sources []src.Source
+	// Upstream hc-install does not provide a String() method to identify the source, store details of each source to contextualize error during `installer.Ensure`
+	var sourceDetails []string
+
 	switch {
 	case tfPath != "":
-		logging.HelperResourceTrace(ctx, fmt.Sprintf("Adding potential Terraform CLI source of exact path: %s", tfPath))
+		sourceDetail := fmt.Sprintf("Terraform CLI source of exact path: %s", tfPath)
+		sourceDetails = append(sourceDetails, sourceDetail)
+		logging.HelperResourceTrace(ctx, fmt.Sprintf("Adding potential %s", sourceDetail))
 
 		sources = append(sources, &fs.AnyVersion{
 			ExactBinPath: tfPath,
 		})
 	case tfVersion != "":
 		tfVersion, err := version.NewVersion(tfVersion)
-
 		if err != nil {
 			return nil, fmt.Errorf("invalid Terraform version: %w", err)
 		}
 
-		logging.HelperResourceTrace(ctx, fmt.Sprintf("Adding potential Terraform CLI source of releases.hashicorp.com exact version %q for installation in: %s", tfVersion, tfDir))
+		sourceDetail := fmt.Sprintf("Terraform CLI source of releases.hashicorp.com exact version %q for installation in: %s", tfVersion, tfDir)
+		sourceDetails = append(sourceDetails, sourceDetail)
+		logging.HelperResourceTrace(ctx, fmt.Sprintf("Adding potential %s", sourceDetail))
 
 		sources = append(sources, &releases.ExactVersion{
 			InstallDir: tfDir,
@@ -66,12 +72,18 @@ func DiscoverConfig(ctx context.Context, sourceDir string) (*Config, error) {
 			Version:    tfVersion,
 		})
 	default:
-		logging.HelperResourceTrace(ctx, "Adding potential Terraform CLI source of local filesystem PATH lookup")
-		logging.HelperResourceTrace(ctx, fmt.Sprintf("Adding potential Terraform CLI source of checkpoint.hashicorp.com latest version for installation in: %s", tfDir))
+		sourceDetail := "Terraform CLI source of local filesystem PATH lookup"
+		sourceDetails = append(sourceDetails, sourceDetail)
+		logging.HelperResourceTrace(ctx, fmt.Sprintf("Adding potential %s", sourceDetail))
 
 		sources = append(sources, &fs.AnyVersion{
 			Product: &product.Terraform,
 		})
+
+		sourceDetail = fmt.Sprintf("Terraform CLI source of checkpoint.hashicorp.com latest version for installation in: %s", tfDir)
+		sourceDetails = append(sourceDetails, sourceDetail)
+		logging.HelperResourceTrace(ctx, fmt.Sprintf("Adding potential %s", sourceDetail))
+
 		sources = append(sources, &checkpoint.LatestVersion{
 			InstallDir: tfDir,
 			Product:    product.Terraform,
@@ -81,7 +93,7 @@ func DiscoverConfig(ctx context.Context, sourceDir string) (*Config, error) {
 	installer := install.NewInstaller()
 	tfExec, err := installer.Ensure(context.Background(), sources)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find or install Terraform CLI from %+v: %w", sources, err)
+		return nil, fmt.Errorf("error ensuring Terraform CLI binary: %w -  attempted source(s): %v", err, sourceDetails)
 	}
 
 	ctx = logging.TestTerraformPathContext(ctx, tfExec)
