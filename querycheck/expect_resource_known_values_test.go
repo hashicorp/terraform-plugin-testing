@@ -154,7 +154,7 @@ func TestExpectResourceKnownValues_ValueIncorrect(t *testing.T) {
 						},
 					),
 				},
-				ExpectError: regexp.MustCompile("the following errors were found while checking values: error checking value for attribute at path: instances for resource with identity .*, err: expected value 4 for NumberExact check, got: 5;"),
+				ExpectError: regexp.MustCompile("the following errors were found while checking values: error checking value for attribute at path: instances for resource with identity .*, err: expected value 4 for NumberExact check, got: 5"),
 			},
 		},
 	})
