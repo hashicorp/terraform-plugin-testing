@@ -861,6 +861,9 @@ type TestStep struct {
 	//   - Supports workspaces (creating and deleting)
 	StateStore bool
 
+	// TODO: docs and new name :), mention how this should rarely be needed
+	DefaultWorkspaceOnly bool
+
 	// VerifyStateStoreLock is used in combination with the StateStore mode and runs various Terraform CLI commands that test
 	// that a state store implementation in a provider supports locking and unlocking.
 	//

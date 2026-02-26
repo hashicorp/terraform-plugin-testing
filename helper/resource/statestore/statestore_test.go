@@ -396,3 +396,5 @@ func TestStateStore_invalid_write_state(t *testing.T) {
 		},
 	})
 }
+
+// TODO: add tests for new single workspace only field
