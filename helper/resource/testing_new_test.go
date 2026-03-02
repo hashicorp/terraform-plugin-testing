@@ -1166,21 +1166,21 @@ func TestShimState(t *testing.T) {
 
 func Test_jsonSchemaToCtyType(t *testing.T) {
 	tests := map[string]struct {
-		schema *tfjson.Schema
+		schema tfjson.Schema
 		want   cty.Type
 	}{
 		"Empty Schema": {
-			schema: &tfjson.Schema{},
+			schema: tfjson.Schema{},
 			want:   cty.NilType,
 		},
 		"Nil Block": {
-			schema: &tfjson.Schema{
+			schema: tfjson.Schema{
 				Block: nil,
 			},
 			want: cty.NilType,
 		},
 		"Empty Attributes": {
-			schema: &tfjson.Schema{
+			schema: tfjson.Schema{
 				Block: &tfjson.SchemaBlock{
 					Attributes: map[string]*tfjson.SchemaAttribute{},
 				},
@@ -1188,7 +1188,7 @@ func Test_jsonSchemaToCtyType(t *testing.T) {
 			want: cty.EmptyObject,
 		},
 		"Primitive Attributes": {
-			schema: &tfjson.Schema{
+			schema: tfjson.Schema{
 				Block: &tfjson.SchemaBlock{
 					Attributes: map[string]*tfjson.SchemaAttribute{
 						"string_attr": {
@@ -1210,7 +1210,7 @@ func Test_jsonSchemaToCtyType(t *testing.T) {
 			}),
 		},
 		"Complex Attributes": {
-			schema: &tfjson.Schema{
+			schema: tfjson.Schema{
 				Block: &tfjson.SchemaBlock{
 					Attributes: map[string]*tfjson.SchemaAttribute{
 						"object_attr": {
@@ -1240,7 +1240,7 @@ func Test_jsonSchemaToCtyType(t *testing.T) {
 			}),
 		},
 		"Nested Blocks": {
-			schema: &tfjson.Schema{
+			schema: tfjson.Schema{
 				Block: &tfjson.SchemaBlock{
 					Attributes: map[string]*tfjson.SchemaAttribute{
 						"string_attr": {
@@ -1321,7 +1321,7 @@ func Test_jsonSchemaToCtyType(t *testing.T) {
 			}),
 		},
 		"Nested Attributes": {
-			schema: &tfjson.Schema{
+			schema: tfjson.Schema{
 				Block: &tfjson.SchemaBlock{
 					Attributes: map[string]*tfjson.SchemaAttribute{
 						"string_attr": {
@@ -1402,7 +1402,7 @@ func Test_jsonSchemaToCtyType(t *testing.T) {
 			}),
 		},
 		"Nested Attributes - 2 Nesting Levels": {
-			schema: &tfjson.Schema{
+			schema: tfjson.Schema{
 				Block: &tfjson.SchemaBlock{
 					Attributes: map[string]*tfjson.SchemaAttribute{
 						"string_attr": {

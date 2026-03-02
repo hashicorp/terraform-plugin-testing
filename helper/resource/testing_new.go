@@ -716,8 +716,8 @@ func jsonStateToCtyValue(attr map[string]interface{}, typ cty.Type) cty.Value {
 	return unmarshal
 }
 
-func jsonSchemaToCtyType(schema *tfjson.Schema) cty.Type {
-	if schema == nil || schema.Block == nil {
+func jsonSchemaToCtyType(schema tfjson.Schema) cty.Type {
+	if schema.Block == nil {
 		return cty.NilType
 	}
 

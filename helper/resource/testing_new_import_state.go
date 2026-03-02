@@ -57,13 +57,13 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		t.Fatalf("Error getting state: %s", err)
 	}
 
-	var providerSchemas *tfjson.ProviderSchemas
 	err = runProviderCommand(ctx, t, testCaseWorkingDir, providers, func() error {
-		providerSchemas, err = testCaseWorkingDir.Schemas(ctx)
+		schemas, err := testCaseWorkingDir.Schemas(ctx)
 		// todo: handle error
 		if err != nil {
 			return err
 		}
+		print(schemas)
 		return nil
 	})
 
@@ -189,7 +189,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	if kind.plannable() {
 		return testImportBlock(ctx, t, workingDir, providers, resourceName, step, priorIdentityValues)
 	} else {
-		return testImportCommand(ctx, t, workingDir, providers, resourceName, importId, step, state, providerSchemas, stateJSON)
+		return testImportCommand(ctx, t, workingDir, providers, resourceName, importId, step, state)
 	}
 }
 
@@ -252,7 +252,7 @@ func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.Wo
 	return nil
 }
 
-func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, importId string, step TestStep, state *terraform.State, schemas *tfjson.ProviderSchemas, statejson *tfjson.State) error {
+func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, importId string, step TestStep, state *terraform.State) error {
 	err := runProviderCommand(ctx, t, workingDir, providers, func() error {
 		return workingDir.Import(ctx, resourceName, importId)
 	})
@@ -261,9 +261,8 @@ func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.
 	}
 
 	var importState *terraform.State
-	var tfjsonImportState *tfjson.State
 	err = runProviderCommand(ctx, t, workingDir, providers, func() error {
-		tfjsonImportState, importState, err = getState(ctx, t, workingDir)
+		_, importState, err = getState(ctx, t, workingDir)
 		if err != nil {
 			return err
 		}
@@ -401,63 +400,7 @@ func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.
 				}
 			}
 
-			// todo: make a function for normalizing empty to
-			// null and add recursion
-			var importResource *tfjson.StateResource
-			resources := resourcesFromState(tfjsonImportState.Values)
-			importResource = resources[0]
-
-			var stateResource *tfjson.StateResource
-			stateResources := resourcesFromState(statejson.Values)
-			stateResource = stateResources[0]
-
-			for k, v := range stateResource.AttributeValues {
-				switch val := v.(type) {
-				case []interface{}:
-					if len(val) == 0 {
-						stateResource.AttributeValues[k] = nil
-					}
-				case map[string]interface{}:
-					if len(val) == 0 {
-						stateResource.AttributeValues[k] = nil
-					}
-				}
-			}
-
-			for k, v := range importResource.AttributeValues {
-				switch val := v.(type) {
-				case []interface{}:
-					if len(val) == 0 {
-						importResource.AttributeValues[k] = nil
-					}
-				case map[string]interface{}:
-					if len(val) == 0 {
-						importResource.AttributeValues[k] = nil
-					}
-				}
-			}
-
-			// Remove fields we're ignoring
-			for _, v := range step.ImportStateVerifyIgnore {
-				for k := range stateResource.AttributeValues {
-					if strings.HasPrefix(k, v) {
-						delete(stateResource.AttributeValues, k)
-					}
-				}
-				for k := range importResource.AttributeValues {
-					if strings.HasPrefix(k, v) {
-						delete(importResource.AttributeValues, k)
-					}
-				}
-			}
-
-			tg := schemas.Schemas["registry.terraform.io/hashicorp/google"].ResourceSchemas["google_bigquery_dataset"]
-			ImportCty := jsonStateToCtyValue(importResource.AttributeValues, jsonSchemaToCtyType(tg))
-			StateCty := jsonStateToCtyValue(stateResource.AttributeValues, jsonSchemaToCtyType(tg))
-
-			eq := ImportCty.Equals(StateCty)
-
-			if !reflect.DeepEqual(actual, expected) && eq.False() {
+			if !reflect.DeepEqual(actual, expected) {
 				// Determine only the different attributes
 				// go-cmp tries to show surrounding identical map key/value for
 				// context of differences, which may be confusing.
