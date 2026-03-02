@@ -422,3 +422,7 @@ func (e *echoProviderServer) UpgradeResourceIdentity(context.Context, *tfprotov6
 		},
 	}, nil
 }
+
+func (e *echoProviderServer) GenerateResourceConfig(ctx context.Context, request *tfprotov6.GenerateResourceConfigRequest) (*tfprotov6.GenerateResourceConfigResponse, error) {
+	return &tfprotov6.GenerateResourceConfigResponse{}, nil
+}
