@@ -182,6 +182,17 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			if err != nil {
 				return fmt.Errorf("Error retrieving pre-apply state: %w", err)
 			}
+
+			// Create Destroy Plan
+			err = runProviderCommand(ctx, t, wd, providers, func() error {
+				var opts []tfexec.PlanOption
+				opts = append(opts, tfexec.Destroy(true))
+
+				return wd.CreatePlan(ctx, opts...)
+			})
+			if err != nil {
+				return fmt.Errorf("Error running pre-apply plan: %w", err)
+			}
 		}
 
 		// Apply the diff, creating real resources
@@ -457,7 +468,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		logging.HelperResourceDebug(ctx, "Called TestCase PostApplyFunc")
 	}
 
-	if refreshAfterApply && !step.Destroy && !step.PlanOnly {
+	if refreshAfterApply && !step.Destroy && !step.PlanOnly && !step.ExpectNonEmptyPlan {
 		if len(c.Steps) > stepIndex+1 {
 			// If the next step is a refresh, then we have no need to refresh here
 			if !c.Steps[stepIndex+1].RefreshState {
