@@ -1563,3 +1563,7 @@ func (s ProviderServer) WriteStateBytes(ctx context.Context, req *tfprotov6.Writ
 
 	return resp, nil
 }
+
+func (s ProviderServer) GenerateResourceConfig(ctx context.Context, request *tfprotov6.GenerateResourceConfigRequest) (*tfprotov6.GenerateResourceConfigResponse, error) {
+	return &tfprotov6.GenerateResourceConfigResponse{}, nil
+}
