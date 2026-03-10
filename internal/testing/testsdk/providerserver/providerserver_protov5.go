@@ -142,3 +142,7 @@ func (s Protov5ProviderServer) GetResourceIdentitySchemas(context.Context, *tfpr
 func (s Protov5ProviderServer) UpgradeResourceIdentity(context.Context, *tfprotov5.UpgradeResourceIdentityRequest) (*tfprotov5.UpgradeResourceIdentityResponse, error) {
 	return &tfprotov5.UpgradeResourceIdentityResponse{}, nil
 }
+
+func (s Protov5ProviderServer) GenerateResourceConfig(ctx context.Context, request *tfprotov5.GenerateResourceConfigRequest) (*tfprotov5.GenerateResourceConfigResponse, error) {
+	return &tfprotov5.GenerateResourceConfigResponse{}, nil
+}
