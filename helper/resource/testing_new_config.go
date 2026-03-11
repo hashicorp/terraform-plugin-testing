@@ -103,6 +103,15 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("Error setting config: %w", err)
 	}
 
+	// require a refresh before applying
+	// failing to do this will result in data sources not being updated
+	err = runProviderCommand(ctx, t, wd, providers, func() error {
+		return wd.Refresh(ctx)
+	})
+	if err != nil {
+		return fmt.Errorf("Error running pre-apply refresh: %w", err)
+	}
+
 	// If this step is a PlanOnly step, skip over this first Plan and
 	// subsequent Apply, and use the follow-up Plan that checks for
 	// permadiffs
@@ -124,7 +133,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 					opts = append(opts, tfexec.Refresh(false))
 				}
 			}
-
+			opts = append(opts, tfexec.Refresh(false))
 			return wd.CreatePlan(ctx, opts...)
 		})
 		if err != nil {
@@ -268,7 +277,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	// do a plan
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
 		opts := []tfexec.PlanOption{
-			tfexec.Refresh(false),
+			tfexec.Refresh(true),
 		}
 		if step.Destroy {
 			opts = append(opts, tfexec.Destroy(true))
@@ -337,6 +346,16 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("After applying this test step, the non-refresh plan was not empty.\nstdout:\n\n%s", stdout)
 	}
 
+	// do a refresh
+	if !step.Destroy || (step.Destroy && !step.PreventPostDestroyRefresh) {
+		err = runProviderCommand(ctx, t, wd, providers, func() error {
+			return wd.Refresh(ctx)
+		})
+		if err != nil {
+			return fmt.Errorf("Error running post-apply refresh: %w", err)
+		}
+	}
+
 	// do another plan
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
 		var opts []tfexec.PlanOption
@@ -357,6 +376,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			}
 		}
 
+		opts = append(opts, tfexec.Refresh(false))
 		return wd.CreatePlan(ctx, opts...)
 	})
 	if err != nil {
