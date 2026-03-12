@@ -103,6 +103,15 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("Error setting config: %w", err)
 	}
 
+	if refreshAfterApply {
+		err = runProviderCommand(ctx, t, wd, providers, func() error {
+			return wd.Refresh(ctx)
+		})
+		if err != nil {
+			return fmt.Errorf("Error running refresh: %w", err)
+		}
+	}
+
 	// If this step is a PlanOnly step, skip over this first Plan and
 	// subsequent Apply, and use the follow-up Plan that checks for
 	// permadiffs
