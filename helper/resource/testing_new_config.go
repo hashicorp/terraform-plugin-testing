@@ -277,7 +277,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	// do a plan
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
 		opts := []tfexec.PlanOption{
-			tfexec.Refresh(false),
+			tfexec.Refresh(refreshAfterApply), // prior to 1.6.0 plans were refreshed by default
 		}
 		if step.Destroy {
 			opts = append(opts, tfexec.Destroy(true))
