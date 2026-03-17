@@ -571,7 +571,7 @@ func TestStateStore_inmem_single_workspace_invalid_unlock_support(t *testing.T) 
 				`,
 				// The lack of unlock support will raise an error during the StateStore testing mode, where
 				// the state will stay locked after an initial apply.
-				ExpectError: regexp.MustCompile(`(?s)(Error creating test resource in "bar" workspace.*Workspace is currently locked)`),
+				ExpectError: regexp.MustCompile(`(?s)(Error creating test resource in "default" workspace.*Workspace is currently locked)`),
 			},
 		},
 	})
