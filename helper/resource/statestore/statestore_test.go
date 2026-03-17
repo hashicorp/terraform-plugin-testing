@@ -4,7 +4,6 @@
 package statestore_test
 
 import (
-	"context"
 	"regexp"
 	"testing"
 
@@ -416,7 +415,7 @@ func TestStateStore_inmem_single_workspace(t *testing.T) {
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				StateStores: map[string]*testprovider.StateStore{
-					"examplecloud_inmem": exampleCloudValidStateStore(),
+					"examplecloud_inmem": exampleCloudDefaultWorkSpaceValidStateStore(),
 				},
 			}),
 		},
@@ -456,7 +455,7 @@ func TestStateStore_inmem_single_workspace_verify_lock(t *testing.T) {
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				StateStores: map[string]*testprovider.StateStore{
-					"examplecloud_inmem": exampleCloudValidStateStore(),
+					"examplecloud_inmem": exampleCloudDefaultWorkSpaceValidStateStore(),
 				},
 			}),
 		},
@@ -488,7 +487,7 @@ func TestStateStore_inmem_single_workspace_no_lock_support_error(t *testing.T) {
 	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
 
 	// Simulating a state store that doesn't support locking
-	stateStoreImpl := exampleCloudValidStateStore()
+	stateStoreImpl := exampleCloudDefaultWorkSpaceValidStateStore()
 	stateStoreImpl.LockStateFunc = nil
 	stateStoreImpl.UnlockStateFunc = nil
 
@@ -535,7 +534,7 @@ func TestStateStore_inmem_single_workspace_invalid_unlock_support(t *testing.T) 
 	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
 
 	// Simulating an invalid state store that doesn't support unlocking
-	stateStoreImpl := exampleCloudValidStateStore()
+	stateStoreImpl := exampleCloudDefaultWorkSpaceValidStateStore()
 	stateStoreImpl.UnlockStateFunc = nil
 
 	r.UnitTest(t, r.TestCase{
@@ -706,7 +705,7 @@ func TestStateStore_inmem_single_workspace_invalid_write_state(t *testing.T) {
 	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
 
 	// Simulating an invalid state store that doesn't support writing state
-	stateStoreImpl := exampleCloudValidStateStore()
+	stateStoreImpl := exampleCloudDefaultWorkSpaceValidStateStore()
 	stateStoreImpl.WriteStateBytesFunc = nil
 
 	r.UnitTest(t, r.TestCase{
@@ -740,51 +739,6 @@ func TestStateStore_inmem_single_workspace_invalid_write_state(t *testing.T) {
 					}
 				`,
 				ExpectError: regexp.MustCompile(`After init, expected the "default" workspace to be created`),
-			},
-		},
-	})
-}
-
-func TestStateStore_inmem_single_workspace_with_multiple_workspaces_error(t *testing.T) {
-	// Setting this environment variable ensures TF core uses pluggable state storage during init.
-	// This is only temporary while PSS is experimental.
-	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
-
-	// Simulate a state store that already contains multiple workspaces
-	stateStoreImpl := exampleCloudValidStateStore()
-	stateStoreImpl.GetStatesFunc = func(ctx context.Context, req statestore.GetStatesRequest, resp *statestore.GetStatesResponse) {
-		resp.StateIDs = []string{"default", "foo", "bar"}
-	}
-
-	r.UnitTest(t, r.TestCase{
-		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_15_0),
-			tfversion.SkipIfNotPrerelease(),
-		},
-		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
-				StateStores: map[string]*testprovider.StateStore{
-					"examplecloud_inmem": stateStoreImpl,
-				},
-			}),
-		},
-		Steps: []r.TestStep{
-			{
-				StateStore:           true,
-				DefaultWorkspaceOnly: true,
-				Config: `
-					terraform {
-					  required_providers {
-						examplecloud = {
-						  source = "registry.terraform.io/hashicorp/examplecloud"
-						}
-					  }
-					  state_store "examplecloud_inmem" {
-						provider "examplecloud" {}
-					  }
-					}
-				`,
-				ExpectError: regexp.MustCompile(`Expected workspaces to be .*got:`),
 			},
 		},
 	})

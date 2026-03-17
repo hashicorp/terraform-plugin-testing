@@ -131,7 +131,7 @@ func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.Work
 			return err
 		}
 	} else {
-		// Clean up the default workspace by applying the original empty config, since we can't delete the workspace
+		// Clean up the default workspace since we can't delete the workspace
 		err = runProviderCommand(ctx, t, wd, providers, func() error {
 			return wd.Destroy(ctx)
 		})
