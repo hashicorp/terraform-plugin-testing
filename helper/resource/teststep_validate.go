@@ -126,6 +126,12 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 		return err
 	}
 
+	if s.DefaultWorkspaceOnly && !s.StateStore {
+		err := fmt.Errorf("TestStep DefaultWorkspaceOnly field must be set to true only when StateStore is true")
+		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
+		return err
+	}
+
 	if req.StepConfiguration != nil && s.RefreshState {
 		err := fmt.Errorf("TestStep cannot have Config or ConfigDirectory or ConfigFile and RefreshState")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})

@@ -609,8 +609,8 @@ func TestStateStore_inmem_single_workspace_validation_error(t *testing.T) {
 							Diagnostics: []*tfprotov6.Diagnostic{
 								{
 									Severity:  tfprotov6.DiagnosticSeverityError,
-									Summary:   "WHOOPS",
-									Detail:    "Something isn't right about that request :D, error it is!",
+									Summary:   "Invalid configuration",
+									Detail:    "The provided configuration for the state store is invalid.",
 									Attribute: tftypes.NewAttributePath().WithAttributeName("path"),
 								},
 							},
@@ -637,7 +637,7 @@ func TestStateStore_inmem_single_workspace_validation_error(t *testing.T) {
 					  }
 					}
 				`,
-				ExpectError: regexp.MustCompile(`Something isn't right about that request :D, error it is!`),
+				ExpectError: regexp.MustCompile(`The provided configuration for the state store is invalid\.`),
 			},
 		},
 	})
@@ -668,8 +668,8 @@ func TestStateStore_inmem_single_workspace_configure_error(t *testing.T) {
 							Diagnostics: []*tfprotov6.Diagnostic{
 								{
 									Severity: tfprotov6.DiagnosticSeverityError,
-									Summary:  "WHOOPS",
-									Detail:   "The configure has failed us! :P",
+									Summary:  "Configuration failed",
+									Detail:   "State store configuration failed during initialization.",
 								},
 							},
 						},
@@ -693,7 +693,7 @@ func TestStateStore_inmem_single_workspace_configure_error(t *testing.T) {
 					  }
 					}
 				`,
-				ExpectError: regexp.MustCompile(`The configure has failed us! :P`),
+				ExpectError: regexp.MustCompile(`State store configuration failed during initialization\.`),
 			},
 		},
 	})
@@ -739,6 +739,46 @@ func TestStateStore_inmem_single_workspace_invalid_write_state(t *testing.T) {
 					}
 				`,
 				ExpectError: regexp.MustCompile(`After init, expected the "default" workspace to be created`),
+			},
+		},
+	})
+}
+
+func TestStateStore_inmem_single_workspace_multiple_workspaces_error(t *testing.T) {
+	// Ensure pluggable state storage is enabled
+	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_15_0),
+			tfversion.SkipIfNotPrerelease(),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				StateStores: map[string]*testprovider.StateStore{
+					// Seed the state store with a non-default workspace to simulate
+					// an invalid state store for DefaultWorkspaceOnly mode.
+					"examplecloud_inmem": exampleCloudDefaultWorkSpaceValidStateStoreWithWorkspaces([]string{"default", "other"}),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				StateStore:           true,
+				DefaultWorkspaceOnly: true,
+				Config: `
+					terraform {
+					  required_providers {
+						examplecloud = {
+						  source = "registry.terraform.io/hashicorp/examplecloud"
+						}
+					  }
+					  state_store "examplecloud_inmem" {
+						provider "examplecloud" {}
+					  }
+					}
+				`,
+				ExpectError: regexp.MustCompile(`Expected only 'default' workspace to be present`),
 			},
 		},
 	})
