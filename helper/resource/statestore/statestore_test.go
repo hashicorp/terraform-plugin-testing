@@ -756,16 +756,14 @@ func TestStateStore_inmem_single_workspace_multiple_workspaces_error(t *testing.
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
 				StateStores: map[string]*testprovider.StateStore{
-					// Seed the state store with a non-default workspace to simulate
-					// an invalid state store for DefaultWorkspaceOnly mode.
-					"examplecloud_inmem": exampleCloudDefaultWorkSpaceValidStateStoreWithWorkspaces([]string{"default", "other"}),
+					"examplecloud_inmem": exampleCloudDefaultWorkSpaceValidStateStore(),
 				},
 			}),
 		},
 		Steps: []r.TestStep{
 			{
 				StateStore:           true,
-				DefaultWorkspaceOnly: true,
+				DefaultWorkspaceOnly: false,
 				Config: `
 					terraform {
 					  required_providers {

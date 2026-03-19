@@ -127,7 +127,7 @@ func (s TestStep) validate(ctx context.Context, req testStepValidateRequest) err
 	}
 
 	if s.DefaultWorkspaceOnly && !s.StateStore {
-		err := fmt.Errorf("TestStep DefaultWorkspaceOnly field must be set to true only when StateStore is true")
+		err := fmt.Errorf("TestStep StateStore field must be set to true when DefaultWorkspaceOnly is true")
 		logging.HelperResourceError(ctx, "TestStep validation error", map[string]interface{}{logging.KeyError: err})
 		return err
 	}

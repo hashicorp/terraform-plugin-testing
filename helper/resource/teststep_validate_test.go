@@ -245,7 +245,7 @@ func TestTestStepValidate(t *testing.T) {
 			},
 			testStepConfig:          "# not empty",
 			testStepValidateRequest: testStepValidateRequest{},
-			expectedError:           fmt.Errorf("TestStep DefaultWorkspaceOnly field must be set to true only when StateStore is true"),
+			expectedError:           fmt.Errorf("TestStep StateStore field must be set to true when DefaultWorkspaceOnly is true"),
 		},
 		"externalproviders-teststep-config-directory": {
 			testStep: TestStep{
