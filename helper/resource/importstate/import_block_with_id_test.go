@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/provider"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -483,6 +484,76 @@ import {
 							knownvalue.StringExact("It was a dark and stormy night.")),
 					},
 				},
+			},
+		},
+	})
+}
+
+func TestImportBlock_WithID_GenerateConfig(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithID requires Terraform 1.5.0 or later
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_container": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "examplecloud_container" "test2" {
+					location = "westeurope"
+					name     = "somevalue"
+				}`,
+			},
+			{
+				ResourceName:    "examplecloud_container.test2",
+				ImportState:     true,
+				GenerateConfig:  true,
+				ImportStateKind: r.ImportBlockWithID,
+			},
+		},
+	})
+}
+
+func TestImportBlock_WithID_GenerateConfig_ExpectError(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_14_0), // Provider generated config requires Terraform 1.14.0 or later
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Capabilities: &provider.ServerCapabilities{
+					// GenerateResourceConfig RPC is unimplemented, returning a null generated
+					// config to Terraform Core.
+					GenerateResourceConfig: true,
+				},
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_container": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "examplecloud_container" "contain" {
+					location = "westeurope"
+					name     = "somevalue"
+				}`,
+			},
+			{
+				ResourceName:    "examplecloud_container.contain",
+				ImportState:     true,
+				GenerateConfig:  true,
+				ImportStateKind: r.ImportBlockWithID,
+				ExpectError:     regexp.MustCompile(`importing resource examplecloud_container.generated: expected a no-op import operation, got.*\["update"\] action with plan(.?)`),
 			},
 		},
 	})

@@ -7,9 +7,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-exec/tfexec"
 	"reflect"
 	"strings"
+
+	"github.com/hashicorp/terraform-exec/tfexec"
 
 	"github.com/hashicorp/go-version"
 
@@ -133,8 +134,9 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	// The resource address in the import block needs to be updated if this is a GenerateConfig mode test step
-	if step.GenerateConfig {
-		resourceName = strings.Replace(resourceName, ".test", ".generated", 1)
+	if step.GenerateConfig && stepNumber > 1 {
+		name := strings.Split(resourceName, ".")
+		resourceName = strings.Replace(resourceName, "."+name[1], ".generated", 1)
 	}
 
 	switch {
