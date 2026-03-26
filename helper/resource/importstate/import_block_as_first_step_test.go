@@ -61,3 +61,43 @@ func TestImportBlock_AsFirstStep(t *testing.T) {
 		},
 	})
 }
+
+func TestImportBlock_AsFirstStep_GenerateConfig(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_5_0), // ImportBlockWithID requires Terraform 1.5.0 or later
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_container": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				ResourceName:    "examplecloud_container.test",
+				ImportStateId:   "examplecloud_container.test",
+				ImportState:     true,
+				GenerateConfig:  true,
+				ImportStateKind: r.ImportBlockWithID,
+				Config: `import {
+					to = examplecloud_container.test
+					id = "westeurope/somevalue"
+				}
+				`,
+				ImportStateConfigExact: true,
+				ImportPlanChecks: r.ImportPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("examplecloud_container.test", plancheck.ResourceActionNoop),
+						plancheck.ExpectKnownValue("examplecloud_container.test", tfjsonpath.New("id"), knownvalue.StringExact("westeurope/somevalue")),
+						plancheck.ExpectKnownValue("examplecloud_container.test", tfjsonpath.New("name"), knownvalue.StringExact("somevalue")),
+						plancheck.ExpectKnownValue("examplecloud_container.test", tfjsonpath.New("location"), knownvalue.StringExact("westeurope")),
+					},
+				},
+			},
+		},
+	})
+}
