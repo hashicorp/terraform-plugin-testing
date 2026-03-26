@@ -238,6 +238,15 @@ func TestTestStepValidate(t *testing.T) {
 			},
 			expectedError: fmt.Errorf("Providers must only be specified within the terraform configuration files when using TestStep.Config"),
 		},
+		"defaultworkspaceonly-without-statestore": {
+			testStep: TestStep{
+				DefaultWorkspaceOnly: true,
+				StateStore:           false,
+			},
+			testStepConfig:          "# not empty",
+			testStepValidateRequest: testStepValidateRequest{},
+			expectedError:           fmt.Errorf("TestStep StateStore field must be set to true when DefaultWorkspaceOnly is true"),
+		},
 		"externalproviders-teststep-config-directory": {
 			testStep: TestStep{
 				ExternalProviders: map[string]ExternalProvider{

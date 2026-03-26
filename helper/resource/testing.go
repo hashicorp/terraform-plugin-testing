@@ -861,6 +861,10 @@ type TestStep struct {
 	//   - Supports workspaces (creating and deleting)
 	StateStore bool
 
+	// DefaultWorkspaceOnly is used only for StateStore tests to enable the use of only the provider's default workspace.
+	// This should only be used in rare cases where StateStore implementations don't support multiple workspaces.
+	DefaultWorkspaceOnly bool
+
 	// VerifyStateStoreLock is used in combination with the StateStore mode and runs various Terraform CLI commands that test
 	// that a state store implementation in a provider supports locking and unlocking.
 	//

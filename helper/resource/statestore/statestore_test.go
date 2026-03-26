@@ -100,7 +100,7 @@ func TestStateStore_inmem_no_lock_support_error(t *testing.T) {
 	// This is only temporary while PSS is experimental.
 	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
 
-	// Simulating an state store that doesn't support locking
+	// Simulating a state store that doesn't support locking
 	stateStoreImpl := exampleCloudValidStateStore()
 	stateStoreImpl.LockStateFunc = nil
 	stateStoreImpl.UnlockStateFunc = nil
@@ -221,8 +221,8 @@ func TestStateStore_validation_error(t *testing.T) {
 							Diagnostics: []*tfprotov6.Diagnostic{
 								{
 									Severity:  tfprotov6.DiagnosticSeverityError,
-									Summary:   "WHOOPS",
-									Detail:    "Something isn't right about that request :D, error it is!",
+									Summary:   "Invalid configuration",
+									Detail:    "The provided configuration for the state store is invalid.",
 									Attribute: tftypes.NewAttributePath().WithAttributeName("path"),
 								},
 							},
@@ -248,7 +248,7 @@ func TestStateStore_validation_error(t *testing.T) {
 					  }
 					}
 				`,
-				ExpectError: regexp.MustCompile(`Something isn't right about that request :D, error it is!`),
+				ExpectError: regexp.MustCompile(`The provided configuration for the state store is invalid\.`),
 			},
 		},
 	})
@@ -279,8 +279,8 @@ func TestStateStore_configure_error(t *testing.T) {
 							Diagnostics: []*tfprotov6.Diagnostic{
 								{
 									Severity: tfprotov6.DiagnosticSeverityError,
-									Summary:  "WHOOPS",
-									Detail:   "The configure has failed us! :P",
+									Summary:  "Configuration failed",
+									Detail:   "State store configuration failed during initialization.",
 								},
 							},
 						},
@@ -303,7 +303,7 @@ func TestStateStore_configure_error(t *testing.T) {
 					  }
 					}
 				`,
-				ExpectError: regexp.MustCompile(`The configure has failed us! :P`),
+				ExpectError: regexp.MustCompile(`State store configuration failed during initialization\.`),
 			},
 		},
 	})
@@ -392,6 +392,391 @@ func TestStateStore_invalid_write_state(t *testing.T) {
 					}
 				`,
 				ExpectError: regexp.MustCompile(`After init, expected the "default" workspace to be created`),
+			},
+		},
+	})
+}
+
+// Tests for the DefaultWorkspaceOnly/TestStep.DefaultWorkspaceOnly behavior. These
+// mirror the multi-workspace tests but ensure the test harness behaves correctly
+// when only the "default" workspace is expected to be used.
+func TestStateStore_inmem_single_workspace(t *testing.T) {
+	// Setting this environment variable ensures TF core uses pluggable state storage during init.
+	// This is only temporary while PSS is experimental.
+	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
+
+	r.UnitTest(t, r.TestCase{
+		// State stores currently are only available in alpha releases or built from source
+		// with experiments enabled: `go install -ldflags="-X main.experimentsAllowed=yes" .`
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_15_0),
+			tfversion.SkipIfNotPrerelease(),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				StateStores: map[string]*testprovider.StateStore{
+					"examplecloud_inmem": exampleCloudDefaultWorkSpaceValidStateStore(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				StateStore:           true,
+				DefaultWorkspaceOnly: true,
+				Config: `
+					terraform {
+					  required_providers {
+						examplecloud = {
+						  source = "registry.terraform.io/hashicorp/examplecloud"
+						}
+					  }
+					  state_store "examplecloud_inmem" {
+						provider "examplecloud" {}
+					  }
+					}
+				`,
+			},
+		},
+	})
+}
+
+func TestStateStore_inmem_single_workspace_verify_lock(t *testing.T) {
+	// Setting this environment variable ensures TF core uses pluggable state storage during init.
+	// This is only temporary while PSS is experimental.
+	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
+
+	r.UnitTest(t, r.TestCase{
+		// State stores currently are only available in alpha releases or built from source
+		// with experiments enabled: `go install -ldflags="-X main.experimentsAllowed=yes" .`
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_15_0),
+			tfversion.SkipIfNotPrerelease(),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				StateStores: map[string]*testprovider.StateStore{
+					"examplecloud_inmem": exampleCloudDefaultWorkSpaceValidStateStore(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				StateStore:           true,
+				DefaultWorkspaceOnly: true,
+				VerifyStateStoreLock: true,
+				Config: `
+					terraform {
+					  required_providers {
+						examplecloud = {
+						  source = "registry.terraform.io/hashicorp/examplecloud"
+						}
+					  }
+					  state_store "examplecloud_inmem" {
+						provider "examplecloud" {}
+					  }
+					}
+				`,
+			},
+		},
+	})
+}
+
+func TestStateStore_inmem_single_workspace_no_lock_support_error(t *testing.T) {
+	// Setting this environment variable ensures TF core uses pluggable state storage during init.
+	// This is only temporary while PSS is experimental.
+	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
+
+	// Simulating a state store that doesn't support locking
+	stateStoreImpl := exampleCloudDefaultWorkSpaceValidStateStore()
+	stateStoreImpl.LockStateFunc = nil
+	stateStoreImpl.UnlockStateFunc = nil
+
+	r.UnitTest(t, r.TestCase{
+		// State stores currently are only available in alpha releases or built from source
+		// with experiments enabled: `go install -ldflags="-X main.experimentsAllowed=yes" .`
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_15_0),
+			tfversion.SkipIfNotPrerelease(),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				StateStores: map[string]*testprovider.StateStore{
+					"examplecloud_inmem": stateStoreImpl,
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				StateStore:           true,
+				DefaultWorkspaceOnly: true,
+				VerifyStateStoreLock: true,
+				Config: `
+					terraform {
+					  required_providers {
+						examplecloud = {
+						  source = "registry.terraform.io/hashicorp/examplecloud"
+						}
+					  }
+					  state_store "examplecloud_inmem" {
+						provider "examplecloud" {}
+					  }
+					}
+				`,
+				ExpectError: regexp.MustCompile(`Failed client lock assertion: Expected an error when attempting to apply to locked "default" state, but received none`),
+			},
+		},
+	})
+}
+
+func TestStateStore_inmem_single_workspace_invalid_unlock_support(t *testing.T) {
+	// Setting this environment variable ensures TF core uses pluggable state storage during init.
+	// This is only temporary while PSS is experimental.
+	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
+
+	// Simulating an invalid state store that doesn't support unlocking
+	stateStoreImpl := exampleCloudDefaultWorkSpaceValidStateStore()
+	stateStoreImpl.UnlockStateFunc = nil
+
+	r.UnitTest(t, r.TestCase{
+		// State stores currently are only available in alpha releases or built from source
+		// with experiments enabled: `go install -ldflags="-X main.experimentsAllowed=yes" .`
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_15_0),
+			tfversion.SkipIfNotPrerelease(),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				StateStores: map[string]*testprovider.StateStore{
+					"examplecloud_inmem": stateStoreImpl,
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				StateStore:           true,
+				DefaultWorkspaceOnly: true,
+				VerifyStateStoreLock: true,
+				Config: `
+					terraform {
+					  required_providers {
+						examplecloud = {
+						  source = "registry.terraform.io/hashicorp/examplecloud"
+						}
+					  }
+					  state_store "examplecloud_inmem" {
+						provider "examplecloud" {}
+					  }
+					}
+				`,
+				// The lack of unlock support will raise an error during the StateStore testing mode, where
+				// the state will stay locked after an initial apply.
+				ExpectError: regexp.MustCompile(`(?s)(Error creating test resource in "default" workspace.*Workspace is currently locked)`),
+			},
+		},
+	})
+}
+
+func TestStateStore_inmem_single_workspace_validation_error(t *testing.T) {
+	// Setting this environment variable ensures TF core uses pluggable state storage during init.
+	// This is only temporary while PSS is experimental.
+	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
+
+	r.UnitTest(t, r.TestCase{
+		// State stores currently are only available in alpha releases or built from source
+		// with experiments enabled: `go install -ldflags="-X main.experimentsAllowed=yes" .`
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_15_0),
+			tfversion.SkipIfNotPrerelease(),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				StateStores: map[string]*testprovider.StateStore{
+					"examplecloud_inmem": {
+						SchemaResponse: &statestore.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{
+									Attributes: []*tfprotov6.SchemaAttribute{
+										{
+											Name:     "path",
+											Type:     tftypes.String,
+											Required: true,
+										},
+									},
+								},
+							},
+						},
+						ValidateConfigResponse: &statestore.ValidateConfigResponse{
+							Diagnostics: []*tfprotov6.Diagnostic{
+								{
+									Severity:  tfprotov6.DiagnosticSeverityError,
+									Summary:   "Invalid configuration",
+									Detail:    "The provided configuration for the state store is invalid.",
+									Attribute: tftypes.NewAttributePath().WithAttributeName("path"),
+								},
+							},
+						},
+					},
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				StateStore:           true,
+				DefaultWorkspaceOnly: true,
+				Config: `
+					terraform {
+					  required_providers {
+						examplecloud = {
+						  source = "registry.terraform.io/hashicorp/examplecloud"
+						}
+					  }
+					  state_store "examplecloud_inmem" {
+						provider "examplecloud" {}
+
+						path = "test_state_file.tfstate"
+					  }
+					}
+				`,
+				ExpectError: regexp.MustCompile(`The provided configuration for the state store is invalid\.`),
+			},
+		},
+	})
+}
+
+func TestStateStore_inmem_single_workspace_configure_error(t *testing.T) {
+	// Setting this environment variable ensures TF core uses pluggable state storage during init.
+	// This is only temporary while PSS is experimental.
+	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
+
+	r.UnitTest(t, r.TestCase{
+		// State stores currently are only available in alpha releases or built from source
+		// with experiments enabled: `go install -ldflags="-X main.experimentsAllowed=yes" .`
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_15_0),
+			tfversion.SkipIfNotPrerelease(),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				StateStores: map[string]*testprovider.StateStore{
+					"examplecloud_inmem": {
+						SchemaResponse: &statestore.SchemaResponse{
+							Schema: &tfprotov6.Schema{
+								Block: &tfprotov6.SchemaBlock{Attributes: []*tfprotov6.SchemaAttribute{}},
+							},
+						},
+						ConfigureResponse: &statestore.ConfigureResponse{
+							Diagnostics: []*tfprotov6.Diagnostic{
+								{
+									Severity: tfprotov6.DiagnosticSeverityError,
+									Summary:  "Configuration failed",
+									Detail:   "State store configuration failed during initialization.",
+								},
+							},
+						},
+					},
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				StateStore:           true,
+				DefaultWorkspaceOnly: true,
+				Config: `
+					terraform {
+					  required_providers {
+						examplecloud = {
+						  source = "registry.terraform.io/hashicorp/examplecloud"
+						}
+					  }
+					  state_store "examplecloud_inmem" {
+						provider "examplecloud" {}
+					  }
+					}
+				`,
+				ExpectError: regexp.MustCompile(`State store configuration failed during initialization\.`),
+			},
+		},
+	})
+}
+
+func TestStateStore_inmem_single_workspace_invalid_write_state(t *testing.T) {
+	// Setting this environment variable ensures TF core uses pluggable state storage during init.
+	// This is only temporary while PSS is experimental.
+	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
+
+	// Simulating an invalid state store that doesn't support writing state
+	stateStoreImpl := exampleCloudDefaultWorkSpaceValidStateStore()
+	stateStoreImpl.WriteStateBytesFunc = nil
+
+	r.UnitTest(t, r.TestCase{
+		// State stores currently are only available in alpha releases or built from source
+		// with experiments enabled: `go install -ldflags="-X main.experimentsAllowed=yes" .`
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_15_0),
+			tfversion.SkipIfNotPrerelease(),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				StateStores: map[string]*testprovider.StateStore{
+					"examplecloud_inmem": stateStoreImpl,
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				StateStore:           true,
+				DefaultWorkspaceOnly: true,
+				Config: `
+					terraform {
+					  required_providers {
+						examplecloud = {
+						  source = "registry.terraform.io/hashicorp/examplecloud"
+						}
+					  }
+					  state_store "examplecloud_inmem" {
+						provider "examplecloud" {}
+					  }
+					}
+				`,
+				ExpectError: regexp.MustCompile(`After init, expected the "default" workspace to be created`),
+			},
+		},
+	})
+}
+
+func TestStateStore_inmem_single_workspace_multiple_workspaces_error(t *testing.T) {
+	// Ensure pluggable state storage is enabled
+	t.Setenv("TF_ENABLE_PLUGGABLE_STATE_STORAGE", "1")
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_15_0),
+			tfversion.SkipIfNotPrerelease(),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				StateStores: map[string]*testprovider.StateStore{
+					"examplecloud_inmem": exampleCloudDefaultWorkSpaceValidStateStore(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				StateStore:           true,
+				DefaultWorkspaceOnly: false,
+				Config: `
+					terraform {
+					  required_providers {
+						examplecloud = {
+						  source = "registry.terraform.io/hashicorp/examplecloud"
+						}
+					  }
+					  state_store "examplecloud_inmem" {
+						provider "examplecloud" {}
+					  }
+					}
+				`,
+				ExpectError: regexp.MustCompile(`Expected only 'default' workspace to be present`),
 			},
 		},
 	})

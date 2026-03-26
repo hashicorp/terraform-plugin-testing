@@ -180,6 +180,165 @@ func exampleCloudValidStateStore() *testprovider.StateStore {
 	}
 }
 
+func exampleCloudDefaultWorkSpaceValidStateStore() *testprovider.StateStore {
+	memFS := fstest.MapFS{}
+
+	return &testprovider.StateStore{
+		SchemaResponse: &statestore.SchemaResponse{
+			Schema: &tfprotov6.Schema{
+				Block: &tfprotov6.SchemaBlock{Attributes: []*tfprotov6.SchemaAttribute{}},
+			},
+		},
+		GetStatesFunc: func(ctx context.Context, req statestore.GetStatesRequest, resp *statestore.GetStatesResponse) {
+			directories, err := memFS.ReadDir(".")
+			if err != nil {
+				resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+					Severity: tfprotov6.DiagnosticSeverityError,
+					Summary:  "Error reading in-memory filesystem",
+					Detail:   err.Error(),
+				})
+				return
+			}
+
+			workspaces := make([]string, 0)
+			for _, dir := range directories {
+				workspaces = append(workspaces, dir.Name())
+				if dir.Name() != "default" {
+					resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+						Severity: tfprotov6.DiagnosticSeverityError,
+						Summary:  "Multiple workspaces found",
+						Detail:   fmt.Sprintf("Expected only 'default' workspace to be present, but found workspaces: %v", workspaces),
+					})
+					return
+				}
+			}
+
+			resp.StateIDs = workspaces
+
+		},
+		DeleteStateFunc: func(ctx context.Context, req statestore.DeleteStateRequest, resp *statestore.DeleteStateResponse) {
+			for filePath := range memFS {
+				if strings.HasPrefix(filePath, req.StateID) {
+					delete(memFS, filePath)
+				}
+			}
+		},
+		LockStateFunc: func(ctx context.Context, req statestore.LockStateRequest, resp *statestore.LockStateResponse) {
+			lockFilePath := filepath.Join(req.StateID, defaultLockFileName)
+			if lockFile, lockExists := memFS[lockFilePath]; lockExists {
+				var lockData lockInfo
+				err := json.Unmarshal(lockFile.Data, &lockData)
+				if err != nil {
+					resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+						Severity: tfprotov6.DiagnosticSeverityError,
+						Summary:  "Error reading existing inmem filesystem lock",
+						Detail:   err.Error(),
+					})
+					return
+				}
+
+				resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+					Severity: tfprotov6.DiagnosticSeverityError,
+					Summary:  "Workspace is currently locked",
+					Detail:   fmt.Sprintf("Workspace %q is currently locked by another client: \n\n%s", req.StateID, lockData),
+				})
+				return
+			}
+
+			lockInfo := newLockInfo(req)
+			lockInfoBytes, err := json.Marshal(lockInfo)
+			if err != nil {
+				resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+					Severity: tfprotov6.DiagnosticSeverityError,
+					Summary:  "Error creating lock file for inmem filesystem",
+					Detail:   err.Error(),
+				})
+				return
+			}
+
+			memFS[lockFilePath] = &fstest.MapFile{
+				Data:    lockInfoBytes,
+				Mode:    fs.ModePerm,
+				ModTime: time.Now(),
+			}
+
+			resp.LockID = lockInfo.ID
+		},
+		UnlockStateFunc: func(ctx context.Context, req statestore.UnlockStateRequest, resp *statestore.UnlockStateResponse) {
+			lockFilePath := filepath.Join(req.StateID, defaultLockFileName)
+			if _, lockExists := memFS[lockFilePath]; !lockExists {
+				resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+					Severity: tfprotov6.DiagnosticSeverityError,
+					Summary:  "Error unlocking inmem filesystem",
+					Detail:   fmt.Sprintf("Workspace %q has already been unlocked.", req.StateID),
+				})
+				return
+			}
+
+			lockFile := memFS[lockFilePath]
+
+			var lockData lockInfo
+			err := json.Unmarshal(lockFile.Data, &lockData)
+			if err != nil {
+				resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+					Severity: tfprotov6.DiagnosticSeverityError,
+					Summary:  "Error reading existing inmem filesystem lock",
+					Detail:   err.Error(),
+				})
+				return
+			}
+
+			if lockData.ID != req.LockID {
+				resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+					Severity: tfprotov6.DiagnosticSeverityError,
+					Summary:  "Error unlocking inmem filesystem",
+					Detail:   fmt.Sprintf("Workspace %q is currently locked by a different client, with lock ID %q. Terraform attempted to unlock with lock ID %q", req.StateID, lockData.ID, req.LockID),
+				})
+				return
+			}
+
+			delete(memFS, lockFilePath)
+		},
+		ReadStateBytesFunc: func(ctx context.Context, req statestore.ReadStateBytesRequest, resp *statestore.ReadStateBytesResponse) {
+			stateFilePath := filepath.Join(req.StateID, defaultStateFileName)
+			stateFile, err := memFS.Open(stateFilePath)
+			if err != nil {
+				// If there is no state file, Terraform will create one.
+				if errors.Is(err, fs.ErrNotExist) {
+					return
+				}
+
+				resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+					Severity: tfprotov6.DiagnosticSeverityError,
+					Summary:  fmt.Sprintf("Error reading state %q at path %q", req.StateID, stateFilePath),
+					Detail:   err.Error(),
+				})
+				return
+			}
+
+			stateBytes, err := io.ReadAll(stateFile)
+			if err != nil {
+				resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
+					Severity: tfprotov6.DiagnosticSeverityError,
+					Summary:  fmt.Sprintf("Error reading %q state bytes", req.StateID),
+					Detail:   err.Error(),
+				})
+				return
+			}
+
+			resp.StateBytes = stateBytes
+		},
+		WriteStateBytesFunc: func(ctx context.Context, req statestore.WriteStateBytesRequest, resp *statestore.WriteStateBytesResponse) {
+			stateFilePath := filepath.Join(req.StateID, defaultStateFileName)
+			memFS[stateFilePath] = &fstest.MapFile{
+				Data:    req.StateBytes,
+				Mode:    fs.ModePerm,
+				ModTime: time.Now(),
+			}
+		},
+	}
+}
+
 type lockInfo struct {
 	ID        string
 	Who       string
