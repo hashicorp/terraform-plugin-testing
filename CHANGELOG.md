@@ -1,3 +1,9 @@
+## 1.14.1 (March 30, 2026)
+
+BUG FIXES:
+
+* Backport: Remove the redundant post-apply refresh triggered by resource/refreshAfterApply so acceptance tests avoid an extra refresh cycle. ([#641](https://github.com/hashicorp/terraform-plugin-testing/issues/641))
+
 ## 1.14.0 (December 03, 2025)
 
 FEATURES:

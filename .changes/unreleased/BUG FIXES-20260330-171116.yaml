@@ -1,5 +1,0 @@
-kind: BUG FIXES
-body: "Backport: Remove the redundant post-apply refresh triggered by resource/refreshAfterApply so acceptance tests avoid an extra refresh cycle."
-time: 2026-03-30T17:11:16.532832+02:00
-custom:
-    Issue: "641"
