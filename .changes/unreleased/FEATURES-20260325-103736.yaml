@@ -1,0 +1,5 @@
+kind: FEATURES
+body: 'helper/resource: Added new `GenerateConfig` testing mode to `TestStep` which can be used to test the generated resource configuration during `ImportState` testing mode.'
+time: 2026-03-25T10:37:36.460435-04:00
+custom:
+    Issue: "638"

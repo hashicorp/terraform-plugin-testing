@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testprovider"
+	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/provider"
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
@@ -180,6 +181,76 @@ func TestImportBlock_WithResourceIdentity_RequiresVersion1_12_0(t *testing.T) {
 				ImportState:     true,
 				ImportStateKind: r.ImportBlockWithResourceIdentity,
 				ExpectError:     regexp.MustCompile(`Terraform 1.12.0\S* or later`),
+			},
+		},
+	})
+}
+
+func TestImportBlock_WithResourceIdentity_GenerateConfig(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_12_0), // ImportBlockWithResourceIdentity requires Terraform 1.12.0 or later
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_container": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "examplecloud_container" "test" {
+					location = "westeurope"
+					name     = "somevalue"
+				}`,
+			},
+			{
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithResourceIdentity,
+				GenerateConfig:  true,
+			},
+		},
+	})
+}
+
+func TestImportBlock_WithResourceIdentity_GenerateConfig_ExpectError(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_14_0), // Provider generated config requires Terraform 1.14.0 or later
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Capabilities: &provider.ServerCapabilities{
+					// GenerateResourceConfig RPC is unimplemented, returning a null generated
+					// config to Terraform Core.
+					GenerateResourceConfig: true,
+				},
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_container": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "examplecloud_container" "test" {
+					location = "westeurope"
+					name     = "somevalue"
+				}`,
+			},
+			{
+				ResourceName:    "examplecloud_container.test",
+				ImportState:     true,
+				ImportStateKind: r.ImportBlockWithResourceIdentity,
+				GenerateConfig:  true,
+				ExpectError:     regexp.MustCompile(`importing resource examplecloud_container.generated: expected a no-op import operation, got.*\["update"\] action with plan(.?)`),
 			},
 		},
 	})
