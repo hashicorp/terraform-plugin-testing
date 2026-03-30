@@ -191,7 +191,7 @@ func TestImportBlock_WithResourceIdentity_GenerateConfig(t *testing.T) {
 
 	r.UnitTest(t, r.TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipAbove(tfversion.Version1_12_0), // ImportBlockWithResourceIdentity requires Terraform 1.12.0 or later
+			tfversion.SkipBelow(tfversion.Version1_12_0), // ImportBlockWithResourceIdentity requires Terraform 1.12.0 or later
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
