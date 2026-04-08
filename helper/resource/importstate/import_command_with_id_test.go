@@ -396,3 +396,32 @@ func TestImportCommand_ExpectError(t *testing.T) {
 		},
 	})
 }
+
+func TestImportCommand_GenerateConfig_Error(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_container": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				ConfigFile: config.StaticFile(`testdata/1/examplecloud_container.tf`),
+			},
+			{
+				ResourceName:      "examplecloud_container.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+				GenerateConfig:    true,
+				ExpectError:       regexp.MustCompile(`GenerateConfig mode is not supported for ImportState tests using ImportCommandWithID`),
+			},
+		},
+	})
+}
