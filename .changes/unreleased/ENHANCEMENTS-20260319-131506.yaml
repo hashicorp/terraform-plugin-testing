@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: 'helper/resource: Added `DefaultWorkspaceOnly` to enable testing state store implementations that don''t support multiple workspaces. This is achieved by only running Terraform commands with the `default` workspace.'
-time: 2026-03-19T13:15:06.890244-04:00
-custom:
-    Issue: "633"

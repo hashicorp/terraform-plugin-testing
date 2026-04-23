@@ -1,5 +1,0 @@
-kind: BUG FIXES
-body: 'dep: updated `hc-install` dependency to `0.9.4` to prevent openpgp key expiration errors.'
-time: 2026-04-23T11:30:47.849926-04:00
-custom:
-    Issue: "647"
