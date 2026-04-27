@@ -15,6 +15,7 @@ var _ Config = configurationDirectory{}
 
 type configurationDirectory struct {
 	directory string
+	recursive bool
 
 	// appendedConfig is a map of filenames to content
 	appendedConfig map[string]string
@@ -93,12 +94,17 @@ func (c configurationDirectory) Write(ctx context.Context, dest string) error {
 		configDirectory = filepath.Join(pwd, configDirectory)
 	}
 
-	err := copyFiles(configDirectory, dest)
-	if err != nil {
-		return err
+	if c.recursive {
+		if err := copyFilesRecursively(configDirectory, dest); err != nil {
+			return err
+		}
+	} else {
+		if err := copyFiles(configDirectory, dest); err != nil {
+			return err
+		}
 	}
 
-	err = c.writeAppendedConfig(dest)
+	err := c.writeAppendedConfig(dest)
 	if err != nil {
 		return err
 	}
