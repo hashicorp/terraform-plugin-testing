@@ -524,13 +524,14 @@ func (wd *WorkingDir) Schemas(ctx context.Context) (*tfjson.ProviderSchemas, err
 	return providerSchemas, err
 }
 
-func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
+func (wd *WorkingDir) Query(ctx context.Context, opts ...tfexec.QueryOption) ([]tfjson.LogMsg, error) {
 	var messages []tfjson.LogMsg
 	var diags []tfjson.LogMsg
 
 	logging.HelperResourceTrace(ctx, "Calling Terraform CLI providers query command")
 
 	args := []tfexec.QueryOption{tfexec.Reattach(wd.reattachInfo)}
+	args = append(args, opts...)
 
 	logs, err := wd.tf.QueryJSON(context.Background(), args...)
 

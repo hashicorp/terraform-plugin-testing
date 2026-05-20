@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/testing/testsdk/providerserver"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/querycheck"
+	"github.com/hashicorp/terraform-plugin-testing/querycheck/queryfilter"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
@@ -100,6 +101,107 @@ func TestQuery(t *testing.T) {
 						"resource_group_name": knownvalue.StringExact("bar"),
 					}),
 				},
+			},
+		},
+	})
+}
+
+func TestQuery_GenerateConfig_WithQueryConfigFilters(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_14_0),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				ListResources: map[string]testprovider.ListResource{
+					"examplecloud_containerette": examplecloudListResource(),
+				},
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_containerette": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "examplecloud_containerette" "test" {
+					name                = "banana"
+					resource_group_name = "foo"
+					location  			= "westeurope"
+
+					instances = 5
+				}`,
+			},
+			{
+				Query:          true,
+				GenerateConfig: true,
+				Config: `
+				provider "examplecloud" {}
+
+				list "examplecloud_containerette" "test" {
+					provider = examplecloud
+
+					config {
+						resource_group_name = "foo"
+					}
+				}
+				`,
+				QueryConfigFilters: map[string]queryfilter.QueryFilter{
+					"test": queryfilter.ByDisplayName(knownvalue.StringExact("banana")),
+				},
+			},
+		},
+	})
+}
+
+func TestQuery_GenerateConfig_WithQueryConfigFilters_MultipleMatches(t *testing.T) {
+	t.Parallel()
+
+	r.UnitTest(t, r.TestCase{
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_14_0),
+		},
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"examplecloud": providerserver.NewProviderServer(testprovider.Provider{
+				ListResources: map[string]testprovider.ListResource{
+					"examplecloud_containerette": examplecloudListResource(),
+				},
+				Resources: map[string]testprovider.Resource{
+					"examplecloud_containerette": examplecloudResource(),
+				},
+			}),
+		},
+		Steps: []r.TestStep{
+			{
+				Config: `
+				resource "examplecloud_containerette" "test" {
+					name                = "banana"
+					resource_group_name = "foo"
+					location  			= "westeurope"
+
+					instances = 5
+				}`,
+			},
+			{
+				Query:          true,
+				GenerateConfig: true,
+				Config: `
+				provider "examplecloud" {}
+
+				list "examplecloud_containerette" "test" {
+					provider = examplecloud
+
+					config {
+						resource_group_name = "foo"
+					}
+				}
+				`,
+				QueryConfigFilters: map[string]queryfilter.QueryFilter{
+					"renamed": queryfilter.ByDisplayName(knownvalue.StringRegexp(regexp.MustCompile(".+"))),
+				},
+				ExpectError: regexp.MustCompile(`Error generating concatenated config: renamed filter returned 6 results, filters must return exactly 1 result`),
 			},
 		},
 	})

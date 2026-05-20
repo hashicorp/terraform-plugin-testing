@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/querycheck"
+	"github.com/hashicorp/terraform-plugin-testing/querycheck/queryfilter"
 
 	"github.com/mitchellh/go-testing-interface"
 
@@ -877,6 +878,17 @@ type TestStep struct {
 	// GenerateConfig will generate resource blocks when set to true. This can
 	// only be used with the `ImportState` and `Query` testing modes.
 	GenerateConfig bool
+
+	// QueryConfigFilters is an optional set of [queryfilter.QueryFilter]
+	// values, keyed by an arbitrary identifier, applied to the
+	// [tfjson.ListResourceFoundData] results produced by a query test step
+	// running in `GenerateConfig` mode. Filters are evaluated using AND
+	// semantics: a query result's Config field is only included in the
+	// generated configuration when every filter reports it as included.
+	//
+	// Filters have no effect outside of the Query testing mode with
+	// GenerateConfig set to true.
+	QueryConfigFilters map[string]queryfilter.QueryFilter
 }
 
 // ConfigPlanChecks defines the different points in a Config TestStep when plan checks can be run.
