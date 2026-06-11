@@ -103,6 +103,24 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("Error setting config: %w", err)
 	}
 
+	// Run validation and diagnostic checks
+	if len(step.ConfigValidateChecks) > 0 {
+		var validateOutput *tfjson.ValidateOutput
+		err = runProviderCommand(ctx, t, wd, providers, func() error {
+			var err error
+			validateOutput, err = wd.Validate(ctx)
+			return err
+		})
+		if err != nil {
+			return fmt.Errorf("Error running terraform validate: %w", err)
+		}
+
+		err = runDiagnosticChecks(ctx, t, validateOutput.Diagnostics, step.ConfigValidateChecks)
+		if err != nil {
+			return fmt.Errorf("Validation diagnostic check(s) failed:\n%w", err)
+		}
+	}
+
 	// If this step is a PlanOnly step, skip over this first Plan and
 	// subsequent Apply, and use the follow-up Plan that checks for
 	// permadiffs
