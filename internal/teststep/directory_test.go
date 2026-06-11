@@ -5,9 +5,11 @@ package teststep
 
 import (
 	"context"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -473,27 +475,31 @@ func TestConfigurationDirectory_Write(t *testing.T) {
 				dirEntries, err := os.ReadDir(testCase.configDirectory.directory)
 
 				if err != nil {
-					t.Errorf("error reading directory: %s", err)
+					t.Fatalf("error reading directory: %s", err)
 				}
 
 				tempDirEntries, err := os.ReadDir(tempDir)
 
 				if err != nil {
-					t.Errorf("error reading temp directory: %s", err)
+					t.Fatalf("error reading temp directory: %s", err)
 				}
 
-				if len(dirEntries) != len(tempDirEntries) {
-					t.Errorf("expected %d dir entries, got %d dir entries", dirEntries, tempDirEntries)
+				files := filesOnly(dirEntries)
+				tempDirFiles := filesOnly(tempDirEntries)
+
+				if len(tempDirFiles)-len(files) != 0 {
+					t.Errorf("expected %d files, got %d files", len(files), tempDirFiles)
 				}
 
-				for k, v := range dirEntries {
-					dirEntryInfo, err := v.Info()
+				for i, file := range files {
+					dirEntryInfo, err := file.Info()
 
 					if err != nil {
 						t.Errorf("error getting dir entry info: %s", err)
 					}
 
-					tempDirEntryInfo, err := tempDirEntries[k].Info()
+					tempDirEntry := tempDirFiles[i]
+					tempDirEntryInfo, err := tempDirEntry.Info()
 
 					if err != nil {
 						t.Errorf("error getting temp dir entry info: %s", err)
@@ -502,6 +508,55 @@ func TestConfigurationDirectory_Write(t *testing.T) {
 					if diff := cmp.Diff(tempDirEntryInfo, dirEntryInfo, fileInfoComparer); diff != "" {
 						t.Errorf("unexpected difference: %s", diff)
 					}
+				}
+			}
+		})
+	}
+}
+
+func TestConfigurationDirectory_Write_Recursive(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		configDirectory configurationDirectory
+		expectedError   *regexp.Regexp
+	}{
+		"dir-recursive": {
+			configDirectory: configurationDirectory{
+				directory: "testdata/recursive",
+				recursive: true,
+			},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			tempDir := t.TempDir()
+
+			err := testCase.configDirectory.Write(context.Background(), tempDir)
+			if testCase.expectedError == nil && err != nil {
+				t.Errorf("unexpected error %s", err)
+			}
+
+			if testCase.expectedError != nil && err == nil {
+				t.Errorf("expected error but got none")
+			}
+
+			if testCase.expectedError != nil && err != nil {
+				if !testCase.expectedError.MatchString(err.Error()) {
+					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
+				}
+			}
+
+			if err == nil {
+				filepaths := readDirectory(t, testCase.configDirectory.directory)
+				tempDirEntries := readDirectory(t, tempDir)
+
+				diff := cmp.Diff(filepaths, tempDirEntries)
+				if len(diff) != 0 {
+					t.Fatalf("expected filepaths do not match actual filepaths: %v", diff)
 				}
 			}
 		})
@@ -572,27 +627,30 @@ func TestConfigurationDirectory_Write_AbsolutePath(t *testing.T) {
 				dirEntries, err := os.ReadDir(testCase.configDirectory.directory)
 
 				if err != nil {
-					t.Errorf("error reading directory: %s", err)
+					t.Fatalf("error reading directory: %s", err)
 				}
 
 				tempDirEntries, err := os.ReadDir(tempDir)
 
 				if err != nil {
-					t.Errorf("error reading temp directory: %s", err)
+					t.Fatalf("error reading temp directory: %s", err)
 				}
 
-				if len(dirEntries) != len(tempDirEntries) {
-					t.Errorf("expected %d dir entries, got %d dir entries", dirEntries, tempDirEntries)
+				files := filesOnly(dirEntries)
+				tempDirFiles := filesOnly(tempDirEntries)
+
+				if len(tempDirFiles)-len(files) != 0 {
+					t.Errorf("expected %d files, got %d files", len(files), tempDirFiles)
 				}
 
-				for k, v := range dirEntries {
-					dirEntryInfo, err := v.Info()
+				for i, file := range files {
+					dirEntryInfo, err := file.Info()
 
 					if err != nil {
 						t.Errorf("error getting dir entry info: %s", err)
 					}
 
-					tempDirEntryInfo, err := tempDirEntries[k].Info()
+					tempDirEntryInfo, err := tempDirFiles[i].Info()
 
 					if err != nil {
 						t.Errorf("error getting temp dir entry info: %s", err)
@@ -641,17 +699,19 @@ func TestConfigurationDirectory_Write_WithAppendedConfig(t *testing.T) {
 			}
 
 			tempDirEntries, err := os.ReadDir(tempDir)
-
 			if err != nil {
 				t.Errorf("error reading temp directory: %s", err)
 			}
 
-			if len(tempDirEntries)-len(dirEntries) != 1 {
-				t.Errorf("expected %d dir entries, got %d dir entries", len(dirEntries)+1, tempDirEntries)
+			files := filesOnly(dirEntries)
+			tempDirFiles := filesOnly(tempDirEntries)
+
+			if len(tempDirFiles)-len(files) != 1 {
+				t.Errorf("expected %d files, got %d files", len(files)+1, tempDirFiles)
 			}
 
-			for _, entry := range dirEntries {
-				filename := entry.Name()
+			for _, file := range files {
+				filename := file.Name()
 				expectedContent, err := os.ReadFile(filepath.Join(testCase.configDirectory.directory, filename))
 				if err != nil {
 					t.Errorf("error reading file from config directory %s: %s", filename, err)
@@ -697,3 +757,32 @@ var fileInfoComparer = cmp.Comparer(func(x, y os.FileInfo) bool {
 
 	return true
 })
+
+func filesOnly(entries []os.DirEntry) []os.DirEntry {
+	files := []os.DirEntry{}
+	for _, e := range entries {
+		if !e.IsDir() {
+			files = append(files, e)
+		}
+	}
+	return files
+}
+
+func readDirectory(t *testing.T, root string) []string {
+	t.Helper()
+
+	contents := []string{}
+
+	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if !entry.IsDir() {
+			contents = append(contents, strings.TrimPrefix(path, root))
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("readDirectory: WalkDir: %v", err)
+
+	}
+
+	return contents
+}
