@@ -212,7 +212,7 @@ func TestFilterSweepers(t *testing.T) {
 			ExpectedSweepers: []string{"aws_dummy"},
 		},
 		{
-			Name: "with dep",
+			Name: "with dependencies",
 			Sweepers: map[string]*Sweeper{
 				"aws_dummy": {
 					Name: "aws_dummy",
@@ -251,6 +251,25 @@ func TestFilterSweepers(t *testing.T) {
 			Filter:           "aws_dummy",
 		},
 		{
+			Name: "with regex filter",
+			Sweepers: map[string]*Sweeper{
+				"aws_dummy": {
+					Name: "aws_dummy",
+					F:    mockSweeperFunc,
+				},
+				"aws_top": {
+					Name: "aws_top",
+					F:    mockSweeperFunc,
+				},
+				"aws_sub": {
+					Name: "aws_sub",
+					F:    mockSweeperFunc,
+				},
+			},
+			ExpectedSweepers: []string{"aws_dummy", "aws_sub", "aws_top"},
+			Filter:           "^aws_",
+		},
+		{
 			Name: "with two filters",
 			Sweepers: map[string]*Sweeper{
 				"aws_dummy": {
@@ -271,7 +290,7 @@ func TestFilterSweepers(t *testing.T) {
 			Filter:           "aws_dummy,aws_sub",
 		},
 		{
-			Name: "with dep and filter",
+			Name: "with dependency and filter",
 			Sweepers: map[string]*Sweeper{
 				"aws_dummy": {
 					Name: "aws_dummy",
@@ -310,7 +329,46 @@ func TestFilterSweepers(t *testing.T) {
 			Filter: "none",
 		},
 		{
-			Name: "with nested depenencies and top level filter",
+			Name: "with non-matching regex filter",
+			Sweepers: map[string]*Sweeper{
+				"aws_dummy": {
+					Name: "aws_dummy",
+					F:    mockSweeperFunc,
+				},
+				"aws_top": {
+					Name:         "aws_top",
+					Dependencies: []string{"aws_sub"},
+					F:            mockSweeperFunc,
+				},
+				"aws_sub": {
+					Name: "aws_sub",
+					F:    mockSweeperFunc,
+				},
+			},
+			Filter: "^aws_$",
+		},
+		{
+			Name: "with redundant filter",
+			Sweepers: map[string]*Sweeper{
+				"aws_dummy": {
+					Name: "aws_dummy",
+					F:    mockSweeperFunc,
+				},
+				"aws_top": {
+					Name:         "aws_top",
+					Dependencies: []string{"aws_sub"},
+					F:            mockSweeperFunc,
+				},
+				"aws_sub": {
+					Name: "aws_sub",
+					F:    mockSweeperFunc,
+				},
+			},
+			ExpectedSweepers: []string{"aws_sub", "aws_top", "aws_dummy"},
+			Filter:           "aws_,aws_dummy",
+		},
+		{
+			Name: "with nested dependencies and top level filter",
 			Sweepers: map[string]*Sweeper{
 				"not_matching": {
 					Name: "not_matching",
@@ -335,7 +393,7 @@ func TestFilterSweepers(t *testing.T) {
 			Filter:           "matching_level1",
 		},
 		{
-			Name: "with nested depenencies and middle level filter",
+			Name: "with nested dependencies and middle level filter",
 			Sweepers: map[string]*Sweeper{
 				"not_matching": {
 					Name: "not_matching",
@@ -360,7 +418,7 @@ func TestFilterSweepers(t *testing.T) {
 			Filter:           "matching_level2",
 		},
 		{
-			Name: "with nested depenencies and bottom level filter",
+			Name: "with nested dependencies and bottom level filter",
 			Sweepers: map[string]*Sweeper{
 				"not_matching": {
 					Name: "not_matching",
