@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: 'testing: Make unit test expectations portable across operating systems.'
+time: 2026-07-24T20:42:26.224+02:00
+custom:
+    Issue: "673"

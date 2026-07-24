@@ -4,6 +4,7 @@
 package config_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/config"
@@ -26,7 +27,7 @@ func TestTestStepConfigFunc_Exec_File(t *testing.T) {
 			testStepConfigRequest: config.TestStepConfigRequest{
 				TestName: "TestTestStepConfigFunc_Exec",
 			},
-			expected: "testdata/TestTestStepConfigFunc_Exec/test.tf",
+			expected: filepath.Join("testdata", "TestTestStepConfigFunc_Exec", "test.tf"),
 		},
 		"test_step_file": {
 			testStepConfigFunc: config.TestStepFile("test.tf"),
@@ -34,7 +35,7 @@ func TestTestStepConfigFunc_Exec_File(t *testing.T) {
 				StepNumber: 1,
 				TestName:   "TestTestStepConfigFunc_Exec",
 			},
-			expected: "testdata/TestTestStepConfigFunc_Exec/1/test.tf",
+			expected: filepath.Join("testdata", "TestTestStepConfigFunc_Exec", "1", "test.tf"),
 		},
 	}
 
