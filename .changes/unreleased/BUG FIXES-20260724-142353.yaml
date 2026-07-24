@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: 'helper/resource: Fix persisted working directory copying on Windows.'
+time: 2026-07-24T14:23:53.759+02:00
+custom:
+    Issue: "672"
