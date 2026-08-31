@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: 'helper/resource: Include the test step number in import state verification failure messages.'
+time: 2026-07-24T12:32:49.356719+02:00
+custom:
+    Issue: "525"

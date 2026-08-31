@@ -348,9 +348,7 @@ func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.
 				}
 			}
 			if oldR == nil || oldR.Primary == nil {
-				t.Fatalf(
-					"Failed state verification, resource with ID %s not found",
-					rIdentifier)
+				return fmt.Errorf("Failed state verification, resource with ID %s not found", rIdentifier)
 			}
 
 			// don't add empty flatmapped containers, so we can more easily
