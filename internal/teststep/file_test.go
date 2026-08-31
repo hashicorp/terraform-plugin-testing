@@ -5,9 +5,11 @@ package teststep
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -20,13 +22,13 @@ func TestConfigurationFile_HasProviderBlock(t *testing.T) {
 	testCases := map[string]struct {
 		configFile    configurationFile
 		expected      bool
-		expectedError *regexp.Regexp
+		expectedError error
 	}{
 		"not-file": {
 			configFile: configurationFile{
 				file: "testdata/empty_file/not_a_real_file.tf",
 			},
-			expectedError: regexp.MustCompile(`.*no such file or directory`),
+			expectedError: fs.ErrNotExist,
 		},
 		"no-config": {
 			configFile: configurationFile{
@@ -116,10 +118,8 @@ func TestConfigurationFile_HasProviderBlock(t *testing.T) {
 				t.Errorf("expected error but got none")
 			}
 
-			if testCase.expectedError != nil && err != nil {
-				if !testCase.expectedError.MatchString(err.Error()) {
-					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
-				}
+			if testCase.expectedError != nil && err != nil && !errors.Is(err, testCase.expectedError) {
+				t.Errorf("expected error %s, got error %s", testCase.expectedError, err)
 			}
 
 			if diff := cmp.Diff(testCase.expected, got); diff != "" {
@@ -135,13 +135,13 @@ func TestConfigurationFile_HasProviderBlock_AbsolutePath(t *testing.T) {
 	testCases := map[string]struct {
 		configFile    configurationFile
 		expected      bool
-		expectedError *regexp.Regexp
+		expectedError error
 	}{
 		"not-file": {
 			configFile: configurationFile{
 				file: "testdata/empty_file/not_a_real_file.tf",
 			},
-			expectedError: regexp.MustCompile(`.*no such file or directory`),
+			expectedError: fs.ErrNotExist,
 		},
 		"no-config": {
 			configFile: configurationFile{
@@ -239,10 +239,8 @@ func TestConfigurationFile_HasProviderBlock_AbsolutePath(t *testing.T) {
 				t.Errorf("expected error but got none")
 			}
 
-			if testCase.expectedError != nil && err != nil {
-				if !testCase.expectedError.MatchString(err.Error()) {
-					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
-				}
+			if testCase.expectedError != nil && err != nil && !errors.Is(err, testCase.expectedError) {
+				t.Errorf("expected error %s, got error %s", testCase.expectedError, err)
 			}
 
 			if diff := cmp.Diff(testCase.expected, got); diff != "" {
@@ -258,13 +256,13 @@ func TestConfigurationFile_HasTerraformBlock(t *testing.T) {
 	testCases := map[string]struct {
 		configFile    configurationFile
 		expected      bool
-		expectedError *regexp.Regexp
+		expectedError error
 	}{
 		"not-file": {
 			configFile: configurationFile{
 				file: "testdata/empty_file/not_a_real_file.tf",
 			},
-			expectedError: regexp.MustCompile(`.*no such file or directory`),
+			expectedError: fs.ErrNotExist,
 		},
 		"no-config": {
 			configFile: configurationFile{
@@ -318,10 +316,8 @@ func TestConfigurationFile_HasTerraformBlock(t *testing.T) {
 				t.Errorf("expected error but got none")
 			}
 
-			if testCase.expectedError != nil && err != nil {
-				if !testCase.expectedError.MatchString(err.Error()) {
-					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
-				}
+			if testCase.expectedError != nil && err != nil && !errors.Is(err, testCase.expectedError) {
+				t.Errorf("expected error %s, got error %s", testCase.expectedError, err)
 			}
 
 			if diff := cmp.Diff(testCase.expected, got); diff != "" {
@@ -337,13 +333,13 @@ func TestConfigurationFile_HasTerraformBlock_AbsolutePath(t *testing.T) {
 	testCases := map[string]struct {
 		configFile    configurationFile
 		expected      bool
-		expectedError *regexp.Regexp
+		expectedError error
 	}{
 		"not-file": {
 			configFile: configurationFile{
 				file: "testdata/empty_file/not_a_real_file.tf",
 			},
-			expectedError: regexp.MustCompile(`.*no such file or directory`),
+			expectedError: fs.ErrNotExist,
 		},
 		"no-config": {
 			configFile: configurationFile{
@@ -405,10 +401,8 @@ func TestConfigurationFile_HasTerraformBlock_AbsolutePath(t *testing.T) {
 				t.Errorf("expected error but got none")
 			}
 
-			if testCase.expectedError != nil && err != nil {
-				if !testCase.expectedError.MatchString(err.Error()) {
-					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
-				}
+			if testCase.expectedError != nil && err != nil && !errors.Is(err, testCase.expectedError) {
+				t.Errorf("expected error %s, got error %s", testCase.expectedError, err)
 			}
 
 			if diff := cmp.Diff(testCase.expected, got); diff != "" {
@@ -423,13 +417,13 @@ func TestConfigurationFile_Write(t *testing.T) {
 
 	testCases := map[string]struct {
 		configFile    configurationFile
-		expectedError *regexp.Regexp
+		expectedError error
 	}{
 		"not-file": {
 			configFile: configurationFile{
 				file: "testdata/empty_file/not_a_real_file.tf",
 			},
-			expectedError: regexp.MustCompile(`.*no such file or directory`),
+			expectedError: fs.ErrNotExist,
 		},
 		"file": {
 			configFile: configurationFile{
@@ -454,10 +448,8 @@ func TestConfigurationFile_Write(t *testing.T) {
 				t.Errorf("expected error but got none")
 			}
 
-			if testCase.expectedError != nil && err != nil {
-				if !testCase.expectedError.MatchString(err.Error()) {
-					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
-				}
+			if testCase.expectedError != nil && err != nil && !errors.Is(err, testCase.expectedError) {
+				t.Errorf("expected error %s, got error %s", testCase.expectedError, err)
 			}
 
 			if err == nil {
@@ -486,13 +478,13 @@ func TestConfigurationFile_Write_AbsolutePath(t *testing.T) {
 
 	testCases := map[string]struct {
 		configFile    configurationFile
-		expectedError *regexp.Regexp
+		expectedError error
 	}{
 		"not-file": {
 			configFile: configurationFile{
 				file: "testdata/empty_file/not_a_real_file.tf",
 			},
-			expectedError: regexp.MustCompile(`.*no such file or directory`),
+			expectedError: fs.ErrNotExist,
 		},
 		"file": {
 			configFile: configurationFile{
@@ -525,10 +517,8 @@ func TestConfigurationFile_Write_AbsolutePath(t *testing.T) {
 				t.Errorf("expected error but got none")
 			}
 
-			if testCase.expectedError != nil && err != nil {
-				if !testCase.expectedError.MatchString(err.Error()) {
-					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
-				}
+			if testCase.expectedError != nil && err != nil && !errors.Is(err, testCase.expectedError) {
+				t.Errorf("expected error %s, got error %s", testCase.expectedError, err)
 			}
 
 			if err == nil {
@@ -590,7 +580,7 @@ func TestConfigFile_Append(t *testing.T) {
 				t.Fatalf("failed to read file: %s", err)
 			}
 
-			gotS := string(got[:])
+			gotS := strings.ReplaceAll(string(got), "\r\n", "\n")
 			if diff := cmp.Diff(testCase.expectedContent, gotS); diff != "" {
 				t.Errorf("expected %+v, got %+v", testCase.expectedContent, gotS)
 			}

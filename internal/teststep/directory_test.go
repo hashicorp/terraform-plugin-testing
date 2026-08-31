@@ -5,6 +5,8 @@ package teststep
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -19,13 +21,13 @@ func TestConfigurationDirectory_HasProviderBlock(t *testing.T) {
 	testCases := map[string]struct {
 		configDirectory configurationDirectory
 		expected        bool
-		expectedError   *regexp.Regexp
+		expectPathError bool
 	}{
 		"not-directory": {
 			configDirectory: configurationDirectory{
 				directory: "testdata/empty_file/main.tf",
 			},
-			expectedError: regexp.MustCompile(`.*not a directory`),
+			expectPathError: true,
 		},
 		"no-config": {
 			configDirectory: configurationDirectory{
@@ -107,17 +109,18 @@ func TestConfigurationDirectory_HasProviderBlock(t *testing.T) {
 
 			got, err := testCase.configDirectory.HasProviderBlock(context.Background())
 
-			if testCase.expectedError == nil && err != nil {
+			if !testCase.expectPathError && err != nil {
 				t.Errorf("unexpected error %s", err)
 			}
 
-			if testCase.expectedError != nil && err == nil {
+			if testCase.expectPathError && err == nil {
 				t.Errorf("expected error but got none")
 			}
 
-			if testCase.expectedError != nil && err != nil {
-				if !testCase.expectedError.MatchString(err.Error()) {
-					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
+			if testCase.expectPathError && err != nil {
+				var pathError *fs.PathError
+				if !errors.As(err, &pathError) {
+					t.Errorf("expected path error, got error %T: %s", err, err)
 				}
 			}
 
@@ -134,13 +137,13 @@ func TestConfigurationDirectory_HasProviderBlock_AbsolutePath(t *testing.T) {
 	testCases := map[string]struct {
 		configDirectory configurationDirectory
 		expected        bool
-		expectedError   *regexp.Regexp
+		expectPathError bool
 	}{
 		"not-directory": {
 			configDirectory: configurationDirectory{
 				directory: "testdata/empty_file/main.tf",
 			},
-			expectedError: regexp.MustCompile(`.*not a directory`),
+			expectPathError: true,
 		},
 		"no-config": {
 			configDirectory: configurationDirectory{
@@ -230,17 +233,18 @@ func TestConfigurationDirectory_HasProviderBlock_AbsolutePath(t *testing.T) {
 
 			got, err := testCase.configDirectory.HasProviderBlock(context.Background())
 
-			if testCase.expectedError == nil && err != nil {
+			if !testCase.expectPathError && err != nil {
 				t.Errorf("unexpected error %s", err)
 			}
 
-			if testCase.expectedError != nil && err == nil {
+			if testCase.expectPathError && err == nil {
 				t.Errorf("expected error but got none")
 			}
 
-			if testCase.expectedError != nil && err != nil {
-				if !testCase.expectedError.MatchString(err.Error()) {
-					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
+			if testCase.expectPathError && err != nil {
+				var pathError *fs.PathError
+				if !errors.As(err, &pathError) {
+					t.Errorf("expected path error, got error %T: %s", err, err)
 				}
 			}
 
@@ -257,13 +261,13 @@ func TestConfigurationDirectory_HasTerraformBlock(t *testing.T) {
 	testCases := map[string]struct {
 		configDirectory configurationDirectory
 		expected        bool
-		expectedError   *regexp.Regexp
+		expectPathError bool
 	}{
 		"not-directory": {
 			configDirectory: configurationDirectory{
 				directory: "testdata/empty_file/main.tf",
 			},
-			expectedError: regexp.MustCompile(`.*not a directory`),
+			expectPathError: true,
 		},
 		"no-config": {
 			configDirectory: configurationDirectory{
@@ -309,17 +313,18 @@ func TestConfigurationDirectory_HasTerraformBlock(t *testing.T) {
 
 			got, err := testCase.configDirectory.HasTerraformBlock(context.Background())
 
-			if testCase.expectedError == nil && err != nil {
+			if !testCase.expectPathError && err != nil {
 				t.Errorf("unexpected error %s", err)
 			}
 
-			if testCase.expectedError != nil && err == nil {
+			if testCase.expectPathError && err == nil {
 				t.Errorf("expected error but got none")
 			}
 
-			if testCase.expectedError != nil && err != nil {
-				if !testCase.expectedError.MatchString(err.Error()) {
-					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
+			if testCase.expectPathError && err != nil {
+				var pathError *fs.PathError
+				if !errors.As(err, &pathError) {
+					t.Errorf("expected path error, got error %T: %s", err, err)
 				}
 			}
 
@@ -336,13 +341,13 @@ func TestConfigurationDirectory_HasTerraformBlock_AbsolutePath(t *testing.T) {
 	testCases := map[string]struct {
 		configDirectory configurationDirectory
 		expected        bool
-		expectedError   *regexp.Regexp
+		expectPathError bool
 	}{
 		"not-directory": {
 			configDirectory: configurationDirectory{
 				directory: "testdata/empty_file/main.tf",
 			},
-			expectedError: regexp.MustCompile(`.*not a directory`),
+			expectPathError: true,
 		},
 		"no-config": {
 			configDirectory: configurationDirectory{
@@ -396,17 +401,18 @@ func TestConfigurationDirectory_HasTerraformBlock_AbsolutePath(t *testing.T) {
 
 			got, err := testCase.configDirectory.HasTerraformBlock(context.Background())
 
-			if testCase.expectedError == nil && err != nil {
+			if !testCase.expectPathError && err != nil {
 				t.Errorf("unexpected error %s", err)
 			}
 
-			if testCase.expectedError != nil && err == nil {
+			if testCase.expectPathError && err == nil {
 				t.Errorf("expected error but got none")
 			}
 
-			if testCase.expectedError != nil && err != nil {
-				if !testCase.expectedError.MatchString(err.Error()) {
-					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
+			if testCase.expectPathError && err != nil {
+				var pathError *fs.PathError
+				if !errors.As(err, &pathError) {
+					t.Errorf("expected path error, got error %T: %s", err, err)
 				}
 			}
 
@@ -422,13 +428,13 @@ func TestConfigurationDirectory_Write(t *testing.T) {
 
 	testCases := map[string]struct {
 		configDirectory configurationDirectory
-		expectedError   *regexp.Regexp
+		expectPathError bool
 	}{
 		"not-directory": {
 			configDirectory: configurationDirectory{
 				directory: "testdata/empty_file/main.tf",
 			},
-			expectedError: regexp.MustCompile(`.*not a directory`),
+			expectPathError: true,
 		},
 		"no-config": {
 			configDirectory: configurationDirectory{
@@ -455,17 +461,18 @@ func TestConfigurationDirectory_Write(t *testing.T) {
 
 			err := testCase.configDirectory.Write(context.Background(), tempDir)
 
-			if testCase.expectedError == nil && err != nil {
+			if !testCase.expectPathError && err != nil {
 				t.Errorf("unexpected error %s", err)
 			}
 
-			if testCase.expectedError != nil && err == nil {
+			if testCase.expectPathError && err == nil {
 				t.Errorf("expected error but got none")
 			}
 
-			if testCase.expectedError != nil && err != nil {
-				if !testCase.expectedError.MatchString(err.Error()) {
-					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
+			if testCase.expectPathError && err != nil {
+				var pathError *fs.PathError
+				if !errors.As(err, &pathError) {
+					t.Errorf("expected path error, got error %T: %s", err, err)
 				}
 			}
 
@@ -513,13 +520,13 @@ func TestConfigurationDirectory_Write_AbsolutePath(t *testing.T) {
 
 	testCases := map[string]struct {
 		configDirectory configurationDirectory
-		expectedError   *regexp.Regexp
+		expectPathError bool
 	}{
 		"not-directory": {
 			configDirectory: configurationDirectory{
 				directory: "testdata/empty_file/main.tf",
 			},
-			expectedError: regexp.MustCompile(`.*not a directory`),
+			expectPathError: true,
 		},
 		"no-config": {
 			configDirectory: configurationDirectory{
@@ -554,17 +561,18 @@ func TestConfigurationDirectory_Write_AbsolutePath(t *testing.T) {
 
 			err = testCase.configDirectory.Write(context.Background(), tempDir)
 
-			if testCase.expectedError == nil && err != nil {
+			if !testCase.expectPathError && err != nil {
 				t.Errorf("unexpected error %s", err)
 			}
 
-			if testCase.expectedError != nil && err == nil {
+			if testCase.expectPathError && err == nil {
 				t.Errorf("expected error but got none")
 			}
 
-			if testCase.expectedError != nil && err != nil {
-				if !testCase.expectedError.MatchString(err.Error()) {
-					t.Errorf("expected error %s, got error %s", testCase.expectedError.String(), err)
+			if testCase.expectPathError && err != nil {
+				var pathError *fs.PathError
+				if !errors.As(err, &pathError) {
+					t.Errorf("expected path error, got error %T: %s", err, err)
 				}
 			}
 
