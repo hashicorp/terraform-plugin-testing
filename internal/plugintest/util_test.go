@@ -123,3 +123,29 @@ func dirEntryComparer(t *testing.T) cmp.Option {
 		return true
 	})
 }
+
+func TestCopyDirWithBaseDirName(t *testing.T) {
+	t.Parallel()
+
+	srcDir := t.TempDir()
+	baseDir := filepath.Join(srcDir, "work")
+
+	if err := os.MkdirAll(baseDir, 0o755); err != nil {
+		t.Fatalf("cannot create base directory: %s", err)
+	}
+
+	if err := os.WriteFile(filepath.Join(baseDir, "src.txt"), []byte("test"), 0o600); err != nil {
+		t.Fatalf("cannot create source file: %s", err)
+	}
+
+	destDir := filepath.Join(t.TempDir(), "dest")
+	baseDirName := baseDir[len(srcDir):]
+
+	if err := CopyDir(srcDir, destDir, baseDirName); err != nil {
+		t.Fatalf("cannot copy directory: %s", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(destDir, "work", "src.txt")); err != nil {
+		t.Fatalf("cannot stat copied source file: %s", err)
+	}
+}

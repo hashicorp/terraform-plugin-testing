@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -119,8 +118,8 @@ func CopyDir(src, dest, baseDirName string) error {
 	}
 
 	for _, dirEntry := range dirEntries {
-		srcFilepath := path.Join(src, dirEntry.Name())
-		destFilepath := path.Join(dest, dirEntry.Name())
+		srcFilepath := filepath.Join(src, dirEntry.Name())
+		destFilepath := filepath.Join(dest, dirEntry.Name())
 
 		if !strings.Contains(srcFilepath, baseDirName) {
 			continue
