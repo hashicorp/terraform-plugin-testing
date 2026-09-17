@@ -165,6 +165,27 @@ func copyFiles(path string, dstPath string) error {
 	return nil
 }
 
+// copyFilesRecursively accepts a path to a directory and a destination.
+func copyFilesRecursively(rootPath string, dstPath string) error {
+	return filepath.WalkDir(rootPath, func(path string, entry os.DirEntry, err error) error {
+		sortaRelativePath := strings.TrimPrefix(path, rootPath)
+		newPath := filepath.Join(dstPath, sortaRelativePath)
+
+		if len(sortaRelativePath) == 0 {
+			return nil
+		}
+
+		if entry.IsDir() {
+			return os.Mkdir(newPath, 0700)
+		} else {
+			newDir, _ := filepath.Split(newPath)
+			_, err := copyFile(path, newDir)
+			return err
+
+		}
+	})
+}
+
 // copyFile accepts a path to a file and a destination,
 // copying the file from path to destination.
 func copyFile(path string, dstPath string) (string, error) {
@@ -179,7 +200,7 @@ func copyFile(path string, dstPath string) (string, error) {
 	di, err := os.Stat(dstPath)
 
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("copyFile: os.Stat: %v", err)
 	}
 
 	if di.IsDir() {
