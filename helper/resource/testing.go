@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-plugin-testing/config"
+	"github.com/hashicorp/terraform-plugin-testing/diagcheck"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -641,6 +642,14 @@ type TestStep struct {
 	// ConfigStateChecks allow assertions to be made against the state file during a Config (apply) test using a state check.
 	// Custom state checks can be created by implementing the [statecheck.StateCheck] interface, or by using a StateCheck implementation from the provided [statecheck] package.
 	ConfigStateChecks []statecheck.StateCheck
+
+	// ConfigValidateChecks runs diagnostic checks after terraform validate.
+	// This occurs after configuration is set and init is run, before plan/apply.
+	// Custom diagnostic checks can be created by implementing the [diagcheck.DiagnosticCheck] interface, or by using a DiagnosticCheck implementation from the provided [diagcheck] package.
+	//
+	// [diagcheck.DiagnosticCheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/diagcheck#DiagnosticCheck
+	// [diagcheck]: https://pkg.go.dev/github.com/hashicorp/terraform-plugin-testing/diagcheck
+	ConfigValidateChecks []diagcheck.DiagnosticCheck
 
 	// QueryResultChecks allow assertions to be made against a collection of found resources that were returned by a query using a query check.
 	// Custom query checks can be created by implementing the [querycheck.QueryResultCheck] interface, or by using a QueryResultCheck implementation from the provided [querycheck] package.

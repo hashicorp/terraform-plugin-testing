@@ -524,6 +524,19 @@ func (wd *WorkingDir) Schemas(ctx context.Context) (*tfjson.ProviderSchemas, err
 	return providerSchemas, err
 }
 
+// Validate runs terraform validate and returns structured validation output.
+//
+// If validation cannot be executed, Validate returns an error.
+func (wd *WorkingDir) Validate(ctx context.Context) (*tfjson.ValidateOutput, error) {
+	logging.HelperResourceTrace(ctx, "Calling Terraform CLI validate command")
+
+	output, err := wd.tf.Validate(context.Background())
+
+	logging.HelperResourceTrace(ctx, "Called Terraform CLI validate command")
+
+	return output, err
+}
+
 func (wd *WorkingDir) Query(ctx context.Context) ([]tfjson.LogMsg, error) {
 	var messages []tfjson.LogMsg
 	var diags []tfjson.LogMsg
