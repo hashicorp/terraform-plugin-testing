@@ -155,6 +155,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		workingDir = testCaseWorkingDir
 	} else {
 		workingDir = helper.RequireNewWorkingDir(ctx, t, "")
+		workingDir.Coverage = testCaseWorkingDir.Coverage
 		defer workingDir.Close()
 	}
 
@@ -191,10 +192,16 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	if kind.plannable() {
-		return testImportBlock(ctx, t, workingDir, providers, resourceName, step, priorIdentityValues)
+		err = testImportBlock(ctx, t, workingDir, providers, resourceName, step, priorIdentityValues)
 	} else {
-		return testImportCommand(ctx, t, workingDir, providers, resourceName, importId, step, state)
+		err = testImportCommand(ctx, t, workingDir, providers, resourceName, importId, step, state)
 	}
+	if err == nil {
+		if !kind.plannable() {
+			workingDir.Coverage.OperationForAddress(resourceName, "import")
+		}
+	}
+	return err
 }
 
 func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, step TestStep, priorIdentityValues map[string]any) error {
@@ -220,6 +227,7 @@ func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.Wo
 	if err != nil {
 		return fmt.Errorf("reading generated plan with import config: %s", err)
 	}
+	workingDir.Coverage.ImportPlan(plan)
 
 	logging.HelperResourceDebug(ctx, fmt.Sprintf("ImportBlockWithId: %d resource changes", len(plan.ResourceChanges)))
 
@@ -277,7 +285,11 @@ func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.
 
 	var importState *terraform.State
 	err = runProviderCommand(ctx, t, workingDir, providers, func() error {
-		_, importState, err = getState(ctx, t, workingDir)
+		jsonState, state, stateErr := getState(ctx, t, workingDir)
+		importState, err = state, stateErr
+		if stateErr == nil {
+			workingDir.Coverage.ObserveState(jsonState)
+		}
 		if err != nil {
 			return err
 		}

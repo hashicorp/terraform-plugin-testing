@@ -21,10 +21,12 @@ func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDi
 	queryConfigRequest := teststep.ConfigurationRequest{
 		Raw: &step.Config,
 	}
+	wd.Coverage.ResetConfig()
 	err := wd.SetQuery(ctx, teststep.Configuration(queryConfigRequest), step.ConfigVariables)
 	if err != nil {
 		return fmt.Errorf("Error setting query config: %w", err)
 	}
+	wd.Coverage.QueryConfig(wd.BaseDir())
 
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
 		return wd.Init(ctx)
@@ -42,6 +44,9 @@ func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDi
 	if err != nil {
 		return err
 	}
-
-	return query.RunQueryChecks(ctx, t, queryOut, step.QueryResultChecks)
+	err = query.RunQueryChecks(ctx, t, queryOut, step.QueryResultChecks)
+	if err == nil {
+		wd.Coverage.QueryResults(queryOut)
+	}
+	return err
 }

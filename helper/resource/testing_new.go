@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -52,6 +53,11 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	t.Helper()
 
 	wd := helper.RequireNewWorkingDir(ctx, t, c.WorkingDir)
+	coverage := semanticcoverage.New(t.Name())
+	if err := coverage.Ready(); err != nil {
+		t.Fatalf("semantic coverage: %s", err)
+	}
+	wd.Coverage = coverage
 
 	ctx = logging.TestTerraformPathContext(ctx, wd.GetHelper().TerraformExecPath())
 	ctx = logging.TestWorkingDirectoryContext(ctx, wd.GetHelper().WorkingDirectory())
@@ -149,6 +155,19 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		}
 
 		stepNumber = stepIndex + 1 // 1-based indexing for humans
+		if err := coverage.Begin(stepNumber); err != nil {
+			t.Errorf("writing semantic coverage finding: %s", err)
+		}
+		// A previous step is complete before the next step starts. Writing here
+		// also retains evidence from a step that calls t.Fatal or t.Skip.
+		defer func(stepNumber int) {
+			if coverage == nil {
+				return
+			}
+			if err := coverage.FinishStep(stepNumber, t.Failed(), t.Skipped()); err != nil {
+				t.Errorf("writing semantic coverage finding: %s", err)
+			}
+		}(stepNumber)
 
 		configRequest := teststep.PrepareConfigurationRequest{
 			Directory: step.ConfigDirectory,
@@ -187,6 +206,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			logging.HelperResourceDebug(ctx, "Called TestStep SkipFunc")
 
 			if skip {
+				coverage.Warning("step_skipped")
 				t.Logf("Skipping step %d/%d due to SkipFunc", stepNumber, len(c.Steps))
 				logging.HelperResourceWarn(ctx, "Skipping TestStep due to SkipFunc")
 				continue
@@ -308,6 +328,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					)
 					t.Fatalf("Step %d/%d error running import, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
 				}
+				coverage.MatchedExpectedError()
 			} else {
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
@@ -332,6 +353,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			logging.HelperResourceTrace(ctx, "TestStep is RefreshState mode")
 
 			err := testStepNewRefreshState(ctx, t, wd, step, providers)
+			if err == nil && step.ExpectError == nil {
+				coverage.RefreshCompleted()
+			}
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 				if err == nil {
@@ -347,6 +371,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					)
 					t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
 				}
+				coverage.MatchedExpectedError()
 			} else {
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
@@ -371,6 +396,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			logging.HelperResourceTrace(ctx, "TestStep is Query mode")
 
 			err := testStepNewQuery(ctx, t, wd, step, providers)
+			if err == nil && step.ExpectError == nil {
+				coverage.QueryCompleted()
+			}
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -384,6 +412,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					)
 					t.Fatalf("Step %d/%d error running query, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
 				}
+				coverage.MatchedExpectedError()
 			} else {
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
@@ -411,6 +440,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				logging.HelperResourceTrace(ctx, "TestStep is running VerifyStateStoreLock logic")
 				err = testStepVerifyStateStoreLock(ctx, t, step, providers, cfg, helper)
 			}
+			if err == nil && step.ExpectError == nil {
+				coverage.StateStoreCompleted()
+			}
 
 			if err != nil {
 				// Ensure the TestStep doesn't run any Terraform commands that expect the backend/state store to be initialized
@@ -430,6 +462,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					)
 					t.Fatalf("Step %d/%d error running state store tests, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
 				}
+				coverage.MatchedExpectedError()
 			} else {
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
@@ -469,6 +502,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					)
 					t.Fatalf("Step %d/%d, expected an error with pattern, no match on: %s", stepNumber, len(c.Steps), err)
 				}
+				coverage.MatchedExpectedError()
 			} else {
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")

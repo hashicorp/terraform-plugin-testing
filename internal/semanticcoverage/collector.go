@@ -1,0 +1,793 @@
+// Copyright IBM Corp. 2026
+// SPDX-License-Identifier: MPL-2.0
+
+// Package semanticcoverage records structural evidence from acceptance-test steps.
+// It never serializes configuration or Terraform values.
+package semanticcoverage
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclparse"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
+	tfjson "github.com/hashicorp/terraform-json"
+)
+
+const EnvDirectory = "TF_ACC_SEMANTIC_COVERAGE_DIR"
+
+// Terraform instance keys can contain arbitrary strings, including ']'.
+// Never persist their contents or the suffix of a malformed address.
+func safeAddress(address string) string {
+	var result strings.Builder
+	for i := 0; i < len(address); i++ {
+		if address[i] != '[' {
+			result.WriteByte(address[i])
+			continue
+		}
+		result.WriteString("[*]")
+		quoted, escaped := false, false
+		closed := false
+		for i++; i < len(address); i++ {
+			switch {
+			case escaped:
+				escaped = false
+			case quoted && address[i] == '\\':
+				escaped = true
+			case address[i] == '"':
+				quoted = !quoted
+			case address[i] == ']' && !quoted:
+				closed = true
+			}
+			if closed {
+				break
+			}
+		}
+		if !closed {
+			break
+		}
+	}
+	return result.String()
+}
+
+type Feature struct {
+	Kind      string   `json:"kind"`
+	Name      string   `json:"name"`
+	Provider  string   `json:"provider,omitempty"`
+	Address   string   `json:"address,omitempty"`
+	Inputs    []string `json:"inputs,omitempty"`
+	Known     []string `json:"known,omitempty"`
+	Null      []string `json:"null,omitempty"`
+	Planned   []string `json:"planned,omitempty"`
+	Completed []string `json:"completed,omitempty"`
+}
+
+type Finding struct {
+	Version  int       `json:"version"`
+	Package  string    `json:"package,omitempty"`
+	Test     string    `json:"test"`
+	Step     int       `json:"step"`
+	Outcome  string    `json:"outcome"`
+	Features []Feature `json:"features,omitempty"`
+	Warnings []string  `json:"warnings,omitempty"`
+}
+
+// Collector belongs to one TestCase, and is shared by its import working directory.
+type Collector struct {
+	mu            sync.Mutex
+	directory     string
+	packageName   string
+	test          string
+	step          int
+	features      map[string]*Feature
+	warnings      []string
+	active        bool
+	lastPlan      []Feature
+	actions       []Feature
+	skipped       bool
+	expectedError bool
+}
+
+func New(test string) *Collector {
+	dir := os.Getenv(EnvDirectory)
+	if dir == "" {
+		return nil
+	}
+	packageName := ""
+	if wd, err := os.Getwd(); err == nil {
+		packageName = filepath.Base(wd)
+	}
+	return &Collector{directory: dir, packageName: packageName, test: test}
+}
+
+func (c *Collector) Begin(step int) error {
+	if c == nil {
+		return nil
+	}
+	// Reaching the next step means the preceding step passed its checks.
+	previousErr := c.Finish("success")
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.step, c.active = step, true
+	c.features = make(map[string]*Feature)
+	c.warnings = nil
+	c.lastPlan = nil
+	c.actions = nil
+	c.skipped = false
+	c.expectedError = false
+	return previousErr
+}
+
+// Ready creates the findings directory before running a test step.
+func (c *Collector) Ready() error {
+	if c == nil {
+		return nil
+	}
+	if err := os.MkdirAll(c.directory, 0700); err != nil {
+		return fmt.Errorf("coverage directory: %w", err)
+	}
+	return nil
+}
+
+func (c *Collector) FinishStep(step int, failed, skipped bool) error {
+	if c == nil {
+		return nil
+	}
+	c.mu.Lock()
+	active := c.active && c.step == step
+	c.mu.Unlock()
+	if !active {
+		return nil
+	}
+	outcome := "success"
+	if failed {
+		outcome = "failed"
+	} else if skipped {
+		outcome = "skipped"
+	}
+	return c.Finish(outcome)
+}
+
+func (c *Collector) feature(kind, name, address string) *Feature {
+	address = safeAddress(address)
+	key := kind + "\x00" + name + "\x00" + address
+	f := c.features[key]
+	if f == nil {
+		f = &Feature{Kind: kind, Name: name, Address: address}
+		c.features[key] = f
+	}
+	return f
+}
+
+func (c *Collector) setProvider(kind, name, address, provider string) {
+	if provider != "" {
+		c.feature(kind, name, address).Provider = provider
+	}
+}
+
+func add(xs *[]string, value string) {
+	if value == "" {
+		return
+	}
+	for _, x := range *xs {
+		if x == value {
+			return
+		}
+	}
+	*xs = append(*xs, value)
+}
+
+func (c *Collector) Warning(code string) {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.active {
+		add(&c.warnings, code)
+		if code == "step_skipped" {
+			c.skipped = true
+		}
+	}
+}
+
+func (c *Collector) MatchedExpectedError() {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.active {
+		c.expectedError = true
+	}
+}
+
+// Config reads the files actually copied into the test working directory.
+func (c *Collector) Config(dir string) {
+	if c == nil {
+		return
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		c.Warning("config_directory_unavailable")
+		return
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !strings.HasSuffix(name, ".tf") && !strings.HasSuffix(name, ".tf.json") && !strings.HasSuffix(name, ".tfquery.hcl") {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			c.Warning("config_file_unavailable")
+			continue
+		}
+		c.Parse(name, data)
+	}
+}
+
+func (c *Collector) QueryConfig(dir string) {
+	if c == nil {
+		return
+	}
+	data, err := os.ReadFile(filepath.Join(dir, "terraform_plugin_test.tfquery.hcl"))
+	if err != nil {
+		c.Warning("query_config_unavailable")
+		return
+	}
+	c.Parse("terraform_plugin_test.tfquery.hcl", data)
+}
+
+func (c *Collector) ResetConfig() {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.active {
+		return
+	}
+	for key, f := range c.features {
+		if len(f.Completed) == 0 && len(f.Planned) == 0 && len(f.Known) == 0 && len(f.Null) == 0 {
+			delete(c.features, key)
+		}
+	}
+}
+
+func (c *Collector) Parse(name string, data []byte) {
+	if c == nil {
+		return
+	}
+	if strings.HasSuffix(name, ".json") {
+		var object map[string]any
+		if json.Unmarshal(data, &object) != nil {
+			c.Warning("config_parse_failed")
+			return
+		}
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		if c.active {
+			c.jsonBlocks(object)
+		}
+		return
+	}
+	parser := hclparse.NewParser()
+	file, diags := parser.ParseHCL(data, name)
+	if diags.HasErrors() {
+		c.Warning("config_parse_failed")
+		return
+	}
+	body, ok := file.Body.(*hclsyntax.Body)
+	if !ok {
+		c.Warning("config_body_unsupported")
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.active {
+		c.blocks(body.Blocks)
+		c.functions(body)
+	}
+}
+
+func (c *Collector) blocks(blocks []*hclsyntax.Block) {
+	for _, b := range blocks {
+		kind, name, address := "", "", ""
+		switch b.Type {
+		case "provider":
+			if len(b.Labels) > 0 && !strings.HasSuffix(b.DefRange().Filename, ".tfquery.hcl") {
+				kind, name = "provider", b.Labels[0]
+			}
+		case "resource", "data", "ephemeral", "action", "list":
+			if len(b.Labels) > 1 {
+				kind, name, address = b.Type, b.Labels[0], b.Labels[0]+"."+b.Labels[1]
+				if kind == "data" {
+					kind = "data_source"
+					address = "data." + address
+				}
+				if kind == "list" {
+					kind = "list_resource"
+					address = "list." + address
+				}
+				if kind == "ephemeral" {
+					kind = "ephemeral_resource"
+					address = "ephemeral." + address
+				}
+				if kind == "action" {
+					address = "action." + address
+				}
+			}
+		case "state_store":
+			if len(b.Labels) > 0 {
+				kind, name = "state_store", b.Labels[0]
+			}
+		}
+		if kind != "" {
+			f := c.feature(kind, name, address)
+			if kind == "action" {
+				for _, nested := range b.Body.Blocks {
+					if nested.Type == "config" {
+						walkInputs(f, nested.Body, "")
+					}
+				}
+			} else if kind == "list_resource" || kind == "state_store" {
+				for _, nested := range b.Body.Blocks {
+					if nested.Type == "config" {
+						walkInputs(f, nested.Body, "")
+					}
+				}
+			} else {
+				walkInputs(f, b.Body, "")
+			}
+		}
+		c.functions(b.Body)
+		c.blocks(b.Body.Blocks)
+	}
+}
+
+func walkInputs(f *Feature, body *hclsyntax.Body, prefix string) {
+	for name := range body.Attributes {
+		path := prefix + name
+		add(&f.Inputs, path)
+	}
+	for _, b := range body.Blocks {
+		path := prefix + b.Type
+		add(&f.Inputs, path)
+		walkInputs(f, b.Body, path+".")
+	}
+}
+
+func (c *Collector) functions(body *hclsyntax.Body) {
+	for _, attr := range body.Attributes {
+		diags := hclsyntax.VisitAll(attr.Expr, func(node hclsyntax.Node) hcl.Diagnostics {
+			if call, ok := node.(*hclsyntax.FunctionCallExpr); ok && strings.HasPrefix(call.Name, "provider::") {
+				parts := strings.Split(call.Name, "::")
+				if len(parts) == 3 {
+					c.feature("function", parts[2], "").Provider = parts[1]
+				}
+			}
+			return nil
+		})
+		if diags.HasErrors() {
+			add(&c.warnings, "function_parse_failed")
+		}
+	}
+}
+
+func (c *Collector) jsonBlocks(root map[string]any) {
+	for rawKind, value := range root {
+		kind := rawKind
+		if kind == "data" {
+			kind = "data_source"
+		}
+		if kind == "list" {
+			kind = "list_resource"
+		}
+		if kind == "ephemeral" {
+			kind = "ephemeral_resource"
+		}
+		if kind == "resource" || kind == "data_source" || kind == "ephemeral_resource" || kind == "action" || kind == "list_resource" || kind == "provider" || kind == "state_store" {
+			for name, raw := range asMap(value) {
+				if kind == "provider" {
+					f := c.feature(kind, name, "")
+					jsonInputs(f, asMap(raw))
+					continue
+				}
+				if kind == "state_store" {
+					jsonInputs(c.feature(kind, name, ""), asMap(asMap(raw)["config"]))
+					continue
+				}
+				for label, cfg := range asMap(raw) {
+					address := name + "." + label
+					if kind == "data_source" {
+						address = "data." + address
+					}
+					if kind == "ephemeral_resource" {
+						address = "ephemeral." + address
+					}
+					if kind == "action" || kind == "list_resource" {
+						cfg = asMap(cfg)["config"]
+					}
+					if kind == "action" {
+						address = "action." + address
+					}
+					if kind == "list_resource" {
+						address = "list." + name + "." + label
+					}
+					jsonInputs(c.feature(kind, name, address), asMap(cfg))
+				}
+			}
+		}
+	}
+}
+
+func asMap(value any) map[string]any { m, _ := value.(map[string]any); return m }
+func jsonInputs(f *Feature, object map[string]any) {
+	for name := range object {
+		add(&f.Inputs, name)
+	}
+}
+
+// Plan records Terraform Core's resource actions, not inferred provider RPCs.
+func (c *Collector) Plan(plan *tfjson.Plan) {
+	if c == nil || plan == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.active {
+		return
+	}
+	if plan.Config != nil {
+		for _, provider := range plan.Config.ProviderConfigs {
+			if provider != nil && provider.FullName != "" {
+				c.feature("provider", provider.FullName, "")
+			}
+		}
+	}
+	// Several plans run during one step. Only the pre-apply plan can justify
+	// completed actions; follow-up no-op plans must not replace that evidence.
+	for _, rc := range plan.ResourceChanges {
+		if rc == nil || rc.Change == nil {
+			continue
+		}
+		kind := "resource"
+		if rc.Mode == tfjson.DataResourceMode {
+			kind = "data_source"
+		} else if rc.Mode != tfjson.ManagedResourceMode {
+			continue
+		}
+		f := c.feature(kind, rc.Type, rc.Address)
+		c.setProvider(kind, rc.Type, rc.Address, rc.ProviderName)
+		add(&f.Planned, action(rc.Change.Actions))
+	}
+	for _, invocation := range plan.ActionInvocations {
+		if invocation == nil {
+			continue
+		}
+		f := c.feature("action", invocation.Type, invocation.Address)
+		c.setProvider("action", invocation.Type, invocation.Address, invocation.ProviderName)
+		add(&f.Planned, "invoke")
+	}
+	// PlannedValues is a plan, not the state produced by a completed apply.
+	// Computed coverage is taken from post-apply or refresh state instead.
+}
+
+// PreApplyPlan snapshots the plan which will actually be applied.
+func (c *Collector) PreApplyPlan(plan *tfjson.Plan) {
+	if c == nil || plan == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.active {
+		return
+	}
+	c.lastPlan = nil
+	c.actions = nil
+	for _, rc := range plan.ResourceChanges {
+		if rc != nil && rc.Change != nil && rc.Mode == tfjson.ManagedResourceMode {
+			c.lastPlan = append(c.lastPlan, Feature{Kind: "resource", Name: rc.Type, Provider: rc.ProviderName, Address: safeAddress(rc.Address), Planned: []string{action(rc.Change.Actions)}})
+		}
+	}
+	for _, invocation := range plan.ActionInvocations {
+		if invocation != nil {
+			c.actions = append(c.actions, Feature{Kind: "action", Name: invocation.Type, Provider: invocation.ProviderName, Address: safeAddress(invocation.Address)})
+		}
+	}
+}
+
+func (c *Collector) ImportPlan(plan *tfjson.Plan) {
+	if c == nil || plan == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.active {
+		return
+	}
+	for _, rc := range plan.ResourceChanges {
+		if rc != nil && rc.Change != nil && rc.Change.Importing != nil {
+			f := c.feature("resource", rc.Type, rc.Address)
+			if f.Provider == "" {
+				f.Provider = rc.ProviderName
+			}
+			add(&f.Planned, "import")
+		}
+	}
+}
+
+func action(actions tfjson.Actions) string {
+	if actions.Create() {
+		return "create"
+	}
+	if actions.Delete() {
+		return "delete"
+	}
+	if actions.Update() {
+		return "update"
+	}
+	if actions.Replace() {
+		return "replace"
+	}
+	if actions.NoOp() {
+		return "no_op"
+	}
+	if actions.Read() {
+		return "read"
+	}
+	return "unknown"
+}
+
+// ObserveState records only schema attribute names and null/known status from
+// state explicitly obtained after a step operation, not setup or cleanup reads.
+func (c *Collector) ObserveState(state *tfjson.State) {
+	if c == nil || state == nil || state.Values == nil || state.Values.RootModule == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.active {
+		c.module(state.Values.RootModule)
+	}
+}
+
+func (c *Collector) module(m *tfjson.StateModule) {
+	for _, r := range m.Resources {
+		if r == nil {
+			continue
+		}
+		kind := "resource"
+		if r.Mode == tfjson.DataResourceMode {
+			kind = "data_source"
+		}
+		f := c.feature(kind, r.Type, r.Address)
+		c.setProvider(kind, r.Type, r.Address, r.ProviderName)
+		states(f, r.AttributeValues)
+		if r.IdentitySchemaVersion != nil && len(r.IdentityValues) > 0 {
+			identity := c.feature("identity", r.Type, r.Address)
+			identity.Provider = r.ProviderName
+			states(identity, r.IdentityValues)
+		}
+	}
+	for _, child := range m.ChildModules {
+		c.module(child)
+	}
+}
+
+func states(f *Feature, values map[string]any) {
+	// Only top-level keys are unambiguously schema names. Nested map keys
+	// could be sensitive user-provided values, so do not persist them.
+	for name, value := range values {
+		if value == nil {
+			add(&f.Null, name)
+		} else {
+			add(&f.Known, name)
+		}
+	}
+}
+
+func (c *Collector) OperationForAddress(address, operation string) {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.active {
+		return
+	}
+	address = safeAddress(address)
+	for _, f := range c.features {
+		if f.Address == address && f.Kind == "resource" {
+			add(&f.Completed, operation)
+			return
+		}
+	}
+	// Import steps without a config still identify the resource by address.
+	parts := strings.Split(address, ".")
+	if len(parts) > 0 {
+		f := c.feature("resource", parts[0], address)
+		if operation == "import" {
+			add(&f.Completed, operation)
+		}
+	}
+}
+
+func (c *Collector) ApplyCompleted(destroy bool) {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.active {
+		return
+	}
+	for _, p := range c.lastPlan {
+		f := c.feature(p.Kind, p.Name, p.Address)
+		if f.Provider == "" {
+			f.Provider = p.Provider
+		}
+		if !destroy {
+			add(&f.Completed, "apply")
+		}
+		for _, operation := range p.Planned {
+			if operation == "unknown" {
+				continue
+			}
+			if destroy {
+				if operation != "delete" {
+					continue
+				}
+				add(&f.Completed, "destroy")
+			}
+			add(&f.Completed, operation)
+		}
+	}
+	for _, p := range c.actions {
+		f := c.feature(p.Kind, p.Name, p.Address)
+		if f.Provider == "" {
+			f.Provider = p.Provider
+		}
+		add(&f.Completed, "invoke")
+	}
+}
+
+// QueryCompleted marks list resources in a query step that passed its checks.
+func (c *Collector) QueryCompleted() {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.active {
+		return
+	}
+	for _, f := range c.features {
+		if f.Kind == "list_resource" {
+			add(&f.Completed, "query")
+		}
+	}
+}
+
+// QueryResults reads query message types without persisting result values,
+// display names, instance keys, or provider-generated configuration.
+func (c *Collector) QueryResults(messages []tfjson.LogMsg) {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.active {
+		return
+	}
+	for _, message := range messages {
+		switch m := message.(type) {
+		case tfjson.ListResourceFoundMessage:
+			for _, f := range c.features {
+				if f.Kind == "list_resource" && f.Name == m.ListResourceFound.ResourceType {
+					add(&f.Completed, "result")
+				}
+			}
+		}
+	}
+}
+
+func (c *Collector) RefreshCompleted() {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.active {
+		return
+	}
+	for _, f := range c.features {
+		if f.Kind == "resource" {
+			add(&f.Completed, "refresh")
+		}
+	}
+}
+
+func (c *Collector) StateStoreCompleted() {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.active {
+		return
+	}
+	for _, f := range c.features {
+		if f.Kind == "state_store" {
+			add(&f.Completed, "state_store")
+		}
+	}
+}
+
+func (c *Collector) ProviderStepCompleted() {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.active {
+		return
+	}
+	for _, f := range c.features {
+		if f.Kind == "provider" {
+			add(&f.Completed, "step")
+		}
+	}
+}
+
+// Finish writes one private finding for an executed test step.
+func (c *Collector) Finish(outcome string) error {
+	if c == nil {
+		return nil
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.active {
+		return nil
+	}
+	c.active = false
+	if c.skipped {
+		outcome = "skipped"
+	} else if c.expectedError && outcome == "success" {
+		outcome = "expected_error"
+	}
+	finding := Finding{Version: 1, Package: c.packageName, Test: c.test, Step: c.step, Outcome: outcome, Warnings: c.warnings}
+	for _, f := range c.features {
+		for _, xs := range []*[]string{&f.Inputs, &f.Known, &f.Null, &f.Planned, &f.Completed} {
+			sort.Strings(*xs)
+		}
+		finding.Features = append(finding.Features, *f)
+	}
+	sort.Slice(finding.Features, func(i, j int) bool {
+		a, b := finding.Features[i], finding.Features[j]
+		return a.Kind+a.Name+a.Address < b.Kind+b.Name+b.Address
+	})
+	sort.Strings(finding.Warnings)
+	if err := os.MkdirAll(c.directory, 0700); err != nil {
+		return fmt.Errorf("coverage directory: %w", err)
+	}
+	file, err := os.OpenFile(filepath.Join(c.directory, fmt.Sprintf("%d-%d-%d.json", time.Now().UnixNano(), os.Getpid(), c.step)), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+	if err := json.NewEncoder(file).Encode(finding); err != nil {
+		_ = file.Close()
+		return err
+	}
+	return file.Close()
+}
