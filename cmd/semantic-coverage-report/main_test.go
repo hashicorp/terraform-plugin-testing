@@ -13,7 +13,7 @@ func TestAggregateKeepsLifecycleAndAttributeEvidenceDistinct(t *testing.T) {
 	t.Parallel()
 
 	doc := schemaDoc{Providers: map[string]providerSchema{"registry.terraform.io/hashicorp/example": {Resources: map[string]schema{"example_item": {Block: &block{Attributes: map[string]attribute{"name": {Required: true}, "id": {Computed: true}}}}}}}}
-	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: "success", Features: []semanticcoverage.Feature{{Kind: "resource", Name: "example_item", Address: "example_item.test", Inputs: []string{"name"}, Planned: []string{"create"}}}}, {Version: 1, Test: "TestExample", Step: 2, Outcome: "success", Features: []semanticcoverage.Feature{{Kind: "resource", Name: "example_item", Address: "example_item.test", Known: []string{"id"}, Completed: []string{"apply", "create"}}}}})
+	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: "resource", Name: "example_item", Address: "example_item.test", Inputs: []string{"name"}, Planned: []string{"create"}}}}, {Version: 1, Test: "TestExample", Step: 2, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: "resource", Name: "example_item", Address: "example_item.test", Known: []string{"id"}, Completed: []string{"apply", "create"}}}}})
 	if result.Inputs.Covered != 1 || result.Computed.Covered != 1 {
 		t.Fatalf("coverage: %+v", result)
 	}
@@ -27,7 +27,7 @@ func TestExpectedErrorDoesNotClaimCompletedOperationOrComputedOutput(t *testing.
 	t.Parallel()
 
 	doc := schemaDoc{Providers: map[string]providerSchema{"registry.terraform.io/hashicorp/example": {Resources: map[string]schema{"example_item": {Block: &block{Attributes: map[string]attribute{"name": {Required: true}, "id": {Computed: true}}}}}}}}
-	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: "expected_error", Features: []semanticcoverage.Feature{{Kind: "resource", Name: "example_item", Inputs: []string{"name"}, Known: []string{"id"}, Planned: []string{"create"}, Completed: []string{"apply", "create"}}}}})
+	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeExpectedError, Features: []semanticcoverage.Feature{{Kind: "resource", Name: "example_item", Inputs: []string{"name"}, Known: []string{"id"}, Planned: []string{"create"}, Completed: []string{"apply", "create"}}}}})
 	if result.Inputs.Covered != 1 || result.Computed.Covered != 0 {
 		t.Fatalf("input/computed coverage: %+v", result)
 	}
@@ -57,7 +57,7 @@ func TestAggregateExcludesNestedAttributesFromCoverageTotals(t *testing.T) {
 			},
 		}}},
 	}}}
-	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: "success", Features: []semanticcoverage.Feature{{Kind: "resource", Name: "example_item", Inputs: []string{"settings"}, Known: []string{"id"}}}}})
+	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: "resource", Name: "example_item", Inputs: []string{"settings"}, Known: []string{"id"}}}}})
 	if result.AttributeScope != "top_level" {
 		t.Fatalf("attribute scope = %q, want top_level", result.AttributeScope)
 	}

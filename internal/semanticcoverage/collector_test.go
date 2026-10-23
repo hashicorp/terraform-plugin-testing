@@ -24,7 +24,7 @@ func TestCollectorKeepsOnlyMetadataAndSeparatesPlansFromApply(t *testing.T) {
 	resource := &tfjson.StateResource{Address: `example_item.test["secret-instance-key"]`, Type: "example_item", AttributeValues: map[string]any{"id": "secret-value", "token": "secret-value", "map": map[string]any{"secret-map-key": "secret-value"}}}
 	c.ObserveState(&tfjson.State{Values: &tfjson.StateValues{RootModule: &tfjson.StateModule{Resources: []*tfjson.StateResource{resource}}}})
 	c.ApplyCompleted(false)
-	if err := c.Finish("success"); err != nil {
+	if err := c.Finish(OutcomeSuccess); err != nil {
 		t.Fatal(err)
 	}
 	entries, err := os.ReadDir(dir)
@@ -84,7 +84,7 @@ func TestFinishWritesOneFindingPerStep(t *testing.T) {
 	c := New("TestExample")
 	c.Begin(1)
 	c.Parse("test.tf", []byte(`resource "example_item" "test" { name = "first" }`))
-	if err := c.Finish("success"); err != nil {
+	if err := c.Finish(OutcomeSuccess); err != nil {
 		t.Fatal(err)
 	}
 	// No active step: the end-of-test FinishStep must not write again.

@@ -72,17 +72,54 @@ type Feature struct {
 	Completed []string `json:"completed,omitempty"`
 }
 
+// Outcome is the final status of a test step, as written to a Finding.
+type Outcome string
+
+const (
+	// OutcomeSuccess means the step completed and passed its checks.
+	OutcomeSuccess Outcome = "success"
+	// OutcomeExpectedError means the step failed with an error matching
+	// TestStep.ExpectError.
+	OutcomeExpectedError Outcome = "expected_error"
+	// OutcomeFailed means the test failed during the step.
+	OutcomeFailed Outcome = "failed"
+	// OutcomeSkipped means the step, or the remaining test, was skipped.
+	OutcomeSkipped Outcome = "skipped"
+)
+
+// Valid reports whether o is one of the known outcomes.
+func (o Outcome) Valid() bool {
+	switch o {
+	case OutcomeSuccess, OutcomeExpectedError, OutcomeFailed, OutcomeSkipped:
+		return true
+	}
+	return false
+}
+
+// Completed reports whether the step ran to completion, either passing or
+// failing with the expected error.
+func (o Outcome) Completed() bool {
+	return o == OutcomeSuccess || o == OutcomeExpectedError
+}
+
 type Finding struct {
 	Version  int       `json:"version"`
 	Package  string    `json:"package,omitempty"`
 	Test     string    `json:"test"`
 	Step     int       `json:"step"`
-	Outcome  string    `json:"outcome"`
+	Outcome  Outcome   `json:"outcome"`
 	Features []Feature `json:"features,omitempty"`
 	Warnings []string  `json:"warnings,omitempty"`
 }
 
 // Collector belongs to one TestCase, and is shared by its import working directory.
+//
+// A nil *Collector is valid and means collection is disabled: New returns nil
+// when EnvDirectory is unset, and every exported method is a no-op on a nil
+// receiver (Ready and Finish return nil, Enabled returns false). Callers can
+// therefore invoke methods unconditionally and only need Enabled to skip work
+// done solely to feed the collector, such as extra Terraform commands. New
+// exported methods must preserve this by returning early when c == nil.
 type Collector struct {
 	mu            sync.Mutex
 	directory     string
@@ -146,11 +183,11 @@ func (c *Collector) Ready() error {
 
 // FinishStep writes the active step, if any, using the test's final status.
 func (c *Collector) FinishStep(failed, skipped bool) error {
-	outcome := "success"
+	outcome := OutcomeSuccess
 	if failed {
-		outcome = "failed"
+		outcome = OutcomeFailed
 	} else if skipped {
-		outcome = "skipped"
+		outcome = OutcomeSkipped
 	}
 	return c.Finish(outcome)
 }
@@ -754,7 +791,7 @@ func (c *Collector) ProviderStepCompleted() {
 }
 
 // Finish writes one private finding for an executed test step.
-func (c *Collector) Finish(outcome string) error {
+func (c *Collector) Finish(outcome Outcome) error {
 	if c == nil {
 		return nil
 	}
@@ -765,9 +802,9 @@ func (c *Collector) Finish(outcome string) error {
 	}
 	c.active = false
 	if c.skipped {
-		outcome = "skipped"
-	} else if c.expectedError && outcome == "success" {
-		outcome = "expected_error"
+		outcome = OutcomeSkipped
+	} else if c.expectedError && outcome == OutcomeSuccess {
+		outcome = OutcomeExpectedError
 	}
 	finding := Finding{Version: FindingVersion, Package: c.packageName, Test: c.test, Step: c.step, Outcome: outcome, Warnings: c.warnings}
 	for _, f := range c.features {

@@ -162,7 +162,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 		stepNumber = stepIndex + 1 // 1-based indexing for humans
 		// Reaching the next step means the previous step passed its checks.
-		if err := coverage.Finish("success"); err != nil {
+		if err := coverage.Finish(semanticcoverage.OutcomeSuccess); err != nil {
 			t.Errorf("writing semantic coverage finding: %s", err)
 		}
 		coverage.Begin(stepNumber)

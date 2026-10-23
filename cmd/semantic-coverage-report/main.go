@@ -184,9 +184,7 @@ func readFindings(dir string) ([]semanticcoverage.Finding, error) {
 		if item.Test == "" || item.Step < 1 {
 			return fmt.Errorf("%s: missing test name or step", path)
 		}
-		switch item.Outcome {
-		case "success", "expected_error", "failed", "skipped":
-		default:
+		if !item.Outcome.Valid() {
 			return fmt.Errorf("%s: invalid outcome %q", path, item.Outcome)
 		}
 		items = append(items, item)
@@ -242,7 +240,7 @@ func aggregate(doc schemaDoc, items []semanticcoverage.Finding) output {
 			continue
 		}
 		seen[id] = true
-		if item.Outcome == "failed" {
+		if item.Outcome == semanticcoverage.OutcomeFailed {
 			result.Warnings = append(result.Warnings, fmt.Sprintf("%s step %d failed; evidence excluded from coverage", item.Test, item.Step))
 		}
 		for _, warning := range item.Warnings {
@@ -264,16 +262,16 @@ func aggregate(doc schemaDoc, items []semanticcoverage.Finding) output {
 				continue
 			}
 			t := matches[0]
-			if item.Outcome == "skipped" {
+			if item.Outcome == semanticcoverage.OutcomeSkipped {
 				continue
 			}
-			if item.Outcome == "failed" {
+			if item.Outcome == semanticcoverage.OutcomeFailed {
 				continue
 			}
 			ref := evidence{Package: item.Package, Test: item.Test, Step: item.Step, Address: f.Address, Kind: "configured"}
 			if len(f.Inputs) > 0 || len(f.Known) > 0 || len(f.Planned) > 0 || len(f.Completed) > 0 || f.Kind == "function" || f.Kind == "identity" {
 				t.Evidence = append(t.Evidence, ref)
-				if item.Outcome == "success" || item.Outcome == "expected_error" {
+				if item.Outcome.Completed() {
 					t.Exercised = true
 				}
 			}
@@ -282,14 +280,14 @@ func aggregate(doc schemaDoc, items []semanticcoverage.Finding) output {
 				e.Kind = "planned"
 				t.Planned[action] = append(t.Planned[action], e)
 			}
-			if item.Outcome == "success" {
+			if item.Outcome == semanticcoverage.OutcomeSuccess {
 				for _, operation := range f.Completed {
 					e := ref
 					e.Kind = "completed"
 					t.Completed[operation] = append(t.Completed[operation], e)
 				}
 			}
-			if item.Outcome != "success" && item.Outcome != "expected_error" {
+			if !item.Outcome.Completed() {
 				continue
 			}
 			for i := range t.Attributes {
@@ -299,10 +297,10 @@ func aggregate(doc schemaDoc, items []semanticcoverage.Finding) output {
 					seen = contains(f.Inputs, a.Path)
 				}
 				if a.Mode == "computed" {
-					seen = item.Outcome == "success" && contains(f.Known, a.Path)
+					seen = item.Outcome == semanticcoverage.OutcomeSuccess && contains(f.Known, a.Path)
 				}
 				if a.Mode == "either" {
-					seen = contains(f.Inputs, a.Path) || (item.Outcome == "success" && contains(f.Known, a.Path))
+					seen = contains(f.Inputs, a.Path) || (item.Outcome == semanticcoverage.OutcomeSuccess && contains(f.Known, a.Path))
 				}
 				if seen {
 					a.Covered = true

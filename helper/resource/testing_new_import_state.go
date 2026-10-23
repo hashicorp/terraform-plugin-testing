@@ -195,9 +195,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		err = testImportBlock(ctx, t, workingDir, providers, resourceName, step, priorIdentityValues)
 	} else {
 		err = testImportCommand(ctx, t, workingDir, providers, resourceName, importId, step, state)
-	}
-	if err == nil {
-		if !kind.plannable() {
+		if err == nil {
 			workingDir.Coverage.OperationForAddress(resourceName, "import")
 		}
 	}
