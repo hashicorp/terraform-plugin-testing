@@ -353,13 +353,10 @@ func (wd *WorkingDir) CreatePlan(ctx context.Context, opts ...tfexec.PlanOption)
 	if err != nil {
 		return err
 	}
-	if wd.Coverage != nil {
-		plan, planErr := wd.SavedPlan(ctx)
-		if planErr == nil {
-			wd.Coverage.Plan(plan)
-		} else {
-			wd.Coverage.Warning("plan_unavailable")
-		}
+	if wd.Coverage.Enabled() {
+		// Plan(nil) records that the saved plan could not be read.
+		plan, _ := wd.SavedPlan(ctx)
+		wd.Coverage.Plan(plan)
 	}
 
 	if !hasChanges {

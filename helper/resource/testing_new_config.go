@@ -130,19 +130,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		if err != nil {
 			return fmt.Errorf("Error running pre-apply plan: %w", err)
 		}
-		if wd.Coverage != nil {
-			var plan *tfjson.Plan
-			planErr := runProviderCommand(ctx, t, wd, providers, func() error {
-				var err error
-				plan, err = wd.SavedPlan(ctx)
-				return err
-			})
-			if planErr == nil {
-				wd.Coverage.PreApplyPlan(plan)
-			} else {
-				wd.Coverage.Warning("pre_apply_plan_unavailable")
-			}
-		}
+		wd.Coverage.PreApplyPlan()
 
 		// Run pre-apply plan checks
 		if len(step.ConfigPlanChecks.PreApply) > 0 {
@@ -206,19 +194,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			if err != nil {
 				return fmt.Errorf("Error running destroy plan after step.Check shimmed state was retrieved: %w", err)
 			}
-			if wd.Coverage != nil {
-				var plan *tfjson.Plan
-				planErr := runProviderCommand(ctx, t, wd, providers, func() error {
-					var err error
-					plan, err = wd.SavedPlan(ctx)
-					return err
-				})
-				if planErr == nil {
-					wd.Coverage.PreApplyPlan(plan)
-				} else {
-					wd.Coverage.Warning("pre_apply_plan_unavailable")
-				}
-			}
+			wd.Coverage.PreApplyPlan()
 		}
 
 		// Apply the diff, creating real resources
@@ -241,7 +217,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		wd.Coverage.ProviderStepCompleted()
 		// Inspect the actual post-apply state even when the test has no Check.
 		// This does not persist any of the state's values.
-		if wd.Coverage != nil && !step.Destroy {
+		if wd.Coverage.Enabled() && !step.Destroy {
 			err = runProviderCommand(ctx, t, wd, providers, func() error {
 				state, err := wd.State(ctx)
 				if err == nil {

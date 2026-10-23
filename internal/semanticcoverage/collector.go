@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2026
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 // Package semanticcoverage records structural evidence from acceptance-test steps.
@@ -91,9 +91,14 @@ type Collector struct {
 	active        bool
 	lastPlan      []Feature
 	actions       []Feature
+	latestPlan    *tfjson.Plan
 	skipped       bool
 	expectedError bool
 }
+
+// Enabled reports whether findings are being collected. Callers use it to
+// skip Terraform commands that only exist to feed the collector.
+func (c *Collector) Enabled() bool { return c != nil }
 
 func New(test string) *Collector {
 	dir := os.Getenv(EnvDirectory)
@@ -107,12 +112,12 @@ func New(test string) *Collector {
 	return &Collector{directory: dir, packageName: packageName, test: test}
 }
 
-func (c *Collector) Begin(step int) error {
+// Begin starts collecting evidence for a step. Any unfinished step is
+// discarded, so callers must Finish the previous step first.
+func (c *Collector) Begin(step int) {
 	if c == nil {
-		return nil
+		return
 	}
-	// Reaching the next step means the preceding step passed its checks.
-	previousErr := c.Finish("success")
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.step, c.active = step, true
@@ -120,9 +125,9 @@ func (c *Collector) Begin(step int) error {
 	c.warnings = nil
 	c.lastPlan = nil
 	c.actions = nil
+	c.latestPlan = nil
 	c.skipped = false
 	c.expectedError = false
-	return previousErr
 }
 
 // Ready creates the findings directory before running a test step.
@@ -136,16 +141,8 @@ func (c *Collector) Ready() error {
 	return nil
 }
 
-func (c *Collector) FinishStep(step int, failed, skipped bool) error {
-	if c == nil {
-		return nil
-	}
-	c.mu.Lock()
-	active := c.active && c.step == step
-	c.mu.Unlock()
-	if !active {
-		return nil
-	}
+// FinishStep writes the active step, if any, using the test's final status.
+func (c *Collector) FinishStep(failed, skipped bool) error {
 	outcome := "success"
 	if failed {
 		outcome = "failed"
@@ -311,19 +308,14 @@ func (c *Collector) blocks(blocks []*hclsyntax.Block) {
 		case "resource", "data", "ephemeral", "action", "list":
 			if len(b.Labels) > 1 {
 				kind, name, address = b.Type, b.Labels[0], b.Labels[0]+"."+b.Labels[1]
-				if kind == "data" {
-					kind = "data_source"
-					address = "data." + address
-				}
-				if kind == "list" {
-					kind = "list_resource"
-					address = "list." + address
-				}
-				if kind == "ephemeral" {
-					kind = "ephemeral_resource"
-					address = "ephemeral." + address
-				}
-				if kind == "action" {
+				switch kind {
+				case "data":
+					kind, address = "data_source", "data."+address
+				case "list":
+					kind, address = "list_resource", "list."+address
+				case "ephemeral":
+					kind, address = "ephemeral_resource", "ephemeral."+address
+				case "action":
 					address = "action." + address
 				}
 			}
@@ -334,19 +326,15 @@ func (c *Collector) blocks(blocks []*hclsyntax.Block) {
 		}
 		if kind != "" {
 			f := c.feature(kind, name, address)
-			if kind == "action" {
+			switch kind {
+			case "action", "list_resource", "state_store":
+				// Schema attributes live in a nested config block.
 				for _, nested := range b.Body.Blocks {
 					if nested.Type == "config" {
 						walkInputs(f, nested.Body, "")
 					}
 				}
-			} else if kind == "list_resource" || kind == "state_store" {
-				for _, nested := range b.Body.Blocks {
-					if nested.Type == "config" {
-						walkInputs(f, nested.Body, "")
-					}
-				}
-			} else {
+			default:
 				walkInputs(f, b.Body, "")
 			}
 		}
@@ -439,13 +427,19 @@ func jsonInputs(f *Feature, object map[string]any) {
 }
 
 // Plan records Terraform Core's resource actions, not inferred provider RPCs.
+// A nil plan means the saved plan could not be read.
 func (c *Collector) Plan(plan *tfjson.Plan) {
-	if c == nil || plan == nil {
+	if c == nil {
 		return
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if !c.active {
+		return
+	}
+	c.latestPlan = plan
+	if plan == nil {
+		add(&c.warnings, "plan_unavailable")
 		return
 	}
 	if plan.Config != nil {
@@ -483,9 +477,10 @@ func (c *Collector) Plan(plan *tfjson.Plan) {
 	// Computed coverage is taken from post-apply or refresh state instead.
 }
 
-// PreApplyPlan snapshots the plan which will actually be applied.
-func (c *Collector) PreApplyPlan(plan *tfjson.Plan) {
-	if c == nil || plan == nil {
+// PreApplyPlan marks the most recently observed plan as the one which will
+// actually be applied.
+func (c *Collector) PreApplyPlan() {
+	if c == nil {
 		return
 	}
 	c.mu.Lock()
@@ -495,6 +490,11 @@ func (c *Collector) PreApplyPlan(plan *tfjson.Plan) {
 	}
 	c.lastPlan = nil
 	c.actions = nil
+	plan := c.latestPlan
+	if plan == nil {
+		add(&c.warnings, "pre_apply_plan_unavailable")
+		return
+	}
 	for _, rc := range plan.ResourceChanges {
 		if rc != nil && rc.Change != nil && rc.Mode == tfjson.ManagedResourceMode {
 			c.lastPlan = append(c.lastPlan, Feature{Kind: "resource", Name: rc.Type, Provider: rc.ProviderName, Address: safeAddress(rc.Address), Planned: []string{action(rc.Change.Actions)}})

@@ -58,6 +58,12 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		t.Fatalf("semantic coverage: %s", err)
 	}
 	wd.Coverage = coverage
+	// The last step, or a step ending in t.Fatal or t.Skip, is written here.
+	defer func() {
+		if err := coverage.FinishStep(t.Failed(), t.Skipped()); err != nil {
+			t.Errorf("writing semantic coverage finding: %s", err)
+		}
+	}()
 
 	ctx = logging.TestTerraformPathContext(ctx, wd.GetHelper().TerraformExecPath())
 	ctx = logging.TestWorkingDirectoryContext(ctx, wd.GetHelper().WorkingDirectory())
@@ -155,19 +161,11 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		}
 
 		stepNumber = stepIndex + 1 // 1-based indexing for humans
-		if err := coverage.Begin(stepNumber); err != nil {
+		// Reaching the next step means the previous step passed its checks.
+		if err := coverage.Finish("success"); err != nil {
 			t.Errorf("writing semantic coverage finding: %s", err)
 		}
-		// A previous step is complete before the next step starts. Writing here
-		// also retains evidence from a step that calls t.Fatal or t.Skip.
-		defer func(stepNumber int) {
-			if coverage == nil {
-				return
-			}
-			if err := coverage.FinishStep(stepNumber, t.Failed(), t.Skipped()); err != nil {
-				t.Errorf("writing semantic coverage finding: %s", err)
-			}
-		}(stepNumber)
+		coverage.Begin(stepNumber)
 
 		configRequest := teststep.PrepareConfigurationRequest{
 			Directory: step.ConfigDirectory,
