@@ -23,6 +23,9 @@ import (
 
 const EnvDirectory = "TF_ACC_SEMANTIC_COVERAGE_DIR"
 
+// FindingVersion is the schema version of the JSON findings written per step.
+const FindingVersion = 1
+
 // Terraform instance keys can contain arbitrary strings, including ']'.
 // Never persist their contents or the suffix of a malformed address.
 func safeAddress(address string) string {
@@ -766,7 +769,7 @@ func (c *Collector) Finish(outcome string) error {
 	} else if c.expectedError && outcome == "success" {
 		outcome = "expected_error"
 	}
-	finding := Finding{Version: 1, Package: c.packageName, Test: c.test, Step: c.step, Outcome: outcome, Warnings: c.warnings}
+	finding := Finding{Version: FindingVersion, Package: c.packageName, Test: c.test, Step: c.step, Outcome: outcome, Warnings: c.warnings}
 	for _, f := range c.features {
 		for _, xs := range []*[]string{&f.Inputs, &f.Known, &f.Null, &f.Planned, &f.Completed} {
 			sort.Strings(*xs)
