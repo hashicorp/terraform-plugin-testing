@@ -15,13 +15,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 )
 
-func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {
+func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, coverage stepCoverage, step TestStep, providers *providerFactories) error {
 	t.Helper()
 
 	queryConfigRequest := teststep.ConfigurationRequest{
 		Raw: &step.Config,
 	}
-	err := wd.SetQuery(ctx, teststep.Configuration(queryConfigRequest), step.ConfigVariables)
+	err := coverage.setQuery(ctx, wd, teststep.Configuration(queryConfigRequest), step.ConfigVariables)
 	if err != nil {
 		return fmt.Errorf("Error setting query config: %w", err)
 	}
@@ -44,7 +44,7 @@ func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDi
 	}
 	err = query.RunQueryChecks(ctx, t, queryOut, step.QueryResultChecks)
 	if err == nil {
-		wd.Coverage.QueryResults(queryOut)
+		coverage.QueryResults(queryOut)
 	}
 	return err
 }

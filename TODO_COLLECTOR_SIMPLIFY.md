@@ -48,6 +48,6 @@ Keep `asMap`. Inlining its 7 call sites, some of them nested, would add temporar
 - `plugintest.QueryFileName` (`internal/plugintest/working_dir.go:25`)
 - `teststep.rawQueryConfigFileName` (`internal/teststep/config.go:21`, unexported)
 
-`semanticcoverage` must not import `plugintest`, because that would reverse the dependency that `TODO_WORKINGDIR_COVERAGE_COUPLING.md` removes. Change `QueryConfig(dir string)` to `QueryConfig(path string)` instead. The caller then passes `filepath.Join(wd.baseDir, plugintest.QueryFileName)`, and `Parse` gets `filepath.Base(path)`. The collector then holds no file names.
+`semanticcoverage` must not import `plugintest`, because `plugintest` must stay unaware of coverage. Change `QueryConfig(dir string)` to `QueryConfig(path string)` instead. The caller (`stepCoverage.setQuery` in `helper/resource/semantic_coverage.go`) then passes `filepath.Join(wd.BaseDir(), plugintest.QueryFileName)`, and `Parse` gets `filepath.Base(path)`. The collector then holds no file names.
 
 Also look at the `".tfquery.hcl"` suffix checks in `Config` and `blocks`. They are extensions, not file names, so they can stay as they are. If they spread further, add an unexported `queryFileExt` constant.

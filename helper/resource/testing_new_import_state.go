@@ -27,7 +27,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, testCaseWorkingDir *plugintest.WorkingDir, step TestStep, priorStepCfg teststep.Config, providers *providerFactories, stepNumber int) error {
+func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, testCaseWorkingDir *plugintest.WorkingDir, coverage stepCoverage, step TestStep, priorStepCfg teststep.Config, providers *providerFactories, stepNumber int) error {
 	t.Helper()
 
 	// step.ImportStateKind implicitly defaults to the zero-value (ImportCommandWithID) for backward compatibility
@@ -155,11 +155,10 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		workingDir = testCaseWorkingDir
 	} else {
 		workingDir = helper.RequireNewWorkingDir(ctx, t, "")
-		workingDir.Coverage = testCaseWorkingDir.Coverage
 		defer workingDir.Close()
 	}
 
-	err = workingDir.SetConfig(ctx, testStepConfig, step.ConfigVariables)
+	err = coverage.setConfig(ctx, workingDir, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		t.Fatalf("Error setting test config: %s", err)
 	}
@@ -192,17 +191,17 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	if kind.plannable() {
-		err = testImportBlock(ctx, t, workingDir, providers, resourceName, step, priorIdentityValues)
+		err = testImportBlock(ctx, t, workingDir, coverage, providers, resourceName, step, priorIdentityValues)
 	} else {
-		err = testImportCommand(ctx, t, workingDir, providers, resourceName, importId, step, state)
+		err = testImportCommand(ctx, t, workingDir, coverage, providers, resourceName, importId, step, state)
 		if err == nil {
-			workingDir.Coverage.OperationForAddress(resourceName, "import")
+			coverage.OperationForAddress(resourceName, "import")
 		}
 	}
 	return err
 }
 
-func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, step TestStep, priorIdentityValues map[string]any) error {
+func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, coverage stepCoverage, providers *providerFactories, resourceName string, step TestStep, priorIdentityValues map[string]any) error {
 	kind := step.ImportStateKind
 
 	if step.GenerateConfig {
@@ -210,12 +209,16 @@ func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.Wo
 
 		path := workingDir.BaseDir() + "/generated.tf"
 		opts = append(opts, tfexec.GenerateConfigOut(path))
-		err := runProviderCommandGenerateConfigAndCreatePlan(ctx, t, workingDir, providers, opts...)
+		err := runProviderCommand(ctx, t, workingDir, providers, func() error {
+			return coverage.createPlan(ctx, workingDir, opts...)
+		})
 		if err != nil {
 			return fmt.Errorf("generating plan with import config: %s", err)
 		}
 	} else {
-		err := runProviderCommandCreatePlan(ctx, t, workingDir, providers)
+		err := runProviderCommand(ctx, t, workingDir, providers, func() error {
+			return coverage.createPlan(ctx, workingDir)
+		})
 		if err != nil {
 			return fmt.Errorf("generating plan with import config: %s", err)
 		}
@@ -225,7 +228,7 @@ func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.Wo
 	if err != nil {
 		return fmt.Errorf("reading generated plan with import config: %s", err)
 	}
-	workingDir.Coverage.ImportPlan(plan)
+	coverage.ImportPlan(plan)
 
 	logging.HelperResourceDebug(ctx, fmt.Sprintf("ImportBlockWithId: %d resource changes", len(plan.ResourceChanges)))
 
@@ -273,7 +276,7 @@ func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.Wo
 	return nil
 }
 
-func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, importId string, step TestStep, state *terraform.State) error {
+func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, coverage stepCoverage, providers *providerFactories, resourceName string, importId string, step TestStep, state *terraform.State) error {
 	err := runProviderCommand(ctx, t, workingDir, providers, func() error {
 		return workingDir.Import(ctx, resourceName, importId)
 	})
@@ -291,7 +294,7 @@ func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
 	}
-	workingDir.Coverage.ObserveState(jsonState)
+	coverage.ObserveState(jsonState)
 
 	logging.HelperResourceDebug(ctx, fmt.Sprintf("State after import: %d resources in the root module", len(importState.RootModule().Resources)))
 

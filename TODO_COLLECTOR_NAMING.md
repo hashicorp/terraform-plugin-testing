@@ -12,8 +12,8 @@ they do or what they cover:
 | `Ready()` | It creates the output directory. "Ready" sounds like a query or a readiness check. The reviewer confirmed it needs a better name. | `EnsureDirectory()`, or fold it into `New`. `Finish` already calls `MkdirAll` itself, so check whether `Ready` is only there to fail early. If so, `New` returning an error is the cleanest option. |
 | field `test` | Ambiguous. | `testName` |
 | field `step` | Doesn't say whether it is an index. It is **1-based** (`Begin(stepNumber)` in `testing_new.go`), so `stepIndex` would be misleading. | `stepNumber`, matching `runNewTest` |
-| fields `lastPlan` / `latestPlan` / `actions` | "last" and "latest" sound like the same thing, but they are not. `latestPlan` is the raw plan that `Plan` saw most recently. `lastPlan` holds the resource changes that `PreApplyPlan` picked from it for `ApplyCompleted` to mark completed. `actions` is the matching list of action invocations. | `latestPlan` → `observedPlan`; `lastPlan` → `pendingApplyChanges`; `actions` → `pendingApplyActions`. Add a field comment for each (also in `TODO_COMMENTS.md`). If `PLAN_FIX_SHOTGUN_SURGERY.md` step 5 folds `PreApplyPlan` into `createPlan`, `observedPlan` can go away entirely. |
-| `ApplyCompleted(destroy)` + `ProviderStepCompleted()` | They are always called together (`testing_new_config.go:216-217`). `ProviderStepCompleted` marks providers with the "step" operation, and its name doesn't say that. | Merge into `ApplySucceeded(destroy)`, or rename the second to `MarkProvidersUsed()` |
+| fields `lastPlan` / `actions` | `lastPlan` holds the resource changes that `PreApplyPlan` picked for `ApplyCompleted` to mark completed; "last" doesn't say that. `actions` is the matching list of action invocations. | `lastPlan` → `pendingApplyChanges`; `actions` → `pendingApplyActions`. Keep the field comments. |
+| `ApplyCompleted(destroy)` + `ProviderStepCompleted()` | They are always called together (`testing_new_config.go`). `ProviderStepCompleted` marks providers with the "step" operation, and its name doesn't say that. | Merge into `ApplySucceeded(destroy)`, or rename the second to `MarkProvidersUsed()` |
 | `OperationForAddress(address, op)` | It reads like a getter, but it records a completed operation. | `RecordCompleted(address, op)` |
 | `Plan(plan)` | It sounds like it creates a plan. It actually records the plan. | `ObservePlan(plan)`, matching `ObserveState` |
 | `Parse(name, data)` / `Config(dir)` / `QueryConfig(dir)` | The noun names hide that these read files and record inputs. | `ObserveConfigFile`, `ObserveConfigDir`, `ObserveQueryConfig` |
@@ -27,7 +27,7 @@ they do or what they cover:
 
 - **Readers have to open the body to learn the contract.** The call sites
   in `helper/resource` are what most maintainers read. Lines like
-  `wd.Coverage.ProviderStepCompleted()` or `coverage.Ready()` don't say
+  `coverage.ProviderStepCompleted()` or `coverage.Ready()` don't say
   what evidence is being recorded. That is the semantics the report
   depends on.
 - **Inconsistent verbs blur the model.** Some methods record observations
@@ -46,7 +46,5 @@ they do or what they cover:
 ## Notes
 
 - The package is `internal`, so renames are not breaking changes.
-- Do this together with `PLAN_FIX_SHOTGUN_SURGERY.md`. Many call sites
-  move anyway, and renaming during the move avoids touching them twice.
 - If no honest name comes for a method, that is a sign it does two things.
   Split it.

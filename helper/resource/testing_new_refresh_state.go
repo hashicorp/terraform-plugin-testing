@@ -16,7 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 )
 
-func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {
+func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, coverage stepCoverage, step TestStep, providers *providerFactories) error {
 	t.Helper()
 
 	var err error
@@ -49,7 +49,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
 	}
-	wd.Coverage.ObserveState(jsonState)
+	coverage.ObserveState(jsonState)
 
 	// Go through the refreshed state and verify
 	if step.Check != nil {
@@ -64,7 +64,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 
 	// do a plan
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		return wd.CreatePlan(ctx)
+		return coverage.createPlan(ctx, wd)
 	})
 	if err != nil {
 		return fmt.Errorf("Error running post-refresh plan: %w", err)

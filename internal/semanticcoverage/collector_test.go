@@ -21,7 +21,7 @@ func TestCollectorKeepsOnlyMetadataAndSeparatesPlansFromApply(t *testing.T) {
 	c.Parse("test.tf", []byte(`resource "example_item" "test" { token = "secret-configuration" }`))
 	plan := &tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: `example_item.test["secret-instance-key"]`, Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionCreate}}}}}
 	c.Plan(plan)
-	c.PreApplyPlan()
+	c.PreApplyPlan(plan)
 	resource := &tfjson.StateResource{Address: `example_item.test["secret-instance-key"]`, Type: "example_item", AttributeValues: map[string]any{"id": "secret-value", "token": "secret-value", "map": map[string]any{"secret-map-key": "secret-value"}}}
 	c.ObserveState(&tfjson.State{Values: &tfjson.StateValues{RootModule: &tfjson.StateModule{Resources: []*tfjson.StateResource{resource}}}})
 	c.ApplyCompleted(false)
@@ -147,7 +147,7 @@ func TestCompletedLifecycleUsesAppliedPlan(t *testing.T) {
 	create := &tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: "example_item.test", Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionCreate}}}}}
 	noOp := &tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: "example_item.test", Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionNoop}}}}}
 	c.Plan(create)
-	c.PreApplyPlan()
+	c.PreApplyPlan(create)
 	c.Plan(noOp)
 	c.ApplyCompleted(false)
 	f := c.feature("resource", "example_item", "example_item.test")
@@ -156,7 +156,7 @@ func TestCompletedLifecycleUsesAppliedPlan(t *testing.T) {
 	}
 	c.BeginStep(2)
 	c.Plan(noOp)
-	c.PreApplyPlan()
+	c.PreApplyPlan(noOp)
 	c.ApplyCompleted(true)
 	f = c.feature("resource", "example_item", "example_item.test")
 	if len(f.Completed) != 0 {
@@ -169,13 +169,13 @@ func TestPreApplyPlanWithoutReadablePlanWarns(t *testing.T) {
 
 	c := &Collector{directory: t.TempDir(), test: "TestUnavailable"}
 	c.BeginStep(1)
-	c.PreApplyPlan()
+	c.PreApplyPlan(nil)
 	if !slices.Equal(c.warnings, []Warning{WarningPlanUnavailable}) {
-		t.Fatalf("pre-apply plan without observed plan, warnings: %v", c.warnings)
+		t.Fatalf("unreadable pre-apply plan, warnings: %v", c.warnings)
 	}
 	c.BeginStep(2)
 	c.Plan(nil)
-	c.PreApplyPlan()
+	c.PreApplyPlan(nil)
 	c.ApplyCompleted(false)
 	if !slices.Equal(c.warnings, []Warning{WarningPlanUnavailable}) {
 		t.Fatalf("warnings: %v", c.warnings)
@@ -206,7 +206,7 @@ func TestNoOpApplyIsStillAnApply(t *testing.T) {
 	c.BeginStep(1)
 	noOp := &tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: "example_item.test", Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionNoop}}}}}
 	c.Plan(noOp)
-	c.PreApplyPlan()
+	c.PreApplyPlan(noOp)
 	c.ApplyCompleted(false)
 	f := c.feature("resource", "example_item", "example_item.test")
 	if !contains(f.Completed, "apply") || !contains(f.Completed, "no_op") {

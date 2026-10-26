@@ -15,7 +15,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
-	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 )
 
@@ -30,8 +29,7 @@ const (
 // NewWorkingDir or RequireNewWorkingDir on its package's singleton
 // plugintest.Helper.
 type WorkingDir struct {
-	h        *Helper
-	Coverage *semanticcoverage.Collector
+	h *Helper
 
 	// baseDir is the root of the working directory tree
 	baseDir string
@@ -155,7 +153,6 @@ func (wd *WorkingDir) SetConfig(ctx context.Context, cfg teststep.Config, vars c
 		return err
 	}
 
-	wd.Coverage.Config(wd.baseDir)
 	return nil
 }
 
@@ -230,7 +227,6 @@ func (wd *WorkingDir) SetQuery(ctx context.Context, cfg teststep.Config, vars co
 		return err
 	}
 
-	wd.Coverage.QueryConfig(wd.baseDir)
 	return nil
 }
 
@@ -352,11 +348,6 @@ func (wd *WorkingDir) CreatePlan(ctx context.Context, opts ...tfexec.PlanOption)
 
 	if err != nil {
 		return err
-	}
-	if wd.Coverage.Enabled() {
-		// Plan(nil) records that the saved plan could not be read.
-		plan, _ := wd.SavedPlan(ctx)
-		wd.Coverage.Plan(plan)
 	}
 
 	if !hasChanges {

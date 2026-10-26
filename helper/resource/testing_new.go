@@ -20,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
-	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -53,25 +52,8 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	t.Helper()
 
 	wd := helper.RequireNewWorkingDir(ctx, t, c.WorkingDir)
-	coverage := semanticcoverage.New(t.Name())
-	if err := coverage.Ready(); err != nil {
-		t.Fatalf("semantic coverage: %s", err)
-	}
-	wd.Coverage = coverage
-	// The last step, or a step ending in t.Fatal or t.Skip, is finished here.
-	defer func() {
-		outcome := semanticcoverage.OutcomeSuccess
-		switch {
-		case t.Failed():
-			outcome = semanticcoverage.OutcomeFailed
-		case t.Skipped():
-			coverage.DiscardStep()
-			return
-		}
-		if err := coverage.FinishStep(outcome); err != nil {
-			t.Errorf("writing semantic coverage finding: %s", err)
-		}
-	}()
+	coverage := newStepCoverage(t)
+	defer coverage.finishTest(t)
 
 	ctx = logging.TestTerraformPathContext(ctx, wd.GetHelper().TerraformExecPath())
 	ctx = logging.TestWorkingDirectoryContext(ctx, wd.GetHelper().WorkingDirectory())
@@ -169,11 +151,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		}
 
 		stepNumber = stepIndex + 1 // 1-based indexing for humans
-		// Reaching the next step means the previous step passed its checks.
-		if err := coverage.FinishStep(semanticcoverage.OutcomeSuccess); err != nil {
-			t.Errorf("writing semantic coverage finding: %s", err)
-		}
-		coverage.BeginStep(stepNumber)
+		coverage.beginStep(t, stepNumber)
 
 		configRequest := teststep.PrepareConfigurationRequest{
 			Directory: step.ConfigDirectory,
@@ -290,7 +268,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			testStepConfig = teststep.Configuration(confRequest)
 
 			if !step.Query {
-				err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
+				err = coverage.setConfig(ctx, wd, testStepConfig, step.ConfigVariables)
 			}
 
 			if err != nil {
@@ -318,7 +296,8 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.ImportState {
 			logging.HelperResourceTrace(ctx, "TestStep is ImportState mode")
 
-			err := testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, providers, stepNumber)
+			err := testStepNewImportState(ctx, t, helper, wd, coverage, step, appliedCfg, providers, stepNumber)
+			coverage.stepResult(step, err, nil)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 				if err == nil {
@@ -334,7 +313,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					)
 					t.Fatalf("Step %d/%d error running import, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
 				}
-				coverage.MatchedExpectedError()
 			} else {
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
@@ -358,10 +336,8 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.RefreshState {
 			logging.HelperResourceTrace(ctx, "TestStep is RefreshState mode")
 
-			err := testStepNewRefreshState(ctx, t, wd, step, providers)
-			if err == nil && step.ExpectError == nil {
-				coverage.RefreshCompleted()
-			}
+			err := testStepNewRefreshState(ctx, t, wd, coverage, step, providers)
+			coverage.stepResult(step, err, coverage.RefreshCompleted)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 				if err == nil {
@@ -377,7 +353,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					)
 					t.Fatalf("Step %d/%d error running refresh, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
 				}
-				coverage.MatchedExpectedError()
 			} else {
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
@@ -401,10 +376,8 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.Query {
 			logging.HelperResourceTrace(ctx, "TestStep is Query mode")
 
-			err := testStepNewQuery(ctx, t, wd, step, providers)
-			if err == nil && step.ExpectError == nil {
-				coverage.QueryCompleted()
-			}
+			err := testStepNewQuery(ctx, t, wd, coverage, step, providers)
+			coverage.stepResult(step, err, coverage.QueryCompleted)
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -418,7 +391,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					)
 					t.Fatalf("Step %d/%d error running query, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
 				}
-				coverage.MatchedExpectedError()
 			} else {
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
@@ -441,14 +413,12 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.StateStore {
 			logging.HelperResourceTrace(ctx, "TestStep is StateStore mode")
 
-			err := testStepNewStateStore(ctx, t, wd, step, providers, cfg)
+			err := testStepNewStateStore(ctx, t, wd, coverage, step, providers, cfg)
 			if err == nil && step.VerifyStateStoreLock {
 				logging.HelperResourceTrace(ctx, "TestStep is running VerifyStateStoreLock logic")
 				err = testStepVerifyStateStoreLock(ctx, t, step, providers, cfg, helper)
 			}
-			if err == nil && step.ExpectError == nil {
-				coverage.StateStoreCompleted()
-			}
+			coverage.stepResult(step, err, coverage.StateStoreCompleted)
 
 			if err != nil {
 				// Ensure the TestStep doesn't run any Terraform commands that expect the backend/state store to be initialized
@@ -468,7 +438,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					)
 					t.Fatalf("Step %d/%d error running state store tests, expected an error with pattern (%s), no match on: %s", stepNumber, len(c.Steps), step.ExpectError.String(), err)
 				}
-				coverage.MatchedExpectedError()
 			} else {
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
@@ -491,7 +460,8 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if cfg != nil {
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
-			err := testStepNewConfig(ctx, t, c, wd, step, providers, stepIndex, helper)
+			err := testStepNewConfig(ctx, t, c, wd, coverage, step, providers, stepIndex, helper)
+			coverage.stepResult(step, err, nil)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 
@@ -508,7 +478,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 					)
 					t.Fatalf("Step %d/%d, expected an error with pattern, no match on: %s", stepNumber, len(c.Steps), err)
 				}
-				coverage.MatchedExpectedError()
 			} else {
 				if err != nil && c.ErrorCheck != nil {
 					logging.HelperResourceDebug(ctx, "Calling TestCase ErrorCheck")
@@ -627,7 +596,7 @@ func planIsEmpty(plan *tfjson.Plan, tfVersion *version.Version) bool {
 	return true
 }
 
-func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, r *terraform.ResourceState, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
+func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, coverage stepCoverage, step TestStep, r *terraform.ResourceState, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
 	t.Helper()
 
 	// Build the state. The state is just the resource with an ID. There
@@ -674,7 +643,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 	// Temporarily set the config to a minimal provider config for the refresh
 	// test. After the refresh we can reset it.
-	err := wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
+	err := coverage.setConfig(ctx, wd, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		t.Fatalf("Error setting import test config: %s", err)
 	}
@@ -700,7 +669,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 		testStepConfigDefer := teststep.Configuration(confRequest)
 
-		err = wd.SetConfig(ctx, testStepConfigDefer, step.ConfigVariables)
+		err = coverage.setConfig(ctx, wd, testStepConfigDefer, step.ConfigVariables)
 
 		if err != nil {
 			t.Fatalf("Error resetting test config: %s", err)

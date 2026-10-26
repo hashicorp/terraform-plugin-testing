@@ -142,7 +142,8 @@ type Finding struct {
 	Warnings []Warning `json:"warnings,omitempty"`
 }
 
-// Collector belongs to one TestCase, and is shared by its import working directory.
+// Collector belongs to one TestCase. It records evidence for one step at a
+// time.
 //
 // A nil *Collector is valid and means collection is disabled: New returns nil
 // when EnvDirectory is unset, and every exported method is a no-op on a nil
@@ -167,9 +168,7 @@ type Collector struct {
 	lastPlan []Feature
 	// actions holds the action invocations of the plan that PreApplyPlan
 	// selected. ApplyCompleted marks them invoked.
-	actions []Feature
-	// latestPlan is the plan that Plan observed most recently.
-	latestPlan    *tfjson.Plan
+	actions       []Feature
 	expectedError bool
 }
 
@@ -200,7 +199,6 @@ func (c *Collector) BeginStep(stepNumber int) {
 	c.warnings = nil
 	c.lastPlan = nil
 	c.actions = nil
-	c.latestPlan = nil
 	c.expectedError = false
 }
 
@@ -485,7 +483,6 @@ func (c *Collector) Plan(plan *tfjson.Plan) {
 	if !c.active {
 		return
 	}
-	c.latestPlan = plan
 	if plan == nil {
 		add(&c.warnings, WarningPlanUnavailable)
 		return
@@ -525,9 +522,10 @@ func (c *Collector) Plan(plan *tfjson.Plan) {
 	// Computed coverage is taken from post-apply or refresh state instead.
 }
 
-// PreApplyPlan marks the most recently observed plan as the one which will
-// actually be applied.
-func (c *Collector) PreApplyPlan() {
+// PreApplyPlan selects plan as the one that the next apply executes.
+// ApplyCompleted marks its changes completed. A nil plan means the saved plan
+// could not be read.
+func (c *Collector) PreApplyPlan(plan *tfjson.Plan) {
 	if c == nil {
 		return
 	}
@@ -536,7 +534,6 @@ func (c *Collector) PreApplyPlan() {
 	}
 	c.lastPlan = nil
 	c.actions = nil
-	plan := c.latestPlan
 	if plan == nil {
 		add(&c.warnings, WarningPlanUnavailable)
 		return

@@ -23,10 +23,10 @@ import (
 //   - Can be successfully initialized (validation and configuring)
 //   - Can read and write state
 //   - Supports workspaces (creating and deleting)
-func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, cfg teststep.Config) error {
+func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, coverage stepCoverage, step TestStep, providers *providerFactories, cfg teststep.Config) error {
 	t.Helper()
 
-	err := wd.SetConfig(ctx, cfg, step.ConfigVariables)
+	err := coverage.setConfig(ctx, wd, cfg, step.ConfigVariables)
 	if err != nil {
 		return fmt.Errorf("Error setting config: %w", err)
 	}
@@ -63,7 +63,7 @@ func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.Work
 	}
 
 	// ----- Apply test resources to the target workspace and assert they are saved successfully in state
-	err = applyTestResources(ctx, t, wd, step, providers, cfg, targetWorkspace)
+	err = applyTestResources(ctx, t, wd, coverage, step, providers, cfg, targetWorkspace)
 	if err != nil {
 		return err
 	}
@@ -227,7 +227,7 @@ func deleteWorkspace(ctx context.Context, t testing.T, wd *plugintest.WorkingDir
 
 // This is the primary place that state storage is being tested, we create two test resources (using the built-in terraform_data resource) with
 // two different "terraform apply" commands, then check the state for their presence.
-func applyTestResources(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, cfg teststep.Config, workspace string) error {
+func applyTestResources(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, coverage stepCoverage, step TestStep, providers *providerFactories, cfg teststep.Config, workspace string) error {
 	t.Helper()
 
 	err := runProviderCommand(ctx, t, wd, providers, func() error {
@@ -245,7 +245,7 @@ func applyTestResources(ctx context.Context, t testing.T, wd *plugintest.Working
 		}`, expectedOutput)
 
 	cfg = cfg.Append(testResourceCfg1)
-	err = wd.SetConfig(ctx, cfg, step.ConfigVariables)
+	err = coverage.setConfig(ctx, wd, cfg, step.ConfigVariables)
 	if err != nil {
 		return fmt.Errorf("Error setting config: %w", err)
 	}
@@ -264,7 +264,7 @@ func applyTestResources(ctx context.Context, t testing.T, wd *plugintest.Working
 		}`, expectedOutput)
 
 	cfg = cfg.Append(testResourceCfg2)
-	err = wd.SetConfig(ctx, cfg, step.ConfigVariables)
+	err = coverage.setConfig(ctx, wd, cfg, step.ConfigVariables)
 	if err != nil {
 		return fmt.Errorf("Error setting config: %w", err)
 	}

@@ -20,7 +20,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
-	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 )
 
 // expectNonEmptyPlanOutputChangesMinTFVersion is used to keep compatibility for
@@ -28,7 +27,7 @@ import (
 // changes. Those older versions will always show outputs being created.
 var expectNonEmptyPlanOutputChangesMinTFVersion = tfversion.Version0_14_0
 
-func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
+func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, coverage stepCoverage, step TestStep, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
 	t.Helper()
 
 	// When `refreshAfterApply` is true, a `Config`-mode test step will invoke
@@ -99,7 +98,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 	testStepConfig := teststep.Configuration(confRequest)
 
-	err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
+	err = coverage.setConfig(ctx, wd, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		return fmt.Errorf("Error setting config: %w", err)
 	}
@@ -126,12 +125,11 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				}
 			}
 
-			return wd.CreatePlan(ctx, opts...)
+			return coverage.createPreApplyPlan(ctx, wd, opts...)
 		})
 		if err != nil {
 			return fmt.Errorf("Error running pre-apply plan: %w", err)
 		}
-		wd.Coverage.PreApplyPlan()
 
 		// Run pre-apply plan checks
 		if len(step.ConfigPlanChecks.PreApply) > 0 {
@@ -190,12 +188,11 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				var opts []tfexec.PlanOption
 				opts = append(opts, tfexec.Destroy(true))
 
-				return wd.CreatePlan(ctx, opts...)
+				return coverage.createPreApplyPlan(ctx, wd, opts...)
 			})
 			if err != nil {
 				return fmt.Errorf("Error running destroy plan after step.Check shimmed state was retrieved: %w", err)
 			}
-			wd.Coverage.PreApplyPlan()
 		}
 
 		// Apply the diff, creating real resources
@@ -214,23 +211,10 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			}
 			return fmt.Errorf("Error running apply: %w", err)
 		}
-		wd.Coverage.ApplyCompleted(step.Destroy)
-		wd.Coverage.ProviderStepCompleted()
-		// Known and null attribute evidence must come from state that an apply
-		// actually produced; plan values are not used for it (see
-		// Collector.Plan). Without this read, a step with no Check would
-		// record no state evidence at all.
-		if wd.Coverage.Enabled() && !step.Destroy {
-			err = runProviderCommand(ctx, t, wd, providers, func() error {
-				state, err := wd.State(ctx)
-				if err == nil {
-					wd.Coverage.ObserveState(state)
-				}
-				return err
-			})
-			if err != nil {
-				wd.Coverage.Warning(semanticcoverage.WarningStateUnavailable)
-			}
+		coverage.ApplyCompleted(step.Destroy)
+		coverage.ProviderStepCompleted()
+		if !step.Destroy {
+			coverage.observeAppliedState(ctx, t, wd, providers)
 		}
 
 		// Run any configured checks
@@ -304,7 +288,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			}
 		}
 
-		return wd.CreatePlan(ctx, opts...)
+		return coverage.createPlan(ctx, wd, opts...)
 	})
 	if err != nil {
 		if step.PlanOnly {
@@ -378,7 +362,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			}
 		}
 
-		return wd.CreatePlan(ctx, opts...)
+		return coverage.createPlan(ctx, wd, opts...)
 	})
 	if err != nil {
 		if step.PlanOnly {
@@ -476,7 +460,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		// caught a different bug.
 		if idRefreshCheck != nil {
 			fmt.Println("Not Writing by testing ID Refresh")
-			if err := testIDRefresh(ctx, t, c, wd, step, idRefreshCheck, providers, stepIndex, helper); err != nil {
+			if err := testIDRefresh(ctx, t, c, wd, coverage, step, idRefreshCheck, providers, stepIndex, helper); err != nil {
 				return fmt.Errorf(
 					"[ERROR] Test: ID-only test failed: %s", err)
 			}
