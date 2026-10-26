@@ -179,7 +179,7 @@ func readFindings(dir string) ([]semanticcoverage.Finding, error) {
 			return fmt.Errorf("%s: %w", path, err)
 		}
 		if item.Version != semanticcoverage.FindingVersion {
-			return fmt.Errorf("%s: unsupported semanticcoverage.Finding version %d", path, item.Version)
+			return fmt.Errorf("%s: finding version %d, this report reads version %d; re-run the tests with the same terraform-plugin-testing version", path, item.Version, semanticcoverage.FindingVersion)
 		}
 		if item.Test == "" || item.Step < 1 {
 			return fmt.Errorf("%s: missing test name or step", path)

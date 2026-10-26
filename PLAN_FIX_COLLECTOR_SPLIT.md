@@ -10,7 +10,7 @@
    `FinishStep`, `Warning`, `MatchedExpectedError`, file writing).
 3. Config parsing for HCL and Terraform JSON (`Config`, `QueryConfig`,
    `Parse`, `blocks`, `walkInputs`, `functions`, `jsonBlocks`,
-   `jsonInputs`, `ResetConfig`).
+   `jsonInputs`).
 4. Plan observation (`Plan`, `PreApplyPlan`, `ImportPlan`, `action`).
 5. State observation (`ObserveState`, `module`, `states`).
 6. Completion marking (`ApplyCompleted`, `QueryCompleted`,
@@ -32,7 +32,7 @@ change and no behaviour change.
 |---|---|
 | `finding.go` | Package doc, `EnvDirectory`, `FindingVersion`, `Outcome` and its constants and methods, `Feature`, `Finding` |
 | `collector.go` | `Collector` struct and its nil-receiver contract doc, `New`, `Enabled`, `Ready`, `Begin`, `Finish`, `FinishStep`, `Warning`, `MatchedExpectedError`, `feature`, `setProvider`, `add` |
-| `config.go` | `Config`, `QueryConfig`, `ResetConfig`, `Parse`, `blocks`, `walkInputs`, `functions`, `jsonBlocks`, `jsonInputs`, `asMap` |
+| `config.go` | `Config`, `QueryConfig`, `Parse`, `blocks`, `walkInputs`, `functions`, `jsonBlocks`, `jsonInputs`, `asMap` |
 | `plan.go` | `Plan`, `PreApplyPlan`, `ImportPlan`, `action` |
 | `state.go` | `ObserveState`, `module`, `states` |
 | `completion.go` | `ApplyCompleted`, `ProviderStepCompleted`, `RefreshCompleted`, `QueryCompleted`, `QueryResults`, `StateStoreCompleted`, `OperationForAddress` |
@@ -54,10 +54,10 @@ Split `collector_test.go` the same way: `config_test.go`, `plan_test.go`,
 - Other small cleanups (a real set instead of `add`, inlining
   `jsonInputs`, the query file name constant) are in
   `TODO_COLLECTOR_SIMPLIFY.md`.
-- **Locking helper.** Most exported methods start with the same 8 lines
-  (`nil` check, `Lock`, `defer Unlock`, `active` check). A
-  `func (c *Collector) withActive(fn func())` helper would remove about
-  100 lines. It would also make the nil-receiver contract hold by
+- **Guard helper.** Most exported methods start with the same lines
+  (`nil` check, `active` check). A
+  `func (c *Collector) withActive(fn func())` helper would remove some
+  repetition. It would also make the nil-receiver contract hold by
   construction.
 - Apply the renames from `TODO_COLLECTOR_NAMING.md` after the move, not
   during it. That keeps `git log --follow` and review simple.

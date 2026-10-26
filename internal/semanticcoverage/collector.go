@@ -13,7 +13,6 @@ import (
 	"slices"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/hashicorp/hcl/v2"
@@ -25,6 +24,13 @@ import (
 const EnvDirectory = "TF_ACC_SEMANTIC_COVERAGE_DIR"
 
 // FindingVersion is the schema version of the JSON findings written per step.
+//
+// Findings live in a user-owned directory (EnvDirectory) that outlives the
+// test run. They are written by the test binary and read by
+// cmd/semantic-coverage-report, and the two can be built from different
+// versions of this module. Bump FindingVersion whenever the meaning or shape
+// of Finding changes incompatibly, so that the report rejects stale findings
+// instead of misreading them.
 const FindingVersion = 1
 
 // Terraform instance keys can contain arbitrary strings, including ']'.
@@ -144,17 +150,25 @@ type Finding struct {
 // therefore invoke methods unconditionally and only need Enabled to skip work
 // done solely to feed the collector, such as extra Terraform commands. New
 // exported methods must preserve this by returning early when c == nil.
+//
+// A Collector is not safe for concurrent use. All calls come from the
+// goroutine that runs the test steps: Terraform commands and checks run
+// synchronously there, and provider servers never see the collector.
 type Collector struct {
-	mu            sync.Mutex
-	directory     string
-	packageName   string
-	test          string
-	step          int
-	features      map[string]*Feature
-	warnings      []Warning
-	active        bool
-	lastPlan      []Feature
-	actions       []Feature
+	directory   string
+	packageName string
+	test        string
+	step        int
+	features    map[string]*Feature
+	warnings    []Warning
+	active      bool
+	// lastPlan holds the resource changes of the plan that PreApplyPlan
+	// selected. ApplyCompleted marks them completed.
+	lastPlan []Feature
+	// actions holds the action invocations of the plan that PreApplyPlan
+	// selected. ApplyCompleted marks them invoked.
+	actions []Feature
+	// latestPlan is the plan that Plan observed most recently.
 	latestPlan    *tfjson.Plan
 	expectedError bool
 }
@@ -181,8 +195,6 @@ func (c *Collector) BeginStep(stepNumber int) {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	c.step, c.active = stepNumber, true
 	c.features = make(map[string]*Feature)
 	c.warnings = nil
@@ -198,8 +210,6 @@ func (c *Collector) DiscardStep() {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	c.active = false
 }
 
@@ -249,19 +259,18 @@ func (c *Collector) Warning(code Warning) {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if c.active {
 		add(&c.warnings, code)
 	}
 }
 
+// MatchedExpectedError records that the active step failed with an error
+// matching TestStep.ExpectError. FinishStep then writes OutcomeExpectedError
+// instead of OutcomeSuccess.
 func (c *Collector) MatchedExpectedError() {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if c.active {
 		c.expectedError = true
 	}
@@ -306,22 +315,6 @@ func (c *Collector) QueryConfig(dir string) {
 	c.Parse("terraform_plugin_test.tfquery.hcl", data)
 }
 
-func (c *Collector) ResetConfig() {
-	if c == nil {
-		return
-	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if !c.active {
-		return
-	}
-	for key, f := range c.features {
-		if len(f.Completed) == 0 && len(f.Planned) == 0 && len(f.Known) == 0 && len(f.Null) == 0 {
-			delete(c.features, key)
-		}
-	}
-}
-
 func (c *Collector) Parse(name string, data []byte) {
 	if c == nil {
 		return
@@ -332,8 +325,6 @@ func (c *Collector) Parse(name string, data []byte) {
 			c.Warning(WarningConfigUnavailable)
 			return
 		}
-		c.mu.Lock()
-		defer c.mu.Unlock()
 		if c.active {
 			c.jsonBlocks(object)
 		}
@@ -350,8 +341,6 @@ func (c *Collector) Parse(name string, data []byte) {
 		c.Warning(WarningConfigUnavailable)
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if c.active {
 		c.blocks(body.Blocks)
 		c.functions(body)
@@ -487,14 +476,12 @@ func jsonInputs(f *Feature, object map[string]any) {
 	}
 }
 
-// Plan records Terraform Core's resource actions, not inferred provider RPCs.
-// A nil plan means the saved plan could not be read.
+// Plan records the planned operation of each resource change and action
+// invocation in plan. A nil plan means the saved plan could not be read.
 func (c *Collector) Plan(plan *tfjson.Plan) {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if !c.active {
 		return
 	}
@@ -544,8 +531,6 @@ func (c *Collector) PreApplyPlan() {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if !c.active {
 		return
 	}
@@ -572,8 +557,6 @@ func (c *Collector) ImportPlan(plan *tfjson.Plan) {
 	if c == nil || plan == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if !c.active {
 		return
 	}
@@ -616,8 +599,6 @@ func (c *Collector) ObserveState(state *tfjson.State) {
 	if c == nil || state == nil || state.Values == nil || state.Values.RootModule == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if c.active {
 		c.module(state.Values.RootModule)
 	}
@@ -662,8 +643,6 @@ func (c *Collector) OperationForAddress(address, operation string) {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if !c.active {
 		return
 	}
@@ -688,8 +667,6 @@ func (c *Collector) ApplyCompleted(destroy bool) {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if !c.active {
 		return
 	}
@@ -728,8 +705,6 @@ func (c *Collector) QueryCompleted() {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if !c.active {
 		return
 	}
@@ -746,8 +721,6 @@ func (c *Collector) QueryResults(messages []tfjson.LogMsg) {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if !c.active {
 		return
 	}
@@ -767,8 +740,6 @@ func (c *Collector) RefreshCompleted() {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if !c.active {
 		return
 	}
@@ -783,8 +754,6 @@ func (c *Collector) StateStoreCompleted() {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if !c.active {
 		return
 	}
@@ -799,8 +768,6 @@ func (c *Collector) ProviderStepCompleted() {
 	if c == nil {
 		return
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if !c.active {
 		return
 	}
@@ -818,8 +785,6 @@ func (c *Collector) FinishStep(outcome Outcome) error {
 	if c == nil {
 		return nil
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if !c.active {
 		return nil
 	}

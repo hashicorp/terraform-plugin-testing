@@ -230,7 +230,6 @@ func TestQueryConfigDoesNotIncludePreviousStep(t *testing.T) {
 	c.BeginStep(1)
 	c.Parse("step.tf", []byte(`resource "example_item" "prior" { name = "previous" }`))
 	c.BeginStep(2)
-	c.ResetConfig()
 	c.Parse("terraform_plugin_test.tfquery.hcl", []byte(`provider "example" {} list "example_item" "query" { config { name = "current" } }`))
 	for _, f := range c.features {
 		if f.Kind == "resource" || f.Kind == "provider" {

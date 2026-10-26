@@ -216,8 +216,10 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		}
 		wd.Coverage.ApplyCompleted(step.Destroy)
 		wd.Coverage.ProviderStepCompleted()
-		// Inspect the actual post-apply state even when the test has no Check.
-		// This does not persist any of the state's values.
+		// Known and null attribute evidence must come from state that an apply
+		// actually produced; plan values are not used for it (see
+		// Collector.Plan). Without this read, a step with no Check would
+		// record no state evidence at all.
 		if wd.Coverage.Enabled() && !step.Destroy {
 			err = runProviderCommand(ctx, t, wd, providers, func() error {
 				state, err := wd.State(ctx)

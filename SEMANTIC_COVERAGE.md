@@ -20,7 +20,8 @@ working directory and inspects Terraform plans and post-operation state. The
 Collection is opt-in. Set `TF_ACC_SEMANTIC_COVERAGE_DIR` to a directory when
 running acceptance tests; one JSON finding is written per executed test step.
 Use an empty directory per run, because the report reads every JSON file under
-it.
+it. Re-run the tests after upgrading terraform-plugin-testing, because the
+report rejects findings written by an incompatible version.
 
 ```sh
 TF_ACC=1 \

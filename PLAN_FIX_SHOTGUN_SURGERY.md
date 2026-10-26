@@ -11,7 +11,7 @@ Coverage events are recorded in two layers and seven files:
 | step runner | `testing_new_config.go` | `PreApplyPlan` x2, `ApplyCompleted`, `ProviderStepCompleted`, post-apply `ObserveState` |
 | step runner | `testing_new_import_state.go` | `ImportPlan`, `ObserveState`, `OperationForAddress` |
 | step runner | `testing_new_refresh_state.go` | `ObserveState` |
-| step runner | `testing_new_query.go` | `ResetConfig`, `QueryResults` |
+| step runner | `testing_new_query.go` | `QueryResults` |
 
 Adding a new evidence type, or changing what counts as "completed",
 means editing several of these files. It is also hard to see the whole
@@ -37,7 +37,7 @@ coverage wiring sits behind one file-local adapter.
    type stepCoverage struct{ c *semanticcoverage.Collector }
 
    func (s stepCoverage) setConfig(ctx, wd, cfg, vars) error // wd.SetConfig + c.Config(wd.WorkingDirectory())
-   func (s stepCoverage) setQuery(ctx, wd, cfg, vars) error  // c.ResetConfig + wd.SetQuery + c.QueryConfig
+   func (s stepCoverage) setQuery(ctx, wd, cfg, vars) error  // wd.SetQuery + c.QueryConfig
    func (s stepCoverage) createPlan(ctx, wd, opts...) error  // wd.CreatePlan + SavedPlan + c.Plan
    func (s stepCoverage) observeState(state *tfjson.State)
    func (s stepCoverage) stepResult(mode stepMode, err error, step TestStep)
@@ -70,10 +70,10 @@ coverage wiring sits behind one file-local adapter.
 
 ## Risks / checks
 
-- Before step 4, check whether the query step's `ResetConfig` is
-  dead code (`TODO_COMMENTS.md`). If it is, don't carry it into `setQuery`.
-- Combine with `TODO_STATE_READ_GYMNASTICS.md`: call `observeState` after
-  the `runProviderCommand` closure, not inside it.
+- `ResetConfig` was dead code and has been removed; `setQuery` doesn't need
+  it.
+- `observeState` is called after the `runProviderCommand` closure, not
+  inside it (already the case in the import and refresh steps).
 - `SetConfig` is called from several places, including
   `testing_new_config.go` and the import step. Audit every call so the
   set of config reads stays the same. Today all of them feed coverage.

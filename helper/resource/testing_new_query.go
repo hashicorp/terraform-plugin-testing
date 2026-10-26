@@ -21,9 +21,6 @@ func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDi
 	queryConfigRequest := teststep.ConfigurationRequest{
 		Raw: &step.Config,
 	}
-	// Drop input-only evidence from any earlier config in this step; the
-	// query file replaces it. SetQuery records the query config itself.
-	wd.Coverage.ResetConfig()
 	err := wd.SetQuery(ctx, teststep.Configuration(queryConfigRequest), step.ConfigVariables)
 	if err != nil {
 		return fmt.Errorf("Error setting query config: %w", err)
