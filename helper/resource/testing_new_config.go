@@ -20,6 +20,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 )
 
 // expectNonEmptyPlanOutputChangesMinTFVersion is used to keep compatibility for
@@ -226,7 +227,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				return err
 			})
 			if err != nil {
-				wd.Coverage.Warning("state_unavailable")
+				wd.Coverage.Warning(semanticcoverage.WarningStateUnavailable)
 			}
 		}
 

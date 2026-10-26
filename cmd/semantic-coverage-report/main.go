@@ -187,6 +187,11 @@ func readFindings(dir string) ([]semanticcoverage.Finding, error) {
 		if !item.Outcome.Valid() {
 			return fmt.Errorf("%s: invalid outcome %q", path, item.Outcome)
 		}
+		for _, warning := range item.Warnings {
+			if !warning.Valid() {
+				return fmt.Errorf("%s: invalid warning %q", path, warning)
+			}
+		}
 		items = append(items, item)
 		return nil
 	})

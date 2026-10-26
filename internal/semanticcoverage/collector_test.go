@@ -6,6 +6,7 @@ package semanticcoverage
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -168,16 +169,33 @@ func TestPreApplyPlanWithoutReadablePlanWarns(t *testing.T) {
 
 	c := &Collector{directory: t.TempDir(), test: "TestUnavailable"}
 	c.BeginStep(1)
+	c.PreApplyPlan()
+	if !slices.Equal(c.warnings, []Warning{WarningPlanUnavailable}) {
+		t.Fatalf("pre-apply plan without observed plan, warnings: %v", c.warnings)
+	}
+	c.BeginStep(2)
 	c.Plan(nil)
 	c.PreApplyPlan()
 	c.ApplyCompleted(false)
-	if !contains(c.warnings, "plan_unavailable") || !contains(c.warnings, "pre_apply_plan_unavailable") {
+	if !slices.Equal(c.warnings, []Warning{WarningPlanUnavailable}) {
 		t.Fatalf("warnings: %v", c.warnings)
 	}
 	for _, f := range c.features {
 		if len(f.Completed) != 0 {
 			t.Fatalf("unreadable plan claimed completion: %v", f)
 		}
+	}
+}
+
+func TestUnparsableConfigWarns(t *testing.T) {
+	t.Parallel()
+
+	c := &Collector{directory: t.TempDir(), test: "TestUnparsable"}
+	c.BeginStep(1)
+	c.Parse("broken.tf", []byte(`resource "example_item" {`))
+	c.Parse("broken.tf.json", []byte(`{`))
+	if !slices.Equal(c.warnings, []Warning{WarningConfigUnavailable}) {
+		t.Fatalf("warnings: %v", c.warnings)
 	}
 }
 

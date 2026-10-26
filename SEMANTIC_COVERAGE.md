@@ -63,6 +63,14 @@ additional Terraform commands are run.
   retains input and plan evidence but cannot claim a completed operation or
   computed state value. Failed steps contribute no coverage. Skipped steps
   write no finding.
+- A finding can carry warnings. Each warning means that one type of evidence
+  for the step may be incomplete:
+
+  | Warning | Meaning |
+  |---|---|
+  | `config_unavailable` | Some configuration could not be read or parsed. Input and feature evidence may be missing. |
+  | `plan_unavailable` | A plan could not be read. Planned and completed operation evidence may be missing. |
+  | `state_unavailable` | The post-operation state could not be read. Known and null attribute evidence may be missing. |
 
 ## Privacy
 

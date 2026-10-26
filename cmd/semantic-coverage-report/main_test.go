@@ -4,6 +4,9 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
@@ -34,6 +37,19 @@ func TestExpectedErrorDoesNotClaimCompletedOperationOrComputedOutput(t *testing.
 	target := result.Targets[0]
 	if len(target.Planned["create"]) != 1 || len(target.Completed) != 0 {
 		t.Fatalf("planned/completed: %+v", target)
+	}
+}
+
+func TestReadFindingsRejectsUnknownWarning(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	finding := `{"version":1,"test":"TestExample","step":1,"outcome":"success","warnings":["step_skipped"]}`
+	if err := os.WriteFile(filepath.Join(dir, "finding.json"), []byte(finding), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readFindings(dir); err == nil || !strings.Contains(err.Error(), `invalid warning "step_skipped"`) {
+		t.Fatalf("err = %v", err)
 	}
 }
 

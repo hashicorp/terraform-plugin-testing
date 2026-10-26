@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -100,6 +101,31 @@ func (o Outcome) Completed() bool {
 	return o == OutcomeSuccess || o == OutcomeExpectedError
 }
 
+// Warning means that one type of evidence for a step may be incomplete. The
+// codes don't say why; use the logs or the collector tests for that.
+type Warning string
+
+const (
+	// WarningConfigUnavailable means some configuration could not be read or
+	// parsed, so input and feature evidence may be missing.
+	WarningConfigUnavailable Warning = "config_unavailable"
+	// WarningPlanUnavailable means a plan could not be read, so planned and
+	// completed operation evidence may be missing.
+	WarningPlanUnavailable Warning = "plan_unavailable"
+	// WarningStateUnavailable means the post-operation state could not be
+	// read, so known and null attribute evidence may be missing.
+	WarningStateUnavailable Warning = "state_unavailable"
+)
+
+// Valid reports whether w is one of the known warnings.
+func (w Warning) Valid() bool {
+	switch w {
+	case WarningConfigUnavailable, WarningPlanUnavailable, WarningStateUnavailable:
+		return true
+	}
+	return false
+}
+
 type Finding struct {
 	Version  int       `json:"version"`
 	Package  string    `json:"package,omitempty"`
@@ -107,7 +133,7 @@ type Finding struct {
 	Step     int       `json:"step"`
 	Outcome  Outcome   `json:"outcome"`
 	Features []Feature `json:"features,omitempty"`
-	Warnings []string  `json:"warnings,omitempty"`
+	Warnings []Warning `json:"warnings,omitempty"`
 }
 
 // Collector belongs to one TestCase, and is shared by its import working directory.
@@ -125,7 +151,7 @@ type Collector struct {
 	test          string
 	step          int
 	features      map[string]*Feature
-	warnings      []string
+	warnings      []Warning
 	active        bool
 	lastPlan      []Feature
 	actions       []Feature
@@ -205,7 +231,7 @@ func (c *Collector) setProvider(kind, name, address, provider string) {
 	}
 }
 
-func add(xs *[]string, value string) {
+func add[T ~string](xs *[]T, value T) {
 	if value == "" {
 		return
 	}
@@ -217,7 +243,9 @@ func add(xs *[]string, value string) {
 	*xs = append(*xs, value)
 }
 
-func (c *Collector) Warning(code string) {
+// Warning records that evidence of the given type may be incomplete for the
+// active step.
+func (c *Collector) Warning(code Warning) {
 	if c == nil {
 		return
 	}
@@ -246,7 +274,7 @@ func (c *Collector) Config(dir string) {
 	}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		c.Warning("config_directory_unavailable")
+		c.Warning(WarningConfigUnavailable)
 		return
 	}
 	for _, entry := range entries {
@@ -259,7 +287,7 @@ func (c *Collector) Config(dir string) {
 		}
 		data, err := os.ReadFile(filepath.Join(dir, name))
 		if err != nil {
-			c.Warning("config_file_unavailable")
+			c.Warning(WarningConfigUnavailable)
 			continue
 		}
 		c.Parse(name, data)
@@ -272,7 +300,7 @@ func (c *Collector) QueryConfig(dir string) {
 	}
 	data, err := os.ReadFile(filepath.Join(dir, "terraform_plugin_test.tfquery.hcl"))
 	if err != nil {
-		c.Warning("query_config_unavailable")
+		c.Warning(WarningConfigUnavailable)
 		return
 	}
 	c.Parse("terraform_plugin_test.tfquery.hcl", data)
@@ -301,7 +329,7 @@ func (c *Collector) Parse(name string, data []byte) {
 	if strings.HasSuffix(name, ".json") {
 		var object map[string]any
 		if json.Unmarshal(data, &object) != nil {
-			c.Warning("config_parse_failed")
+			c.Warning(WarningConfigUnavailable)
 			return
 		}
 		c.mu.Lock()
@@ -314,12 +342,12 @@ func (c *Collector) Parse(name string, data []byte) {
 	parser := hclparse.NewParser()
 	file, diags := parser.ParseHCL(data, name)
 	if diags.HasErrors() {
-		c.Warning("config_parse_failed")
+		c.Warning(WarningConfigUnavailable)
 		return
 	}
 	body, ok := file.Body.(*hclsyntax.Body)
 	if !ok {
-		c.Warning("config_body_unsupported")
+		c.Warning(WarningConfigUnavailable)
 		return
 	}
 	c.mu.Lock()
@@ -400,7 +428,7 @@ func (c *Collector) functions(body *hclsyntax.Body) {
 			return nil
 		})
 		if diags.HasErrors() {
-			add(&c.warnings, "function_parse_failed")
+			add(&c.warnings, WarningConfigUnavailable)
 		}
 	}
 }
@@ -472,7 +500,7 @@ func (c *Collector) Plan(plan *tfjson.Plan) {
 	}
 	c.latestPlan = plan
 	if plan == nil {
-		add(&c.warnings, "plan_unavailable")
+		add(&c.warnings, WarningPlanUnavailable)
 		return
 	}
 	if plan.Config != nil {
@@ -525,7 +553,7 @@ func (c *Collector) PreApplyPlan() {
 	c.actions = nil
 	plan := c.latestPlan
 	if plan == nil {
-		add(&c.warnings, "pre_apply_plan_unavailable")
+		add(&c.warnings, WarningPlanUnavailable)
 		return
 	}
 	for _, rc := range plan.ResourceChanges {
@@ -810,7 +838,7 @@ func (c *Collector) FinishStep(outcome Outcome) error {
 		a, b := finding.Features[i], finding.Features[j]
 		return a.Kind+a.Name+a.Address < b.Kind+b.Name+b.Address
 	})
-	sort.Strings(finding.Warnings)
+	slices.Sort(finding.Warnings)
 	if err := os.MkdirAll(c.directory, 0700); err != nil {
 		return fmt.Errorf("coverage directory: %w", err)
 	}
