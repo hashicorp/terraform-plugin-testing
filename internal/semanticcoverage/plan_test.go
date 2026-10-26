@@ -15,7 +15,7 @@ func TestPlanOnlyDoesNotCompleteApply(t *testing.T) {
 
 	c := &Collector{}
 	c.BeginStep(1)
-	c.Plan(&tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: "example_item.test", Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionCreate}}}}})
+	c.ObservePlan(&tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: "example_item.test", Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionCreate}}}}})
 	f := c.feature(KindResource, "example_item", "example_item.test")
 	if len(f.planned) != 1 || len(f.completed) != 0 || len(f.known) != 0 {
 		t.Fatalf("planned=%v completed=%v known=%v", f.planned, f.completed, f.known)
@@ -25,14 +25,14 @@ func TestPlanOnlyDoesNotCompleteApply(t *testing.T) {
 func TestPreApplyPlanWithoutReadablePlanWarns(t *testing.T) {
 	t.Parallel()
 
-	c := &Collector{directory: t.TempDir(), test: "TestUnavailable"}
+	c := &Collector{directory: t.TempDir(), testName: "TestUnavailable"}
 	c.BeginStep(1)
 	c.PreApplyPlan(nil)
 	if !slices.Equal(c.warnings.sorted(), []Warning{WarningPlanUnavailable}) {
 		t.Fatalf("unreadable pre-apply plan, warnings: %v", c.warnings)
 	}
 	c.BeginStep(2)
-	c.Plan(nil)
+	c.ObservePlan(nil)
 	c.PreApplyPlan(nil)
 	c.ApplyCompleted(false)
 	if !slices.Equal(c.warnings.sorted(), []Warning{WarningPlanUnavailable}) {

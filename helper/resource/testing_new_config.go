@@ -212,7 +212,6 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			return fmt.Errorf("Error running apply: %w", err)
 		}
 		coverage.ApplyCompleted(step.Destroy)
-		coverage.ProviderStepCompleted()
 		if !step.Destroy {
 			coverage.observeAppliedState(ctx, t, wd, providers)
 		}

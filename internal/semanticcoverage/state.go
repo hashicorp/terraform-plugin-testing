@@ -14,11 +14,11 @@ func (c *Collector) ObserveState(state *tfjson.State) {
 		return
 	}
 	if c.active {
-		c.module(state.Values.RootModule)
+		c.observeStateModule(state.Values.RootModule)
 	}
 }
 
-func (c *Collector) module(m *tfjson.StateModule) {
+func (c *Collector) observeStateModule(m *tfjson.StateModule) {
 	for _, r := range m.Resources {
 		if r == nil {
 			continue
@@ -29,19 +29,19 @@ func (c *Collector) module(m *tfjson.StateModule) {
 		}
 		f := c.feature(kind, r.Type, r.Address)
 		c.setProvider(kind, r.Type, r.Address, r.ProviderName)
-		states(f, r.AttributeValues)
+		recordAttributeStatus(f, r.AttributeValues)
 		if r.IdentitySchemaVersion != nil && len(r.IdentityValues) > 0 {
 			identity := c.feature(KindIdentity, r.Type, r.Address)
 			identity.provider = r.ProviderName
-			states(identity, r.IdentityValues)
+			recordAttributeStatus(identity, r.IdentityValues)
 		}
 	}
 	for _, child := range m.ChildModules {
-		c.module(child)
+		c.observeStateModule(child)
 	}
 }
 
-func states(f *featureEvidence, values map[string]any) {
+func recordAttributeStatus(f *featureEvidence, values map[string]any) {
 	// Only top-level keys are unambiguously schema names. Nested map keys
 	// could be sensitive user-provided values, so do not persist them.
 	for name, value := range values {

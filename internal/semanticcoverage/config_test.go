@@ -13,10 +13,10 @@ import (
 func TestUnparsableConfigWarns(t *testing.T) {
 	t.Parallel()
 
-	c := &Collector{directory: t.TempDir(), test: "TestUnparsable"}
+	c := &Collector{directory: t.TempDir(), testName: "TestUnparsable"}
 	c.BeginStep(1)
-	c.Parse("broken.tf", []byte(`resource "example_item" {`))
-	c.Parse("broken.tf.json", []byte(`{`))
+	c.observeConfigFile("broken.tf", []byte(`resource "example_item" {`))
+	c.observeConfigFile("broken.tf.json", []byte(`{`))
 	if !slices.Equal(c.warnings.sorted(), []Warning{WarningConfigUnavailable}) {
 		t.Fatalf("warnings: %v", c.warnings)
 	}
@@ -25,11 +25,11 @@ func TestUnparsableConfigWarns(t *testing.T) {
 func TestQueryConfigDoesNotIncludePreviousStep(t *testing.T) {
 	t.Parallel()
 
-	c := &Collector{directory: t.TempDir(), test: "TestQuery"}
+	c := &Collector{directory: t.TempDir(), testName: "TestQuery"}
 	c.BeginStep(1)
-	c.Parse("step.tf", []byte(`resource "example_item" "prior" { name = "previous" }`))
+	c.observeConfigFile("step.tf", []byte(`resource "example_item" "prior" { name = "previous" }`))
 	c.BeginStep(2)
-	c.Parse("terraform_plugin_test.tfquery.hcl", []byte(`
+	c.observeConfigFile("terraform_plugin_test.tfquery.hcl", []byte(`
 provider "example" {}
 list "example_item" "query" {
   config { name = "current" }
@@ -87,7 +87,7 @@ state_store "example_store" {
 	for name, data := range map[string]string{"main.tf": hcl, "main.tf.json": json} {
 		c := &Collector{}
 		c.BeginStep(1)
-		c.Parse(name, []byte(data))
+		c.observeConfigFile(name, []byte(data))
 		var got []Feature
 		for _, f := range c.features {
 			got = append(got, f.finding())

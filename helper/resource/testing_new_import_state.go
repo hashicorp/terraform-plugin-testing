@@ -195,7 +195,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	} else {
 		err = testImportCommand(ctx, t, workingDir, coverage, providers, resourceName, importId, step, state)
 		if err == nil {
-			coverage.OperationForAddress(resourceName, "import")
+			coverage.ImportCompleted(resourceName)
 		}
 	}
 	return err

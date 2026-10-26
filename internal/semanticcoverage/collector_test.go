@@ -15,11 +15,14 @@ import (
 func TestCollectorKeepsOnlyMetadataAndSeparatesPlansFromApply(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv(EnvDirectory, dir)
-	c := New("TestExample")
+	c, err := New("TestExample")
+	if err != nil {
+		t.Fatal(err)
+	}
 	c.BeginStep(1)
-	c.Parse("test.tf", []byte(`resource "example_item" "test" { token = "secret-configuration" }`))
+	c.observeConfigFile("test.tf", []byte(`resource "example_item" "test" { token = "secret-configuration" }`))
 	plan := &tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: `example_item.test["secret-instance-key"]`, Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionCreate}}}}}
-	c.Plan(plan)
+	c.ObservePlan(plan)
 	c.PreApplyPlan(plan)
 	resource := &tfjson.StateResource{Address: `example_item.test["secret-instance-key"]`, Type: "example_item", Mode: tfjson.ManagedResourceMode, AttributeValues: map[string]any{"id": "secret-value", "token": "secret-value", "map": map[string]any{"secret-map-key": "secret-value"}}}
 	c.ObserveState(&tfjson.State{Values: &tfjson.StateValues{RootModule: &tfjson.StateModule{Resources: []*tfjson.StateResource{resource}}}})
@@ -53,9 +56,12 @@ func TestCollectorKeepsOnlyMetadataAndSeparatesPlansFromApply(t *testing.T) {
 func TestFinishWritesOneFindingPerStep(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv(EnvDirectory, dir)
-	c := New("TestExample")
+	c, err := New("TestExample")
+	if err != nil {
+		t.Fatal(err)
+	}
 	c.BeginStep(1)
-	c.Parse("test.tf", []byte(`resource "example_item" "test" { name = "first" }`))
+	c.observeConfigFile("test.tf", []byte(`resource "example_item" "test" { name = "first" }`))
 	if err := c.FinishStep(OutcomeSuccess); err != nil {
 		t.Fatal(err)
 	}
@@ -82,9 +88,12 @@ func TestFinishWritesOneFindingPerStep(t *testing.T) {
 func TestDiscardStepWritesNoFinding(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv(EnvDirectory, dir)
-	c := New("TestExample")
+	c, err := New("TestExample")
+	if err != nil {
+		t.Fatal(err)
+	}
 	c.BeginStep(1)
-	c.Parse("test.tf", []byte(`resource "example_item" "test" {}`))
+	c.observeConfigFile("test.tf", []byte(`resource "example_item" "test" {}`))
 	c.DiscardStep()
 	// The discarded step is no longer active, so finishing it is a no-op.
 	if err := c.FinishStep(OutcomeSuccess); err != nil {
@@ -113,4 +122,19 @@ func TestDiscardStepWritesNoFinding(t *testing.T) {
 func contains(values set[string], wanted string) bool {
 	_, ok := values[wanted]
 	return ok
+}
+
+func TestNewFailsEarlyForUnusableDirectory(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "file")
+	if err := os.WriteFile(file, nil, 0600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(EnvDirectory, filepath.Join(file, "findings"))
+	if c, err := New("TestExample"); err == nil || c != nil {
+		t.Fatalf("collector=%v err=%v", c, err)
+	}
+	t.Setenv(EnvDirectory, "")
+	if c, err := New("TestExample"); err != nil || c != nil {
+		t.Fatalf("disabled: collector=%v err=%v", c, err)
+	}
 }

@@ -19,7 +19,7 @@ import (
 //
 // A nil *Collector is valid and means collection is disabled: New returns nil
 // when EnvDirectory is unset, and every exported method is a no-op on a nil
-// receiver (Ready and FinishStep return nil, Enabled returns false). Callers can
+// receiver (FinishStep returns nil, Enabled returns false). Callers can
 // therefore invoke methods unconditionally and only need Enabled to skip work
 // done solely to feed the collector, such as extra Terraform commands. New
 // exported methods must preserve this by returning early when c == nil.
@@ -30,34 +30,40 @@ import (
 type Collector struct {
 	directory   string
 	packageName string
-	test        string
-	step        int
+	testName    string
+	stepNumber  int
 	features    map[string]*featureEvidence
 	warnings    set[Warning]
 	active      bool
-	// lastPlan holds the resource changes of the plan that PreApplyPlan
-	// selected. ApplyCompleted marks them completed.
-	lastPlan []Feature
-	// actions holds the action invocations of the plan that PreApplyPlan
-	// selected. ApplyCompleted marks them invoked.
-	actions       []Feature
-	expectedError bool
+	// pendingApplyChanges holds the resource changes of the plan that
+	// PreApplyPlan selected. ApplyCompleted marks them completed.
+	pendingApplyChanges []Feature
+	// pendingApplyActions holds the action invocations of the plan that
+	// PreApplyPlan selected. ApplyCompleted marks them invoked.
+	pendingApplyActions []Feature
+	expectedError       bool
 }
 
 // Enabled reports whether findings are being collected. Callers use it to
 // skip Terraform commands that only exist to feed the collector.
 func (c *Collector) Enabled() bool { return c != nil }
 
-func New(test string) *Collector {
+// New returns a Collector for the test with the given name, or nil if
+// EnvDirectory is unset. It creates the findings directory, so that a bad
+// directory fails the test before its first step.
+func New(testName string) (*Collector, error) {
 	dir := os.Getenv(EnvDirectory)
 	if dir == "" {
-		return nil
+		return nil, nil
+	}
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return nil, fmt.Errorf("coverage directory: %w", err)
 	}
 	packageName := ""
 	if wd, err := os.Getwd(); err == nil {
 		packageName = filepath.Base(wd)
 	}
-	return &Collector{directory: dir, packageName: packageName, test: test}
+	return &Collector{directory: dir, packageName: packageName, testName: testName}, nil
 }
 
 // BeginStep starts collecting evidence for a step. Any unfinished step is
@@ -66,11 +72,11 @@ func (c *Collector) BeginStep(stepNumber int) {
 	if c == nil {
 		return
 	}
-	c.step, c.active = stepNumber, true
+	c.stepNumber, c.active = stepNumber, true
 	c.features = make(map[string]*featureEvidence)
 	c.warnings = make(set[Warning])
-	c.lastPlan = nil
-	c.actions = nil
+	c.pendingApplyChanges = nil
+	c.pendingApplyActions = nil
 	c.expectedError = false
 }
 
@@ -88,7 +94,7 @@ func (c *Collector) FinishStep(outcome Outcome) error {
 	if c.expectedError && outcome == OutcomeSuccess {
 		outcome = OutcomeExpectedError
 	}
-	finding := Finding{Version: FindingVersion, Package: c.packageName, Test: c.test, Step: c.step, Outcome: outcome, Warnings: c.warnings.sorted()}
+	finding := Finding{Version: FindingVersion, Package: c.packageName, Test: c.testName, Step: c.stepNumber, Outcome: outcome, Warnings: c.warnings.sorted()}
 	for _, f := range c.features {
 		finding.Features = append(finding.Features, f.finding())
 	}
@@ -99,7 +105,7 @@ func (c *Collector) FinishStep(outcome Outcome) error {
 	if err := os.MkdirAll(c.directory, 0700); err != nil {
 		return fmt.Errorf("coverage directory: %w", err)
 	}
-	file, err := os.OpenFile(filepath.Join(c.directory, fmt.Sprintf("%d-%d-%d.json", time.Now().UnixNano(), os.Getpid(), c.step)), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	file, err := os.OpenFile(filepath.Join(c.directory, fmt.Sprintf("%d-%d-%d.json", time.Now().UnixNano(), os.Getpid(), c.stepNumber)), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
@@ -117,17 +123,6 @@ func (c *Collector) DiscardStep() {
 		return
 	}
 	c.active = false
-}
-
-// Ready creates the findings directory before running a test step.
-func (c *Collector) Ready() error {
-	if c == nil {
-		return nil
-	}
-	if err := os.MkdirAll(c.directory, 0700); err != nil {
-		return fmt.Errorf("coverage directory: %w", err)
-	}
-	return nil
 }
 
 // featureEvidence is the evidence for one feature in the active step. It is

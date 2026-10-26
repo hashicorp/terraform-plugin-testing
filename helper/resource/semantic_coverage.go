@@ -33,8 +33,8 @@ type stepCoverage struct {
 func newStepCoverage(t testing.T) stepCoverage {
 	t.Helper()
 
-	c := semanticcoverage.New(t.Name())
-	if err := c.Ready(); err != nil {
+	c, err := semanticcoverage.New(t.Name())
+	if err != nil {
 		t.Fatalf("semantic coverage: %s", err)
 	}
 	return stepCoverage{c}
@@ -92,7 +92,7 @@ func (s stepCoverage) setConfig(ctx context.Context, wd *plugintest.WorkingDir, 
 	if err := wd.SetConfig(ctx, cfg, vars); err != nil {
 		return err
 	}
-	s.Config(wd.BaseDir())
+	s.ObserveConfigDir(wd.BaseDir())
 	return nil
 }
 
@@ -102,7 +102,7 @@ func (s stepCoverage) setQuery(ctx context.Context, wd *plugintest.WorkingDir, c
 	if err := wd.SetQuery(ctx, cfg, vars); err != nil {
 		return err
 	}
-	s.QueryConfig(filepath.Join(wd.BaseDir(), plugintest.QueryFileName))
+	s.ObserveQueryConfig(filepath.Join(wd.BaseDir(), plugintest.QueryFileName))
 	return nil
 }
 
@@ -134,14 +134,14 @@ func (s stepCoverage) plan(ctx context.Context, wd *plugintest.WorkingDir, opts 
 	}
 	// A nil plan records that the saved plan could not be read.
 	plan, _ := wd.SavedPlan(ctx)
-	s.Plan(plan)
+	s.ObservePlan(plan)
 	return plan, nil
 }
 
 // observeAppliedState records the state that a successful apply produced.
 //
 // Known and null attribute evidence must come from state that an apply
-// actually produced; plan values are not used for it (see Collector.Plan).
+// actually produced; plan values are not used for it (see Collector.ObservePlan).
 // Without this read, a step with no Check would record no state evidence at
 // all.
 func (s stepCoverage) observeAppliedState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, providers *providerFactories) {

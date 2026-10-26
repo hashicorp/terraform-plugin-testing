@@ -14,8 +14,9 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
-// Config reads the files actually copied into the test working directory.
-func (c *Collector) Config(dir string) {
+// ObserveConfigDir records the features and inputs declared by the
+// configuration files in dir, the test working directory.
+func (c *Collector) ObserveConfigDir(dir string) {
 	if c == nil {
 		return
 	}
@@ -37,12 +38,13 @@ func (c *Collector) Config(dir string) {
 			c.Warning(WarningConfigUnavailable)
 			continue
 		}
-		c.Parse(name, data)
+		c.observeConfigFile(name, data)
 	}
 }
 
-// QueryConfig reads the query configuration file at path.
-func (c *Collector) QueryConfig(path string) {
+// ObserveQueryConfig records the features and inputs declared by the query
+// configuration file at path.
+func (c *Collector) ObserveQueryConfig(path string) {
 	if c == nil {
 		return
 	}
@@ -51,10 +53,12 @@ func (c *Collector) QueryConfig(path string) {
 		c.Warning(WarningConfigUnavailable)
 		return
 	}
-	c.Parse(filepath.Base(path), data)
+	c.observeConfigFile(filepath.Base(path), data)
 }
 
-func (c *Collector) Parse(name string, data []byte) {
+// observeConfigFile records the features and inputs declared by the HCL or
+// Terraform JSON configuration file with the given name and contents.
+func (c *Collector) observeConfigFile(name string, data []byte) {
 	if c == nil {
 		return
 	}
@@ -65,7 +69,7 @@ func (c *Collector) Parse(name string, data []byte) {
 			return
 		}
 		if c.active {
-			c.jsonBlocks(object)
+			c.observeJSONBlocks(object)
 		}
 		return
 	}
@@ -81,7 +85,7 @@ func (c *Collector) Parse(name string, data []byte) {
 		return
 	}
 	if c.active {
-		c.blocks(body.Blocks)
+		c.observeHCLBlocks(body.Blocks)
 		c.functions(body)
 	}
 }
@@ -125,7 +129,7 @@ func (c *Collector) blockFeature(block configBlock, labels ...string) *featureEv
 	return c.feature(block.kind, labels[0], block.addressPrefix+labels[0]+"."+labels[1])
 }
 
-func (c *Collector) blocks(blocks []*hclsyntax.Block) {
+func (c *Collector) observeHCLBlocks(blocks []*hclsyntax.Block) {
 	for _, b := range blocks {
 		block, ok := configBlocks[b.Type]
 		// Providers in a query file configure the query, not a test step.
@@ -143,7 +147,7 @@ func (c *Collector) blocks(blocks []*hclsyntax.Block) {
 			}
 		}
 		c.functions(b.Body)
-		c.blocks(b.Body.Blocks)
+		c.observeHCLBlocks(b.Body.Blocks)
 	}
 }
 
@@ -175,7 +179,7 @@ func (c *Collector) functions(body *hclsyntax.Body) {
 	}
 }
 
-func (c *Collector) jsonBlocks(root map[string]any) {
+func (c *Collector) observeJSONBlocks(root map[string]any) {
 	for blockType, value := range root {
 		block, ok := configBlocks[blockType]
 		if !ok {

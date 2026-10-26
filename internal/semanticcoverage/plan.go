@@ -7,9 +7,9 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 )
 
-// Plan records the planned operation of each resource change and action
+// ObservePlan records the planned operation of each resource change and action
 // invocation in plan. A nil plan means the saved plan could not be read.
-func (c *Collector) Plan(plan *tfjson.Plan) {
+func (c *Collector) ObservePlan(plan *tfjson.Plan) {
 	if c == nil {
 		return
 	}
@@ -39,7 +39,7 @@ func (c *Collector) Plan(plan *tfjson.Plan) {
 		}
 		f := c.feature(kind, rc.Type, rc.Address)
 		c.setProvider(kind, rc.Type, rc.Address, rc.ProviderName)
-		f.planned.add(action(rc.Change.Actions))
+		f.planned.add(operationForActions(rc.Change.Actions))
 	}
 	for _, invocation := range plan.ActionInvocations {
 		if invocation == nil {
@@ -63,24 +63,26 @@ func (c *Collector) PreApplyPlan(plan *tfjson.Plan) {
 	if !c.active {
 		return
 	}
-	c.lastPlan = nil
-	c.actions = nil
+	c.pendingApplyChanges = nil
+	c.pendingApplyActions = nil
 	if plan == nil {
 		c.warnings.add(WarningPlanUnavailable)
 		return
 	}
 	for _, rc := range plan.ResourceChanges {
 		if rc != nil && rc.Change != nil && rc.Mode == tfjson.ManagedResourceMode {
-			c.lastPlan = append(c.lastPlan, Feature{Kind: KindResource, Name: rc.Type, Provider: rc.ProviderName, Address: safeAddress(rc.Address), Planned: []string{action(rc.Change.Actions)}})
+			c.pendingApplyChanges = append(c.pendingApplyChanges, Feature{Kind: KindResource, Name: rc.Type, Provider: rc.ProviderName, Address: safeAddress(rc.Address), Planned: []string{operationForActions(rc.Change.Actions)}})
 		}
 	}
 	for _, invocation := range plan.ActionInvocations {
 		if invocation != nil {
-			c.actions = append(c.actions, Feature{Kind: KindAction, Name: invocation.Type, Provider: invocation.ProviderName, Address: safeAddress(invocation.Address)})
+			c.pendingApplyActions = append(c.pendingApplyActions, Feature{Kind: KindAction, Name: invocation.Type, Provider: invocation.ProviderName, Address: safeAddress(invocation.Address)})
 		}
 	}
 }
 
+// ImportPlan records each resource change in plan that imports a resource as
+// a planned import.
 func (c *Collector) ImportPlan(plan *tfjson.Plan) {
 	if c == nil || plan == nil {
 		return
@@ -105,7 +107,7 @@ var modeKinds = map[tfjson.ResourceMode]Kind{
 	tfjson.DataResourceMode:    KindDataSource,
 }
 
-func action(actions tfjson.Actions) string {
+func operationForActions(actions tfjson.Actions) string {
 	if actions.Create() {
 		return "create"
 	}

@@ -14,7 +14,7 @@ func TestStateRequiresExplicitPostOperationObservation(t *testing.T) {
 
 	c := &Collector{}
 	c.BeginStep(1)
-	c.Plan(&tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: "example_item.test", Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionCreate}, After: map[string]any{"id": "secret"}}}}})
+	c.ObservePlan(&tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: "example_item.test", Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionCreate}, After: map[string]any{"id": "secret"}}}}})
 	f := c.feature(KindResource, "example_item", "example_item.test")
 	if len(f.known) != 0 {
 		t.Fatalf("plan claimed post-operation state: %v", f.known)

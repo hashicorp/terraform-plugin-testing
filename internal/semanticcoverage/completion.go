@@ -9,7 +9,9 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 )
 
-func (c *Collector) OperationForAddress(address, operation string) {
+// ImportCompleted marks the resource at address as imported by a successful
+// import command.
+func (c *Collector) ImportCompleted(address string) {
 	if c == nil {
 		return
 	}
@@ -19,20 +21,20 @@ func (c *Collector) OperationForAddress(address, operation string) {
 	address = safeAddress(address)
 	for _, f := range c.features {
 		if f.address == address && f.kind == KindResource {
-			f.completed.add(operation)
+			f.completed.add("import")
 			return
 		}
 	}
 	// Import steps without a config still identify the resource by address.
-	parts := strings.Split(address, ".")
-	if len(parts) > 0 {
-		f := c.feature(KindResource, parts[0], address)
-		if operation == "import" {
-			f.completed.add(operation)
-		}
-	}
+	resourceType, _, _ := strings.Cut(address, ".")
+	c.feature(KindResource, resourceType, address).completed.add("import")
 }
 
+// ApplyCompleted records a successful apply of the plan selected by
+// PreApplyPlan: each planned change is marked "apply" plus its operation, and
+// each action invocation "invoke". After a destroy apply, only deletions are
+// marked, as "destroy" and "delete". Every provider in the step is marked
+// "step".
 func (c *Collector) ApplyCompleted(destroy bool) {
 	if c == nil {
 		return
@@ -40,7 +42,7 @@ func (c *Collector) ApplyCompleted(destroy bool) {
 	if !c.active {
 		return
 	}
-	for _, p := range c.lastPlan {
+	for _, p := range c.pendingApplyChanges {
 		f := c.feature(p.Kind, p.Name, p.Address)
 		if f.provider == "" {
 			f.provider = p.Provider
@@ -61,12 +63,17 @@ func (c *Collector) ApplyCompleted(destroy bool) {
 			f.completed.add(operation)
 		}
 	}
-	for _, p := range c.actions {
+	for _, p := range c.pendingApplyActions {
 		f := c.feature(p.Kind, p.Name, p.Address)
 		if f.provider == "" {
 			f.provider = p.Provider
 		}
 		f.completed.add("invoke")
+	}
+	for _, f := range c.features {
+		if f.kind == KindProvider {
+			f.completed.add("step")
+		}
 	}
 }
 
@@ -106,6 +113,8 @@ func (c *Collector) QueryResults(messages []tfjson.LogMsg) {
 	}
 }
 
+// RefreshCompleted marks every resource in a refresh step that passed its
+// checks as refreshed.
 func (c *Collector) RefreshCompleted() {
 	if c == nil {
 		return
@@ -120,6 +129,8 @@ func (c *Collector) RefreshCompleted() {
 	}
 }
 
+// StateStoreCompleted marks every state store in a state store step that
+// passed its checks as used.
 func (c *Collector) StateStoreCompleted() {
 	if c == nil {
 		return
@@ -130,20 +141,6 @@ func (c *Collector) StateStoreCompleted() {
 	for _, f := range c.features {
 		if f.kind == KindStateStore {
 			f.completed.add("state_store")
-		}
-	}
-}
-
-func (c *Collector) ProviderStepCompleted() {
-	if c == nil {
-		return
-	}
-	if !c.active {
-		return
-	}
-	for _, f := range c.features {
-		if f.kind == KindProvider {
-			f.completed.add("step")
 		}
 	}
 }
