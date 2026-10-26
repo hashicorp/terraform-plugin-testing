@@ -23,16 +23,16 @@ func (c *Collector) module(m *tfjson.StateModule) {
 		if r == nil {
 			continue
 		}
-		kind := "resource"
-		if r.Mode == tfjson.DataResourceMode {
-			kind = "data_source"
+		kind, ok := modeKinds[r.Mode]
+		if !ok {
+			continue
 		}
 		f := c.feature(kind, r.Type, r.Address)
 		c.setProvider(kind, r.Type, r.Address, r.ProviderName)
 		states(f, r.AttributeValues)
 		if r.IdentitySchemaVersion != nil && len(r.IdentityValues) > 0 {
-			identity := c.feature("identity", r.Type, r.Address)
-			identity.Provider = r.ProviderName
+			identity := c.feature(KindIdentity, r.Type, r.Address)
+			identity.provider = r.ProviderName
 			states(identity, r.IdentityValues)
 		}
 	}
@@ -41,14 +41,14 @@ func (c *Collector) module(m *tfjson.StateModule) {
 	}
 }
 
-func states(f *Feature, values map[string]any) {
+func states(f *featureEvidence, values map[string]any) {
 	// Only top-level keys are unambiguously schema names. Nested map keys
 	// could be sensitive user-provided values, so do not persist them.
 	for name, value := range values {
 		if value == nil {
-			add(&f.Null, name)
+			f.null.add(name)
 		} else {
-			add(&f.Known, name)
+			f.known.add(name)
 		}
 	}
 }

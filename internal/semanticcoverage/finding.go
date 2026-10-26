@@ -18,7 +18,7 @@ const EnvDirectory = "TF_ACC_SEMANTIC_COVERAGE_DIR"
 const FindingVersion = 1
 
 type Feature struct {
-	Kind      string   `json:"kind"`
+	Kind      Kind     `json:"kind"`
 	Name      string   `json:"name"`
 	Provider  string   `json:"provider,omitempty"`
 	Address   string   `json:"address,omitempty"`
@@ -27,6 +27,31 @@ type Feature struct {
 	Null      []string `json:"null,omitempty"`
 	Planned   []string `json:"planned,omitempty"`
 	Completed []string `json:"completed,omitempty"`
+}
+
+// Kind is the type of a provider feature, such as a resource or a data
+// source.
+type Kind string
+
+const (
+	KindProvider          Kind = "provider"
+	KindResource          Kind = "resource"
+	KindDataSource        Kind = "data_source"
+	KindEphemeralResource Kind = "ephemeral_resource"
+	KindListResource      Kind = "list_resource"
+	KindAction            Kind = "action"
+	KindStateStore        Kind = "state_store"
+	KindFunction          Kind = "function"
+	KindIdentity          Kind = "identity"
+)
+
+// Valid reports whether k is one of the known kinds.
+func (k Kind) Valid() bool {
+	switch k {
+	case KindProvider, KindResource, KindDataSource, KindEphemeralResource, KindListResource, KindAction, KindStateStore, KindFunction, KindIdentity:
+		return true
+	}
+	return false
 }
 
 // Outcome is the final status of a test step, as written to a Finding.

@@ -20,17 +20,17 @@ func TestCompletedLifecycleUsesAppliedPlan(t *testing.T) {
 	c.PreApplyPlan(create)
 	c.Plan(noOp)
 	c.ApplyCompleted(false)
-	f := c.feature("resource", "example_item", "example_item.test")
-	if !contains(f.Completed, "create") || !contains(f.Completed, "apply") || contains(f.Completed, "no_op") {
-		t.Fatalf("completed actions: %v", f.Completed)
+	f := c.feature(KindResource, "example_item", "example_item.test")
+	if !contains(f.completed, "create") || !contains(f.completed, "apply") || contains(f.completed, "no_op") {
+		t.Fatalf("completed actions: %v", f.completed)
 	}
 	c.BeginStep(2)
 	c.Plan(noOp)
 	c.PreApplyPlan(noOp)
 	c.ApplyCompleted(true)
-	f = c.feature("resource", "example_item", "example_item.test")
-	if len(f.Completed) != 0 {
-		t.Fatalf("no-op destroy step claimed completion: %v", f.Completed)
+	f = c.feature(KindResource, "example_item", "example_item.test")
+	if len(f.completed) != 0 {
+		t.Fatalf("no-op destroy step claimed completion: %v", f.completed)
 	}
 }
 
@@ -43,8 +43,8 @@ func TestNoOpApplyIsStillAnApply(t *testing.T) {
 	c.Plan(noOp)
 	c.PreApplyPlan(noOp)
 	c.ApplyCompleted(false)
-	f := c.feature("resource", "example_item", "example_item.test")
-	if !contains(f.Completed, "apply") || !contains(f.Completed, "no_op") {
-		t.Fatalf("completed actions: %v", f.Completed)
+	f := c.feature(KindResource, "example_item", "example_item.test")
+	if !contains(f.completed, "apply") || !contains(f.completed, "no_op") {
+		t.Fatalf("completed actions: %v", f.completed)
 	}
 }

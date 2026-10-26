@@ -20,7 +20,6 @@ they do or what they cover:
 | `states(f, values)` | It records known and null attribute names. | `recordAttributeStatus` |
 | `module(m)` | It walks a state module recursively. | `observeStateModule` |
 | `blocks(blocks)` | It walks HCL blocks and records features and inputs. | `observeHCLBlocks` |
-| `add(xs, v)` | It is a set-insert into a slice. | Replace it with a set type, see `TODO_COLLECTOR_SIMPLIFY.md` item 2. Otherwise rename it to `appendUnique`. |
 | `action(actions)` | It maps tfjson actions to an operation string. | `operationForActions` |
 
 ## Why this is a problem

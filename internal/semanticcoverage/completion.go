@@ -18,17 +18,17 @@ func (c *Collector) OperationForAddress(address, operation string) {
 	}
 	address = safeAddress(address)
 	for _, f := range c.features {
-		if f.Address == address && f.Kind == "resource" {
-			add(&f.Completed, operation)
+		if f.address == address && f.kind == KindResource {
+			f.completed.add(operation)
 			return
 		}
 	}
 	// Import steps without a config still identify the resource by address.
 	parts := strings.Split(address, ".")
 	if len(parts) > 0 {
-		f := c.feature("resource", parts[0], address)
+		f := c.feature(KindResource, parts[0], address)
 		if operation == "import" {
-			add(&f.Completed, operation)
+			f.completed.add(operation)
 		}
 	}
 }
@@ -42,11 +42,11 @@ func (c *Collector) ApplyCompleted(destroy bool) {
 	}
 	for _, p := range c.lastPlan {
 		f := c.feature(p.Kind, p.Name, p.Address)
-		if f.Provider == "" {
-			f.Provider = p.Provider
+		if f.provider == "" {
+			f.provider = p.Provider
 		}
 		if !destroy {
-			add(&f.Completed, "apply")
+			f.completed.add("apply")
 		}
 		for _, operation := range p.Planned {
 			if operation == "unknown" {
@@ -56,17 +56,17 @@ func (c *Collector) ApplyCompleted(destroy bool) {
 				if operation != "delete" {
 					continue
 				}
-				add(&f.Completed, "destroy")
+				f.completed.add("destroy")
 			}
-			add(&f.Completed, operation)
+			f.completed.add(operation)
 		}
 	}
 	for _, p := range c.actions {
 		f := c.feature(p.Kind, p.Name, p.Address)
-		if f.Provider == "" {
-			f.Provider = p.Provider
+		if f.provider == "" {
+			f.provider = p.Provider
 		}
-		add(&f.Completed, "invoke")
+		f.completed.add("invoke")
 	}
 }
 
@@ -79,8 +79,8 @@ func (c *Collector) QueryCompleted() {
 		return
 	}
 	for _, f := range c.features {
-		if f.Kind == "list_resource" {
-			add(&f.Completed, "query")
+		if f.kind == KindListResource {
+			f.completed.add("query")
 		}
 	}
 }
@@ -98,8 +98,8 @@ func (c *Collector) QueryResults(messages []tfjson.LogMsg) {
 		switch m := message.(type) {
 		case tfjson.ListResourceFoundMessage:
 			for _, f := range c.features {
-				if f.Kind == "list_resource" && f.Name == m.ListResourceFound.ResourceType {
-					add(&f.Completed, "result")
+				if f.kind == KindListResource && f.name == m.ListResourceFound.ResourceType {
+					f.completed.add("result")
 				}
 			}
 		}
@@ -114,8 +114,8 @@ func (c *Collector) RefreshCompleted() {
 		return
 	}
 	for _, f := range c.features {
-		if f.Kind == "resource" {
-			add(&f.Completed, "refresh")
+		if f.kind == KindResource {
+			f.completed.add("refresh")
 		}
 	}
 }
@@ -128,8 +128,8 @@ func (c *Collector) StateStoreCompleted() {
 		return
 	}
 	for _, f := range c.features {
-		if f.Kind == "state_store" {
-			add(&f.Completed, "state_store")
+		if f.kind == KindStateStore {
+			f.completed.add("state_store")
 		}
 	}
 }
@@ -142,8 +142,8 @@ func (c *Collector) ProviderStepCompleted() {
 		return
 	}
 	for _, f := range c.features {
-		if f.Kind == "provider" {
-			add(&f.Completed, "step")
+		if f.kind == KindProvider {
+			f.completed.add("step")
 		}
 	}
 }

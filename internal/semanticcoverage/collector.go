@@ -6,6 +6,7 @@ package semanticcoverage
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -31,8 +32,8 @@ type Collector struct {
 	packageName string
 	test        string
 	step        int
-	features    map[string]*Feature
-	warnings    []Warning
+	features    map[string]*featureEvidence
+	warnings    set[Warning]
 	active      bool
 	// lastPlan holds the resource changes of the plan that PreApplyPlan
 	// selected. ApplyCompleted marks them completed.
@@ -66,8 +67,8 @@ func (c *Collector) BeginStep(stepNumber int) {
 		return
 	}
 	c.step, c.active = stepNumber, true
-	c.features = make(map[string]*Feature)
-	c.warnings = nil
+	c.features = make(map[string]*featureEvidence)
+	c.warnings = make(set[Warning])
 	c.lastPlan = nil
 	c.actions = nil
 	c.expectedError = false
@@ -87,18 +88,14 @@ func (c *Collector) FinishStep(outcome Outcome) error {
 	if c.expectedError && outcome == OutcomeSuccess {
 		outcome = OutcomeExpectedError
 	}
-	finding := Finding{Version: FindingVersion, Package: c.packageName, Test: c.test, Step: c.step, Outcome: outcome, Warnings: c.warnings}
+	finding := Finding{Version: FindingVersion, Package: c.packageName, Test: c.test, Step: c.step, Outcome: outcome, Warnings: c.warnings.sorted()}
 	for _, f := range c.features {
-		for _, xs := range []*[]string{&f.Inputs, &f.Known, &f.Null, &f.Planned, &f.Completed} {
-			sort.Strings(*xs)
-		}
-		finding.Features = append(finding.Features, *f)
+		finding.Features = append(finding.Features, f.finding())
 	}
 	sort.Slice(finding.Features, func(i, j int) bool {
 		a, b := finding.Features[i], finding.Features[j]
-		return a.Kind+a.Name+a.Address < b.Kind+b.Name+b.Address
+		return string(a.Kind)+a.Name+a.Address < string(b.Kind)+b.Name+b.Address
 	})
-	slices.Sort(finding.Warnings)
 	if err := os.MkdirAll(c.directory, 0700); err != nil {
 		return fmt.Errorf("coverage directory: %w", err)
 	}
@@ -133,33 +130,72 @@ func (c *Collector) Ready() error {
 	return nil
 }
 
-func (c *Collector) feature(kind, name, address string) *Feature {
+// featureEvidence is the evidence for one feature in the active step. It is
+// converted to a Feature when the step is written.
+type featureEvidence struct {
+	kind      Kind
+	name      string
+	provider  string
+	address   string
+	inputs    set[string]
+	known     set[string]
+	null      set[string]
+	planned   set[string]
+	completed set[string]
+}
+
+func (f *featureEvidence) finding() Feature {
+	return Feature{
+		Kind:      f.kind,
+		Name:      f.name,
+		Provider:  f.provider,
+		Address:   f.address,
+		Inputs:    f.inputs.sorted(),
+		Known:     f.known.sorted(),
+		Null:      f.null.sorted(),
+		Planned:   f.planned.sorted(),
+		Completed: f.completed.sorted(),
+	}
+}
+
+func (c *Collector) feature(kind Kind, name, address string) *featureEvidence {
 	address = safeAddress(address)
-	key := kind + "\x00" + name + "\x00" + address
+	key := string(kind) + "\x00" + name + "\x00" + address
 	f := c.features[key]
 	if f == nil {
-		f = &Feature{Kind: kind, Name: name, Address: address}
+		f = &featureEvidence{
+			kind:      kind,
+			name:      name,
+			address:   address,
+			inputs:    make(set[string]),
+			known:     make(set[string]),
+			null:      make(set[string]),
+			planned:   make(set[string]),
+			completed: make(set[string]),
+		}
 		c.features[key] = f
 	}
 	return f
 }
 
-func (c *Collector) setProvider(kind, name, address, provider string) {
+func (c *Collector) setProvider(kind Kind, name, address, provider string) {
 	if provider != "" {
-		c.feature(kind, name, address).Provider = provider
+		c.feature(kind, name, address).provider = provider
 	}
 }
 
-func add[T ~string](xs *[]T, value T) {
-	if value == "" {
-		return
+// set is a set of strings. The empty string is never a member.
+type set[T ~string] map[T]struct{}
+
+func (s set[T]) add(value T) {
+	if value != "" {
+		s[value] = struct{}{}
 	}
-	for _, x := range *xs {
-		if x == value {
-			return
-		}
-	}
-	*xs = append(*xs, value)
+}
+
+// sorted returns the members of s in order, or nil if s is empty.
+func (s set[T]) sorted() []T {
+	return slices.Sorted(maps.Keys(s))
 }
 
 // Warning records that evidence of the given type may be incomplete for the
@@ -169,7 +205,7 @@ func (c *Collector) Warning(code Warning) {
 		return
 	}
 	if c.active {
-		add(&c.warnings, code)
+		c.warnings.add(code)
 	}
 }
 

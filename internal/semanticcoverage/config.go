@@ -41,16 +41,17 @@ func (c *Collector) Config(dir string) {
 	}
 }
 
-func (c *Collector) QueryConfig(dir string) {
+// QueryConfig reads the query configuration file at path.
+func (c *Collector) QueryConfig(path string) {
 	if c == nil {
 		return
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "terraform_plugin_test.tfquery.hcl"))
+	data, err := os.ReadFile(path)
 	if err != nil {
 		c.Warning(WarningConfigUnavailable)
 		return
 	}
-	c.Parse("terraform_plugin_test.tfquery.hcl", data)
+	c.Parse(filepath.Base(path), data)
 }
 
 func (c *Collector) Parse(name string, data []byte) {
@@ -85,45 +86,60 @@ func (c *Collector) Parse(name string, data []byte) {
 	}
 }
 
+// configBlock describes a configuration block type that declares a feature.
+type configBlock struct {
+	kind Kind
+	// addressed blocks have two labels, the type and the name, and an
+	// address of addressPrefix + type + "." + name. Other blocks have one
+	// label, the name, and no address.
+	addressed     bool
+	addressPrefix string
+	// nestedConfig blocks keep their schema attributes in a nested "config"
+	// block.
+	nestedConfig bool
+}
+
+// configBlocks maps configuration block types to the features they declare.
+var configBlocks = map[string]configBlock{
+	"provider":    {kind: KindProvider},
+	"state_store": {kind: KindStateStore, nestedConfig: true},
+	"resource":    {kind: KindResource, addressed: true},
+	"data":        {kind: KindDataSource, addressed: true, addressPrefix: "data."},
+	"ephemeral":   {kind: KindEphemeralResource, addressed: true, addressPrefix: "ephemeral."},
+	"list":        {kind: KindListResource, addressed: true, addressPrefix: "list.", nestedConfig: true},
+	"action":      {kind: KindAction, addressed: true, addressPrefix: "action.", nestedConfig: true},
+}
+
+// blockFeature returns the feature that a block with the given labels
+// declares, or nil if the labels are incomplete.
+func (c *Collector) blockFeature(block configBlock, labels ...string) *featureEvidence {
+	if !block.addressed {
+		if len(labels) < 1 {
+			return nil
+		}
+		return c.feature(block.kind, labels[0], "")
+	}
+	if len(labels) < 2 {
+		return nil
+	}
+	return c.feature(block.kind, labels[0], block.addressPrefix+labels[0]+"."+labels[1])
+}
+
 func (c *Collector) blocks(blocks []*hclsyntax.Block) {
 	for _, b := range blocks {
-		kind, name, address := "", "", ""
-		switch b.Type {
-		case "provider":
-			if len(b.Labels) > 0 && !strings.HasSuffix(b.DefRange().Filename, ".tfquery.hcl") {
-				kind, name = "provider", b.Labels[0]
-			}
-		case "resource", "data", "ephemeral", "action", "list":
-			if len(b.Labels) > 1 {
-				kind, name, address = b.Type, b.Labels[0], b.Labels[0]+"."+b.Labels[1]
-				switch kind {
-				case "data":
-					kind, address = "data_source", "data."+address
-				case "list":
-					kind, address = "list_resource", "list."+address
-				case "ephemeral":
-					kind, address = "ephemeral_resource", "ephemeral."+address
-				case "action":
-					address = "action." + address
-				}
-			}
-		case "state_store":
-			if len(b.Labels) > 0 {
-				kind, name = "state_store", b.Labels[0]
-			}
-		}
-		if kind != "" {
-			f := c.feature(kind, name, address)
-			switch kind {
-			case "action", "list_resource", "state_store":
-				// Schema attributes live in a nested config block.
-				for _, nested := range b.Body.Blocks {
-					if nested.Type == "config" {
-						walkInputs(f, nested.Body, "")
+		block, ok := configBlocks[b.Type]
+		// Providers in a query file configure the query, not a test step.
+		if ok && !(block.kind == KindProvider && strings.HasSuffix(b.DefRange().Filename, ".tfquery.hcl")) {
+			if f := c.blockFeature(block, b.Labels...); f != nil {
+				if block.nestedConfig {
+					for _, nested := range b.Body.Blocks {
+						if nested.Type == "config" {
+							walkInputs(f, nested.Body, "")
+						}
 					}
+				} else {
+					walkInputs(f, b.Body, "")
 				}
-			default:
-				walkInputs(f, b.Body, "")
 			}
 		}
 		c.functions(b.Body)
@@ -131,14 +147,13 @@ func (c *Collector) blocks(blocks []*hclsyntax.Block) {
 	}
 }
 
-func walkInputs(f *Feature, body *hclsyntax.Body, prefix string) {
+func walkInputs(f *featureEvidence, body *hclsyntax.Body, prefix string) {
 	for name := range body.Attributes {
-		path := prefix + name
-		add(&f.Inputs, path)
+		f.inputs.add(prefix + name)
 	}
 	for _, b := range body.Blocks {
 		path := prefix + b.Type
-		add(&f.Inputs, path)
+		f.inputs.add(path)
 		walkInputs(f, b.Body, path+".")
 	}
 }
@@ -149,68 +164,46 @@ func (c *Collector) functions(body *hclsyntax.Body) {
 			if call, ok := node.(*hclsyntax.FunctionCallExpr); ok && strings.HasPrefix(call.Name, "provider::") {
 				parts := strings.Split(call.Name, "::")
 				if len(parts) == 3 {
-					c.feature("function", parts[2], "").Provider = parts[1]
+					c.feature(KindFunction, parts[2], "").provider = parts[1]
 				}
 			}
 			return nil
 		})
 		if diags.HasErrors() {
-			add(&c.warnings, WarningConfigUnavailable)
+			c.warnings.add(WarningConfigUnavailable)
 		}
 	}
 }
 
 func (c *Collector) jsonBlocks(root map[string]any) {
-	for rawKind, value := range root {
-		kind := rawKind
-		if kind == "data" {
-			kind = "data_source"
+	for blockType, value := range root {
+		block, ok := configBlocks[blockType]
+		if !ok {
+			continue
 		}
-		if kind == "list" {
-			kind = "list_resource"
-		}
-		if kind == "ephemeral" {
-			kind = "ephemeral_resource"
-		}
-		if kind == "resource" || kind == "data_source" || kind == "ephemeral_resource" || kind == "action" || kind == "list_resource" || kind == "provider" || kind == "state_store" {
-			for name, raw := range asMap(value) {
-				if kind == "provider" {
-					f := c.feature(kind, name, "")
-					jsonInputs(f, asMap(raw))
-					continue
-				}
-				if kind == "state_store" {
-					jsonInputs(c.feature(kind, name, ""), asMap(asMap(raw)["config"]))
-					continue
-				}
-				for label, cfg := range asMap(raw) {
-					address := name + "." + label
-					if kind == "data_source" {
-						address = "data." + address
-					}
-					if kind == "ephemeral_resource" {
-						address = "ephemeral." + address
-					}
-					if kind == "action" || kind == "list_resource" {
-						cfg = asMap(cfg)["config"]
-					}
-					if kind == "action" {
-						address = "action." + address
-					}
-					if kind == "list_resource" {
-						address = "list." + name + "." + label
-					}
-					jsonInputs(c.feature(kind, name, address), asMap(cfg))
-				}
+		for name, raw := range asMap(value) {
+			if !block.addressed {
+				c.jsonFeature(block, raw, name)
+				continue
+			}
+			for label, cfg := range asMap(raw) {
+				c.jsonFeature(block, cfg, name, label)
 			}
 		}
 	}
 }
 
-func asMap(value any) map[string]any { m, _ := value.(map[string]any); return m }
-
-func jsonInputs(f *Feature, object map[string]any) {
-	for name := range object {
-		add(&f.Inputs, name)
+// jsonFeature records the feature that a Terraform JSON block with the given
+// labels and body declares.
+func (c *Collector) jsonFeature(block configBlock, body any, labels ...string) {
+	f := c.blockFeature(block, labels...)
+	attributes := asMap(body)
+	if block.nestedConfig {
+		attributes = asMap(attributes["config"])
+	}
+	for name := range attributes {
+		f.inputs.add(name)
 	}
 }
+
+func asMap(value any) map[string]any { m, _ := value.(map[string]any); return m }

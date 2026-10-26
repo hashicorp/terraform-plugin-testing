@@ -5,6 +5,7 @@ package resource
 
 import (
 	"context"
+	"path/filepath"
 
 	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
@@ -101,7 +102,7 @@ func (s stepCoverage) setQuery(ctx context.Context, wd *plugintest.WorkingDir, c
 	if err := wd.SetQuery(ctx, cfg, vars); err != nil {
 		return err
 	}
-	s.QueryConfig(wd.BaseDir())
+	s.QueryConfig(filepath.Join(wd.BaseDir(), plugintest.QueryFileName))
 	return nil
 }
 

@@ -36,7 +36,7 @@ type attributeResult struct {
 }
 type target struct {
 	Provider   string                `json:"provider"`
-	Kind       string                `json:"kind"`
+	Kind       semanticcoverage.Kind `json:"kind"`
 	Name       string                `json:"name"`
 	Exercised  bool                  `json:"exercised"`
 	Evidence   []evidence            `json:"evidence,omitempty"`
@@ -151,6 +151,11 @@ func readFindings(dir string) ([]semanticcoverage.Finding, error) {
 				return fmt.Errorf("%s: invalid warning %q", path, warning)
 			}
 		}
+		for _, feature := range item.Features {
+			if !feature.Kind.Valid() {
+				return fmt.Errorf("%s: invalid feature kind %q", path, feature.Kind)
+			}
+		}
 		items = append(items, item)
 		return nil
 	})
@@ -171,34 +176,34 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 	for _, address := range sortedKeys(doc.Schemas) {
 		p := doc.Schemas[address]
 		if p.ConfigSchema != nil {
-			result.Targets = append(result.Targets, newTarget(address, "provider", "", p.ConfigSchema.Block))
+			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindProvider, "", p.ConfigSchema.Block))
 		}
 		for _, name := range sortedKeys(p.ResourceSchemas) {
-			result.Targets = append(result.Targets, newTarget(address, "resource", name, p.ResourceSchemas[name].Block))
+			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindResource, name, p.ResourceSchemas[name].Block))
 		}
 		for _, name := range sortedKeys(p.DataSourceSchemas) {
-			result.Targets = append(result.Targets, newTarget(address, "data_source", name, p.DataSourceSchemas[name].Block))
+			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindDataSource, name, p.DataSourceSchemas[name].Block))
 		}
 		for _, name := range sortedKeys(p.EphemeralResourceSchemas) {
-			result.Targets = append(result.Targets, newTarget(address, "ephemeral_resource", name, p.EphemeralResourceSchemas[name].Block))
+			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindEphemeralResource, name, p.EphemeralResourceSchemas[name].Block))
 		}
 		for _, name := range sortedKeys(p.ListResourceSchemas) {
-			result.Targets = append(result.Targets, newTarget(address, "list_resource", name, p.ListResourceSchemas[name].Block))
+			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindListResource, name, p.ListResourceSchemas[name].Block))
 		}
 		for _, name := range sortedKeys(p.ActionSchemas) {
-			result.Targets = append(result.Targets, newTarget(address, "action", name, p.ActionSchemas[name].Block))
+			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindAction, name, p.ActionSchemas[name].Block))
 		}
 		for _, name := range sortedKeys(p.StateStoreSchemas) {
-			result.Targets = append(result.Targets, newTarget(address, "state_store", name, p.StateStoreSchemas[name].Block))
+			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindStateStore, name, p.StateStoreSchemas[name].Block))
 		}
 		// Identity attributes are only observed in state, and the schema
 		// doesn't say which of them are computed, so they are left out of
 		// the attribute totals.
 		for _, name := range sortedKeys(p.ResourceIdentitySchemas) {
-			result.Targets = append(result.Targets, newTarget(address, "identity", name, nil))
+			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindIdentity, name, nil))
 		}
 		for _, name := range sortedKeys(p.Functions) {
-			result.Targets = append(result.Targets, newTarget(address, "function", name, nil))
+			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindFunction, name, nil))
 		}
 	}
 	for _, item := range items {
@@ -217,14 +222,14 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 		for _, f := range item.Features {
 			var matches []*target
 			for _, t := range result.Targets {
-				providerMatch := t.Kind == "provider" && f.Name != "" && (t.Provider == f.Name || strings.HasSuffix(t.Provider, "/"+f.Name))
+				providerMatch := t.Kind == semanticcoverage.KindProvider && f.Name != "" && (t.Provider == f.Name || strings.HasSuffix(t.Provider, "/"+f.Name))
 				providerSourceMatch := f.Provider == "" || t.Provider == f.Provider || !strings.Contains(f.Provider, "/") && strings.HasSuffix(t.Provider, "/"+f.Provider)
 				if t.Kind == f.Kind && (t.Name == f.Name || providerMatch) && providerSourceMatch {
 					matches = append(matches, t)
 				}
 			}
 			if len(matches) != 1 {
-				if f.Kind != "test_step" && f.Name != "terraform_data" && len(matches) > 1 {
+				if f.Name != "terraform_data" && len(matches) > 1 {
 					result.Warnings = append(result.Warnings, fmt.Sprintf("%s step %d: %s %s has %d schema matches", item.Test, item.Step, f.Kind, f.Name, len(matches)))
 				}
 				continue
@@ -234,7 +239,7 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 				continue
 			}
 			ref := evidence{Package: item.Package, Test: item.Test, Step: item.Step, Address: f.Address, Kind: "configured"}
-			if len(f.Inputs) > 0 || len(f.Known) > 0 || len(f.Planned) > 0 || len(f.Completed) > 0 || f.Kind == "function" || f.Kind == "identity" {
+			if len(f.Inputs) > 0 || len(f.Known) > 0 || len(f.Planned) > 0 || len(f.Completed) > 0 || f.Kind == semanticcoverage.KindFunction || f.Kind == semanticcoverage.KindIdentity {
 				t.Evidence = append(t.Evidence, ref)
 				if item.Outcome.Completed() {
 					t.Exercised = true
@@ -279,7 +284,7 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 		}
 	}
 	for _, t := range result.Targets {
-		if t.Kind != "identity" {
+		if t.Kind != semanticcoverage.KindIdentity {
 			result.Entities.Total++
 			if t.Exercised {
 				result.Entities.Covered++
@@ -301,7 +306,7 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 	}
 	sort.Slice(result.Targets, func(i, j int) bool {
 		a, b := result.Targets[i], result.Targets[j]
-		return a.Provider+a.Kind+a.Name < b.Provider+b.Kind+b.Name
+		return a.Provider+string(a.Kind)+a.Name < b.Provider+string(b.Kind)+b.Name
 	})
 	sort.Strings(result.Warnings)
 	return result
@@ -317,7 +322,7 @@ func contains(xs []string, x string) bool {
 
 // newTarget returns a report target with the top-level attributes of b, sorted
 // by path. A nil b gives a target without attributes.
-func newTarget(provider, kind, name string, b *tfjson.SchemaBlock) *target {
+func newTarget(provider string, kind semanticcoverage.Kind, name string, b *tfjson.SchemaBlock) *target {
 	t := &target{Provider: provider, Kind: kind, Name: name, Planned: make(map[string][]evidence), Completed: make(map[string][]evidence)}
 	flatten(&t.Attributes, "", b)
 	sort.Slice(t.Attributes, func(i, j int) bool { return t.Attributes[i].Path < t.Attributes[j].Path })

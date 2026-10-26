@@ -17,13 +17,13 @@ func (c *Collector) Plan(plan *tfjson.Plan) {
 		return
 	}
 	if plan == nil {
-		add(&c.warnings, WarningPlanUnavailable)
+		c.warnings.add(WarningPlanUnavailable)
 		return
 	}
 	if plan.Config != nil {
 		for _, provider := range plan.Config.ProviderConfigs {
 			if provider != nil && provider.FullName != "" {
-				c.feature("provider", provider.FullName, "")
+				c.feature(KindProvider, provider.FullName, "")
 			}
 		}
 	}
@@ -33,23 +33,21 @@ func (c *Collector) Plan(plan *tfjson.Plan) {
 		if rc == nil || rc.Change == nil {
 			continue
 		}
-		kind := "resource"
-		if rc.Mode == tfjson.DataResourceMode {
-			kind = "data_source"
-		} else if rc.Mode != tfjson.ManagedResourceMode {
+		kind, ok := modeKinds[rc.Mode]
+		if !ok {
 			continue
 		}
 		f := c.feature(kind, rc.Type, rc.Address)
 		c.setProvider(kind, rc.Type, rc.Address, rc.ProviderName)
-		add(&f.Planned, action(rc.Change.Actions))
+		f.planned.add(action(rc.Change.Actions))
 	}
 	for _, invocation := range plan.ActionInvocations {
 		if invocation == nil {
 			continue
 		}
-		f := c.feature("action", invocation.Type, invocation.Address)
-		c.setProvider("action", invocation.Type, invocation.Address, invocation.ProviderName)
-		add(&f.Planned, "invoke")
+		f := c.feature(KindAction, invocation.Type, invocation.Address)
+		c.setProvider(KindAction, invocation.Type, invocation.Address, invocation.ProviderName)
+		f.planned.add("invoke")
 	}
 	// PlannedValues is a plan, not the state produced by a completed apply.
 	// Computed coverage is taken from post-apply or refresh state instead.
@@ -68,17 +66,17 @@ func (c *Collector) PreApplyPlan(plan *tfjson.Plan) {
 	c.lastPlan = nil
 	c.actions = nil
 	if plan == nil {
-		add(&c.warnings, WarningPlanUnavailable)
+		c.warnings.add(WarningPlanUnavailable)
 		return
 	}
 	for _, rc := range plan.ResourceChanges {
 		if rc != nil && rc.Change != nil && rc.Mode == tfjson.ManagedResourceMode {
-			c.lastPlan = append(c.lastPlan, Feature{Kind: "resource", Name: rc.Type, Provider: rc.ProviderName, Address: safeAddress(rc.Address), Planned: []string{action(rc.Change.Actions)}})
+			c.lastPlan = append(c.lastPlan, Feature{Kind: KindResource, Name: rc.Type, Provider: rc.ProviderName, Address: safeAddress(rc.Address), Planned: []string{action(rc.Change.Actions)}})
 		}
 	}
 	for _, invocation := range plan.ActionInvocations {
 		if invocation != nil {
-			c.actions = append(c.actions, Feature{Kind: "action", Name: invocation.Type, Provider: invocation.ProviderName, Address: safeAddress(invocation.Address)})
+			c.actions = append(c.actions, Feature{Kind: KindAction, Name: invocation.Type, Provider: invocation.ProviderName, Address: safeAddress(invocation.Address)})
 		}
 	}
 }
@@ -92,13 +90,19 @@ func (c *Collector) ImportPlan(plan *tfjson.Plan) {
 	}
 	for _, rc := range plan.ResourceChanges {
 		if rc != nil && rc.Change != nil && rc.Change.Importing != nil {
-			f := c.feature("resource", rc.Type, rc.Address)
-			if f.Provider == "" {
-				f.Provider = rc.ProviderName
+			f := c.feature(KindResource, rc.Type, rc.Address)
+			if f.provider == "" {
+				f.provider = rc.ProviderName
 			}
-			add(&f.Planned, "import")
+			f.planned.add("import")
 		}
 	}
+}
+
+// modeKinds maps the resource modes in plans and state to feature kinds.
+var modeKinds = map[tfjson.ResourceMode]Kind{
+	tfjson.ManagedResourceMode: KindResource,
+	tfjson.DataResourceMode:    KindDataSource,
 }
 
 func action(actions tfjson.Actions) string {

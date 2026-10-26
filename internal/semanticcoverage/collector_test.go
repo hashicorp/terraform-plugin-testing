@@ -21,7 +21,7 @@ func TestCollectorKeepsOnlyMetadataAndSeparatesPlansFromApply(t *testing.T) {
 	plan := &tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: `example_item.test["secret-instance-key"]`, Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionCreate}}}}}
 	c.Plan(plan)
 	c.PreApplyPlan(plan)
-	resource := &tfjson.StateResource{Address: `example_item.test["secret-instance-key"]`, Type: "example_item", AttributeValues: map[string]any{"id": "secret-value", "token": "secret-value", "map": map[string]any{"secret-map-key": "secret-value"}}}
+	resource := &tfjson.StateResource{Address: `example_item.test["secret-instance-key"]`, Type: "example_item", Mode: tfjson.ManagedResourceMode, AttributeValues: map[string]any{"id": "secret-value", "token": "secret-value", "map": map[string]any{"secret-map-key": "secret-value"}}}
 	c.ObserveState(&tfjson.State{Values: &tfjson.StateValues{RootModule: &tfjson.StateModule{Resources: []*tfjson.StateResource{resource}}}})
 	c.ApplyCompleted(false)
 	if err := c.FinishStep(OutcomeSuccess); err != nil {
@@ -110,11 +110,7 @@ func TestDiscardStepWritesNoFinding(t *testing.T) {
 	}
 }
 
-func contains(values []string, wanted string) bool {
-	for _, value := range values {
-		if value == wanted {
-			return true
-		}
-	}
-	return false
+func contains(values set[string], wanted string) bool {
+	_, ok := values[wanted]
+	return ok
 }
