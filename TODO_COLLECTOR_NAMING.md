@@ -10,7 +10,6 @@ they do or what they cover:
 | Current | Problem | Suggested |
 |---|---|---|
 | `Ready()` | It creates the output directory. "Ready" sounds like a query or a readiness check. The reviewer confirmed it needs a better name. | `EnsureDirectory()`, or fold it into `New`. `Finish` already calls `MkdirAll` itself, so check whether `Ready` is only there to fail early. If so, `New` returning an error is the cleanest option. |
-| `Begin(step)` / `Finish(outcome)` / `FinishStep(failed, skipped)` | `Finish` and `FinishStep` differ only in how the outcome is passed in. | Decided: `BeginStep` / `FinishStep(outcome)` / `DiscardStep`. See `TODO_FINISH_STEP.md` |
 | field `test` | Ambiguous. | `testName` |
 | field `step` | Doesn't say whether it is an index. It is **1-based** (`Begin(stepNumber)` in `testing_new.go`), so `stepIndex` would be misleading. | `stepNumber`, matching `runNewTest` |
 | fields `lastPlan` / `latestPlan` / `actions` | "last" and "latest" sound like the same thing, but they are not. `latestPlan` is the raw plan that `Plan` saw most recently. `lastPlan` holds the resource changes that `PreApplyPlan` picked from it for `ApplyCompleted` to mark completed. `actions` is the matching list of action invocations. | `latestPlan` → `observedPlan`; `lastPlan` → `pendingApplyChanges`; `actions` → `pendingApplyActions`. Add a field comment for each (also in `TODO_COMMENTS.md`). If `PLAN_FIX_SHOTGUN_SURGERY.md` step 5 folds `PreApplyPlan` into `createPlan`, `observedPlan` can go away entirely. |

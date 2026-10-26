@@ -59,9 +59,10 @@ additional Terraform commands are run.
   results, provider-defined function references, and state-store step
   completion are recorded where the test harness exposes them.
 - Each finding includes its test name, step number, and outcome
-  (`success`, `expected_error`, `failed`, `skipped`). A matched `ExpectError`
+  (`success`, `expected_error`, `failed`). A matched `ExpectError`
   retains input and plan evidence but cannot claim a completed operation or
-  computed state value. Failed and skipped steps contribute no coverage.
+  computed state value. Failed steps contribute no coverage. Skipped steps
+  write no finding.
 
 ## Privacy
 

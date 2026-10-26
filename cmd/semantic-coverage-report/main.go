@@ -262,9 +262,6 @@ func aggregate(doc schemaDoc, items []semanticcoverage.Finding) output {
 				continue
 			}
 			t := matches[0]
-			if item.Outcome == semanticcoverage.OutcomeSkipped {
-				continue
-			}
 			if item.Outcome == semanticcoverage.OutcomeFailed {
 				continue
 			}

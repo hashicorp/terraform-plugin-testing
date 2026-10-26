@@ -83,14 +83,12 @@ const (
 	OutcomeExpectedError Outcome = "expected_error"
 	// OutcomeFailed means the test failed during the step.
 	OutcomeFailed Outcome = "failed"
-	// OutcomeSkipped means the step, or the remaining test, was skipped.
-	OutcomeSkipped Outcome = "skipped"
 )
 
 // Valid reports whether o is one of the known outcomes.
 func (o Outcome) Valid() bool {
 	switch o {
-	case OutcomeSuccess, OutcomeExpectedError, OutcomeFailed, OutcomeSkipped:
+	case OutcomeSuccess, OutcomeExpectedError, OutcomeFailed:
 		return true
 	}
 	return false
@@ -116,7 +114,7 @@ type Finding struct {
 //
 // A nil *Collector is valid and means collection is disabled: New returns nil
 // when EnvDirectory is unset, and every exported method is a no-op on a nil
-// receiver (Ready and Finish return nil, Enabled returns false). Callers can
+// receiver (Ready and FinishStep return nil, Enabled returns false). Callers can
 // therefore invoke methods unconditionally and only need Enabled to skip work
 // done solely to feed the collector, such as extra Terraform commands. New
 // exported methods must preserve this by returning early when c == nil.
@@ -132,7 +130,6 @@ type Collector struct {
 	lastPlan      []Feature
 	actions       []Feature
 	latestPlan    *tfjson.Plan
-	skipped       bool
 	expectedError bool
 }
 
@@ -152,22 +149,32 @@ func New(test string) *Collector {
 	return &Collector{directory: dir, packageName: packageName, test: test}
 }
 
-// Begin starts collecting evidence for a step. Any unfinished step is
-// discarded, so callers must Finish the previous step first.
-func (c *Collector) Begin(step int) {
+// BeginStep starts collecting evidence for a step. Any unfinished step is
+// discarded, so callers must FinishStep or DiscardStep the previous step first.
+func (c *Collector) BeginStep(stepNumber int) {
 	if c == nil {
 		return
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.step, c.active = step, true
+	c.step, c.active = stepNumber, true
 	c.features = make(map[string]*Feature)
 	c.warnings = nil
 	c.lastPlan = nil
 	c.actions = nil
 	c.latestPlan = nil
-	c.skipped = false
 	c.expectedError = false
+}
+
+// DiscardStep ends the active step, if any, without writing a finding. It is
+// used for skipped steps, which contribute no coverage.
+func (c *Collector) DiscardStep() {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.active = false
 }
 
 // Ready creates the findings directory before running a test step.
@@ -179,17 +186,6 @@ func (c *Collector) Ready() error {
 		return fmt.Errorf("coverage directory: %w", err)
 	}
 	return nil
-}
-
-// FinishStep writes the active step, if any, using the test's final status.
-func (c *Collector) FinishStep(failed, skipped bool) error {
-	outcome := OutcomeSuccess
-	if failed {
-		outcome = OutcomeFailed
-	} else if skipped {
-		outcome = OutcomeSkipped
-	}
-	return c.Finish(outcome)
 }
 
 func (c *Collector) feature(kind, name, address string) *Feature {
@@ -229,9 +225,6 @@ func (c *Collector) Warning(code string) {
 	defer c.mu.Unlock()
 	if c.active {
 		add(&c.warnings, code)
-		if code == "step_skipped" {
-			c.skipped = true
-		}
 	}
 }
 
@@ -790,8 +783,10 @@ func (c *Collector) ProviderStepCompleted() {
 	}
 }
 
-// Finish writes one private finding for an executed test step.
-func (c *Collector) Finish(outcome Outcome) error {
+// FinishStep writes one private finding for the active test step, if any. A
+// successful step that matched TestStep.ExpectError is written as
+// OutcomeExpectedError.
+func (c *Collector) FinishStep(outcome Outcome) error {
 	if c == nil {
 		return nil
 	}
@@ -801,9 +796,7 @@ func (c *Collector) Finish(outcome Outcome) error {
 		return nil
 	}
 	c.active = false
-	if c.skipped {
-		outcome = OutcomeSkipped
-	} else if c.expectedError && outcome == OutcomeSuccess {
+	if c.expectedError && outcome == OutcomeSuccess {
 		outcome = OutcomeExpectedError
 	}
 	finding := Finding{Version: FindingVersion, Package: c.packageName, Test: c.test, Step: c.step, Outcome: outcome, Warnings: c.warnings}

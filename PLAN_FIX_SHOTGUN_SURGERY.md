@@ -7,7 +7,7 @@ Coverage events are recorded in two layers and seven files:
 | Layer | File | Hook |
 |---|---|---|
 | `plugintest.WorkingDir` | `internal/plugintest/working_dir.go` | `Config` (in `SetConfig`), `QueryConfig` (in `SetQuery`), `Plan` (in `CreatePlan`) |
-| step runner | `helper/resource/testing_new.go` | `Begin`, `Finish`, `FinishStep`, `Warning("step_skipped")`, `MatchedExpectedError` x5, `RefreshCompleted`, `QueryCompleted`, `StateStoreCompleted` |
+| step runner | `helper/resource/testing_new.go` | `BeginStep`, `FinishStep` x2, `DiscardStep` x2, `MatchedExpectedError` x5, `RefreshCompleted`, `QueryCompleted`, `StateStoreCompleted` |
 | step runner | `testing_new_config.go` | `PreApplyPlan` x2, `ApplyCompleted`, `ProviderStepCompleted`, post-apply `ObserveState` |
 | step runner | `testing_new_import_state.go` | `ImportPlan`, `ObserveState`, `OperationForAddress` |
 | step runner | `testing_new_refresh_state.go` | `ObserveState` |

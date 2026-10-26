@@ -16,7 +16,7 @@ func TestCollectorKeepsOnlyMetadataAndSeparatesPlansFromApply(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv(EnvDirectory, dir)
 	c := New("TestExample")
-	c.Begin(1)
+	c.BeginStep(1)
 	c.Parse("test.tf", []byte(`resource "example_item" "test" { token = "secret-configuration" }`))
 	plan := &tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: `example_item.test["secret-instance-key"]`, Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionCreate}}}}}
 	c.Plan(plan)
@@ -24,7 +24,7 @@ func TestCollectorKeepsOnlyMetadataAndSeparatesPlansFromApply(t *testing.T) {
 	resource := &tfjson.StateResource{Address: `example_item.test["secret-instance-key"]`, Type: "example_item", AttributeValues: map[string]any{"id": "secret-value", "token": "secret-value", "map": map[string]any{"secret-map-key": "secret-value"}}}
 	c.ObserveState(&tfjson.State{Values: &tfjson.StateValues{RootModule: &tfjson.StateModule{Resources: []*tfjson.StateResource{resource}}}})
 	c.ApplyCompleted(false)
-	if err := c.Finish(OutcomeSuccess); err != nil {
+	if err := c.FinishStep(OutcomeSuccess); err != nil {
 		t.Fatal(err)
 	}
 	entries, err := os.ReadDir(dir)
@@ -54,7 +54,7 @@ func TestPlanOnlyDoesNotCompleteApply(t *testing.T) {
 	t.Parallel()
 
 	c := &Collector{}
-	c.Begin(1)
+	c.BeginStep(1)
 	c.Plan(&tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: "example_item.test", Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionCreate}}}}})
 	f := c.feature("resource", "example_item", "example_item.test")
 	if len(f.Planned) != 1 || len(f.Completed) != 0 || len(f.Known) != 0 {
@@ -66,7 +66,7 @@ func TestStateRequiresExplicitPostOperationObservation(t *testing.T) {
 	t.Parallel()
 
 	c := &Collector{}
-	c.Begin(1)
+	c.BeginStep(1)
 	c.Plan(&tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: "example_item.test", Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionCreate}, After: map[string]any{"id": "secret"}}}}})
 	f := c.feature("resource", "example_item", "example_item.test")
 	if len(f.Known) != 0 {
@@ -82,13 +82,13 @@ func TestFinishWritesOneFindingPerStep(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv(EnvDirectory, dir)
 	c := New("TestExample")
-	c.Begin(1)
+	c.BeginStep(1)
 	c.Parse("test.tf", []byte(`resource "example_item" "test" { name = "first" }`))
-	if err := c.Finish(OutcomeSuccess); err != nil {
+	if err := c.FinishStep(OutcomeSuccess); err != nil {
 		t.Fatal(err)
 	}
 	// No active step: the end-of-test FinishStep must not write again.
-	if err := c.FinishStep(false, false); err != nil {
+	if err := c.FinishStep(OutcomeSuccess); err != nil {
 		t.Fatal(err)
 	}
 	entries, err := os.ReadDir(dir)
@@ -107,11 +107,42 @@ func TestFinishWritesOneFindingPerStep(t *testing.T) {
 	}
 }
 
+func TestDiscardStepWritesNoFinding(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv(EnvDirectory, dir)
+	c := New("TestExample")
+	c.BeginStep(1)
+	c.Parse("test.tf", []byte(`resource "example_item" "test" {}`))
+	c.DiscardStep()
+	// The discarded step is no longer active, so finishing it is a no-op.
+	if err := c.FinishStep(OutcomeSuccess); err != nil {
+		t.Fatal(err)
+	}
+	c.BeginStep(2)
+	if err := c.FinishStep(OutcomeSuccess); err != nil {
+		t.Fatal(err)
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("got %d findings", len(entries))
+	}
+	data, err := os.ReadFile(filepath.Join(dir, entries[0].Name()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), `"step":2`) {
+		t.Fatalf("unexpected finding: %s", data)
+	}
+}
+
 func TestCompletedLifecycleUsesAppliedPlan(t *testing.T) {
 	t.Parallel()
 
 	c := &Collector{directory: t.TempDir(), test: "TestLifecycle"}
-	c.Begin(1)
+	c.BeginStep(1)
 	create := &tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: "example_item.test", Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionCreate}}}}}
 	noOp := &tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: "example_item.test", Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionNoop}}}}}
 	c.Plan(create)
@@ -122,7 +153,7 @@ func TestCompletedLifecycleUsesAppliedPlan(t *testing.T) {
 	if !contains(f.Completed, "create") || !contains(f.Completed, "apply") || contains(f.Completed, "no_op") {
 		t.Fatalf("completed actions: %v", f.Completed)
 	}
-	c.Begin(2)
+	c.BeginStep(2)
 	c.Plan(noOp)
 	c.PreApplyPlan()
 	c.ApplyCompleted(true)
@@ -136,7 +167,7 @@ func TestPreApplyPlanWithoutReadablePlanWarns(t *testing.T) {
 	t.Parallel()
 
 	c := &Collector{directory: t.TempDir(), test: "TestUnavailable"}
-	c.Begin(1)
+	c.BeginStep(1)
 	c.Plan(nil)
 	c.PreApplyPlan()
 	c.ApplyCompleted(false)
@@ -154,7 +185,7 @@ func TestNoOpApplyIsStillAnApply(t *testing.T) {
 	t.Parallel()
 
 	c := &Collector{directory: t.TempDir(), test: "TestNoOp"}
-	c.Begin(1)
+	c.BeginStep(1)
 	noOp := &tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: "example_item.test", Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionNoop}}}}}
 	c.Plan(noOp)
 	c.PreApplyPlan()
@@ -178,9 +209,9 @@ func TestQueryConfigDoesNotIncludePreviousStep(t *testing.T) {
 	t.Parallel()
 
 	c := &Collector{directory: t.TempDir(), test: "TestQuery"}
-	c.Begin(1)
+	c.BeginStep(1)
 	c.Parse("step.tf", []byte(`resource "example_item" "prior" { name = "previous" }`))
-	c.Begin(2)
+	c.BeginStep(2)
 	c.ResetConfig()
 	c.Parse("terraform_plugin_test.tfquery.hcl", []byte(`provider "example" {} list "example_item" "query" { config { name = "current" } }`))
 	for _, f := range c.features {

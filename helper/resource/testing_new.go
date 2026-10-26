@@ -58,9 +58,17 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		t.Fatalf("semantic coverage: %s", err)
 	}
 	wd.Coverage = coverage
-	// The last step, or a step ending in t.Fatal or t.Skip, is written here.
+	// The last step, or a step ending in t.Fatal or t.Skip, is finished here.
 	defer func() {
-		if err := coverage.FinishStep(t.Failed(), t.Skipped()); err != nil {
+		outcome := semanticcoverage.OutcomeSuccess
+		switch {
+		case t.Failed():
+			outcome = semanticcoverage.OutcomeFailed
+		case t.Skipped():
+			coverage.DiscardStep()
+			return
+		}
+		if err := coverage.FinishStep(outcome); err != nil {
 			t.Errorf("writing semantic coverage finding: %s", err)
 		}
 	}()
@@ -162,10 +170,10 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 		stepNumber = stepIndex + 1 // 1-based indexing for humans
 		// Reaching the next step means the previous step passed its checks.
-		if err := coverage.Finish(semanticcoverage.OutcomeSuccess); err != nil {
+		if err := coverage.FinishStep(semanticcoverage.OutcomeSuccess); err != nil {
 			t.Errorf("writing semantic coverage finding: %s", err)
 		}
-		coverage.Begin(stepNumber)
+		coverage.BeginStep(stepNumber)
 
 		configRequest := teststep.PrepareConfigurationRequest{
 			Directory: step.ConfigDirectory,
@@ -204,7 +212,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			logging.HelperResourceDebug(ctx, "Called TestStep SkipFunc")
 
 			if skip {
-				coverage.Warning("step_skipped")
+				coverage.DiscardStep()
 				t.Logf("Skipping step %d/%d due to SkipFunc", stepNumber, len(c.Steps))
 				logging.HelperResourceWarn(ctx, "Skipping TestStep due to SkipFunc")
 				continue
