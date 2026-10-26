@@ -4,7 +4,7 @@ Smell: **Mysterious Name** (judgement call from code review).
 
 ## What
 
-Several names in `internal/semanticcoverage/collector.go` don't say what
+Several names in `internal/semanticcoverage` don't say what
 they do or what they cover:
 
 | Current | Problem | Suggested |

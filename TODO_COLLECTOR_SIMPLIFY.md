@@ -1,10 +1,10 @@
-# TODO: small simplifications in `internal/semanticcoverage/collector.go`
+# TODO: small simplifications in `internal/semanticcoverage`
 
-Source: review comments. Do these after the file split in `PLAN_FIX_COLLECTOR_SPLIT.md`, so that each change lands in its new file.
+Source: review comments.
 
 ## 1. Make `kind` a typed enum
 
-The reviewer decided this ("let's make kind an enum"). It replaces the "Kind constants" follow-up in `PLAN_FIX_COLLECTOR_SPLIT.md`.
+The reviewer decided this ("let's make kind an enum").
 
 - Add `type Kind string`, with constants for `provider`, `resource`, `data_source`, `ephemeral_resource`, `list_resource`, `action`, `state_store`, `function` and `identity`, in `finding.go` next to `Outcome`. Give it the same `Valid()` method.
 - Use `Kind` for `Feature.Kind` and for the `kind` parameter of `feature` and `setProvider`. The `report` command uses it for `target.Kind` and its group table.
@@ -26,7 +26,7 @@ The reviewer decided this ("let's make kind an enum"). It replaces the "Kind con
 
 ## 2. Replace `add` with a real set
 
-`add` does a linear search, then appends. Callers never rely on insertion order: `Finish` sorts every slice before writing (`collector.go`, `sort.Strings(*xs)`). So this is a **set**, not an ordered set. It is used about 30 times, so keep a helper and don't inline it.
+`add` does a linear search, then appends. Callers never rely on insertion order: `FinishStep` sorts every slice before writing (`collector.go`, `sort.Strings(*xs)`). So this is a **set**, not an ordered set. It is used about 30 times, so keep a helper and don't inline it.
 
 Options, in order of preference:
 
