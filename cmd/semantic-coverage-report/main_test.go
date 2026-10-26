@@ -4,10 +4,13 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	tfjson "github.com/hashicorp/terraform-json"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 )
@@ -15,7 +18,7 @@ import (
 func TestAggregateKeepsLifecycleAndAttributeEvidenceDistinct(t *testing.T) {
 	t.Parallel()
 
-	doc := schemaDoc{Providers: map[string]providerSchema{"registry.terraform.io/hashicorp/example": {Resources: map[string]schema{"example_item": {Block: &block{Attributes: map[string]attribute{"name": {Required: true}, "id": {Computed: true}}}}}}}}
+	doc := parseSchema(t, exampleSchema)
 	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: "resource", Name: "example_item", Address: "example_item.test", Inputs: []string{"name"}, Planned: []string{"create"}}}}, {Version: 1, Test: "TestExample", Step: 2, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: "resource", Name: "example_item", Address: "example_item.test", Known: []string{"id"}, Completed: []string{"apply", "create"}}}}})
 	if result.Inputs.Covered != 1 || result.Computed.Covered != 1 {
 		t.Fatalf("coverage: %+v", result)
@@ -29,7 +32,7 @@ func TestAggregateKeepsLifecycleAndAttributeEvidenceDistinct(t *testing.T) {
 func TestExpectedErrorDoesNotClaimCompletedOperationOrComputedOutput(t *testing.T) {
 	t.Parallel()
 
-	doc := schemaDoc{Providers: map[string]providerSchema{"registry.terraform.io/hashicorp/example": {Resources: map[string]schema{"example_item": {Block: &block{Attributes: map[string]attribute{"name": {Required: true}, "id": {Computed: true}}}}}}}}
+	doc := parseSchema(t, exampleSchema)
 	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeExpectedError, Features: []semanticcoverage.Feature{{Kind: "resource", Name: "example_item", Inputs: []string{"name"}, Known: []string{"id"}, Planned: []string{"create"}, Completed: []string{"apply", "create"}}}}})
 	if result.Inputs.Covered != 1 || result.Computed.Covered != 0 {
 		t.Fatalf("input/computed coverage: %+v", result)
@@ -53,26 +56,51 @@ func TestReadFindingsRejectsUnknownWarning(t *testing.T) {
 	}
 }
 
+func TestAggregateReadsActionsAndLeavesIdentityOutOfAttributeTotals(t *testing.T) {
+	t.Parallel()
+
+	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {
+		"action_schemas": {"example_action": {"block": {"attributes": {"message": {"type": "string", "required": true}}}}},
+		"resource_identity_schemas": {"example_item": {"version": 0, "attributes": {"id": {"type": "string", "required_for_import": true}}}},
+		"functions": {"example_function": {"return_type": "string"}}
+	}}}`)
+	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{
+		{Kind: "action", Name: "example_action", Inputs: []string{"message"}},
+		{Kind: "identity", Name: "example_item", Known: []string{"id"}},
+	}}})
+	if result.Inputs != (metric{Covered: 1, Total: 1}) || result.Computed != (metric{}) {
+		t.Fatalf("inputs=%+v computed=%+v", result.Inputs, result.Computed)
+	}
+	kinds := map[string]*target{}
+	for _, target := range result.Targets {
+		kinds[target.Kind] = target
+	}
+	if kinds["identity"] == nil || len(kinds["identity"].Attributes) != 0 || !kinds["identity"].Exercised {
+		t.Fatalf("identity target: %+v", kinds["identity"])
+	}
+	if kinds["function"] == nil {
+		t.Fatalf("missing function target: %+v", result.Targets)
+	}
+}
+
 func TestAggregateExcludesNestedAttributesFromCoverageTotals(t *testing.T) {
 	t.Parallel()
 
-	doc := schemaDoc{Providers: map[string]providerSchema{"registry.terraform.io/hashicorp/example": {
-		Resources: map[string]schema{"example_item": {Block: &block{
-			Attributes: map[string]attribute{
-				"settings": {Optional: true, Nested: &nestedAttribute{Nesting: "single", Attributes: map[string]attribute{
-					"mode":   {Optional: true},
-					"status": {Computed: true},
-				}}},
-				"id": {Computed: true},
-			},
-			Blocks: map[string]nestedBlock{
-				"connection": {Nesting: "list", Block: &block{Attributes: map[string]attribute{
-					"host":  {Required: true},
-					"state": {Computed: true},
-				}}},
-			},
-		}}},
-	}}}
+	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {
+		"attributes": {
+			"settings": {"optional": true, "nested_type": {"nesting_mode": "single", "attributes": {
+				"mode":   {"type": "string", "optional": true},
+				"status": {"type": "string", "computed": true}
+			}}},
+			"id": {"type": "string", "computed": true}
+		},
+		"block_types": {
+			"connection": {"nesting_mode": "list", "block": {"attributes": {
+				"host":  {"type": "string", "required": true},
+				"state": {"type": "string", "computed": true}
+			}}}
+		}
+	}}}}}}`)
 	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: "resource", Name: "example_item", Inputs: []string{"settings"}, Known: []string{"id"}}}}})
 	if result.AttributeScope != "top_level" {
 		t.Fatalf("attribute scope = %q, want top_level", result.AttributeScope)
@@ -91,4 +119,19 @@ func TestAggregateExcludesNestedAttributesFromCoverageTotals(t *testing.T) {
 			t.Errorf("nested path %q should be excluded", a.Path)
 		}
 	}
+}
+
+const exampleSchema = `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {"attributes": {
+	"name": {"type": "string", "required": true},
+	"id":   {"type": "string", "computed": true}
+}}}}}}}`
+
+func parseSchema(t *testing.T, data string) *tfjson.ProviderSchemas {
+	t.Helper()
+
+	var doc tfjson.ProviderSchemas
+	if err := json.Unmarshal([]byte(data), &doc); err != nil {
+		t.Fatal(err)
+	}
+	return &doc
 }

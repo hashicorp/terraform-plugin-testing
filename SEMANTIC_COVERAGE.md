@@ -33,9 +33,9 @@ terraform -chdir=/path/to/initialized/provider/config providers schema -json \
   > provider-schema.json
 
 go run github.com/hashicorp/terraform-plugin-testing/cmd/semantic-coverage-report \
-  -findings findings/run-1 \
-  -schema provider-schema.json \
-  -json coverage.json -text coverage.txt
+  -findings-dir findings/run-1 \
+  -schema-file provider-schema.json \
+  -json-out coverage.json -text-out coverage.txt
 ```
 
 When `TF_ACC_SEMANTIC_COVERAGE_DIR` is unset, the collector is disabled and no
@@ -98,6 +98,8 @@ provider selection as the test run.
 - Attribute totals include only top-level schema attributes and blocks. Nested
   attributes are not counted until a schema-aware walker can distinguish
   nested schema names from user map keys.
+- Resource identity attributes are not counted. They are only observed in
+  state, and the schema doesn't say which of them are computed.
 - Modules referenced from external sources may be visible in plan actions or
   state, but not in the locally copied configuration files.
 - Each plan observed while collecting costs one additional `terraform show`,

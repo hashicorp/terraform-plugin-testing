@@ -16,49 +16,10 @@ import (
 	"sort"
 	"strings"
 
+	tfjson "github.com/hashicorp/terraform-json"
+
 	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 )
-
-type schemaDoc struct {
-	FormatVersion string                    `json:"format_version"`
-	Providers     map[string]providerSchema `json:"provider_schemas"`
-}
-type providerSchema struct {
-	Provider    *schema                    `json:"provider"`
-	Resources   map[string]schema          `json:"resource_schemas"`
-	DataSources map[string]schema          `json:"data_source_schemas"`
-	Ephemeral   map[string]schema          `json:"ephemeral_resource_schemas"`
-	Lists       map[string]schema          `json:"list_resource_schemas"`
-	Actions     map[string]schema          `json:"action_schemas"`
-	Stores      map[string]schema          `json:"state_store_schemas"`
-	Identities  map[string]schema          `json:"resource_identity_schemas"`
-	Functions   map[string]json.RawMessage `json:"functions"`
-}
-type schema struct {
-	Block      *block               `json:"block"`
-	Attributes map[string]attribute `json:"attributes"`
-}
-type block struct {
-	Attributes map[string]attribute   `json:"attributes"`
-	Blocks     map[string]nestedBlock `json:"block_types"`
-	Deprecated bool                   `json:"deprecated"`
-}
-type nestedBlock struct {
-	Nesting string `json:"nesting_mode"`
-	Block   *block `json:"block"`
-}
-type attribute struct {
-	Required   bool             `json:"required"`
-	Optional   bool             `json:"optional"`
-	Computed   bool             `json:"computed"`
-	WriteOnly  bool             `json:"write_only"`
-	Deprecated bool             `json:"deprecated"`
-	Nested     *nestedAttribute `json:"nested_type"`
-}
-type nestedAttribute struct {
-	Nesting    string               `json:"nesting_mode"`
-	Attributes map[string]attribute `json:"attributes"`
-}
 
 type evidence struct {
 	Package string `json:"package,omitempty"`
@@ -99,41 +60,39 @@ type output struct {
 }
 
 func main() {
-	findings := flag.String("findings", "findings", "directory of test-derived JSON findings")
-	schemaFile := flag.String("schema", "", "terraform providers schema -json file")
-	jsonFile := flag.String("json", "coverage.json", "JSON report path")
-	textFile := flag.String("text", "coverage.txt", "text report path")
+	findingsDir := flag.String("findings-dir", "findings", "directory of test-derived JSON findings")
+	schemaFile := flag.String("schema-file", "", "terraform providers schema -json file")
+	jsonOut := flag.String("json-out", "coverage.json", "JSON report path")
+	textOut := flag.String("text-out", "coverage.txt", "text report path")
 	flag.Parse()
 	if *schemaFile == "" {
-		die(fmt.Errorf("-schema is required"))
+		die(fmt.Errorf("-schema-file is required"))
 	}
 	docBytes, err := os.ReadFile(*schemaFile)
 	if err != nil {
 		die(err)
 	}
-	var doc schemaDoc
+	// Unmarshalling also validates the schema format version.
+	var doc tfjson.ProviderSchemas
 	if err = json.Unmarshal(docBytes, &doc); err != nil {
-		die(err)
+		die(fmt.Errorf("%s: %w", *schemaFile, err))
 	}
-	if len(doc.Providers) == 0 {
+	if len(doc.Schemas) == 0 {
 		die(fmt.Errorf("schema has no providers"))
 	}
-	if !strings.HasPrefix(doc.FormatVersion, "1.") {
-		die(fmt.Errorf("unsupported provider schema format version %q", doc.FormatVersion))
-	}
-	items, err := readFindings(*findings)
+	items, err := readFindings(*findingsDir)
 	if err != nil {
 		die(err)
 	}
 	if len(items) == 0 {
-		die(fmt.Errorf("no step findings in %s", *findings))
+		die(fmt.Errorf("no step findings in %s", *findingsDir))
 	}
-	result := aggregate(doc, items)
+	result := aggregate(&doc, items)
 	data, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
 		die(err)
 	}
-	if err = os.WriteFile(*jsonFile, append(data, '\n'), 0600); err != nil {
+	if err = os.WriteFile(*jsonOut, append(data, '\n'), 0600); err != nil {
 		die(err)
 	}
 	var text strings.Builder
@@ -155,10 +114,10 @@ func main() {
 	for _, w := range result.Warnings {
 		fmt.Fprintf(&text, "warning: %s\n", w)
 	}
-	if err = os.WriteFile(*textFile, []byte(text.String()), 0600); err != nil {
+	if err = os.WriteFile(*textOut, []byte(text.String()), 0600); err != nil {
 		die(err)
 	}
-	fmt.Printf("read %d step findings; wrote %s and %s\n", len(items), *jsonFile, *textFile)
+	fmt.Printf("read %d step findings; wrote %s and %s\n", len(items), *jsonOut, *textOut)
 }
 func die(err error) { fmt.Fprintln(os.Stderr, err); os.Exit(1) }
 func readFindings(dir string) ([]semanticcoverage.Finding, error) {
@@ -206,36 +165,40 @@ func sortedKeys[V any](m map[string]V) []string {
 	return result
 }
 
-func aggregate(doc schemaDoc, items []semanticcoverage.Finding) output {
+func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) output {
 	result := output{Version: 1, AttributeScope: "top_level", Findings: len(items)}
 	seen := make(map[string]bool)
-	for _, address := range sortedKeys(doc.Providers) {
-		p := doc.Providers[address]
-		register := func(kind, name string, s schema) {
-			t := &target{Provider: address, Kind: kind, Name: name, Planned: make(map[string][]evidence), Completed: make(map[string][]evidence)}
-			if s.Block != nil {
-				flatten(&t.Attributes, "", s.Block)
-			} else {
-				for name, a := range s.Attributes {
-					addAttribute(&t.Attributes, name, a)
-				}
-			}
-			sort.Slice(t.Attributes, func(i, j int) bool { return t.Attributes[i].Path < t.Attributes[j].Path })
-			result.Targets = append(result.Targets, t)
+	for _, address := range sortedKeys(doc.Schemas) {
+		p := doc.Schemas[address]
+		if p.ConfigSchema != nil {
+			result.Targets = append(result.Targets, newTarget(address, "provider", "", p.ConfigSchema.Block))
 		}
-		if p.Provider != nil {
-			register("provider", "", *p.Provider)
+		for _, name := range sortedKeys(p.ResourceSchemas) {
+			result.Targets = append(result.Targets, newTarget(address, "resource", name, p.ResourceSchemas[name].Block))
 		}
-		for _, group := range []struct {
-			kind    string
-			members map[string]schema
-		}{{"resource", p.Resources}, {"data_source", p.DataSources}, {"ephemeral_resource", p.Ephemeral}, {"list_resource", p.Lists}, {"action", p.Actions}, {"state_store", p.Stores}, {"identity", p.Identities}} {
-			for _, name := range sortedKeys(group.members) {
-				register(group.kind, name, group.members[name])
-			}
+		for _, name := range sortedKeys(p.DataSourceSchemas) {
+			result.Targets = append(result.Targets, newTarget(address, "data_source", name, p.DataSourceSchemas[name].Block))
+		}
+		for _, name := range sortedKeys(p.EphemeralResourceSchemas) {
+			result.Targets = append(result.Targets, newTarget(address, "ephemeral_resource", name, p.EphemeralResourceSchemas[name].Block))
+		}
+		for _, name := range sortedKeys(p.ListResourceSchemas) {
+			result.Targets = append(result.Targets, newTarget(address, "list_resource", name, p.ListResourceSchemas[name].Block))
+		}
+		for _, name := range sortedKeys(p.ActionSchemas) {
+			result.Targets = append(result.Targets, newTarget(address, "action", name, p.ActionSchemas[name].Block))
+		}
+		for _, name := range sortedKeys(p.StateStoreSchemas) {
+			result.Targets = append(result.Targets, newTarget(address, "state_store", name, p.StateStoreSchemas[name].Block))
+		}
+		// Identity attributes are only observed in state, and the schema
+		// doesn't say which of them are computed, so they are left out of
+		// the attribute totals.
+		for _, name := range sortedKeys(p.ResourceIdentitySchemas) {
+			result.Targets = append(result.Targets, newTarget(address, "identity", name, nil))
 		}
 		for _, name := range sortedKeys(p.Functions) {
-			register("function", name, schema{})
+			result.Targets = append(result.Targets, newTarget(address, "function", name, nil))
 		}
 	}
 	for _, item := range items {
@@ -351,7 +314,16 @@ func contains(xs []string, x string) bool {
 	}
 	return false
 }
-func addAttribute(to *[]attributeResult, path string, a attribute) {
+
+// newTarget returns a report target with the top-level attributes of b, sorted
+// by path. A nil b gives a target without attributes.
+func newTarget(provider, kind, name string, b *tfjson.SchemaBlock) *target {
+	t := &target{Provider: provider, Kind: kind, Name: name, Planned: make(map[string][]evidence), Completed: make(map[string][]evidence)}
+	flatten(&t.Attributes, "", b)
+	sort.Slice(t.Attributes, func(i, j int) bool { return t.Attributes[i].Path < t.Attributes[j].Path })
+	return t
+}
+func addAttribute(to *[]attributeResult, path string, a *tfjson.SchemaAttribute) {
 	if a.Deprecated {
 		return
 	}
@@ -363,14 +335,14 @@ func addAttribute(to *[]attributeResult, path string, a attribute) {
 	}
 	*to = append(*to, attributeResult{Path: path, Mode: mode})
 }
-func flatten(to *[]attributeResult, prefix string, b *block) {
+func flatten(to *[]attributeResult, prefix string, b *tfjson.SchemaBlock) {
 	if b == nil || b.Deprecated {
 		return
 	}
 	for name, a := range b.Attributes {
 		addAttribute(to, prefix+name, a)
 	}
-	for name := range b.Blocks {
+	for name := range b.NestedBlocks {
 		*to = append(*to, attributeResult{Path: prefix + name, Mode: "input"})
 	}
 }
