@@ -281,21 +281,17 @@ func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.
 		return err
 	}
 
+	var jsonState *tfjson.State
 	var importState *terraform.State
 	err = runProviderCommand(ctx, t, workingDir, providers, func() error {
-		jsonState, state, stateErr := getState(ctx, t, workingDir)
-		importState, err = state, stateErr
-		if stateErr == nil {
-			workingDir.Coverage.ObserveState(jsonState)
-		}
-		if err != nil {
-			return err
-		}
-		return nil
+		var err error
+		jsonState, importState, err = getState(ctx, t, workingDir)
+		return err
 	})
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
 	}
+	workingDir.Coverage.ObserveState(jsonState)
 
 	logging.HelperResourceDebug(ctx, fmt.Sprintf("State after import: %d resources in the root module", len(importState.RootModule().Resources)))
 

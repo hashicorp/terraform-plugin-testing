@@ -39,21 +39,17 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 		return err
 	}
 
+	var jsonState *tfjson.State
 	var refreshState *terraform.State
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		jsonState, state, stateErr := getState(ctx, t, wd)
-		refreshState, err = state, stateErr
-		if stateErr == nil {
-			wd.Coverage.ObserveState(jsonState)
-		}
-		if err != nil {
-			return err
-		}
-		return nil
+		var err error
+		jsonState, refreshState, err = getState(ctx, t, wd)
+		return err
 	})
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
 	}
+	wd.Coverage.ObserveState(jsonState)
 
 	// Go through the refreshed state and verify
 	if step.Check != nil {
