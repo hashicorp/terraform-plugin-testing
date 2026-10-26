@@ -9,8 +9,11 @@ they do or what they cover:
 
 | Current | Problem | Suggested |
 |---|---|---|
-| `Ready()` | It creates the output directory. "Ready" sounds like a query or a readiness check. | `EnsureDirectory()`, or fold it into `New` |
-| `Begin(step)` / `Finish(outcome)` / `FinishStep(failed, skipped)` | `Finish` and `FinishStep` differ only in how the outcome is passed in. Nothing in the names says that. | `StartStep(step)`, `WriteStep(outcome)`, `WriteStepFromTestStatus(failed, skipped)` |
+| `Ready()` | It creates the output directory. "Ready" sounds like a query or a readiness check. The reviewer confirmed it needs a better name. | `EnsureDirectory()`, or fold it into `New`. `Finish` already calls `MkdirAll` itself, so check whether `Ready` is only there to fail early. If so, `New` returning an error is the cleanest option. |
+| `Begin(step)` / `Finish(outcome)` / `FinishStep(failed, skipped)` | `Finish` and `FinishStep` differ only in how the outcome is passed in. | Decided: `BeginStep` / `FinishStep(outcome)` / `DiscardStep`. See `TODO_FINISH_STEP.md` |
+| field `test` | Ambiguous. | `testName` |
+| field `step` | Doesn't say whether it is an index. It is **1-based** (`Begin(stepNumber)` in `testing_new.go`), so `stepIndex` would be misleading. | `stepNumber`, matching `runNewTest` |
+| fields `lastPlan` / `latestPlan` / `actions` | "last" and "latest" sound like the same thing, but they are not. `latestPlan` is the raw plan that `Plan` saw most recently. `lastPlan` holds the resource changes that `PreApplyPlan` picked from it for `ApplyCompleted` to mark completed. `actions` is the matching list of action invocations. | `latestPlan` → `observedPlan`; `lastPlan` → `pendingApplyChanges`; `actions` → `pendingApplyActions`. Add a field comment for each (also in `TODO_COMMENTS.md`). If `PLAN_FIX_SHOTGUN_SURGERY.md` step 5 folds `PreApplyPlan` into `createPlan`, `observedPlan` can go away entirely. |
 | `ApplyCompleted(destroy)` + `ProviderStepCompleted()` | They are always called together (`testing_new_config.go:216-217`). `ProviderStepCompleted` marks providers with the "step" operation, and its name doesn't say that. | Merge into `ApplySucceeded(destroy)`, or rename the second to `MarkProvidersUsed()` |
 | `OperationForAddress(address, op)` | It reads like a getter, but it records a completed operation. | `RecordCompleted(address, op)` |
 | `Plan(plan)` | It sounds like it creates a plan. It actually records the plan. | `ObservePlan(plan)`, matching `ObserveState` |
@@ -18,7 +21,7 @@ they do or what they cover:
 | `states(f, values)` | It records known and null attribute names. | `recordAttributeStatus` |
 | `module(m)` | It walks a state module recursively. | `observeStateModule` |
 | `blocks(blocks)` | It walks HCL blocks and records features and inputs. | `observeHCLBlocks` |
-| `add(xs, v)` | It is a set-insert into a slice. | `appendUnique` |
+| `add(xs, v)` | It is a set-insert into a slice. | Replace it with a set type, see `TODO_COLLECTOR_SIMPLIFY.md` item 2. Otherwise rename it to `appendUnique`. |
 | `action(actions)` | It maps tfjson actions to an operation string. | `operationForActions` |
 
 ## Why this is a problem

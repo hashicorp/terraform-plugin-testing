@@ -70,6 +70,10 @@ coverage wiring sits behind one file-local adapter.
 
 ## Risks / checks
 
+- Before step 4, check whether the query step's `ResetConfig` is
+  dead code (`TODO_COMMENTS.md`). If it is, don't carry it into `setQuery`.
+- Combine with `TODO_STATE_READ_GYMNASTICS.md`: call `observeState` after
+  the `runProviderCommand` closure, not inside it.
 - `SetConfig` is called from several places, including
   `testing_new_config.go` and the import step. Audit every call so the
   set of config reads stays the same. Today all of them feed coverage.

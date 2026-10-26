@@ -43,13 +43,17 @@ Split `collector_test.go` the same way: `config_test.go`, `plan_test.go`,
 
 ## Follow-ups (separate commits, optional)
 
-- **Kind constants.** Kind strings repeat across `blocks`,
+- **Kind constants.** The reviewer decided to make `Kind` an enum. See
+  `TODO_COLLECTOR_SIMPLIFY.md` item 1. Kind strings repeat across `blocks`,
   `jsonBlocks`, `Plan` and `module`: `"resource"`, `"data_source"`,
   `"list_resource"` and others. One `blockKinds` map from the HCL/JSON
   block type to `(kind, address prefix)` would replace the nested `switch`
-  in `blocks` and the `if` chain in `jsonBlocks` (Repeated Switches). This
-  needs a typed `Kind` like `Outcome`. The report command already
-  switches on these strings.
+  in `blocks` and the `if` chain in `jsonBlocks` (Repeated Switches).
+  The decided approach is a single Kind table that gives each kind its
+  address prefix, see `TODO_COLLECTOR_SIMPLIFY.md` item 1.
+- Other small cleanups (a real set instead of `add`, inlining
+  `jsonInputs`, the query file name constant) are in
+  `TODO_COLLECTOR_SIMPLIFY.md`.
 - **Locking helper.** Most exported methods start with the same 8 lines
   (`nil` check, `Lock`, `defer Unlock`, `active` check). A
   `func (c *Collector) withActive(fn func())` helper would remove about
