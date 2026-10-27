@@ -10,12 +10,10 @@ import (
 // ObserveState records only schema attribute names and null/known status from
 // state explicitly obtained after a step operation, not setup or cleanup reads.
 func (c *Collector) ObserveState(state *tfjson.State) {
-	if c == nil || state == nil || state.Values == nil || state.Values.RootModule == nil {
+	if c == nil || !c.active || state == nil || state.Values == nil || state.Values.RootModule == nil {
 		return
 	}
-	if c.active {
-		c.observeStateModule(state.Values.RootModule)
-	}
+	c.observeStateModule(state.Values.RootModule)
 }
 
 func (c *Collector) observeStateModule(m *tfjson.StateModule) {

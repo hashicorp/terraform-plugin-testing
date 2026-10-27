@@ -6,10 +6,10 @@ package semanticcoverage
 import (
 	"os"
 	"path/filepath"
-	"reflect"
 	"slices"
-	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestUnparsableConfigWarns(t *testing.T) {
@@ -108,10 +108,8 @@ state_store "example_store" {
 	for _, f := range c.features {
 		got = append(got, f.finding())
 	}
-	slices.SortFunc(got, func(a, b Feature) int {
-		return strings.Compare(string(a.Kind)+a.Address, string(b.Kind)+b.Address)
-	})
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got  %+v\nwant %+v", got, want)
+	sortFeatures(got)
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("features mismatch (-want +got):\n%s", diff)
 	}
 }

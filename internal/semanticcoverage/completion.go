@@ -12,10 +12,7 @@ import (
 // ImportCompleted marks the resource at address as imported by a successful
 // import command.
 func (c *Collector) ImportCompleted(address string) {
-	if c == nil {
-		return
-	}
-	if !c.active {
+	if c == nil || !c.active {
 		return
 	}
 	address = safeAddress(address)
@@ -36,10 +33,7 @@ func (c *Collector) ImportCompleted(address string) {
 // marked, as "destroy" and "delete". Every provider in the step is marked
 // "step".
 func (c *Collector) ApplyCompleted(destroy bool) {
-	if c == nil {
-		return
-	}
-	if !c.active {
+	if c == nil || !c.active {
 		return
 	}
 	for _, p := range c.pendingApplyChanges {
@@ -79,10 +73,7 @@ func (c *Collector) ApplyCompleted(destroy bool) {
 
 // QueryCompleted marks list resources in a query step that passed its checks.
 func (c *Collector) QueryCompleted() {
-	if c == nil {
-		return
-	}
-	if !c.active {
+	if c == nil || !c.active {
 		return
 	}
 	for _, f := range c.features {
@@ -95,10 +86,7 @@ func (c *Collector) QueryCompleted() {
 // QueryResults reads query message types without persisting result values,
 // display names, instance keys, or provider-generated configuration.
 func (c *Collector) QueryResults(messages []tfjson.LogMsg) {
-	if c == nil {
-		return
-	}
-	if !c.active {
+	if c == nil || !c.active {
 		return
 	}
 	for _, message := range messages {
@@ -116,10 +104,7 @@ func (c *Collector) QueryResults(messages []tfjson.LogMsg) {
 // RefreshCompleted marks every resource in a refresh step that passed its
 // checks as refreshed.
 func (c *Collector) RefreshCompleted() {
-	if c == nil {
-		return
-	}
-	if !c.active {
+	if c == nil || !c.active {
 		return
 	}
 	for _, f := range c.features {
@@ -132,10 +117,7 @@ func (c *Collector) RefreshCompleted() {
 // StateStoreCompleted marks every state store in a state store step that
 // passed its checks as used.
 func (c *Collector) StateStoreCompleted() {
-	if c == nil {
-		return
-	}
-	if !c.active {
+	if c == nil || !c.active {
 		return
 	}
 	for _, f := range c.features {

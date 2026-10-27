@@ -10,10 +10,7 @@ import (
 // ObservePlan records the planned operation of each resource change and action
 // invocation in plan. A nil plan means the saved plan could not be read.
 func (c *Collector) ObservePlan(plan *tfjson.Plan) {
-	if c == nil {
-		return
-	}
-	if !c.active {
+	if c == nil || !c.active {
 		return
 	}
 	if plan == nil {
@@ -57,10 +54,7 @@ func (c *Collector) ObservePlan(plan *tfjson.Plan) {
 // ApplyCompleted marks its changes completed. A nil plan means the saved plan
 // could not be read.
 func (c *Collector) PreApplyPlan(plan *tfjson.Plan) {
-	if c == nil {
-		return
-	}
-	if !c.active {
+	if c == nil || !c.active {
 		return
 	}
 	c.pendingApplyChanges = nil
@@ -84,10 +78,7 @@ func (c *Collector) PreApplyPlan(plan *tfjson.Plan) {
 // ImportPlan records each resource change in plan that imports a resource as
 // a planned import.
 func (c *Collector) ImportPlan(plan *tfjson.Plan) {
-	if c == nil || plan == nil {
-		return
-	}
-	if !c.active {
+	if c == nil || !c.active || plan == nil {
 		return
 	}
 	for _, rc := range plan.ResourceChanges {

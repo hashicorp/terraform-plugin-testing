@@ -20,7 +20,7 @@ import (
 // provider tests, so it isn't parsed; a .tf.json file only records
 // WarningConfigUnavailable, so that the report shows the missing evidence.
 func (c *Collector) ObserveConfigDir(dir string) {
-	if c == nil {
+	if c == nil || !c.active {
 		return
 	}
 	entries, err := os.ReadDir(dir)
@@ -52,7 +52,7 @@ func (c *Collector) ObserveConfigDir(dir string) {
 // ObserveQueryConfig records the features and inputs declared by the query
 // configuration file at path.
 func (c *Collector) ObserveQueryConfig(path string) {
-	if c == nil {
+	if c == nil || !c.active {
 		return
 	}
 	data, err := os.ReadFile(path)
@@ -66,7 +66,7 @@ func (c *Collector) ObserveQueryConfig(path string) {
 // observeConfigFile records the features and inputs declared by the HCL
 // configuration file with the given name and contents.
 func (c *Collector) observeConfigFile(name string, data []byte) {
-	if c == nil {
+	if c == nil || !c.active {
 		return
 	}
 	parser := hclparse.NewParser()
@@ -80,10 +80,8 @@ func (c *Collector) observeConfigFile(name string, data []byte) {
 		c.Warning(WarningConfigUnavailable)
 		return
 	}
-	if c.active {
-		c.observeHCLBlocks(body.Blocks)
-		c.functions(body)
-	}
+	c.observeHCLBlocks(body.Blocks)
+	c.functions(body)
 }
 
 // configBlock describes a configuration block type that declares a feature.

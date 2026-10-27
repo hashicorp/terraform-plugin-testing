@@ -79,9 +79,13 @@ func TestTargetMatches(t *testing.T) {
 		"function of other provider":       {function, semanticcoverage.Feature{Kind: semanticcoverage.KindFunction, Name: "arn_parse", Provider: "google"}, false},
 	}
 	for name, test := range tests {
-		if got := test.target.matches(test.f); got != test.want {
-			t.Errorf("%s: matches = %t, want %t", name, got, test.want)
-		}
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := test.target.matches(test.f); got != test.want {
+				t.Errorf("matches = %t, want %t", got, test.want)
+			}
+		})
 	}
 }
 

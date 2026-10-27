@@ -4,6 +4,7 @@
 package semanticcoverage
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"maps"
@@ -11,7 +12,6 @@ import (
 	"path/filepath"
 	"runtime/debug"
 	"slices"
-	"sort"
 	"strings"
 	"time"
 )
@@ -98,10 +98,7 @@ func (c *Collector) BeginStep(stepNumber int) {
 // successful step that matched TestStep.ExpectError is written as
 // OutcomeExpectedError.
 func (c *Collector) FinishStep(outcome Outcome) error {
-	if c == nil {
-		return nil
-	}
-	if !c.active {
+	if c == nil || !c.active {
 		return nil
 	}
 	c.active = false
@@ -112,10 +109,7 @@ func (c *Collector) FinishStep(outcome Outcome) error {
 	for _, f := range c.features {
 		finding.Features = append(finding.Features, f.finding())
 	}
-	sort.Slice(finding.Features, func(i, j int) bool {
-		a, b := finding.Features[i], finding.Features[j]
-		return string(a.Kind)+a.Name+a.Address < string(b.Kind)+b.Name+b.Address
-	})
+	sortFeatures(finding.Features)
 	if err := os.MkdirAll(c.directory, 0700); err != nil {
 		return fmt.Errorf("coverage directory: %w", err)
 	}
@@ -128,6 +122,17 @@ func (c *Collector) FinishStep(outcome Outcome) error {
 		return err
 	}
 	return file.Close()
+}
+
+// sortFeatures sorts features by kind, name, and address.
+func sortFeatures(features []Feature) {
+	slices.SortFunc(features, func(a, b Feature) int {
+		return cmp.Or(
+			cmp.Compare(a.Kind, b.Kind),
+			cmp.Compare(a.Name, b.Name),
+			cmp.Compare(a.Address, b.Address),
+		)
+	})
 }
 
 // DiscardStep ends the active step, if any, without writing a finding. It is
@@ -218,22 +223,18 @@ func (s set[T]) sorted() []T {
 // Warning records that evidence of the given type may be incomplete for the
 // active step.
 func (c *Collector) Warning(code Warning) {
-	if c == nil {
+	if c == nil || !c.active {
 		return
 	}
-	if c.active {
-		c.warnings.add(code)
-	}
+	c.warnings.add(code)
 }
 
 // MatchedExpectedError records that the active step failed with an error
 // matching TestStep.ExpectError. FinishStep then writes OutcomeExpectedError
 // instead of OutcomeSuccess.
 func (c *Collector) MatchedExpectedError() {
-	if c == nil {
+	if c == nil || !c.active {
 		return
 	}
-	if c.active {
-		c.expectedError = true
-	}
+	c.expectedError = true
 }

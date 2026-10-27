@@ -7,14 +7,16 @@
 package main
 
 import (
+	"cmp"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
 
 	tfjson "github.com/hashicorp/terraform-json"
@@ -90,40 +92,50 @@ type output struct {
 }
 
 func main() {
-	findingsDir := flag.String("findings-dir", "findings", "directory of test-derived JSON findings")
-	schemaFile := flag.String("schema-file", "", "terraform providers schema -json file")
-	jsonOut := flag.String("json-out", "coverage.json", "JSON report path")
-	textOut := flag.String("text-out", "coverage.txt", "text report path")
-	flag.Parse()
+	if err := run(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run(args []string) error {
+	flags := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	findingsDir := flags.String("findings-dir", "findings", "directory of test-derived JSON findings")
+	schemaFile := flags.String("schema-file", "", "terraform providers schema -json file")
+	jsonOut := flags.String("json-out", "coverage.json", "JSON report path")
+	textOut := flags.String("text-out", "coverage.txt", "text report path")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
 	if *schemaFile == "" {
-		die(fmt.Errorf("-schema-file is required"))
+		return errors.New("-schema-file is required")
 	}
 	docBytes, err := os.ReadFile(*schemaFile)
 	if err != nil {
-		die(err)
+		return err
 	}
 	// Unmarshalling also validates the schema format version.
 	var doc tfjson.ProviderSchemas
 	if err = json.Unmarshal(docBytes, &doc); err != nil {
-		die(fmt.Errorf("%s: %w", *schemaFile, err))
+		return fmt.Errorf("%s: %w", *schemaFile, err)
 	}
 	if len(doc.Schemas) == 0 {
-		die(fmt.Errorf("schema has no providers"))
+		return errors.New("schema has no providers")
 	}
 	items, err := readFindings(*findingsDir)
 	if err != nil {
-		die(err)
+		return err
 	}
 	if len(items) == 0 {
-		die(fmt.Errorf("no step findings in %s", *findingsDir))
+		return fmt.Errorf("no step findings in %s", *findingsDir)
 	}
 	result := aggregate(&doc, items)
 	data, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
-		die(err)
+		return err
 	}
 	if err = os.WriteFile(*jsonOut, append(data, '\n'), 0600); err != nil {
-		die(err)
+		return err
 	}
 	var text strings.Builder
 	fmt.Fprintf(&text, "Test-derived semantic coverage: %d steps\nAttribute scope: top-level schema attributes and blocks only; nested descendants are excluded.\nEntities %d/%d; configurable %d/%d; computed %d/%d\n", result.Findings, result.Entities.Covered, result.Entities.Total, result.Configurable.Covered, result.Configurable.Total, result.Computed.Covered, result.Computed.Total)
@@ -134,7 +146,7 @@ func main() {
 				covered++
 			}
 		}
-		fmt.Fprintf(&text, "%s %s %s: exercised=%t attributes=%d/%d planned=%v completed=%v\n", t.Provider, t.Kind, t.Name, t.Exercised, covered, len(t.Attributes), sortedKeys(t.Planned), sortedKeys(t.Completed))
+		fmt.Fprintf(&text, "%s %s %s: exercised=%t attributes=%d/%d planned=%v completed=%v\n", t.Provider, t.Kind, t.Name, t.Exercised, covered, len(t.Attributes), slices.Sorted(maps.Keys(t.Planned)), slices.Sorted(maps.Keys(t.Completed)))
 		for _, a := range t.Attributes {
 			if !a.Covered {
 				fmt.Fprintf(&text, "  uncovered %s (needs %s)\n", a.Path, strings.Join(a.missing(), ", "))
@@ -145,11 +157,12 @@ func main() {
 		fmt.Fprintf(&text, "warning: %s\n", w)
 	}
 	if err = os.WriteFile(*textOut, []byte(text.String()), 0600); err != nil {
-		die(err)
+		return err
 	}
 	fmt.Printf("read %d step findings; wrote %s and %s\n", len(items), *jsonOut, *textOut)
+	return nil
 }
-func die(err error) { fmt.Fprintln(os.Stderr, err); os.Exit(1) }
+
 func readFindings(dir string) ([]semanticcoverage.Finding, error) {
 	var items []semanticcoverage.Finding
 	err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
@@ -191,47 +204,39 @@ func readFindings(dir string) ([]semanticcoverage.Finding, error) {
 	})
 	return items, err
 }
-func sortedKeys[V any](m map[string]V) []string {
-	result := make([]string, 0, len(m))
-	for k := range m {
-		result = append(result, k)
-	}
-	sort.Strings(result)
-	return result
-}
 
 func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) output {
 	result := output{Version: 1, AttributeScope: "top_level", Findings: len(items)}
-	for _, address := range sortedKeys(doc.Schemas) {
+	for _, address := range slices.Sorted(maps.Keys(doc.Schemas)) {
 		p := doc.Schemas[address]
 		if p.ConfigSchema != nil {
 			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindProvider, "", p.ConfigSchema.Block))
 		}
-		for _, name := range sortedKeys(p.ResourceSchemas) {
+		for _, name := range slices.Sorted(maps.Keys(p.ResourceSchemas)) {
 			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindResource, name, p.ResourceSchemas[name].Block))
 		}
-		for _, name := range sortedKeys(p.DataSourceSchemas) {
+		for _, name := range slices.Sorted(maps.Keys(p.DataSourceSchemas)) {
 			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindDataSource, name, p.DataSourceSchemas[name].Block))
 		}
-		for _, name := range sortedKeys(p.EphemeralResourceSchemas) {
+		for _, name := range slices.Sorted(maps.Keys(p.EphemeralResourceSchemas)) {
 			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindEphemeralResource, name, p.EphemeralResourceSchemas[name].Block))
 		}
-		for _, name := range sortedKeys(p.ListResourceSchemas) {
+		for _, name := range slices.Sorted(maps.Keys(p.ListResourceSchemas)) {
 			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindListResource, name, p.ListResourceSchemas[name].Block))
 		}
-		for _, name := range sortedKeys(p.ActionSchemas) {
+		for _, name := range slices.Sorted(maps.Keys(p.ActionSchemas)) {
 			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindAction, name, p.ActionSchemas[name].Block))
 		}
-		for _, name := range sortedKeys(p.StateStoreSchemas) {
+		for _, name := range slices.Sorted(maps.Keys(p.StateStoreSchemas)) {
 			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindStateStore, name, p.StateStoreSchemas[name].Block))
 		}
 		// Identity attributes are only observed in state and have no
 		// configurable/computed distinction (only required/optional for
 		// import), so they don't fit either attribute total and are left out.
-		for _, name := range sortedKeys(p.ResourceIdentitySchemas) {
+		for _, name := range slices.Sorted(maps.Keys(p.ResourceIdentitySchemas)) {
 			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindIdentity, name, nil))
 		}
-		for _, name := range sortedKeys(p.Functions) {
+		for _, name := range slices.Sorted(maps.Keys(p.Functions)) {
 			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindFunction, name, nil))
 		}
 	}
@@ -340,11 +345,14 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 			a.Covered = len(a.missing()) == 0
 		}
 	}
-	sort.Slice(result.Targets, func(i, j int) bool {
-		a, b := result.Targets[i], result.Targets[j]
-		return a.Provider+string(a.Kind)+a.Name < b.Provider+string(b.Kind)+b.Name
+	slices.SortFunc(result.Targets, func(a, b *target) int {
+		return cmp.Or(
+			cmp.Compare(a.Provider, b.Provider),
+			cmp.Compare(a.Kind, b.Kind),
+			cmp.Compare(a.Name, b.Name),
+		)
 	})
-	sort.Strings(result.Warnings)
+	slices.Sort(result.Warnings)
 	return result
 }
 
