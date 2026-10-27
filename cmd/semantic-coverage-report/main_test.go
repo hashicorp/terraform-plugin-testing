@@ -20,7 +20,7 @@ func TestAggregateKeepsLifecycleAndAttributeEvidenceDistinct(t *testing.T) {
 
 	doc := parseSchema(t, exampleSchema)
 	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Address: "example_item.test", Inputs: []string{"name"}, Planned: []string{"create"}}}}, {Version: 1, Test: "TestExample", Step: 2, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Address: "example_item.test", Known: []string{"id"}, Completed: []string{"apply", "create"}}}}})
-	if result.Inputs.Covered != 1 || result.Computed.Covered != 1 {
+	if result.Configurable.Covered != 1 || result.Computed.Covered != 1 {
 		t.Fatalf("coverage: %+v", result)
 	}
 	target := result.Targets[0]
@@ -34,8 +34,8 @@ func TestExpectedErrorDoesNotClaimCompletedOperationOrComputedOutput(t *testing.
 
 	doc := parseSchema(t, exampleSchema)
 	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeExpectedError, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Inputs: []string{"name"}, Known: []string{"id"}, Planned: []string{"create"}, Completed: []string{"apply", "create"}}}}})
-	if result.Inputs.Covered != 1 || result.Computed.Covered != 0 {
-		t.Fatalf("input/computed coverage: %+v", result)
+	if result.Configurable.Covered != 1 || result.Computed.Covered != 0 {
+		t.Fatalf("configurable/computed coverage: %+v", result)
 	}
 	target := result.Targets[0]
 	if len(target.Planned["create"]) != 1 || len(target.Completed) != 0 {
@@ -52,7 +52,7 @@ func TestAggregateMergesFindingsForTheSameStep(t *testing.T) {
 		{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeFailed, Features: []semanticcoverage.Feature{feature}},
 		{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{feature}},
 	})
-	if result.Inputs.Covered != 1 || result.Computed.Covered != 1 || !result.Targets[0].Exercised {
+	if result.Configurable.Covered != 1 || result.Computed.Covered != 1 || !result.Targets[0].Exercised {
 		t.Fatalf("a failed finding must not cancel another finding's coverage: %+v", result)
 	}
 }
@@ -85,25 +85,46 @@ func TestTargetMatches(t *testing.T) {
 	}
 }
 
-func TestAggregateRecordsHowOptionalComputedAttributesAreCovered(t *testing.T) {
+const optionalComputedSchema = `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {"attributes": {
+	"tags": {"type": "string", "optional": true, "computed": true}
+}}}}}}}`
+
+func TestAggregateNeedsOptionalComputedAttributesSetAndUnset(t *testing.T) {
 	t.Parallel()
 
-	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {"attributes": {
-		"tags": {"type": "string", "optional": true, "computed": true}
-	}}}}}}}`)
-	result := aggregate(doc, []semanticcoverage.Finding{
-		{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Known: []string{"tags"}}}},
-		{Version: 1, Test: "TestExample", Step: 2, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Inputs: []string{"tags"}}}},
-	})
-	if result.Inputs != (metric{Covered: 1, Total: 1}) || result.Computed != (metric{}) {
-		t.Fatalf("optional-computed attributes count as inputs: inputs=%+v computed=%+v", result.Inputs, result.Computed)
+	doc := parseSchema(t, optionalComputedSchema)
+	unset := semanticcoverage.Finding{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Address: "example_item.test", Known: []string{"tags"}}}}
+	set := semanticcoverage.Finding{Version: 1, Test: "TestExample", Step: 2, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Address: "example_item.test", Inputs: []string{"tags"}, Known: []string{"tags"}}}}
+
+	result := aggregate(doc, []semanticcoverage.Finding{unset, set})
+	if result.Configurable != (metric{Covered: 1, Total: 1}) || result.Computed != (metric{Covered: 1, Total: 1}) {
+		t.Fatalf("configurable=%+v computed=%+v, want both 1/1", result.Configurable, result.Computed)
 	}
-	var kinds []string
-	for _, e := range result.Targets[0].Attributes[0].Evidence {
-		kinds = append(kinds, e.Kind)
+	if a := result.Targets[0].Attributes[0]; !a.Covered {
+		t.Fatalf("attribute should be covered: %+v", a)
 	}
-	if strings.Join(kinds, ",") != "state_known,configured" {
-		t.Fatalf("evidence kinds = %v, want [state_known configured]", kinds)
+
+	result = aggregate(doc, []semanticcoverage.Finding{set})
+	if result.Configurable != (metric{Covered: 1, Total: 1}) || result.Computed != (metric{Total: 1}) {
+		t.Fatalf("a configured value echoed into state is not computed: configurable=%+v computed=%+v", result.Configurable, result.Computed)
+	}
+	if a := result.Targets[0].Attributes[0]; a.Covered || strings.Join(a.missing(), ",") != "state_known" {
+		t.Fatalf("attribute should only miss state_known: %+v", a)
+	}
+}
+
+func TestAggregateIgnoresStateOfTypesConfiguredInTheSameStep(t *testing.T) {
+	t.Parallel()
+
+	// With count or for_each, the configured address has no instance key and
+	// the state address has one, so they are different features.
+	doc := parseSchema(t, optionalComputedSchema)
+	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{
+		{Kind: semanticcoverage.KindResource, Name: "example_item", Address: "example_item.test", Inputs: []string{"tags"}},
+		{Kind: semanticcoverage.KindResource, Name: "example_item", Address: "example_item.test[*]", Known: []string{"tags"}},
+	}}})
+	if result.Computed.Covered != 0 {
+		t.Fatalf("computed = %+v, want no coverage", result.Computed)
 	}
 }
 
@@ -145,8 +166,8 @@ func TestAggregateReadsActionsAndLeavesIdentityOutOfAttributeTotals(t *testing.T
 		{Kind: semanticcoverage.KindAction, Name: "example_action", Inputs: []string{"message"}},
 		{Kind: semanticcoverage.KindIdentity, Name: "example_item", Known: []string{"id"}},
 	}}})
-	if result.Inputs != (metric{Covered: 1, Total: 1}) || result.Computed != (metric{}) {
-		t.Fatalf("inputs=%+v computed=%+v", result.Inputs, result.Computed)
+	if result.Configurable != (metric{Covered: 1, Total: 1}) || result.Computed != (metric{}) {
+		t.Fatalf("configurable=%+v computed=%+v", result.Configurable, result.Computed)
 	}
 	kinds := map[semanticcoverage.Kind]*target{}
 	for _, target := range result.Targets {
@@ -182,8 +203,8 @@ func TestAggregateExcludesNestedAttributesFromCoverageTotals(t *testing.T) {
 	if result.AttributeScope != "top_level" {
 		t.Fatalf("attribute scope = %q, want top_level", result.AttributeScope)
 	}
-	if result.Inputs.Covered != 1 || result.Inputs.Total != 2 {
-		t.Fatalf("input coverage should include only settings and connection: %+v", result.Inputs)
+	if result.Configurable.Covered != 1 || result.Configurable.Total != 2 {
+		t.Fatalf("configurable coverage should include only settings and connection: %+v", result.Configurable)
 	}
 	if result.Computed.Covered != 1 || result.Computed.Total != 1 {
 		t.Fatalf("computed coverage should include only id: %+v", result.Computed)

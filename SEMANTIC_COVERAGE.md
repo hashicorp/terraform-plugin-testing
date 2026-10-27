@@ -46,13 +46,19 @@ additional Terraform commands are run.
 
 ## Evidence model
 
-- An input is covered when a completed or expected-error step configures its
-  schema attribute in HCL or Terraform JSON configuration. The collector reads
-  generated `Config` strings, `ConfigFile`, and `ConfigDirectory` at runtime.
-- A computed attribute is covered when a completed step's resulting state has
-  a non-null value for that attribute. Only top-level state attribute names are
-  read: deeper maps can contain user-provided keys. Optional-computed attributes
-  can be covered by either input or state evidence.
+- A configurable attribute (required, optional, or a block) is covered when a
+  completed or expected-error step configures it in HCL or Terraform JSON
+  configuration. The collector reads generated `Config` strings, `ConfigFile`,
+  and `ConfigDirectory` at runtime.
+- A computed attribute is covered when a successful step's resulting state has
+  a non-null value for it that the step didn't configure. Only top-level state
+  attribute names are read: deeper maps can contain user-provided keys.
+- Optional-computed attributes count in both the configurable and the computed
+  total, because both behaviours need a test: one step that sets the attribute
+  and one that leaves it to the provider. Configuration and state can't be
+  paired per instance (`count`, `for_each`, modules), so state evidence for
+  such an attribute only counts in a step where no resource of the same type
+  configures it.
 - Resource actions in saved plans are **planned** evidence. **Completed**
   create, update, replace, delete, or no-op requires a successful apply of the
   matching pre-apply plan. `PlanOnly` never contributes completed apply
@@ -104,8 +110,8 @@ provider selection as the test run.
   nested schema names from user map keys. Deprecated attributes are not
   counted.
 - Resource identity attributes are not counted. They are only observed in
-  state and have no input/computed distinction (only required/optional for
-  import).
+  state and have no configurable/computed distinction (only required/optional
+  for import).
 - Modules referenced from external sources may be visible in plan actions or
   state, but not in the locally copied configuration files.
 - Provider blocks and provider-defined function calls name a provider by its
@@ -119,6 +125,8 @@ provider selection as the test run.
 ## Example result
 
 Against `terraform-provider-local` (excluding the download-dependent upgrade
-tests), 80 step findings yielded 9/9 active feature entities, 29/29 input
-attributes, and 35/38 computed attributes. The three uncovered computed
-attributes were ephemeral-resource outputs.
+tests), 58 step findings yielded 9/9 active feature entities, 29/29
+configurable attributes, and 39/42 computed attributes. The four
+optional-computed permission attributes count in both totals and were covered
+both set and unset. The three uncovered computed attributes were
+ephemeral-resource outputs.

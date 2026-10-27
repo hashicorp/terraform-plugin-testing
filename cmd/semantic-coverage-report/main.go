@@ -31,25 +31,34 @@ type evidence struct {
 }
 type attributeResult struct {
 	Path string `json:"path"`
-	// Configurable attributes can be covered by configuration: required or
-	// optional attributes, and blocks.
+	// Configurable attributes are covered by configuration ("configured"
+	// evidence): required or optional attributes, and blocks.
 	Configurable bool `json:"configurable"`
-	// Computed attributes can be covered by a known value in state.
-	Computed bool       `json:"computed"`
+	// Computed attributes are covered by a known value in state that the
+	// step didn't configure ("state_known" evidence). Optional-computed
+	// attributes are both, and need both: one test that sets them and one
+	// that leaves them to the provider.
+	Computed bool `json:"computed"`
+	// Covered reports whether every side of the attribute has evidence.
 	Covered  bool       `json:"covered"`
 	Evidence []evidence `json:"evidence,omitempty"`
 }
 
-// coveredBy names the evidence kinds that can cover a.
-func (a attributeResult) coveredBy() string {
-	switch {
-	case a.Configurable && a.Computed:
-		return "configured or state_known"
-	case a.Computed:
-		return "state_known"
-	default:
-		return "configured"
+// has reports whether a has evidence of the given kind.
+func (a attributeResult) has(kind string) bool {
+	return slices.ContainsFunc(a.Evidence, func(e evidence) bool { return e.Kind == kind })
+}
+
+// missing returns the evidence kinds that a still needs to be covered.
+func (a attributeResult) missing() []string {
+	var kinds []string
+	if a.Configurable && !a.has("configured") {
+		kinds = append(kinds, "configured")
 	}
+	if a.Computed && !a.has("state_known") {
+		kinds = append(kinds, "state_known")
+	}
+	return kinds
 }
 
 type target struct {
@@ -67,14 +76,17 @@ type metric struct {
 	Total   int `json:"total"`
 }
 type output struct {
-	Version        int       `json:"version"`
-	AttributeScope string    `json:"attribute_scope"`
-	Findings       int       `json:"findings"`
-	Entities       metric    `json:"entities"`
-	Inputs         metric    `json:"inputs"`
-	Computed       metric    `json:"computed"`
-	Targets        []*target `json:"targets"`
-	Warnings       []string  `json:"warnings,omitempty"`
+	Version        int    `json:"version"`
+	AttributeScope string `json:"attribute_scope"`
+	Findings       int    `json:"findings"`
+	Entities       metric `json:"entities"`
+	// Configurable counts configurable attributes covered by configuration.
+	Configurable metric `json:"configurable"`
+	// Computed counts computed attributes covered by a provider-computed
+	// state value. Optional-computed attributes count in both totals.
+	Computed metric    `json:"computed"`
+	Targets  []*target `json:"targets"`
+	Warnings []string  `json:"warnings,omitempty"`
 }
 
 func main() {
@@ -114,7 +126,7 @@ func main() {
 		die(err)
 	}
 	var text strings.Builder
-	fmt.Fprintf(&text, "Test-derived semantic coverage: %d steps\nAttribute scope: top-level schema attributes and blocks only; nested descendants are excluded.\nEntities %d/%d; inputs %d/%d; computed %d/%d\n", result.Findings, result.Entities.Covered, result.Entities.Total, result.Inputs.Covered, result.Inputs.Total, result.Computed.Covered, result.Computed.Total)
+	fmt.Fprintf(&text, "Test-derived semantic coverage: %d steps\nAttribute scope: top-level schema attributes and blocks only; nested descendants are excluded.\nEntities %d/%d; configurable %d/%d; computed %d/%d\n", result.Findings, result.Entities.Covered, result.Entities.Total, result.Configurable.Covered, result.Configurable.Total, result.Computed.Covered, result.Computed.Total)
 	for _, t := range result.Targets {
 		covered := 0
 		for _, a := range t.Attributes {
@@ -125,7 +137,7 @@ func main() {
 		fmt.Fprintf(&text, "%s %s %s: exercised=%t attributes=%d/%d planned=%v completed=%v\n", t.Provider, t.Kind, t.Name, t.Exercised, covered, len(t.Attributes), sortedKeys(t.Planned), sortedKeys(t.Completed))
 		for _, a := range t.Attributes {
 			if !a.Covered {
-				fmt.Fprintf(&text, "  uncovered %s (%s)\n", a.Path, a.coveredBy())
+				fmt.Fprintf(&text, "  uncovered %s (needs %s)\n", a.Path, strings.Join(a.missing(), ", "))
 			}
 		}
 	}
@@ -214,8 +226,8 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindStateStore, name, p.StateStoreSchemas[name].Block))
 		}
 		// Identity attributes are only observed in state and have no
-		// input/computed distinction (only required/optional for import),
-		// so they don't fit either attribute total and are left out.
+		// configurable/computed distinction (only required/optional for
+		// import), so they don't fit either attribute total and are left out.
 		for _, name := range sortedKeys(p.ResourceIdentitySchemas) {
 			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindIdentity, name, nil))
 		}
@@ -235,6 +247,14 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 			result.Warnings = append(result.Warnings, fmt.Sprintf("%s step %d failed; evidence excluded from coverage", item.Test, item.Step))
 			continue
 		}
+		// Match every feature first, so that the step's configured attributes
+		// are known per target before any state evidence is recorded.
+		type match struct {
+			f semanticcoverage.Feature
+			t *target
+		}
+		var matched []match
+		configured := make(map[*target][]string)
 		for _, f := range item.Features {
 			var matches []*target
 			for _, t := range result.Targets {
@@ -252,7 +272,11 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 				}
 				continue
 			}
-			t := matches[0]
+			matched = append(matched, match{f, matches[0]})
+			configured[matches[0]] = append(configured[matches[0]], f.Inputs...)
+		}
+		for _, m := range matched {
+			f, t := m.f, m.t
 			ref := evidence{Package: item.Package, Test: item.Test, Step: item.Step, Address: f.Address, Kind: "configured"}
 			if len(f.Inputs) > 0 || len(f.Known) > 0 || len(f.Planned) > 0 || len(f.Completed) > 0 || f.Kind == semanticcoverage.KindFunction || f.Kind == semanticcoverage.KindIdentity {
 				t.Evidence = append(t.Evidence, ref)
@@ -276,11 +300,15 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 			for i := range t.Attributes {
 				a := &t.Attributes[i]
 				if a.Configurable && slices.Contains(f.Inputs, a.Path) {
-					a.Covered = true
 					a.Evidence = append(a.Evidence, ref)
 				}
-				if a.Computed && success && slices.Contains(f.Known, a.Path) {
-					a.Covered = true
+				// A configured value is echoed back into state, so a known
+				// value only shows that the provider computed it if the step
+				// didn't configure the attribute. Instances in a step can't be
+				// paired reliably between configuration and state (count,
+				// for_each, modules), so any configuration of the type in the
+				// step rules it out.
+				if a.Computed && success && slices.Contains(f.Known, a.Path) && !slices.Contains(configured[t], a.Path) {
 					e := ref
 					e.Kind = "state_known"
 					a.Evidence = append(a.Evidence, e)
@@ -295,15 +323,21 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 				result.Entities.Covered++
 			}
 		}
-		for _, a := range t.Attributes {
-			m := &result.Inputs
-			if !a.Configurable {
-				m = &result.Computed
+		for i := range t.Attributes {
+			a := &t.Attributes[i]
+			if a.Configurable {
+				result.Configurable.Total++
+				if a.has("configured") {
+					result.Configurable.Covered++
+				}
 			}
-			m.Total++
-			if a.Covered {
-				m.Covered++
+			if a.Computed {
+				result.Computed.Total++
+				if a.has("state_known") {
+					result.Computed.Covered++
+				}
 			}
+			a.Covered = len(a.missing()) == 0
 		}
 	}
 	sort.Slice(result.Targets, func(i, j int) bool {
