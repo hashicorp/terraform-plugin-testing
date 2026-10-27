@@ -4,129 +4,129 @@
 package semanticcoverage
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	tfjson "github.com/hashicorp/terraform-json"
 )
 
-func TestCollectorKeepsOnlyMetadataAndSeparatesPlansFromApply(t *testing.T) {
-	dir := t.TempDir()
-	t.Setenv(EnvDirectory, dir)
+func TestFinishWritesTheOutcome(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		expectError, failed bool
+		want                Outcome
+	}{
+		"passed":                     {want: OutcomeSuccess},
+		"passed with ExpectError":    {expectError: true, want: OutcomeExpectedError},
+		"failed":                     {failed: true, want: OutcomeFailed},
+		"failed despite ExpectError": {expectError: true, failed: true, want: OutcomeFailed},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			c := testCollector(t)
+			if err := c.BeginStep(1, test.expectError).Finish(test.failed); err != nil {
+				t.Fatal(err)
+			}
+			if got := writtenFindings(t, c)[0].Outcome; got != test.want {
+				t.Errorf("outcome = %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
+func TestFindingIdentifiesTheStep(t *testing.T) {
+	t.Setenv(EnvDirectory, t.TempDir())
+
 	c, err := New("TestExample")
 	if err != nil {
 		t.Fatal(err)
 	}
-	c.BeginStep(1)
-	c.observeConfigFile("test.tf", []byte(`resource "example_item" "test" { token = "secret-configuration" }`))
-	plan := &tfjson.Plan{ResourceChanges: []*tfjson.ResourceChange{{Address: `example_item.test["secret-instance-key"]`, Type: "example_item", Mode: tfjson.ManagedResourceMode, Change: &tfjson.Change{Actions: tfjson.Actions{tfjson.ActionCreate}}}}}
-	c.ObservePlan(plan)
-	c.PreApplyPlan(plan)
-	resource := &tfjson.StateResource{Address: `example_item.test["secret-instance-key"]`, Type: "example_item", Mode: tfjson.ManagedResourceMode, AttributeValues: map[string]any{"id": "secret-value", "token": "secret-value", "map": map[string]any{"secret-map-key": "secret-value"}}}
-	c.ObserveState(&tfjson.State{Values: &tfjson.StateValues{RootModule: &tfjson.StateModule{Resources: []*tfjson.StateResource{resource}}}})
-	c.ApplyCompleted(false)
-	if err := c.FinishStep(OutcomeSuccess); err != nil {
+	if err := c.BeginStep(2, false).Finish(false); err != nil {
 		t.Fatal(err)
 	}
-	entries, err := os.ReadDir(dir)
-	if err != nil {
+	want := Finding{
+		Version: FindingVersion,
+		// The full import path keeps same-named tests in packages with the
+		// same directory name apart.
+		Package: "github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage",
+		Test:    "TestExample",
+		Step:    2,
+		Outcome: OutcomeSuccess,
+	}
+	if diff := cmp.Diff([]Finding{want}, writtenFindings(t, c)); diff != "" {
+		t.Errorf("findings mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestOnlyFinishedStepsWriteFindings(t *testing.T) {
+	t.Parallel()
+
+	c := testCollector(t)
+	skipped := c.BeginStep(1, false)
+	skipped.ObserveState(state(resource("example_item", map[string]any{"id": "x"})))
+	if err := c.BeginStep(2, false).Finish(false); err != nil {
 		t.Fatal(err)
 	}
-	if len(entries) != 1 {
-		t.Fatalf("got %d findings", len(entries))
+	findings := writtenFindings(t, c)
+	if len(findings) != 1 || findings[0].Step != 2 || len(findings[0].Features) != 0 {
+		t.Fatalf("findings = %+v, want only an empty step 2", findings)
 	}
-	data, err := os.ReadFile(filepath.Join(dir, entries[0].Name()))
-	if err != nil {
+}
+
+func TestFindingKeepsNoValues(t *testing.T) {
+	t.Parallel()
+
+	c := testCollector(t)
+	s := c.BeginStep(1, false)
+	s.ObserveConfigDir(configDir(t, `
+resource "example_item" "secret_name" {
+  token = "secret-configuration"
+}
+`))
+	p := plan(itemChange(tfjson.ActionCreate))
+	p.ResourceChanges[0].Address = `example_item.secret_name["secret-instance-key"]`
+	p.ResourceChanges[0].Change.After = map[string]any{"token": "secret-planned-value"}
+	s.ObservePlan(p)
+	r := resource("example_item", map[string]any{"token": "secret-value", "map": map[string]any{"secret-map-key": "secret-value"}})
+	r.Address = `example_item.secret_name["secret-instance-key"]`
+	s.ObserveState(state(r))
+	if err := s.Finish(false); err != nil {
 		t.Fatal(err)
 	}
-	for _, s := range []string{"secret-configuration", "secret-instance-key", "secret-map-key", "secret-value"} {
-		if strings.Contains(string(data), s) {
-			t.Errorf("finding persisted test value %q", s)
+	data := writtenFiles(t, c)[0]
+	for _, secret := range []string{"secret-configuration", "secret_name", "secret-instance-key", "secret-planned-value", "secret-map-key", "secret-value"} {
+		if strings.Contains(string(data), secret) {
+			t.Errorf("finding persisted %q: %s", secret, data)
 		}
 	}
-	for _, s := range []string{`"planned":["create"]`, `"completed":["apply","create"]`, `"known":["id","map","token"]`} {
-		if !strings.Contains(string(data), s) {
-			t.Errorf("missing %s in %s", s, data)
-		}
-	}
 }
 
-func TestFinishWritesOneFindingPerStep(t *testing.T) {
-	dir := t.TempDir()
-	t.Setenv(EnvDirectory, dir)
-	c, err := New("TestExample")
-	if err != nil {
-		t.Fatal(err)
-	}
-	c.BeginStep(1)
-	c.observeConfigFile("test.tf", []byte(`resource "example_item" "test" { name = "first" }`))
-	if err := c.FinishStep(OutcomeSuccess); err != nil {
-		t.Fatal(err)
-	}
-	// No active step: the end-of-test FinishStep must not write again.
-	if err := c.FinishStep(OutcomeSuccess); err != nil {
-		t.Fatal(err)
-	}
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(entries) != 1 {
-		t.Fatalf("got %d findings", len(entries))
-	}
-	data, err := os.ReadFile(filepath.Join(dir, entries[0].Name()))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(string(data), `"step":1`) || strings.Contains(string(data), "first") {
-		t.Fatalf("unexpected finding: %s", data)
-	}
-	// The full import path keeps same-named tests in packages with the same
-	// directory name apart.
-	if !strings.Contains(string(data), `"package":"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"`) {
-		t.Fatalf("finding lacks package import path: %s", data)
-	}
-}
+func TestDisabledCollectionDoesNothing(t *testing.T) {
+	t.Parallel()
 
-func TestDiscardStepWritesNoFinding(t *testing.T) {
-	dir := t.TempDir()
-	t.Setenv(EnvDirectory, dir)
-	c, err := New("TestExample")
-	if err != nil {
+	var c *Collector
+	s := c.BeginStep(1, false)
+	if s.Enabled() {
+		t.Fatal("step of a nil collector is enabled")
+	}
+	s.ObserveConfigDir(t.TempDir())
+	s.ObserveQueryConfig("missing.tfquery.hcl")
+	s.ObservePlan(nil)
+	s.ApplyCompleted(nil)
+	s.ObserveState(nil)
+	s.ImportCompleted(nil, "")
+	s.RefreshCompleted()
+	s.QueryCompleted()
+	if err := s.Finish(true); err != nil {
 		t.Fatal(err)
 	}
-	c.BeginStep(1)
-	c.observeConfigFile("test.tf", []byte(`resource "example_item" "test" {}`))
-	c.DiscardStep()
-	// The discarded step is no longer active, so finishing it is a no-op.
-	if err := c.FinishStep(OutcomeSuccess); err != nil {
-		t.Fatal(err)
-	}
-	c.BeginStep(2)
-	if err := c.FinishStep(OutcomeSuccess); err != nil {
-		t.Fatal(err)
-	}
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(entries) != 1 {
-		t.Fatalf("got %d findings", len(entries))
-	}
-	data, err := os.ReadFile(filepath.Join(dir, entries[0].Name()))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(string(data), `"step":2`) {
-		t.Fatalf("unexpected finding: %s", data)
-	}
-}
-
-func contains(values set[string], wanted string) bool {
-	_, ok := values[wanted]
-	return ok
 }
 
 func TestNewFailsEarlyForUnusableDirectory(t *testing.T) {
@@ -141,5 +141,114 @@ func TestNewFailsEarlyForUnusableDirectory(t *testing.T) {
 	t.Setenv(EnvDirectory, "")
 	if c, err := New("TestExample"); err != nil || c != nil {
 		t.Fatalf("disabled: collector=%v err=%v", c, err)
+	}
+}
+
+// testCollector returns a collector that writes to a new directory.
+func testCollector(t *testing.T) *Collector {
+	t.Helper()
+
+	return &Collector{directory: t.TempDir(), testName: "TestExample"}
+}
+
+// stepFinding records evidence in step 1 with record and returns the finding
+// that the step writes.
+func stepFinding(t *testing.T, record func(s *Step)) Finding {
+	t.Helper()
+
+	c := testCollector(t)
+	s := c.BeginStep(1, false)
+	record(s)
+	if err := s.Finish(false); err != nil {
+		t.Fatal(err)
+	}
+	findings := writtenFindings(t, c)
+	if len(findings) != 1 {
+		t.Fatalf("got %d findings, want 1", len(findings))
+	}
+	return findings[0]
+}
+
+func writtenFindings(t *testing.T, c *Collector) []Finding {
+	t.Helper()
+
+	var findings []Finding
+	for _, data := range writtenFiles(t, c) {
+		var f Finding
+		if err := json.Unmarshal(data, &f); err != nil {
+			t.Fatal(err)
+		}
+		findings = append(findings, f)
+	}
+	return findings
+}
+
+func writtenFiles(t *testing.T, c *Collector) [][]byte {
+	t.Helper()
+
+	entries, err := os.ReadDir(c.directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var files [][]byte
+	for _, entry := range entries {
+		data, err := os.ReadFile(filepath.Join(c.directory, entry.Name()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		files = append(files, data)
+	}
+	return files
+}
+
+// configDir returns a directory with main.tf containing config.
+func configDir(t *testing.T, config string) string {
+	t.Helper()
+
+	return configFiles(t, map[string]string{"main.tf": config})
+}
+
+// configFiles returns a directory with the given files.
+func configFiles(t *testing.T, files map[string]string) string {
+	t.Helper()
+
+	dir := t.TempDir()
+	for name, content := range files {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return dir
+}
+
+const exampleProvider = "registry.terraform.io/hashicorp/example"
+
+func plan(changes ...*tfjson.ResourceChange) *tfjson.Plan {
+	return &tfjson.Plan{ResourceChanges: changes}
+}
+
+// itemChange returns a change of the managed resource example_item.test.
+func itemChange(actions ...tfjson.Action) *tfjson.ResourceChange {
+	return &tfjson.ResourceChange{
+		Address:      "example_item.test",
+		Type:         "example_item",
+		Mode:         tfjson.ManagedResourceMode,
+		ProviderName: exampleProvider,
+		Change:       &tfjson.Change{Actions: actions},
+	}
+}
+
+func state(resources ...*tfjson.StateResource) *tfjson.State {
+	return &tfjson.State{Values: &tfjson.StateValues{RootModule: &tfjson.StateModule{Resources: resources}}}
+}
+
+// resource returns the managed resource typ.test with the given values.
+func resource(typ string, values map[string]any) *tfjson.StateResource {
+	return &tfjson.StateResource{
+		Address:         typ + ".test",
+		Type:            typ,
+		Mode:            tfjson.ManagedResourceMode,
+		ProviderName:    exampleProvider,
+		AttributeValues: values,
 	}
 }

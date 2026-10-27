@@ -6,8 +6,8 @@
 Semantic coverage reports which parts of a provider's schema the acceptance
 tests actually exercise: which resources, data sources, ephemeral resources,
 list resources, actions, state stores, and functions are used, which of their
-attributes are configured or populated, and which lifecycle operations were
-planned or completed.
+attributes are configured or populated, and which operations were planned or
+completed.
 
 It is derived from the tests themselves. While enabled, the test harness
 observes each `TestStep`: it reads the configuration copied into the step's
@@ -20,8 +20,8 @@ working directory and inspects Terraform plans and post-operation state. The
 Collection is opt-in. Set `TF_ACC_SEMANTIC_COVERAGE_DIR` to a directory when
 running acceptance tests; one JSON finding is written per executed test step.
 Use an empty directory per run, because the report reads every JSON file under
-it and combines all findings: a schema element is covered if any finding covers
-it. Findings from other runs would therefore count as coverage of this one.
+it and combines all findings: a feature or attribute is covered if any finding
+covers it. Findings from other runs would therefore count as coverage of this one.
 Running tests repeatedly within one run (`go test -count=N` with N > 1) is not
 supported. Re-run the tests after upgrading terraform-plugin-testing, because
 the report rejects findings written by an incompatible version.
@@ -46,56 +46,70 @@ additional Terraform commands are run.
 
 ## Evidence model
 
-- A configurable attribute (required, optional, or a block) is covered when a
-  completed or expected-error step configures it in HCL configuration. The
-  collector reads generated `Config` strings, `ConfigFile`, and
-  `ConfigDirectory` at runtime.
-- A computed attribute is covered when a successful step's resulting state has
-  a non-null value for it that the step didn't configure. Only top-level state
-  attribute names are read: deeper maps can contain user-provided keys.
-- Optional-computed attributes count in both the configurable and the computed
-  total, because both behaviours need a test: one step that sets the attribute
-  and one that leaves it to the provider. Configuration and state can't be
-  paired per instance (`count`, `for_each`, modules), so state evidence for
-  such an attribute only counts in a step where no resource of the same type
-  configures it.
-- Resource actions in saved plans are **planned** evidence. **Completed**
-  create, update, replace, delete, or no-op requires a successful apply of the
-  matching pre-apply plan. `PlanOnly` never contributes completed apply
-  evidence. Explicit `Destroy` steps can contribute completed destroy;
-  automatic cleanup does not. Command imports contribute completed import;
-  import-block tests that only plan contribute planned import.
-- Action invocations from plans and successful apply, list-resource query
-  results, provider-defined function references, and state-store step
-  completion are recorded where the test harness exposes them.
-- Each finding includes its test name, step number, and outcome
-  (`success`, `expected_error`, `failed`). A matched `ExpectError`
-  retains input and plan evidence but cannot claim a completed operation or
-  computed state value. Failed steps contribute no coverage. Skipped steps
-  write no finding.
-- A finding can carry warnings. Each warning means that one type of evidence
-  for the step may be incomplete:
+Each finding describes one test step: its test name, step number, and
+outcome, and the provider **features** (resources, data sources, ephemeral
+resources, list resources, actions, state stores, providers, and functions)
+that the step used. All uses of one feature type in a step are merged.
+
+- **Outcome.** `success` means the step passed. `expected_error` means it
+  failed with an error matching `ExpectError`. `failed` means the test failed
+  during the step. Skipped steps write no finding.
+- **Configured** attributes are the top-level attributes and blocks that the
+  step's HCL configuration sets. The collector reads generated `Config`
+  strings, `ConfigFile`, and `ConfigDirectory` at runtime. Configuration that
+  the test harness generates itself is not recorded.
+- **Populated** attributes are the top-level attributes with a non-null value
+  in the state that the step's apply, import, or refresh produced. Only
+  top-level state attribute names are read: deeper maps can contain
+  user-provided keys.
+- **Operations** are `create`, `update`, `replace`, `delete`, `read`,
+  `import`, `refresh`, `query`, and `invoke`. An operation is **planned** when
+  it appears in one of the step's plans, and **completed** when Terraform
+  performed it successfully: an applied plan, an import command, a refresh,
+  or a query. A no-op change has no operation. `PlanOnly` steps and
+  import-block tests that only plan contribute planned operations only.
+  Explicit `Destroy` steps complete `delete`; the automatic cleanup after the
+  test is not recorded.
+- A finding can carry warnings. Each warning means that one source of
+  evidence for the step was unavailable:
 
   | Warning | Meaning |
   |---|---|
-  | `config_unavailable` | Some configuration could not be read or parsed. Input and feature evidence may be missing. |
-  | `plan_unavailable` | A plan could not be read. Planned and completed operation evidence may be missing. |
-  | `state_unavailable` | The post-operation state could not be read. Known and null attribute evidence may be missing. |
+  | `config_unavailable` | Some configuration could not be read or parsed. Features and configured attributes may be missing. |
+  | `plan_unavailable` | A plan could not be read. Planned and completed operations may be missing. |
+  | `state_unavailable` | The state after an operation could not be read. Populated attributes may be missing. |
+
+## Coverage rules
+
+The report applies these rules to the findings:
+
+- Failed steps contribute no coverage.
+- A feature is **covered** when it appears in a finding that didn't fail.
+- A configurable attribute (required, optional, or a block) is covered when a
+  step that didn't fail configures it.
+- A computed attribute is covered when a successful step finds it populated
+  without configuring it. A configured value is echoed into state, and
+  configuration and state can't be paired per instance (`count`, `for_each`,
+  modules), so a step that configures the attribute on any feature of the
+  same type doesn't count.
+- Optional-computed attributes count in both the configurable and the computed
+  total, because both behaviours need a test: one step that sets the attribute
+  and one that leaves it to the provider.
+- A matched `ExpectError` keeps configured attributes and planned operations,
+  but can't claim completed operations or populated attributes.
 
 ## Privacy
 
 The collector does not persist configuration text, attribute values, plan or
-state JSON, query result values, or assertion matchers. Instance keys in
-resource addresses are replaced with `[*]`. It does persist provider and
-feature names, normalized resource addresses, schema attribute names,
-known/null classifications, operations, test names, and test package import
-paths.
+state JSON, query results, resource names, addresses, instance keys, or
+assertion matchers. It does persist provider and feature type names, schema
+attribute names, operations, test names, and test package import paths.
 Write findings to a trusted private directory.
 
 ## Report
 
-The report contains schema-backed entity and attribute totals, plus planned and
-completed operation lists with step references. Operation totals are
+The report contains schema-backed feature and attribute totals, plus planned
+and completed operation lists with step references. Operation totals are
 observations, not percentages, because the schema does not declare which
 lifecycle cases apply to a feature. The schema document must describe the same
 provider selection as the test run.
@@ -103,8 +117,8 @@ provider selection as the test run.
 ## Current limits
 
 - Ephemeral-resource and function results are not stored in Terraform state,
-  so their use and inputs are identified but their computed outputs are not
-  covered.
+  so their use and configured attributes are identified, but their computed
+  outputs are not covered.
 - Attribute totals include only top-level schema attributes and blocks. Nested
   attributes are not counted until a schema-aware walker can distinguish
   nested schema names from user map keys.
@@ -121,14 +135,19 @@ provider selection as the test run.
   provider's source address. If `required_providers` gives a provider a
   different local name (for example `mycloud = { source = "hashicorp/aws" }`),
   that evidence is not attributed to the provider.
-- Each plan observed while collecting costs one additional `terraform show`,
-  and each completed apply one additional state read.
+- The query file of a `Query` step stays in the working directory, so later
+  steps in the same test also record its list resources and their configured
+  attributes.
+- Each apply costs one additional `terraform show` for the plan and one for
+  the resulting state while collecting.
 
 ## Example result
 
-Against `terraform-provider-local` (excluding the download-dependent upgrade
-tests), 58 step findings yielded 9/9 active feature entities, 30/30
-configurable attributes, and 39/42 computed attributes. The four
+Against `terraform-provider-local` at commit `b3d30fe` (excluding the
+download-dependent upgrade tests), 58 findings yielded 9/9 covered features,
+30/30 configurable attributes, and 39/42 computed attributes. The four
 optional-computed permission attributes count in both totals and were covered
 both set and unset. The three uncovered computed attributes were
-ephemeral-resource outputs.
+ephemeral-resource outputs. Completed operations were `create` and `replace`
+for both file resources, `read` for the `local_command` data source, and
+`invoke` for the `local_command` action.

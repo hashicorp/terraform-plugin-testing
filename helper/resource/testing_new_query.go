@@ -42,9 +42,7 @@ func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDi
 	if err != nil {
 		return err
 	}
-	err = query.RunQueryChecks(ctx, t, queryOut, step.QueryResultChecks)
-	if err == nil {
-		coverage.QueryResults(queryOut)
-	}
-	return err
+	coverage.QueryCompleted()
+
+	return query.RunQueryChecks(ctx, t, queryOut, step.QueryResultChecks)
 }

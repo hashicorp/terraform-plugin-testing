@@ -7,7 +7,6 @@ import (
 	"cmp"
 	"encoding/json"
 	"fmt"
-	"maps"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -16,39 +15,15 @@ import (
 	"time"
 )
 
-// Collector belongs to one TestCase. It records evidence for one step at a
-// time.
+// Collector belongs to one TestCase and starts a Step for each test step.
 //
-// A nil *Collector is valid and means collection is disabled: New returns nil
-// when EnvDirectory is unset, and every exported method is a no-op on a nil
-// receiver (FinishStep returns nil, Enabled returns false). Callers can
-// therefore invoke methods unconditionally and only need Enabled to skip work
-// done solely to feed the collector, such as extra Terraform commands. New
-// exported methods must preserve this by returning early when c == nil.
-//
-// A Collector is not safe for concurrent use. All calls come from the
-// goroutine that runs the test steps: Terraform commands and checks run
-// synchronously there, and provider servers never see the collector.
+// A nil *Collector means collection is disabled: New returns nil when
+// EnvDirectory is unset, and BeginStep then returns a nil *Step.
 type Collector struct {
 	directory   string
 	packageName string
 	testName    string
-	stepNumber  int
-	features    map[featureKey]*featureEvidence
-	warnings    set[Warning]
-	active      bool
-	// pendingApplyChanges holds the resource changes of the plan that
-	// PreApplyPlan selected. ApplyCompleted marks them completed.
-	pendingApplyChanges []Feature
-	// pendingApplyActions holds the action invocations of the plan that
-	// PreApplyPlan selected. ApplyCompleted marks them invoked.
-	pendingApplyActions []Feature
-	expectedError       bool
 }
-
-// Enabled reports whether findings are being collected. Callers use it to
-// skip Terraform commands that only exist to feed the collector.
-func (c *Collector) Enabled() bool { return c != nil }
 
 // New returns a Collector for the test with the given name, or nil if
 // EnvDirectory is unset. It creates the findings directory, so that a bad
@@ -80,40 +55,74 @@ func testPackage() string {
 	return path
 }
 
-// BeginStep starts collecting evidence for a step. Any unfinished step is
-// discarded, so callers must FinishStep or DiscardStep the previous step first.
-func (c *Collector) BeginStep(stepNumber int) {
+// BeginStep starts collecting evidence for the test step with the given
+// number. expectError reports whether the step sets TestStep.ExpectError.
+func (c *Collector) BeginStep(number int, expectError bool) *Step {
 	if c == nil {
-		return
-	}
-	c.stepNumber, c.active = stepNumber, true
-	c.features = make(map[featureKey]*featureEvidence)
-	c.warnings = make(set[Warning])
-	c.pendingApplyChanges = nil
-	c.pendingApplyActions = nil
-	c.expectedError = false
-}
-
-// FinishStep writes one private finding for the active test step, if any. A
-// successful step that matched TestStep.ExpectError is written as
-// OutcomeExpectedError.
-func (c *Collector) FinishStep(outcome Outcome) error {
-	if c == nil || !c.active {
 		return nil
 	}
-	c.active = false
-	if c.expectedError && outcome == OutcomeSuccess {
+	return &Step{collector: c, number: number, expectError: expectError, features: make(map[featureKey]*Feature)}
+}
+
+// Step collects the evidence of one test step. Finish writes it as a Finding;
+// a step that is never finished, such as a skipped one, writes nothing.
+//
+// A nil *Step is valid and means collection is disabled: every method is a
+// no-op on a nil receiver (Finish returns nil, Enabled returns false). Callers
+// can therefore invoke methods unconditionally and only need Enabled to skip
+// work done solely to feed the step, such as extra Terraform commands. New
+// methods must preserve this by returning early when s == nil.
+//
+// A Step is not safe for concurrent use. All calls come from the goroutine
+// that runs the test steps: Terraform commands and checks run synchronously
+// there, and provider servers never see the step.
+type Step struct {
+	collector   *Collector
+	number      int
+	expectError bool
+	features    map[featureKey]*Feature
+	warnings    []Warning
+}
+
+// Enabled reports whether evidence is being collected.
+func (s *Step) Enabled() bool { return s != nil }
+
+// Finish writes the step's Finding. failed reports whether the test failed
+// during the step. A step that didn't fail and sets TestStep.ExpectError
+// passed only because the error matched, so it is written as
+// OutcomeExpectedError.
+func (s *Step) Finish(failed bool) error {
+	if s == nil {
+		return nil
+	}
+	outcome := OutcomeSuccess
+	switch {
+	case failed:
+		outcome = OutcomeFailed
+	case s.expectError:
 		outcome = OutcomeExpectedError
 	}
-	finding := Finding{Version: FindingVersion, Package: c.packageName, Test: c.testName, Step: c.stepNumber, Outcome: outcome, Warnings: c.warnings.sorted()}
-	for _, f := range c.features {
-		finding.Features = append(finding.Features, f.finding())
+	finding := Finding{
+		Version:  FindingVersion,
+		Package:  s.collector.packageName,
+		Test:     s.collector.testName,
+		Step:     s.number,
+		Outcome:  outcome,
+		Warnings: sortedSet(s.warnings),
 	}
-	sortFeatures(finding.Features)
-	if err := os.MkdirAll(c.directory, 0700); err != nil {
-		return fmt.Errorf("coverage directory: %w", err)
+	for _, f := range s.features {
+		f.Configured = sortedSet(f.Configured)
+		f.Populated = sortedSet(f.Populated)
+		f.Planned = sortedSet(f.Planned)
+		f.Completed = sortedSet(f.Completed)
+		finding.Features = append(finding.Features, *f)
 	}
-	file, err := os.OpenFile(filepath.Join(c.directory, fmt.Sprintf("%d-%d-%d.json", time.Now().UnixNano(), os.Getpid(), c.stepNumber)), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	slices.SortFunc(finding.Features, func(a, b Feature) int {
+		return cmp.Or(cmp.Compare(a.Kind, b.Kind), cmp.Compare(a.Name, b.Name), cmp.Compare(a.Provider, b.Provider))
+	})
+
+	name := fmt.Sprintf("%d-%d-%d.json", time.Now().UnixNano(), os.Getpid(), s.number)
+	file, err := os.OpenFile(filepath.Join(s.collector.directory, name), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
@@ -124,117 +133,49 @@ func (c *Collector) FinishStep(outcome Outcome) error {
 	return file.Close()
 }
 
-// sortFeatures sorts features by kind, name, and address.
-func sortFeatures(features []Feature) {
-	slices.SortFunc(features, func(a, b Feature) int {
-		return cmp.Or(
-			cmp.Compare(a.Kind, b.Kind),
-			cmp.Compare(a.Name, b.Name),
-			cmp.Compare(a.Address, b.Address),
-		)
-	})
-}
-
-// DiscardStep ends the active step, if any, without writing a finding. It is
-// used for skipped steps, which contribute no coverage.
-func (c *Collector) DiscardStep() {
-	if c == nil {
-		return
-	}
-	c.active = false
-}
-
-// featureEvidence is the evidence for one feature in the active step. It is
-// converted to a Feature when the step is written.
-type featureEvidence struct {
-	kind      Kind
-	name      string
-	provider  string
-	address   string
-	inputs    set[string]
-	known     set[string]
-	null      set[string]
-	planned   set[string]
-	completed set[string]
-}
-
-func (f *featureEvidence) finding() Feature {
-	return Feature{
-		Kind:      f.kind,
-		Name:      f.name,
-		Provider:  f.provider,
-		Address:   f.address,
-		Inputs:    f.inputs.sorted(),
-		Known:     f.known.sorted(),
-		Null:      f.null.sorted(),
-		Planned:   f.planned.sorted(),
-		Completed: f.completed.sorted(),
-	}
-}
-
-// featureKey identifies a feature within a step. The same resource type can
-// appear at several addresses, each with its own evidence.
+// featureKey identifies a feature within a step. Configuration names no
+// provider address, so the features of one type are merged across
+// configuration, plans, and state. Functions are the exception: a call names
+// its provider, so equally named functions of two providers stay apart.
 type featureKey struct {
-	kind    Kind
-	name    string
-	address string
+	kind     Kind
+	name     string
+	provider string
 }
 
-func (c *Collector) feature(kind Kind, name, address string) *featureEvidence {
-	address = safeAddress(address)
-	key := featureKey{kind: kind, name: name, address: address}
-	f := c.features[key]
+// feature returns the step's feature of the given kind and name, creating it
+// if needed. A non-empty provider is recorded.
+func (s *Step) feature(kind Kind, name, provider string) *Feature {
+	key := featureKey{kind: kind, name: name}
+	if kind == KindFunction {
+		key.provider = provider
+	}
+	f := s.features[key]
 	if f == nil {
-		f = &featureEvidence{
-			kind:      kind,
-			name:      name,
-			address:   address,
-			inputs:    make(set[string]),
-			known:     make(set[string]),
-			null:      make(set[string]),
-			planned:   make(set[string]),
-			completed: make(set[string]),
-		}
-		c.features[key] = f
+		f = &Feature{Kind: kind, Name: name}
+		s.features[key] = f
+	}
+	if provider != "" {
+		f.Provider = provider
 	}
 	return f
 }
 
-func (c *Collector) setProvider(kind Kind, name, address, provider string) {
-	if provider != "" {
-		c.feature(kind, name, address).provider = provider
-	}
+// warn records that evidence of the given type may be incomplete.
+func (s *Step) warn(w Warning) {
+	s.warnings = append(s.warnings, w)
 }
 
-// set is a set of strings. The empty string is never a member.
-type set[T ~string] map[T]struct{}
-
-func (s set[T]) add(value T) {
+// add appends value to the list, unless it is empty. Finish removes
+// duplicates.
+func add[T ~string](list *[]T, value T) {
 	if value != "" {
-		s[value] = struct{}{}
+		*list = append(*list, value)
 	}
 }
 
-// sorted returns the members of s in order, or nil if s is empty.
-func (s set[T]) sorted() []T {
-	return slices.Sorted(maps.Keys(s))
-}
-
-// Warning records that evidence of the given type may be incomplete for the
-// active step.
-func (c *Collector) Warning(code Warning) {
-	if c == nil || !c.active {
-		return
-	}
-	c.warnings.add(code)
-}
-
-// MatchedExpectedError records that the active step failed with an error
-// matching TestStep.ExpectError. FinishStep then writes OutcomeExpectedError
-// instead of OutcomeSuccess.
-func (c *Collector) MatchedExpectedError() {
-	if c == nil || !c.active {
-		return
-	}
-	c.expectedError = true
+// sortedSet sorts values and removes duplicates.
+func sortedSet[T ~string](values []T) []T {
+	slices.Sort(values)
+	return slices.Compact(values)
 }

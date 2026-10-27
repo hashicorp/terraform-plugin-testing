@@ -7,25 +7,48 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 )
 
-// ObservePlan records the planned operation of each resource change and action
-// invocation in plan. A nil plan means the saved plan could not be read.
-func (c *Collector) ObservePlan(plan *tfjson.Plan) {
-	if c == nil || !c.active {
+// ObservePlan records the providers in plan and the operations it plans. A nil
+// plan means the plan could not be read.
+//
+// Plan values are not recorded: populated attributes must come from state
+// that an operation produced (see ObserveState).
+func (s *Step) ObservePlan(plan *tfjson.Plan) {
+	if s == nil {
 		return
 	}
 	if plan == nil {
-		c.warnings.add(WarningPlanUnavailable)
+		s.warn(WarningPlanUnavailable)
 		return
 	}
 	if plan.Config != nil {
 		for _, provider := range plan.Config.ProviderConfigs {
 			if provider != nil && provider.FullName != "" {
-				c.feature(KindProvider, provider.FullName, "")
+				s.feature(KindProvider, provider.FullName, "")
 			}
 		}
 	}
-	// Several plans run during one step. Only the pre-apply plan can justify
-	// completed actions; follow-up no-op plans must not replace that evidence.
+	s.plannedOperations(plan, func(f *Feature, operation Operation) {
+		add(&f.Planned, operation)
+	})
+}
+
+// ApplyCompleted records the operations of plan as completed, after it was
+// applied successfully. A nil plan records nothing; ObservePlan warns about
+// it.
+func (s *Step) ApplyCompleted(plan *tfjson.Plan) {
+	if s == nil || plan == nil {
+		return
+	}
+	s.plannedOperations(plan, func(f *Feature, operation Operation) {
+		add(&f.Completed, operation)
+	})
+}
+
+// plannedOperations calls fn for each resource change and action invocation
+// in plan. A change that imports a resource has two operations: the import,
+// and the change to the imported object. A change without an operation, such
+// as a no-op, still declares its feature, with an empty operation.
+func (s *Step) plannedOperations(plan *tfjson.Plan, fn func(f *Feature, operation Operation)) {
 	for _, rc := range plan.ResourceChanges {
 		if rc == nil || rc.Change == nil {
 			continue
@@ -34,60 +57,15 @@ func (c *Collector) ObservePlan(plan *tfjson.Plan) {
 		if !ok {
 			continue
 		}
-		f := c.feature(kind, rc.Type, rc.Address)
-		c.setProvider(kind, rc.Type, rc.Address, rc.ProviderName)
-		f.planned.add(operationForActions(rc.Change.Actions))
-	}
-	for _, invocation := range plan.ActionInvocations {
-		if invocation == nil {
-			continue
-		}
-		f := c.feature(KindAction, invocation.Type, invocation.Address)
-		c.setProvider(KindAction, invocation.Type, invocation.Address, invocation.ProviderName)
-		f.planned.add("invoke")
-	}
-	// PlannedValues is a plan, not the state produced by a completed apply.
-	// Computed coverage is taken from post-apply or refresh state instead.
-}
-
-// PreApplyPlan selects plan as the one that the next apply executes.
-// ApplyCompleted marks its changes completed. A nil plan means the saved plan
-// could not be read.
-func (c *Collector) PreApplyPlan(plan *tfjson.Plan) {
-	if c == nil || !c.active {
-		return
-	}
-	c.pendingApplyChanges = nil
-	c.pendingApplyActions = nil
-	if plan == nil {
-		c.warnings.add(WarningPlanUnavailable)
-		return
-	}
-	for _, rc := range plan.ResourceChanges {
-		if rc != nil && rc.Change != nil && rc.Mode == tfjson.ManagedResourceMode {
-			c.pendingApplyChanges = append(c.pendingApplyChanges, Feature{Kind: KindResource, Name: rc.Type, Provider: rc.ProviderName, Address: safeAddress(rc.Address), Planned: []string{operationForActions(rc.Change.Actions)}})
+		f := s.feature(kind, rc.Type, rc.ProviderName)
+		fn(f, operationForActions(rc.Change.Actions))
+		if rc.Change.Importing != nil {
+			fn(f, OperationImport)
 		}
 	}
 	for _, invocation := range plan.ActionInvocations {
 		if invocation != nil {
-			c.pendingApplyActions = append(c.pendingApplyActions, Feature{Kind: KindAction, Name: invocation.Type, Provider: invocation.ProviderName, Address: safeAddress(invocation.Address)})
-		}
-	}
-}
-
-// ImportPlan records each resource change in plan that imports a resource as
-// a planned import.
-func (c *Collector) ImportPlan(plan *tfjson.Plan) {
-	if c == nil || !c.active || plan == nil {
-		return
-	}
-	for _, rc := range plan.ResourceChanges {
-		if rc != nil && rc.Change != nil && rc.Change.Importing != nil {
-			f := c.feature(KindResource, rc.Type, rc.Address)
-			if f.provider == "" {
-				f.provider = rc.ProviderName
-			}
-			f.planned.add("import")
+			fn(s.feature(KindAction, invocation.Type, invocation.ProviderName), OperationInvoke)
 		}
 	}
 }
@@ -98,24 +76,20 @@ var modeKinds = map[tfjson.ResourceMode]Kind{
 	tfjson.DataResourceMode:    KindDataSource,
 }
 
-func operationForActions(actions tfjson.Actions) string {
-	if actions.Create() {
-		return "create"
+// operationForActions returns the operation of a resource change, or "" if
+// it changes nothing.
+func operationForActions(actions tfjson.Actions) Operation {
+	switch {
+	case actions.Create():
+		return OperationCreate
+	case actions.Delete():
+		return OperationDelete
+	case actions.Update():
+		return OperationUpdate
+	case actions.Replace():
+		return OperationReplace
+	case actions.Read():
+		return OperationRead
 	}
-	if actions.Delete() {
-		return "delete"
-	}
-	if actions.Update() {
-		return "update"
-	}
-	if actions.Replace() {
-		return "replace"
-	}
-	if actions.NoOp() {
-		return "no_op"
-	}
-	if actions.Read() {
-		return "read"
-	}
-	return "unknown"
+	return ""
 }

@@ -191,14 +191,10 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	if kind.plannable() {
-		err = testImportBlock(ctx, t, workingDir, coverage, providers, resourceName, step, priorIdentityValues)
+		return testImportBlock(ctx, t, workingDir, coverage, providers, resourceName, step, priorIdentityValues)
 	} else {
-		err = testImportCommand(ctx, t, workingDir, coverage, providers, resourceName, importId, step, state)
-		if err == nil {
-			coverage.ImportCompleted(resourceName)
-		}
+		return testImportCommand(ctx, t, workingDir, coverage, providers, resourceName, importId, step, state)
 	}
-	return err
 }
 
 func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, coverage stepCoverage, providers *providerFactories, resourceName string, step TestStep, priorIdentityValues map[string]any) error {
@@ -209,16 +205,12 @@ func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.Wo
 
 		path := workingDir.BaseDir() + "/generated.tf"
 		opts = append(opts, tfexec.GenerateConfigOut(path))
-		err := runProviderCommand(ctx, t, workingDir, providers, func() error {
-			return coverage.createPlan(ctx, workingDir, opts...)
-		})
+		err := runProviderCommandGenerateConfigAndCreatePlan(ctx, t, workingDir, providers, opts...)
 		if err != nil {
 			return fmt.Errorf("generating plan with import config: %s", err)
 		}
 	} else {
-		err := runProviderCommand(ctx, t, workingDir, providers, func() error {
-			return coverage.createPlan(ctx, workingDir)
-		})
+		err := runProviderCommandCreatePlan(ctx, t, workingDir, providers)
 		if err != nil {
 			return fmt.Errorf("generating plan with import config: %s", err)
 		}
@@ -228,7 +220,7 @@ func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.Wo
 	if err != nil {
 		return fmt.Errorf("reading generated plan with import config: %s", err)
 	}
-	coverage.ImportPlan(plan)
+	coverage.ObservePlan(plan)
 
 	logging.HelperResourceDebug(ctx, fmt.Sprintf("ImportBlockWithId: %d resource changes", len(plan.ResourceChanges)))
 
@@ -295,6 +287,7 @@ func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.
 		t.Fatalf("Error getting state: %s", err)
 	}
 	coverage.ObserveState(jsonState)
+	coverage.ImportCompleted(jsonState, resourceName)
 
 	logging.HelperResourceDebug(ctx, fmt.Sprintf("State after import: %d resources in the root module", len(importState.RootModule().Resources)))
 

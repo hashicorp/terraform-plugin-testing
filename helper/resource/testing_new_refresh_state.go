@@ -19,6 +19,12 @@ import (
 func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, coverage stepCoverage, step TestStep, providers *providerFactories) error {
 	t.Helper()
 
+	// A refresh step sets no configuration of its own, so Terraform uses the
+	// configuration in the working directory. Recording it keeps values that
+	// it sets, which the refresh echoes into state, from counting as computed
+	// by the provider.
+	coverage.ObserveConfigDir(wd.BaseDir())
+
 	var err error
 	// Explicitly ensure prior state exists before refresh.
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
@@ -50,6 +56,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 		t.Fatalf("Error getting state: %s", err)
 	}
 	coverage.ObserveState(jsonState)
+	coverage.RefreshCompleted()
 
 	// Go through the refreshed state and verify
 	if step.Check != nil {
@@ -64,7 +71,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 
 	// do a plan
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		return coverage.createPlan(ctx, wd)
+		return wd.CreatePlan(ctx)
 	})
 	if err != nil {
 		return fmt.Errorf("Error running post-refresh plan: %w", err)
@@ -79,6 +86,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 	if err != nil {
 		return fmt.Errorf("Error retrieving post-refresh plan: %w", err)
 	}
+	coverage.ObservePlan(plan)
 
 	// Run post-refresh plan checks
 	if len(step.RefreshPlanChecks.PostRefresh) > 0 {

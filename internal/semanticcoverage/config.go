@@ -13,162 +13,143 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
-// ObserveConfigDir records the features and inputs declared by the
-// configuration files in dir, the test working directory.
+// ObserveConfigDir records the features and configured attributes declared by
+// the configuration files in dir, the test working directory.
 //
 // Only HCL configuration is read. Terraform JSON configuration is rare in
 // provider tests, so it isn't parsed; a .tf.json file only records
 // WarningConfigUnavailable, so that the report shows the missing evidence.
-func (c *Collector) ObserveConfigDir(dir string) {
-	if c == nil || !c.active {
+func (s *Step) ObserveConfigDir(dir string) {
+	if s == nil {
 		return
 	}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		c.Warning(WarningConfigUnavailable)
+		s.warn(WarningConfigUnavailable)
 		return
 	}
 	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
 		name := entry.Name()
-		if strings.HasSuffix(name, ".tf.json") {
-			c.Warning(WarningConfigUnavailable)
-			continue
+		switch {
+		case entry.IsDir():
+		case strings.HasSuffix(name, ".tf.json"):
+			s.warn(WarningConfigUnavailable)
+		case strings.HasSuffix(name, ".tf"), strings.HasSuffix(name, ".tfquery.hcl"):
+			s.observeConfigFile(filepath.Join(dir, name))
 		}
-		if !strings.HasSuffix(name, ".tf") && !strings.HasSuffix(name, ".tfquery.hcl") {
-			continue
-		}
-		data, err := os.ReadFile(filepath.Join(dir, name))
-		if err != nil {
-			c.Warning(WarningConfigUnavailable)
-			continue
-		}
-		c.observeConfigFile(name, data)
 	}
 }
 
-// ObserveQueryConfig records the features and inputs declared by the query
-// configuration file at path.
-func (c *Collector) ObserveQueryConfig(path string) {
-	if c == nil || !c.active {
+// ObserveQueryConfig records the features and configured attributes declared
+// by the query configuration file at path.
+func (s *Step) ObserveQueryConfig(path string) {
+	if s == nil {
 		return
 	}
+	s.observeConfigFile(path)
+}
+
+// observeConfigFile records the features and configured attributes declared by
+// the HCL configuration file at path.
+func (s *Step) observeConfigFile(path string) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		c.Warning(WarningConfigUnavailable)
+		s.warn(WarningConfigUnavailable)
 		return
 	}
-	c.observeConfigFile(filepath.Base(path), data)
-}
-
-// observeConfigFile records the features and inputs declared by the HCL
-// configuration file with the given name and contents.
-func (c *Collector) observeConfigFile(name string, data []byte) {
-	if c == nil || !c.active {
-		return
-	}
-	parser := hclparse.NewParser()
-	file, diags := parser.ParseHCL(data, name)
+	file, diags := hclparse.NewParser().ParseHCL(data, filepath.Base(path))
 	if diags.HasErrors() {
-		c.Warning(WarningConfigUnavailable)
+		s.warn(WarningConfigUnavailable)
 		return
 	}
 	body, ok := file.Body.(*hclsyntax.Body)
-	if !ok {
-		c.Warning(WarningConfigUnavailable)
+	if !ok { // ParseHCL always returns an hclsyntax body.
+		s.warn(WarningConfigUnavailable)
 		return
 	}
-	c.observeHCLBlocks(body.Blocks)
-	c.functions(body)
+	// Providers in a query file configure the query, not a test step.
+	s.observeBlocks(body.Blocks, strings.HasSuffix(path, ".tfquery.hcl"))
+	s.observeFunctionCalls(body)
 }
 
 // configBlock describes a configuration block type that declares a feature.
 type configBlock struct {
 	kind Kind
-	// addressed blocks have two labels, the type and the name, and an
-	// address of addressPrefix + type + "." + name. Other blocks have one
-	// label, the name, and no address.
-	addressed     bool
-	addressPrefix string
 	// nestedConfig blocks keep their schema attributes in a nested "config"
 	// block.
 	nestedConfig bool
 }
 
 // configBlocks maps configuration block types to the features they declare.
+// The first label of each is the feature's type name.
 var configBlocks = map[string]configBlock{
 	"provider":    {kind: KindProvider},
-	"state_store": {kind: KindStateStore, nestedConfig: true},
-	"resource":    {kind: KindResource, addressed: true},
-	"data":        {kind: KindDataSource, addressed: true, addressPrefix: "data."},
-	"ephemeral":   {kind: KindEphemeralResource, addressed: true, addressPrefix: "ephemeral."},
-	"list":        {kind: KindListResource, addressed: true, addressPrefix: "list.", nestedConfig: true},
-	"action":      {kind: KindAction, addressed: true, addressPrefix: "action.", nestedConfig: true},
+	"state_store": {kind: KindStateStore},
+	"resource":    {kind: KindResource},
+	"data":        {kind: KindDataSource},
+	"ephemeral":   {kind: KindEphemeralResource},
+	"list":        {kind: KindListResource, nestedConfig: true},
+	"action":      {kind: KindAction, nestedConfig: true},
 }
 
-// blockFeature returns the feature that a block with the given labels
-// declares, or nil if the labels are incomplete.
-func (c *Collector) blockFeature(block configBlock, labels ...string) *featureEvidence {
-	if !block.addressed {
-		if len(labels) < 1 {
-			return nil
-		}
-		return c.feature(block.kind, labels[0], "")
-	}
-	if len(labels) < 2 {
-		return nil
-	}
-	return c.feature(block.kind, labels[0], block.addressPrefix+labels[0]+"."+labels[1])
-}
-
-func (c *Collector) observeHCLBlocks(blocks []*hclsyntax.Block) {
+func (s *Step) observeBlocks(blocks []*hclsyntax.Block, queryFile bool) {
 	for _, b := range blocks {
 		block, ok := configBlocks[b.Type]
-		// Providers in a query file configure the query, not a test step.
-		if ok && !(block.kind == KindProvider && strings.HasSuffix(b.DefRange().Filename, ".tfquery.hcl")) {
-			if f := c.blockFeature(block, b.Labels...); f != nil {
-				if block.nestedConfig {
-					for _, nested := range b.Body.Blocks {
-						if nested.Type == "config" {
-							walkInputs(f, nested.Body, "")
-						}
-					}
-				} else {
-					walkInputs(f, b.Body, "")
-				}
+		if ok && len(b.Labels) > 0 && !(queryFile && block.kind == KindProvider) {
+			f := s.feature(block.kind, b.Labels[0], "")
+			for _, body := range schemaBodies(b, block) {
+				recordConfigured(f, body)
+			}
+			// The body of a feature follows the provider's schema, so its
+			// nested blocks are schema blocks, not declarations. A state
+			// store is the exception: it holds the provider block it uses.
+			if block.kind != KindStateStore {
+				continue
 			}
 		}
-		c.functions(b.Body)
-		c.observeHCLBlocks(b.Body.Blocks)
+		// Other blocks, such as terraform and check, can declare features.
+		s.observeBlocks(b.Body.Blocks, queryFile)
 	}
 }
 
-func walkInputs(f *featureEvidence, body *hclsyntax.Body, prefix string) {
+// schemaBodies returns the bodies of b that hold the feature's schema
+// attributes.
+func schemaBodies(b *hclsyntax.Block, block configBlock) []*hclsyntax.Body {
+	if !block.nestedConfig {
+		return []*hclsyntax.Body{b.Body}
+	}
+	var bodies []*hclsyntax.Body
+	for _, nested := range b.Body.Blocks {
+		if nested.Type == "config" {
+			bodies = append(bodies, nested.Body)
+		}
+	}
+	return bodies
+}
+
+// recordConfigured records the top-level attributes and blocks set in body.
+func recordConfigured(f *Feature, body *hclsyntax.Body) {
 	for name := range body.Attributes {
-		f.inputs.add(prefix + name)
+		add(&f.Configured, name)
 	}
 	for _, b := range body.Blocks {
-		path := prefix + b.Type
-		f.inputs.add(path)
-		walkInputs(f, b.Body, path+".")
+		name := b.Type
+		if name == "dynamic" && len(b.Labels) == 1 {
+			name = b.Labels[0]
+		}
+		add(&f.Configured, name)
 	}
 }
 
-func (c *Collector) functions(body *hclsyntax.Body) {
-	for _, attr := range body.Attributes {
-		diags := hclsyntax.VisitAll(attr.Expr, func(node hclsyntax.Node) hcl.Diagnostics {
-			if call, ok := node.(*hclsyntax.FunctionCallExpr); ok && strings.HasPrefix(call.Name, "provider::") {
-				parts := strings.Split(call.Name, "::")
-				if len(parts) == 3 {
-					c.feature(KindFunction, parts[2], "").provider = parts[1]
-				}
+// observeFunctionCalls records the provider-defined functions called in body.
+func (s *Step) observeFunctionCalls(body *hclsyntax.Body) {
+	// The callback returns no diagnostics, so neither does VisitAll.
+	_ = hclsyntax.VisitAll(body, func(node hclsyntax.Node) hcl.Diagnostics {
+		if call, ok := node.(*hclsyntax.FunctionCallExpr); ok {
+			if parts := strings.Split(call.Name, "::"); len(parts) == 3 && parts[0] == "provider" {
+				s.feature(KindFunction, parts[2], parts[1])
 			}
-			return nil
-		})
-		if diags.HasErrors() {
-			c.warnings.add(WarningConfigUnavailable)
 		}
-	}
+		return nil
+	})
 }

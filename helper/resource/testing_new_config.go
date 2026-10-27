@@ -125,7 +125,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				}
 			}
 
-			return coverage.createPreApplyPlan(ctx, wd, opts...)
+			return wd.CreatePlan(ctx, opts...)
 		})
 		if err != nil {
 			return fmt.Errorf("Error running pre-apply plan: %w", err)
@@ -188,7 +188,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				var opts []tfexec.PlanOption
 				opts = append(opts, tfexec.Destroy(true))
 
-				return coverage.createPreApplyPlan(ctx, wd, opts...)
+				return wd.CreatePlan(ctx, opts...)
 			})
 			if err != nil {
 				return fmt.Errorf("Error running destroy plan after step.Check shimmed state was retrieved: %w", err)
@@ -203,17 +203,13 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				opts = append(opts, tfexec.AllowDeferral(true))
 			}
 
-			return wd.Apply(ctx, opts...)
+			return coverage.apply(ctx, wd, opts...)
 		})
 		if err != nil {
 			if step.Destroy {
 				return fmt.Errorf("Error running destroy: %w", err)
 			}
 			return fmt.Errorf("Error running apply: %w", err)
-		}
-		coverage.ApplyCompleted(step.Destroy)
-		if !step.Destroy {
-			coverage.observeAppliedState(ctx, t, wd, providers)
 		}
 
 		// Run any configured checks
@@ -287,7 +283,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			}
 		}
 
-		return coverage.createPlan(ctx, wd, opts...)
+		return wd.CreatePlan(ctx, opts...)
 	})
 	if err != nil {
 		if step.PlanOnly {
@@ -310,6 +306,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 		return fmt.Errorf("Error reading saved post-apply non-refresh plan: %w", err)
 	}
+	coverage.ObservePlan(plan)
 
 	// Run post-apply, pre-refresh plan checks
 	if len(step.ConfigPlanChecks.PostApplyPreRefresh) > 0 {
@@ -361,7 +358,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			}
 		}
 
-		return coverage.createPlan(ctx, wd, opts...)
+		return wd.CreatePlan(ctx, opts...)
 	})
 	if err != nil {
 		if step.PlanOnly {
@@ -383,6 +380,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 		return fmt.Errorf("Error reading post-apply refresh plan: %w", err)
 	}
+	coverage.ObservePlan(plan)
 
 	// Run post-apply, post-refresh plan checks
 	if len(step.ConfigPlanChecks.PostApplyPostRefresh) > 0 {
@@ -459,7 +457,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		// caught a different bug.
 		if idRefreshCheck != nil {
 			fmt.Println("Not Writing by testing ID Refresh")
-			if err := testIDRefresh(ctx, t, c, wd, coverage, step, idRefreshCheck, providers, stepIndex, helper); err != nil {
+			if err := testIDRefresh(ctx, t, c, wd, step, idRefreshCheck, providers, stepIndex, helper); err != nil {
 				return fmt.Errorf(
 					"[ERROR] Test: ID-only test failed: %s", err)
 			}

@@ -10,178 +10,190 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	tfjson "github.com/hashicorp/terraform-json"
 
-	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
+	sc "github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 )
 
-func TestAggregateKeepsLifecycleAndAttributeEvidenceDistinct(t *testing.T) {
+func TestAggregateKeepsOperationAndAttributeEvidenceDistinct(t *testing.T) {
 	t.Parallel()
 
-	doc := parseSchema(t, exampleSchema)
-	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Address: "example_item.test", Inputs: []string{"name"}, Planned: []string{"create"}}}}, {Version: 1, Test: "TestExample", Step: 2, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Address: "example_item.test", Known: []string{"id"}, Completed: []string{"apply", "create"}}}}})
-	if result.Configurable.Covered != 1 || result.Computed.Covered != 1 {
-		t.Fatalf("coverage: %+v", result)
-	}
-	target := result.Targets[0]
-	if len(target.Planned["create"]) != 1 || len(target.Completed["create"]) != 1 {
-		t.Fatalf("lifecycle: %+v", target)
-	}
-}
-
-func TestExpectedErrorDoesNotClaimCompletedOperationOrComputedOutput(t *testing.T) {
-	t.Parallel()
-
-	doc := parseSchema(t, exampleSchema)
-	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeExpectedError, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Inputs: []string{"name"}, Known: []string{"id"}, Planned: []string{"create"}, Completed: []string{"apply", "create"}}}}})
-	if result.Configurable.Covered != 1 || result.Computed.Covered != 0 {
-		t.Fatalf("configurable/computed coverage: %+v", result)
-	}
-	target := result.Targets[0]
-	if len(target.Planned["create"]) != 1 || len(target.Completed) != 0 {
-		t.Fatalf("planned/completed: %+v", target)
-	}
-}
-
-func TestAggregateMergesFindingsForTheSameStep(t *testing.T) {
-	t.Parallel()
-
-	doc := parseSchema(t, exampleSchema)
-	feature := semanticcoverage.Feature{Kind: semanticcoverage.KindResource, Name: "example_item", Inputs: []string{"name"}, Known: []string{"id"}}
-	result := aggregate(doc, []semanticcoverage.Finding{
-		{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeFailed, Features: []semanticcoverage.Feature{feature}},
-		{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{feature}},
+	result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{
+		finding(1, sc.OutcomeSuccess, item(func(f *sc.Feature) {
+			f.Configured = []string{"name"}
+			f.Planned = []sc.Operation{sc.OperationCreate}
+		})),
+		finding(2, sc.OutcomeSuccess, item(func(f *sc.Feature) {
+			f.Populated = []string{"id"}
+			f.Completed = []sc.Operation{sc.OperationCreate}
+		})),
 	})
-	if result.Configurable.Covered != 1 || result.Computed.Covered != 1 || !result.Targets[0].Exercised {
-		t.Fatalf("a failed finding must not cancel another finding's coverage: %+v", result)
+	if result.Totals.Configurable != (metric{Covered: 1, Total: 1}) || result.Totals.Computed != (metric{Covered: 1, Total: 1}) {
+		t.Fatalf("totals: %+v", result.Totals)
+	}
+	f := result.Features[0]
+	want := map[sc.Operation][]stepRef{sc.OperationCreate: {ref(1)}}
+	if diff := cmp.Diff(want, f.Planned); diff != "" {
+		t.Errorf("planned mismatch (-want +got):\n%s", diff)
+	}
+	want = map[sc.Operation][]stepRef{sc.OperationCreate: {ref(2)}}
+	if diff := cmp.Diff(want, f.Completed); diff != "" {
+		t.Errorf("completed mismatch (-want +got):\n%s", diff)
 	}
 }
 
-func TestTargetMatches(t *testing.T) {
+func TestExpectedErrorClaimsNoCompletedOperationOrComputedValue(t *testing.T) {
 	t.Parallel()
 
-	const aws = "registry.terraform.io/hashicorp/aws"
-	provider := &target{Provider: aws, Kind: semanticcoverage.KindProvider}
-	resource := &target{Provider: aws, Kind: semanticcoverage.KindResource, Name: "aws_instance"}
-	function := &target{Provider: aws, Kind: semanticcoverage.KindFunction, Name: "arn_parse"}
+	result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{
+		finding(1, sc.OutcomeExpectedError, item(func(f *sc.Feature) {
+			f.Configured = []string{"name"}
+			f.Populated = []string{"id"}
+			f.Planned = []sc.Operation{sc.OperationCreate}
+			f.Completed = []sc.Operation{sc.OperationCreate}
+		})),
+	})
+	if result.Totals.Configurable.Covered != 1 || result.Totals.Computed.Covered != 0 {
+		t.Fatalf("totals: %+v", result.Totals)
+	}
+	f := result.Features[0]
+	if len(f.Planned[sc.OperationCreate]) != 1 || len(f.Completed) != 0 {
+		t.Fatalf("planned=%v completed=%v", f.Planned, f.Completed)
+	}
+}
+
+func TestFailedFindingDoesNotCancelAnotherFinding(t *testing.T) {
+	t.Parallel()
+
+	feature := item(func(f *sc.Feature) {
+		f.Configured = []string{"name"}
+		f.Populated = []string{"id"}
+	})
+	result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{
+		finding(1, sc.OutcomeFailed, feature),
+		finding(1, sc.OutcomeSuccess, feature),
+	})
+	want := totals{Features: metric{1, 1}, Configurable: metric{1, 1}, Computed: metric{1, 1}}
+	if result.Totals != want {
+		t.Fatalf("totals = %+v, want %+v", result.Totals, want)
+	}
+}
+
+func TestFeatureCoverage(t *testing.T) {
+	t.Parallel()
+
 	tests := map[string]struct {
-		target *target
-		f      semanticcoverage.Feature
-		want   bool
+		outcome sc.Outcome
+		feature sc.Feature
+		want    bool
 	}{
-		"provider block by local name":     {provider, semanticcoverage.Feature{Kind: semanticcoverage.KindProvider, Name: "aws"}, true},
-		"provider block of other provider": {provider, semanticcoverage.Feature{Kind: semanticcoverage.KindProvider, Name: "google"}, false},
-		"resource from config":             {resource, semanticcoverage.Feature{Kind: semanticcoverage.KindResource, Name: "aws_instance"}, true},
-		"resource from plan":               {resource, semanticcoverage.Feature{Kind: semanticcoverage.KindResource, Name: "aws_instance", Provider: aws}, true},
-		"resource of fork from plan":       {resource, semanticcoverage.Feature{Kind: semanticcoverage.KindResource, Name: "aws_instance", Provider: "registry.terraform.io/example/aws"}, false},
-		"data source with resource name":   {resource, semanticcoverage.Feature{Kind: semanticcoverage.KindDataSource, Name: "aws_instance"}, false},
-		"function by local name":           {function, semanticcoverage.Feature{Kind: semanticcoverage.KindFunction, Name: "arn_parse", Provider: "aws"}, true},
-		"function of other provider":       {function, semanticcoverage.Feature{Kind: semanticcoverage.KindFunction, Name: "arn_parse", Provider: "google"}, false},
+		"used in a successful step":      {sc.OutcomeSuccess, item(nil), true},
+		"used in an expected error step": {sc.OutcomeExpectedError, item(nil), true},
+		"used in a failed step":          {sc.OutcomeFailed, item(nil), false},
+		"only another feature used":      {sc.OutcomeSuccess, sc.Feature{Kind: sc.KindDataSource, Name: "example_item"}, false},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := test.target.matches(test.f); got != test.want {
-				t.Errorf("matches = %t, want %t", got, test.want)
+			result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{finding(1, test.outcome, test.feature)})
+			if got := result.Features[0].Covered; got != test.want {
+				t.Errorf("covered = %t, want %t", got, test.want)
 			}
 		})
 	}
 }
 
-const optionalComputedSchema = `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {"attributes": {
-	"tags": {"type": "string", "optional": true, "computed": true}
-}}}}}}}`
-
-func TestAggregateNeedsOptionalComputedAttributesSetAndUnset(t *testing.T) {
+func TestAggregateMatchesFeaturesToTheSchema(t *testing.T) {
 	t.Parallel()
 
-	doc := parseSchema(t, optionalComputedSchema)
-	unset := semanticcoverage.Finding{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Address: "example_item.test", Known: []string{"tags"}}}}
-	set := semanticcoverage.Finding{Version: 1, Test: "TestExample", Step: 2, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Address: "example_item.test", Inputs: []string{"tags"}, Known: []string{"tags"}}}}
+	const aws = "registry.terraform.io/hashicorp/aws"
+	const google = "registry.terraform.io/hashicorp/google"
+	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {
+		"registry.terraform.io/hashicorp/aws": {
+			"provider": {"block": {}},
+			"resource_schemas": {"aws_instance": {"block": {}}},
+			"functions": {"arn_parse": {"return_type": "string"}}
+		},
+		"registry.terraform.io/hashicorp/google": {
+			"provider": {"block": {}},
+			"functions": {"arn_parse": {"return_type": "string"}}
+		}
+	}}`)
+	tests := map[string]struct {
+		feature sc.Feature
+		want    []string
+	}{
+		"provider block by local name":   {sc.Feature{Kind: sc.KindProvider, Name: "aws"}, []string{aws + " provider "}},
+		"provider from a plan":           {sc.Feature{Kind: sc.KindProvider, Name: aws}, []string{aws + " provider "}},
+		"resource from configuration":    {sc.Feature{Kind: sc.KindResource, Name: "aws_instance"}, []string{aws + " resource aws_instance"}},
+		"resource from a plan":           {sc.Feature{Kind: sc.KindResource, Name: "aws_instance", Provider: aws}, []string{aws + " resource aws_instance"}},
+		"resource of another provider":   {sc.Feature{Kind: sc.KindResource, Name: "aws_instance", Provider: "registry.terraform.io/example/aws"}, nil},
+		"data source with resource name": {sc.Feature{Kind: sc.KindDataSource, Name: "aws_instance"}, nil},
+		"function by local name":         {sc.Feature{Kind: sc.KindFunction, Name: "arn_parse", Provider: "google"}, []string{google + " function arn_parse"}},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 
-	result := aggregate(doc, []semanticcoverage.Finding{unset, set})
-	if result.Configurable != (metric{Covered: 1, Total: 1}) || result.Computed != (metric{Covered: 1, Total: 1}) {
-		t.Fatalf("configurable=%+v computed=%+v, want both 1/1", result.Configurable, result.Computed)
-	}
-	if a := result.Targets[0].Attributes[0]; !a.Covered {
-		t.Fatalf("attribute should be covered: %+v", a)
-	}
-
-	result = aggregate(doc, []semanticcoverage.Finding{set})
-	if result.Configurable != (metric{Covered: 1, Total: 1}) || result.Computed != (metric{Total: 1}) {
-		t.Fatalf("a configured value echoed into state is not computed: configurable=%+v computed=%+v", result.Configurable, result.Computed)
-	}
-	if a := result.Targets[0].Attributes[0]; a.Covered || strings.Join(a.missing(), ",") != "state_known" {
-		t.Fatalf("attribute should only miss state_known: %+v", a)
+			result := aggregate(doc, []sc.Finding{finding(1, sc.OutcomeSuccess, test.feature)})
+			var covered []string
+			for _, f := range result.Features {
+				if f.Covered {
+					covered = append(covered, f.Provider+" "+string(f.Kind)+" "+f.Name)
+				}
+			}
+			if diff := cmp.Diff(test.want, covered); diff != "" {
+				t.Errorf("covered features mismatch (-want +got):\n%s", diff)
+			}
+			if len(result.Warnings) != 0 {
+				t.Errorf("warnings: %v", result.Warnings)
+			}
+		})
 	}
 }
 
-func TestAggregateIgnoresStateOfTypesConfiguredInTheSameStep(t *testing.T) {
+func TestAmbiguousConfigurationIsNotCounted(t *testing.T) {
 	t.Parallel()
 
-	// With count or for_each, the configured address has no instance key and
-	// the state address has one, so they are different features.
-	doc := parseSchema(t, optionalComputedSchema)
-	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{
-		{Kind: semanticcoverage.KindResource, Name: "example_item", Address: "example_item.test", Inputs: []string{"tags"}},
-		{Kind: semanticcoverage.KindResource, Name: "example_item", Address: "example_item.test[*]", Known: []string{"tags"}},
-	}}})
-	if result.Computed.Covered != 0 {
-		t.Fatalf("computed = %+v, want no coverage", result.Computed)
+	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {
+		"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {}}}},
+		"registry.terraform.io/fork/example": {"resource_schemas": {"example_item": {"block": {}}}}
+	}}`)
+	result := aggregate(doc, []sc.Finding{finding(1, sc.OutcomeSuccess, sc.Feature{Kind: sc.KindResource, Name: "example_item"})})
+	if result.Totals.Features.Covered != 0 {
+		t.Errorf("features = %+v, want none covered", result.Totals.Features)
+	}
+	want := []string{"TestExample step 1: resource example_item has 2 schema matches"}
+	if diff := cmp.Diff(want, result.Warnings); diff != "" {
+		t.Errorf("warnings mismatch (-want +got):\n%s", diff)
 	}
 }
 
-func TestReadFindingsRejectsUnknownWarning(t *testing.T) {
+func TestOptionalComputedAttributesNeedATestThatSetsThemAndOneThatDoesNot(t *testing.T) {
 	t.Parallel()
 
-	dir := t.TempDir()
-	finding := `{"version":1,"test":"TestExample","step":1,"outcome":"success","warnings":["step_skipped"]}`
-	if err := os.WriteFile(filepath.Join(dir, "finding.json"), []byte(finding), 0600); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := readFindings(dir); err == nil || !strings.Contains(err.Error(), `invalid warning "step_skipped"`) {
-		t.Fatalf("err = %v", err)
-	}
-}
+	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {"attributes": {
+		"tags": {"type": "string", "optional": true, "computed": true}
+	}}}}}}}`)
+	unset := finding(1, sc.OutcomeSuccess, item(func(f *sc.Feature) { f.Populated = []string{"tags"} }))
+	set := finding(2, sc.OutcomeSuccess, item(func(f *sc.Feature) {
+		f.Configured = []string{"tags"}
+		f.Populated = []string{"tags"}
+	}))
 
-func TestReadFindingsRejectsUnknownKind(t *testing.T) {
-	t.Parallel()
+	got := aggregate(doc, []sc.Finding{unset, set}).Features[0].Attributes[0]
+	want := attributeResult{Path: "tags", Configurable: true, Computed: true, Covered: true, ConfiguredBy: []stepRef{ref(2)}, ComputedBy: []stepRef{ref(1)}}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("attribute mismatch (-want +got):\n%s", diff)
+	}
 
-	dir := t.TempDir()
-	finding := `{"version":1,"test":"TestExample","step":1,"outcome":"success","features":[{"kind":"test_step","name":"x"}]}`
-	if err := os.WriteFile(filepath.Join(dir, "finding.json"), []byte(finding), 0600); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := readFindings(dir); err == nil || !strings.Contains(err.Error(), `invalid feature kind "test_step"`) {
-		t.Fatalf("err = %v", err)
-	}
-}
-
-func TestAggregateReadsActionsAndLeavesIdentityOutOfAttributeTotals(t *testing.T) {
-	t.Parallel()
-
-	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {
-		"action_schemas": {"example_action": {"block": {"attributes": {"message": {"type": "string", "required": true}}}}},
-		"resource_identity_schemas": {"example_item": {"version": 0, "attributes": {"id": {"type": "string", "required_for_import": true}}}},
-		"functions": {"example_function": {"return_type": "string"}}
-	}}}`)
-	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{
-		{Kind: semanticcoverage.KindAction, Name: "example_action", Inputs: []string{"message"}},
-		{Kind: semanticcoverage.KindIdentity, Name: "example_item", Known: []string{"id"}},
-	}}})
-	if result.Configurable != (metric{Covered: 1, Total: 1}) || result.Computed != (metric{}) {
-		t.Fatalf("configurable=%+v computed=%+v", result.Configurable, result.Computed)
-	}
-	kinds := map[semanticcoverage.Kind]*target{}
-	for _, target := range result.Targets {
-		kinds[target.Kind] = target
-	}
-	if kinds[semanticcoverage.KindIdentity] == nil || len(kinds[semanticcoverage.KindIdentity].Attributes) != 0 || !kinds[semanticcoverage.KindIdentity].Exercised {
-		t.Fatalf("identity target: %+v", kinds[semanticcoverage.KindIdentity])
-	}
-	if kinds[semanticcoverage.KindFunction] == nil {
-		t.Fatalf("missing function target: %+v", result.Targets)
+	// A configured value is echoed into state, so it isn't computed.
+	got = aggregate(doc, []sc.Finding{set}).Features[0].Attributes[0]
+	want = attributeResult{Path: "tags", Configurable: true, Computed: true, ConfiguredBy: []stepRef{ref(2)}}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("attribute mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -192,13 +204,13 @@ func TestAggregateCountsDeprecatedAttributes(t *testing.T) {
 		"attributes": {"old_name": {"type": "string", "optional": true, "deprecated": true}},
 		"deprecated": true
 	}}}}}}`)
-	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Inputs: []string{"old_name"}}}}})
-	if result.Configurable != (metric{Covered: 1, Total: 1}) {
-		t.Fatalf("deprecated attribute of a deprecated resource should count: %+v", result.Configurable)
+	result := aggregate(doc, []sc.Finding{finding(1, sc.OutcomeSuccess, item(func(f *sc.Feature) { f.Configured = []string{"old_name"} }))})
+	if result.Totals.Configurable != (metric{Covered: 1, Total: 1}) {
+		t.Fatalf("deprecated attribute of a deprecated resource should count: %+v", result.Totals.Configurable)
 	}
 }
 
-func TestAggregateExcludesNestedAttributesFromCoverageTotals(t *testing.T) {
+func TestAggregateExcludesNestedAttributes(t *testing.T) {
 	t.Parallel()
 
 	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {
@@ -216,23 +228,97 @@ func TestAggregateExcludesNestedAttributesFromCoverageTotals(t *testing.T) {
 			}}}
 		}
 	}}}}}}`)
-	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Inputs: []string{"settings"}, Known: []string{"id"}}}}})
+	result := aggregate(doc, []sc.Finding{finding(1, sc.OutcomeSuccess, item(func(f *sc.Feature) {
+		f.Configured = []string{"settings"}
+		f.Populated = []string{"id"}
+	}))})
 	if result.AttributeScope != "top_level" {
 		t.Fatalf("attribute scope = %q, want top_level", result.AttributeScope)
 	}
-	if result.Configurable.Covered != 1 || result.Configurable.Total != 2 {
-		t.Fatalf("configurable coverage should include only settings and connection: %+v", result.Configurable)
+	var paths []string
+	for _, a := range result.Features[0].Attributes {
+		paths = append(paths, a.Path)
 	}
-	if result.Computed.Covered != 1 || result.Computed.Total != 1 {
-		t.Fatalf("computed coverage should include only id: %+v", result.Computed)
+	if diff := cmp.Diff([]string{"connection", "id", "settings"}, paths); diff != "" {
+		t.Errorf("attributes mismatch (-want +got):\n%s", diff)
 	}
-	if got, want := len(result.Targets[0].Attributes), 3; got != want {
-		t.Fatalf("top-level attributes = %d, want %d: %+v", got, want, result.Targets[0].Attributes)
+	if result.Totals.Configurable != (metric{Covered: 1, Total: 2}) || result.Totals.Computed != (metric{Covered: 1, Total: 1}) {
+		t.Fatalf("totals: %+v", result.Totals)
 	}
-	for _, a := range result.Targets[0].Attributes {
-		if a.Path == "settings.mode" || a.Path == "settings.status" || a.Path == "connection[*].host" || a.Path == "connection[*].state" {
-			t.Errorf("nested path %q should be excluded", a.Path)
-		}
+}
+
+func TestWarningsAreInStepOrder(t *testing.T) {
+	t.Parallel()
+
+	step := func(n int) sc.Finding {
+		f := finding(n, sc.OutcomeSuccess)
+		f.Package = "example.com/provider"
+		f.Warnings = []sc.Warning{sc.WarningStateUnavailable}
+		return f
+	}
+	result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{step(10), step(2)})
+	want := []string{
+		"example.com/provider TestExample step 2: state_unavailable",
+		"example.com/provider TestExample step 10: state_unavailable",
+	}
+	if diff := cmp.Diff(want, result.Warnings); diff != "" {
+		t.Errorf("warnings mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestTextReport(t *testing.T) {
+	t.Parallel()
+
+	result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{
+		finding(1, sc.OutcomeSuccess, item(func(f *sc.Feature) {
+			f.Configured = []string{"name"}
+			f.Planned = []sc.Operation{sc.OperationCreate}
+			f.Completed = []sc.Operation{sc.OperationCreate}
+		})),
+		finding(2, sc.OutcomeFailed),
+	})
+	want := `Test-derived semantic coverage: 2 findings
+Attribute scope: top-level schema attributes and blocks only; nested descendants are excluded.
+Features 1/1; configurable 1/1; computed 0/1
+registry.terraform.io/hashicorp/example resource example_item: covered=true attributes=1/2 planned=[create] completed=[create]
+  uncovered id (needs a test that leaves it to the provider)
+warning: TestExample step 2 failed; evidence excluded from coverage
+`
+	if diff := cmp.Diff(want, textReport(result)); diff != "" {
+		t.Errorf("text report mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestReadFindingsRejectsInvalidFindings(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		finding string
+		want    string
+	}{
+		"not JSON":          {`{`, "unexpected end of JSON input"},
+		"other version":     {`{"version":2,"test":"TestExample","step":1,"outcome":"success"}`, "finding version 2, this report reads version 1"},
+		"no test name":      {`{"version":1,"step":1,"outcome":"success"}`, "missing test name or step"},
+		"no step":           {`{"version":1,"test":"TestExample","outcome":"success"}`, "missing test name or step"},
+		"unknown outcome":   {`{"version":1,"test":"TestExample","step":1,"outcome":"skipped"}`, `invalid outcome "skipped"`},
+		"unknown warning":   {`{"version":1,"test":"TestExample","step":1,"outcome":"success","warnings":["step_skipped"]}`, `invalid warning "step_skipped"`},
+		"unknown kind":      {`{"version":1,"test":"TestExample","step":1,"outcome":"success","features":[{"kind":"identity","name":"x"}]}`, `invalid feature kind "identity"`},
+		"unknown operation": {`{"version":1,"test":"TestExample","step":1,"outcome":"success","features":[{"kind":"resource","name":"x","completed":["apply"]}]}`, `invalid operation "apply"`},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			dir := t.TempDir()
+			path := filepath.Join(dir, "finding.json")
+			if err := os.WriteFile(path, []byte(test.finding), 0600); err != nil {
+				t.Fatal(err)
+			}
+			_, err := readFindings(dir)
+			if err == nil || !strings.HasPrefix(err.Error(), path+": ") || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("err = %v, want %q", err, test.want)
+			}
+		})
 	}
 }
 
@@ -249,4 +335,22 @@ func parseSchema(t *testing.T, data string) *tfjson.ProviderSchemas {
 		t.Fatal(err)
 	}
 	return &doc
+}
+
+// finding returns a finding of step n of TestExample.
+func finding(n int, outcome sc.Outcome, features ...sc.Feature) sc.Finding {
+	return sc.Finding{Version: sc.FindingVersion, Test: "TestExample", Step: n, Outcome: outcome, Features: features}
+}
+
+// item returns the resource example_item of exampleSchema, changed by fn.
+func item(fn func(f *sc.Feature)) sc.Feature {
+	f := sc.Feature{Kind: sc.KindResource, Name: "example_item"}
+	if fn != nil {
+		fn(&f)
+	}
+	return f
+}
+
+func ref(step int) stepRef {
+	return stepRef{Test: "TestExample", Step: step}
 }

@@ -52,8 +52,15 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	t.Helper()
 
 	wd := helper.RequireNewWorkingDir(ctx, t, c.WorkingDir)
-	coverage := newStepCoverage(t)
-	defer coverage.finishTest(t)
+	collector := newCoverageCollector(t)
+	var coverage stepCoverage
+	// A step that ends in t.Fatal or a panic never returns to the step loop,
+	// so it is written here, as failed. A skipped step writes nothing.
+	defer func() {
+		if !t.Skipped() {
+			coverage.end(t, true)
+		}
+	}()
 
 	ctx = logging.TestTerraformPathContext(ctx, wd.GetHelper().TerraformExecPath())
 	ctx = logging.TestWorkingDirectoryContext(ctx, wd.GetHelper().WorkingDirectory())
@@ -150,8 +157,13 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			copyWorkingDir(ctx, t, stepNumber, wd)
 		}
 
+		// The previous step returned to the loop, so it didn't end in
+		// t.Fatal. It failed only if the test reported an error without
+		// stopping.
+		coverage.end(t, t.Failed())
+
 		stepNumber = stepIndex + 1 // 1-based indexing for humans
-		coverage.beginStep(t, stepNumber)
+		coverage = stepCoverage{collector.BeginStep(stepNumber, step.ExpectError != nil)}
 
 		configRequest := teststep.PrepareConfigurationRequest{
 			Directory: step.ConfigDirectory,
@@ -190,7 +202,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			logging.HelperResourceDebug(ctx, "Called TestStep SkipFunc")
 
 			if skip {
-				coverage.DiscardStep()
+				coverage = stepCoverage{}
 				t.Logf("Skipping step %d/%d due to SkipFunc", stepNumber, len(c.Steps))
 				logging.HelperResourceWarn(ctx, "Skipping TestStep due to SkipFunc")
 				continue
@@ -268,7 +280,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			testStepConfig = teststep.Configuration(confRequest)
 
 			if !step.Query {
-				err = coverage.setConfig(ctx, wd, testStepConfig, step.ConfigVariables)
+				err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 			}
 
 			if err != nil {
@@ -297,7 +309,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			logging.HelperResourceTrace(ctx, "TestStep is ImportState mode")
 
 			err := testStepNewImportState(ctx, t, helper, wd, coverage, step, appliedCfg, providers, stepNumber)
-			coverage.stepResult(step, err, nil)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 				if err == nil {
@@ -337,7 +348,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			logging.HelperResourceTrace(ctx, "TestStep is RefreshState mode")
 
 			err := testStepNewRefreshState(ctx, t, wd, coverage, step, providers)
-			coverage.stepResult(step, err, coverage.RefreshCompleted)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 				if err == nil {
@@ -377,7 +387,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			logging.HelperResourceTrace(ctx, "TestStep is Query mode")
 
 			err := testStepNewQuery(ctx, t, wd, coverage, step, providers)
-			coverage.stepResult(step, err, coverage.QueryCompleted)
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -418,7 +427,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				logging.HelperResourceTrace(ctx, "TestStep is running VerifyStateStoreLock logic")
 				err = testStepVerifyStateStoreLock(ctx, t, step, providers, cfg, helper)
 			}
-			coverage.stepResult(step, err, coverage.StateStoreCompleted)
 
 			if err != nil {
 				// Ensure the TestStep doesn't run any Terraform commands that expect the backend/state store to be initialized
@@ -461,7 +469,6 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
 			err := testStepNewConfig(ctx, t, c, wd, coverage, step, providers, stepIndex, helper)
-			coverage.stepResult(step, err, nil)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 
@@ -551,6 +558,10 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		t.Fatalf("Step %d/%d, unsupported test mode", stepNumber, len(c.Steps))
 	}
 
+	// Write the last step before the deferred cleanup, which can still fail
+	// the test.
+	coverage.end(t, t.Failed())
+
 	if stepNumber > 0 {
 		copyWorkingDir(ctx, t, stepNumber, wd)
 	}
@@ -596,7 +607,7 @@ func planIsEmpty(plan *tfjson.Plan, tfVersion *version.Version) bool {
 	return true
 }
 
-func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, coverage stepCoverage, step TestStep, r *terraform.ResourceState, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
+func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, r *terraform.ResourceState, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
 	t.Helper()
 
 	// Build the state. The state is just the resource with an ID. There
@@ -643,7 +654,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 	// Temporarily set the config to a minimal provider config for the refresh
 	// test. After the refresh we can reset it.
-	err := coverage.setConfig(ctx, wd, testStepConfig, step.ConfigVariables)
+	err := wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		t.Fatalf("Error setting import test config: %s", err)
 	}
@@ -669,7 +680,7 @@ func testIDRefresh(ctx context.Context, t testing.T, c TestCase, wd *plugintest.
 
 		testStepConfigDefer := teststep.Configuration(confRequest)
 
-		err = coverage.setConfig(ctx, wd, testStepConfigDefer, step.ConfigVariables)
+		err = wd.SetConfig(ctx, testStepConfigDefer, step.ConfigVariables)
 
 		if err != nil {
 			t.Fatalf("Error resetting test config: %s", err)
