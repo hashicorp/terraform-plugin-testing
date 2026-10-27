@@ -4,6 +4,8 @@
 package semanticcoverage
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
@@ -16,9 +18,33 @@ func TestUnparsableConfigWarns(t *testing.T) {
 	c := &Collector{directory: t.TempDir(), testName: "TestUnparsable"}
 	c.BeginStep(1)
 	c.observeConfigFile("broken.tf", []byte(`resource "example_item" {`))
-	c.observeConfigFile("broken.tf.json", []byte(`{`))
 	if !slices.Equal(c.warnings.sorted(), []Warning{WarningConfigUnavailable}) {
 		t.Fatalf("warnings: %v", c.warnings)
+	}
+}
+
+func TestJSONConfigWarnsAndIsNotRead(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "main.tf.json"), []byte(`{"resource": {"example_item": {"a": {"name": "x"}}}}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "main.tf"), []byte(`resource "example_item" "b" { name = "x" }`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	c := &Collector{}
+	c.BeginStep(1)
+	c.ObserveConfigDir(dir)
+	if !slices.Equal(c.warnings.sorted(), []Warning{WarningConfigUnavailable}) {
+		t.Fatalf("warnings: %v", c.warnings)
+	}
+	var addresses []string
+	for _, f := range c.features {
+		addresses = append(addresses, f.address)
+	}
+	if !slices.Equal(addresses, []string{"example_item.b"}) {
+		t.Fatalf("only the HCL file should be read, got features at %v", addresses)
 	}
 }
 
@@ -48,7 +74,7 @@ list "example_item" "query" {
 	}
 }
 
-func TestConfigBlocksDeclareFeaturesInHCLAndJSON(t *testing.T) {
+func TestConfigBlocksDeclareFeatures(t *testing.T) {
 	t.Parallel()
 
 	hcl := `
@@ -66,15 +92,6 @@ state_store "example_store" {
   config { path = "x" }
 }
 `
-	json := `{
-  "provider": {"example": {"region": "x"}},
-  "resource": {"example_item": {"a": {"name": "x"}}},
-  "data": {"example_item": {"b": {"id": "x"}}},
-  "ephemeral": {"example_secret": {"c": {"length": 1}}},
-  "list": {"example_item": {"d": {"config": {"filter": "x"}}}},
-  "action": {"example_action": {"e": {"config": {"message": "x"}}}},
-  "state_store": {"example_store": {"config": {"path": "x"}}}
-}`
 	want := []Feature{
 		{Kind: KindAction, Name: "example_action", Address: "action.example_action.e", Inputs: []string{"message"}},
 		{Kind: KindDataSource, Name: "example_item", Address: "data.example_item.b", Inputs: []string{"id"}},
@@ -84,19 +101,17 @@ state_store "example_store" {
 		{Kind: KindResource, Name: "example_item", Address: "example_item.a", Inputs: []string{"name"}},
 		{Kind: KindStateStore, Name: "example_store", Inputs: []string{"path"}},
 	}
-	for name, data := range map[string]string{"main.tf": hcl, "main.tf.json": json} {
-		c := &Collector{}
-		c.BeginStep(1)
-		c.observeConfigFile(name, []byte(data))
-		var got []Feature
-		for _, f := range c.features {
-			got = append(got, f.finding())
-		}
-		slices.SortFunc(got, func(a, b Feature) int {
-			return strings.Compare(string(a.Kind)+a.Address, string(b.Kind)+b.Address)
-		})
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("%s:\ngot  %+v\nwant %+v", name, got, want)
-		}
+	c := &Collector{}
+	c.BeginStep(1)
+	c.observeConfigFile("main.tf", []byte(hcl))
+	var got []Feature
+	for _, f := range c.features {
+		got = append(got, f.finding())
+	}
+	slices.SortFunc(got, func(a, b Feature) int {
+		return strings.Compare(string(a.Kind)+a.Address, string(b.Kind)+b.Address)
+	})
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got  %+v\nwant %+v", got, want)
 	}
 }

@@ -47,9 +47,9 @@ additional Terraform commands are run.
 ## Evidence model
 
 - A configurable attribute (required, optional, or a block) is covered when a
-  completed or expected-error step configures it in HCL or Terraform JSON
-  configuration. The collector reads generated `Config` strings, `ConfigFile`,
-  and `ConfigDirectory` at runtime.
+  completed or expected-error step configures it in HCL configuration. The
+  collector reads generated `Config` strings, `ConfigFile`, and
+  `ConfigDirectory` at runtime.
 - A computed attribute is covered when a successful step's resulting state has
   a non-null value for it that the step didn't configure. Only top-level state
   attribute names are read: deeper maps can contain user-provided keys.
@@ -114,6 +114,9 @@ provider selection as the test run.
   for import).
 - Modules referenced from external sources may be visible in plan actions or
   state, but not in the locally copied configuration files.
+- Terraform JSON configuration (a JSON `Config` string or a `.tf.json` file)
+  is not read. Steps that use it get a `config_unavailable` warning and have no
+  configuration evidence; plan and state evidence is still recorded.
 - Provider blocks and provider-defined function calls name a provider by its
   local name, which the report matches against the type segment of the
   provider's source address. If `required_providers` gives a provider a

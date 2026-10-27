@@ -4,7 +4,6 @@
 package semanticcoverage
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,6 +15,10 @@ import (
 
 // ObserveConfigDir records the features and inputs declared by the
 // configuration files in dir, the test working directory.
+//
+// Only HCL configuration is read. Terraform JSON configuration is rare in
+// provider tests, so it isn't parsed; a .tf.json file only records
+// WarningConfigUnavailable, so that the report shows the missing evidence.
 func (c *Collector) ObserveConfigDir(dir string) {
 	if c == nil {
 		return
@@ -30,7 +33,11 @@ func (c *Collector) ObserveConfigDir(dir string) {
 			continue
 		}
 		name := entry.Name()
-		if !strings.HasSuffix(name, ".tf") && !strings.HasSuffix(name, ".tf.json") && !strings.HasSuffix(name, ".tfquery.hcl") {
+		if strings.HasSuffix(name, ".tf.json") {
+			c.Warning(WarningConfigUnavailable)
+			continue
+		}
+		if !strings.HasSuffix(name, ".tf") && !strings.HasSuffix(name, ".tfquery.hcl") {
 			continue
 		}
 		data, err := os.ReadFile(filepath.Join(dir, name))
@@ -56,21 +63,10 @@ func (c *Collector) ObserveQueryConfig(path string) {
 	c.observeConfigFile(filepath.Base(path), data)
 }
 
-// observeConfigFile records the features and inputs declared by the HCL or
-// Terraform JSON configuration file with the given name and contents.
+// observeConfigFile records the features and inputs declared by the HCL
+// configuration file with the given name and contents.
 func (c *Collector) observeConfigFile(name string, data []byte) {
 	if c == nil {
-		return
-	}
-	if strings.HasSuffix(name, ".json") {
-		var object map[string]any
-		if json.Unmarshal(data, &object) != nil {
-			c.Warning(WarningConfigUnavailable)
-			return
-		}
-		if c.active {
-			c.observeJSONBlocks(object)
-		}
 		return
 	}
 	parser := hclparse.NewParser()
@@ -178,36 +174,3 @@ func (c *Collector) functions(body *hclsyntax.Body) {
 		}
 	}
 }
-
-func (c *Collector) observeJSONBlocks(root map[string]any) {
-	for blockType, value := range root {
-		block, ok := configBlocks[blockType]
-		if !ok {
-			continue
-		}
-		for name, raw := range asMap(value) {
-			if !block.addressed {
-				c.jsonFeature(block, raw, name)
-				continue
-			}
-			for label, cfg := range asMap(raw) {
-				c.jsonFeature(block, cfg, name, label)
-			}
-		}
-	}
-}
-
-// jsonFeature records the feature that a Terraform JSON block with the given
-// labels and body declares.
-func (c *Collector) jsonFeature(block configBlock, body any, labels ...string) {
-	f := c.blockFeature(block, labels...)
-	attributes := asMap(body)
-	if block.nestedConfig {
-		attributes = asMap(attributes["config"])
-	}
-	for name := range attributes {
-		f.inputs.add(name)
-	}
-}
-
-func asMap(value any) map[string]any { m, _ := value.(map[string]any); return m }
