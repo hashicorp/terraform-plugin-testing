@@ -13,6 +13,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -29,11 +30,28 @@ type evidence struct {
 	Kind    string `json:"kind"`
 }
 type attributeResult struct {
-	Path     string     `json:"path"`
-	Mode     string     `json:"mode"`
+	Path string `json:"path"`
+	// Configurable attributes can be covered by configuration: required or
+	// optional attributes, and blocks.
+	Configurable bool `json:"configurable"`
+	// Computed attributes can be covered by a known value in state.
+	Computed bool       `json:"computed"`
 	Covered  bool       `json:"covered"`
 	Evidence []evidence `json:"evidence,omitempty"`
 }
+
+// coveredBy names the evidence kinds that can cover a.
+func (a attributeResult) coveredBy() string {
+	switch {
+	case a.Configurable && a.Computed:
+		return "configured or state_known"
+	case a.Computed:
+		return "state_known"
+	default:
+		return "configured"
+	}
+}
+
 type target struct {
 	Provider   string                `json:"provider"`
 	Kind       semanticcoverage.Kind `json:"kind"`
@@ -107,7 +125,7 @@ func main() {
 		fmt.Fprintf(&text, "%s %s %s: exercised=%t attributes=%d/%d planned=%v completed=%v\n", t.Provider, t.Kind, t.Name, t.Exercised, covered, len(t.Attributes), sortedKeys(t.Planned), sortedKeys(t.Completed))
 		for _, a := range t.Attributes {
 			if !a.Covered {
-				fmt.Fprintf(&text, "  uncovered %s (%s)\n", a.Path, a.Mode)
+				fmt.Fprintf(&text, "  uncovered %s (%s)\n", a.Path, a.coveredBy())
 			}
 		}
 	}
@@ -172,7 +190,6 @@ func sortedKeys[V any](m map[string]V) []string {
 
 func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) output {
 	result := output{Version: 1, AttributeScope: "top_level", Findings: len(items)}
-	seen := make(map[string]bool)
 	for _, address := range sortedKeys(doc.Schemas) {
 		p := doc.Schemas[address]
 		if p.ConfigSchema != nil {
@@ -196,9 +213,9 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 		for _, name := range sortedKeys(p.StateStoreSchemas) {
 			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindStateStore, name, p.StateStoreSchemas[name].Block))
 		}
-		// Identity attributes are only observed in state, and the schema
-		// doesn't say which of them are computed, so they are left out of
-		// the attribute totals.
+		// Identity attributes are only observed in state and have no
+		// input/computed distinction (only required/optional for import),
+		// so they don't fit either attribute total and are left out.
 		for _, name := range sortedKeys(p.ResourceIdentitySchemas) {
 			result.Targets = append(result.Targets, newTarget(address, semanticcoverage.KindIdentity, name, nil))
 		}
@@ -207,77 +224,65 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 		}
 	}
 	for _, item := range items {
-		id := fmt.Sprintf("%s\x00%s\x00%d", item.Package, item.Test, item.Step)
-		if seen[id] {
-			result.Warnings = append(result.Warnings, fmt.Sprintf("duplicate semanticcoverage.Finding for %s step %d", item.Test, item.Step))
-			continue
-		}
-		seen[id] = true
-		if item.Outcome == semanticcoverage.OutcomeFailed {
-			result.Warnings = append(result.Warnings, fmt.Sprintf("%s step %d failed; evidence excluded from coverage", item.Test, item.Step))
-		}
 		for _, warning := range item.Warnings {
 			result.Warnings = append(result.Warnings, fmt.Sprintf("%s step %d: %s", item.Test, item.Step, warning))
+		}
+		// A failed step can stop anywhere, and an unexpected error means
+		// the provider didn't do what the test expected, so none of its
+		// evidence shows that a feature works. Other findings for the same
+		// step still count.
+		if item.Outcome == semanticcoverage.OutcomeFailed {
+			result.Warnings = append(result.Warnings, fmt.Sprintf("%s step %d failed; evidence excluded from coverage", item.Test, item.Step))
+			continue
 		}
 		for _, f := range item.Features {
 			var matches []*target
 			for _, t := range result.Targets {
-				providerMatch := t.Kind == semanticcoverage.KindProvider && f.Name != "" && (t.Provider == f.Name || strings.HasSuffix(t.Provider, "/"+f.Name))
-				providerSourceMatch := f.Provider == "" || t.Provider == f.Provider || !strings.Contains(f.Provider, "/") && strings.HasSuffix(t.Provider, "/"+f.Provider)
-				if t.Kind == f.Kind && (t.Name == f.Name || providerMatch) && providerSourceMatch {
+				if t.matches(f) {
 					matches = append(matches, t)
 				}
 			}
+			// Features of providers missing from the schema match nothing.
+			// Several matches mean config-only evidence (no provider address)
+			// for a type name that more than one provider in the schema
+			// defines.
 			if len(matches) != 1 {
-				if f.Name != "terraform_data" && len(matches) > 1 {
+				if len(matches) > 1 {
 					result.Warnings = append(result.Warnings, fmt.Sprintf("%s step %d: %s %s has %d schema matches", item.Test, item.Step, f.Kind, f.Name, len(matches)))
 				}
 				continue
 			}
 			t := matches[0]
-			if item.Outcome == semanticcoverage.OutcomeFailed {
-				continue
-			}
 			ref := evidence{Package: item.Package, Test: item.Test, Step: item.Step, Address: f.Address, Kind: "configured"}
 			if len(f.Inputs) > 0 || len(f.Known) > 0 || len(f.Planned) > 0 || len(f.Completed) > 0 || f.Kind == semanticcoverage.KindFunction || f.Kind == semanticcoverage.KindIdentity {
 				t.Evidence = append(t.Evidence, ref)
-				if item.Outcome.Completed() {
-					t.Exercised = true
-				}
+				t.Exercised = true
 			}
 			for _, action := range f.Planned {
 				e := ref
 				e.Kind = "planned"
 				t.Planned[action] = append(t.Planned[action], e)
 			}
-			if item.Outcome == semanticcoverage.OutcomeSuccess {
+			// An expected error leaves no completed operation and no reliable
+			// state.
+			success := item.Outcome == semanticcoverage.OutcomeSuccess
+			if success {
 				for _, operation := range f.Completed {
 					e := ref
 					e.Kind = "completed"
 					t.Completed[operation] = append(t.Completed[operation], e)
 				}
 			}
-			if !item.Outcome.Completed() {
-				continue
-			}
 			for i := range t.Attributes {
 				a := &t.Attributes[i]
-				seen := false
-				if a.Mode == "input" {
-					seen = contains(f.Inputs, a.Path)
+				if a.Configurable && slices.Contains(f.Inputs, a.Path) {
+					a.Covered = true
+					a.Evidence = append(a.Evidence, ref)
 				}
-				if a.Mode == "computed" {
-					seen = item.Outcome == semanticcoverage.OutcomeSuccess && contains(f.Known, a.Path)
-				}
-				if a.Mode == "either" {
-					seen = contains(f.Inputs, a.Path) || (item.Outcome == semanticcoverage.OutcomeSuccess && contains(f.Known, a.Path))
-				}
-				if seen {
+				if a.Computed && success && slices.Contains(f.Known, a.Path) {
 					a.Covered = true
 					e := ref
-					if a.Mode == "computed" {
-						e.Kind = "state_known"
-					}
+					e.Kind = "state_known"
 					a.Evidence = append(a.Evidence, e)
 				}
 			}
@@ -291,16 +296,13 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 			}
 		}
 		for _, a := range t.Attributes {
-			if a.Mode == "computed" {
-				result.Computed.Total++
-				if a.Covered {
-					result.Computed.Covered++
-				}
-			} else {
-				result.Inputs.Total++
-				if a.Covered {
-					result.Inputs.Covered++
-				}
+			m := &result.Inputs
+			if !a.Configurable {
+				m = &result.Computed
+			}
+			m.Total++
+			if a.Covered {
+				m.Covered++
 			}
 		}
 	}
@@ -311,43 +313,65 @@ func aggregate(doc *tfjson.ProviderSchemas, items []semanticcoverage.Finding) ou
 	sort.Strings(result.Warnings)
 	return result
 }
-func contains(xs []string, x string) bool {
-	for _, v := range xs {
-		if v == x {
-			return true
-		}
+
+// newTarget returns a report target measured against the top-level attributes
+// of b. A nil b gives a target without attributes.
+func newTarget(provider string, kind semanticcoverage.Kind, name string, b *tfjson.SchemaBlock) *target {
+	return &target{
+		Provider:   provider,
+		Kind:       kind,
+		Name:       name,
+		Attributes: topLevelAttributes(b),
+		Planned:    make(map[string][]evidence),
+		Completed:  make(map[string][]evidence),
 	}
-	return false
 }
 
-// newTarget returns a report target with the top-level attributes of b, sorted
-// by path. A nil b gives a target without attributes.
-func newTarget(provider string, kind semanticcoverage.Kind, name string, b *tfjson.SchemaBlock) *target {
-	t := &target{Provider: provider, Kind: kind, Name: name, Planned: make(map[string][]evidence), Completed: make(map[string][]evidence)}
-	flatten(&t.Attributes, "", b)
-	sort.Slice(t.Attributes, func(i, j int) bool { return t.Attributes[i].Path < t.Attributes[j].Path })
-	return t
-}
-func addAttribute(to *[]attributeResult, path string, a *tfjson.SchemaAttribute) {
-	if a.Deprecated {
-		return
+// matches reports whether f is evidence for t.
+func (t *target) matches(f semanticcoverage.Feature) bool {
+	if t.Kind != f.Kind {
+		return false
 	}
-	mode := "input"
-	if a.Computed && (a.Optional || a.Required) {
-		mode = "either"
-	} else if a.Computed {
-		mode = "computed"
+	if t.Kind == semanticcoverage.KindProvider {
+		// Provider blocks are labelled with the provider's local name.
+		return f.Name != "" && providerMatches(t.Provider, f.Name)
 	}
-	*to = append(*to, attributeResult{Path: path, Mode: mode})
+	return t.Name == f.Name && providerMatches(t.Provider, f.Provider)
 }
-func flatten(to *[]attributeResult, prefix string, b *tfjson.SchemaBlock) {
+
+// providerMatches reports whether ref refers to the provider with the given
+// source address. ref is a full source address (from plans and state), a
+// local name (from configuration), matched against the address's type
+// segment, or empty, which matches any provider.
+func providerMatches(address, ref string) bool {
+	switch {
+	case ref == "":
+		return true
+	case strings.Contains(ref, "/"):
+		return address == ref
+	default:
+		return strings.HasSuffix(address, "/"+ref)
+	}
+}
+
+// topLevelAttributes returns the top-level attributes and nested blocks of b,
+// sorted by path, which are what attribute coverage is measured against.
+// Nested attributes are left out: state can't tell their names apart from
+// user-provided map keys. Deprecated attributes are left out too, and a
+// deprecated or nil b has none.
+func topLevelAttributes(b *tfjson.SchemaBlock) []attributeResult {
 	if b == nil || b.Deprecated {
-		return
+		return nil
 	}
+	var result []attributeResult
 	for name, a := range b.Attributes {
-		addAttribute(to, prefix+name, a)
+		if !a.Deprecated {
+			result = append(result, attributeResult{Path: name, Configurable: a.Optional || a.Required, Computed: a.Computed})
+		}
 	}
 	for name := range b.NestedBlocks {
-		*to = append(*to, attributeResult{Path: prefix + name, Mode: "input"})
+		result = append(result, attributeResult{Path: name, Configurable: true})
 	}
+	slices.SortFunc(result, func(a, b attributeResult) int { return strings.Compare(a.Path, b.Path) })
+	return result
 }

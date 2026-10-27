@@ -43,6 +43,70 @@ func TestExpectedErrorDoesNotClaimCompletedOperationOrComputedOutput(t *testing.
 	}
 }
 
+func TestAggregateMergesFindingsForTheSameStep(t *testing.T) {
+	t.Parallel()
+
+	doc := parseSchema(t, exampleSchema)
+	feature := semanticcoverage.Feature{Kind: semanticcoverage.KindResource, Name: "example_item", Inputs: []string{"name"}, Known: []string{"id"}}
+	result := aggregate(doc, []semanticcoverage.Finding{
+		{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeFailed, Features: []semanticcoverage.Feature{feature}},
+		{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{feature}},
+	})
+	if result.Inputs.Covered != 1 || result.Computed.Covered != 1 || !result.Targets[0].Exercised {
+		t.Fatalf("a failed finding must not cancel another finding's coverage: %+v", result)
+	}
+}
+
+func TestTargetMatches(t *testing.T) {
+	t.Parallel()
+
+	const aws = "registry.terraform.io/hashicorp/aws"
+	provider := &target{Provider: aws, Kind: semanticcoverage.KindProvider}
+	resource := &target{Provider: aws, Kind: semanticcoverage.KindResource, Name: "aws_instance"}
+	function := &target{Provider: aws, Kind: semanticcoverage.KindFunction, Name: "arn_parse"}
+	tests := map[string]struct {
+		target *target
+		f      semanticcoverage.Feature
+		want   bool
+	}{
+		"provider block by local name":     {provider, semanticcoverage.Feature{Kind: semanticcoverage.KindProvider, Name: "aws"}, true},
+		"provider block of other provider": {provider, semanticcoverage.Feature{Kind: semanticcoverage.KindProvider, Name: "google"}, false},
+		"resource from config":             {resource, semanticcoverage.Feature{Kind: semanticcoverage.KindResource, Name: "aws_instance"}, true},
+		"resource from plan":               {resource, semanticcoverage.Feature{Kind: semanticcoverage.KindResource, Name: "aws_instance", Provider: aws}, true},
+		"resource of fork from plan":       {resource, semanticcoverage.Feature{Kind: semanticcoverage.KindResource, Name: "aws_instance", Provider: "registry.terraform.io/example/aws"}, false},
+		"data source with resource name":   {resource, semanticcoverage.Feature{Kind: semanticcoverage.KindDataSource, Name: "aws_instance"}, false},
+		"function by local name":           {function, semanticcoverage.Feature{Kind: semanticcoverage.KindFunction, Name: "arn_parse", Provider: "aws"}, true},
+		"function of other provider":       {function, semanticcoverage.Feature{Kind: semanticcoverage.KindFunction, Name: "arn_parse", Provider: "google"}, false},
+	}
+	for name, test := range tests {
+		if got := test.target.matches(test.f); got != test.want {
+			t.Errorf("%s: matches = %t, want %t", name, got, test.want)
+		}
+	}
+}
+
+func TestAggregateRecordsHowOptionalComputedAttributesAreCovered(t *testing.T) {
+	t.Parallel()
+
+	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {"attributes": {
+		"tags": {"type": "string", "optional": true, "computed": true}
+	}}}}}}}`)
+	result := aggregate(doc, []semanticcoverage.Finding{
+		{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Known: []string{"tags"}}}},
+		{Version: 1, Test: "TestExample", Step: 2, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Inputs: []string{"tags"}}}},
+	})
+	if result.Inputs != (metric{Covered: 1, Total: 1}) || result.Computed != (metric{}) {
+		t.Fatalf("optional-computed attributes count as inputs: inputs=%+v computed=%+v", result.Inputs, result.Computed)
+	}
+	var kinds []string
+	for _, e := range result.Targets[0].Attributes[0].Evidence {
+		kinds = append(kinds, e.Kind)
+	}
+	if strings.Join(kinds, ",") != "state_known,configured" {
+		t.Fatalf("evidence kinds = %v, want [state_known configured]", kinds)
+	}
+}
+
 func TestReadFindingsRejectsUnknownWarning(t *testing.T) {
 	t.Parallel()
 

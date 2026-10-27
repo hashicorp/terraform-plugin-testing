@@ -9,8 +9,10 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"slices"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -32,7 +34,7 @@ type Collector struct {
 	packageName string
 	testName    string
 	stepNumber  int
-	features    map[string]*featureEvidence
+	features    map[featureKey]*featureEvidence
 	warnings    set[Warning]
 	active      bool
 	// pendingApplyChanges holds the resource changes of the plan that
@@ -59,11 +61,23 @@ func New(testName string) (*Collector, error) {
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return nil, fmt.Errorf("coverage directory: %w", err)
 	}
-	packageName := ""
-	if wd, err := os.Getwd(); err == nil {
-		packageName = filepath.Base(wd)
+	return &Collector{directory: dir, packageName: testPackage(), testName: testName}, nil
+}
+
+// testPackage returns the import path of the package under test, so that
+// tests with the same name in different packages get distinct findings. A test
+// binary's main package is the package's import path with a ".test" suffix.
+// It returns "" for binaries without one, such as go test with file arguments.
+func testPackage() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
 	}
-	return &Collector{directory: dir, packageName: packageName, testName: testName}, nil
+	path, ok := strings.CutSuffix(info.Path, ".test")
+	if !ok || path == "command-line-arguments" {
+		return ""
+	}
+	return path
 }
 
 // BeginStep starts collecting evidence for a step. Any unfinished step is
@@ -73,7 +87,7 @@ func (c *Collector) BeginStep(stepNumber int) {
 		return
 	}
 	c.stepNumber, c.active = stepNumber, true
-	c.features = make(map[string]*featureEvidence)
+	c.features = make(map[featureKey]*featureEvidence)
 	c.warnings = make(set[Warning])
 	c.pendingApplyChanges = nil
 	c.pendingApplyActions = nil
@@ -153,9 +167,17 @@ func (f *featureEvidence) finding() Feature {
 	}
 }
 
+// featureKey identifies a feature within a step. The same resource type can
+// appear at several addresses, each with its own evidence.
+type featureKey struct {
+	kind    Kind
+	name    string
+	address string
+}
+
 func (c *Collector) feature(kind Kind, name, address string) *featureEvidence {
 	address = safeAddress(address)
-	key := string(kind) + "\x00" + name + "\x00" + address
+	key := featureKey{kind: kind, name: name, address: address}
 	f := c.features[key]
 	if f == nil {
 		f = &featureEvidence{

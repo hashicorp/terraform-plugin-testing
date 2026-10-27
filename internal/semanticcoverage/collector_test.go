@@ -83,6 +83,11 @@ func TestFinishWritesOneFindingPerStep(t *testing.T) {
 	if !strings.Contains(string(data), `"step":1`) || strings.Contains(string(data), "first") {
 		t.Fatalf("unexpected finding: %s", data)
 	}
+	// The full import path keeps same-named tests in packages with the same
+	// directory name apart.
+	if !strings.Contains(string(data), `"package":"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"`) {
+		t.Fatalf("finding lacks package import path: %s", data)
+	}
 }
 
 func TestDiscardStepWritesNoFinding(t *testing.T) {

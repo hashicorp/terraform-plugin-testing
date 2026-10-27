@@ -20,8 +20,11 @@ working directory and inspects Terraform plans and post-operation state. The
 Collection is opt-in. Set `TF_ACC_SEMANTIC_COVERAGE_DIR` to a directory when
 running acceptance tests; one JSON finding is written per executed test step.
 Use an empty directory per run, because the report reads every JSON file under
-it. Re-run the tests after upgrading terraform-plugin-testing, because the
-report rejects findings written by an incompatible version.
+it and combines all findings: a schema element is covered if any finding covers
+it. Findings from other runs would therefore count as coverage of this one.
+Running tests repeatedly within one run (`go test -count=N` with N > 1) is not
+supported. Re-run the tests after upgrading terraform-plugin-testing, because
+the report rejects findings written by an incompatible version.
 
 ```sh
 TF_ACC=1 \
@@ -79,7 +82,8 @@ The collector does not persist configuration text, attribute values, plan or
 state JSON, query result values, or assertion matchers. Instance keys in
 resource addresses are replaced with `[*]`. It does persist provider and
 feature names, normalized resource addresses, schema attribute names,
-known/null classifications, operations, test names, and test package names.
+known/null classifications, operations, test names, and test package import
+paths.
 Write findings to a trusted private directory.
 
 ## Report
@@ -97,11 +101,18 @@ provider selection as the test run.
   covered.
 - Attribute totals include only top-level schema attributes and blocks. Nested
   attributes are not counted until a schema-aware walker can distinguish
-  nested schema names from user map keys.
+  nested schema names from user map keys. Deprecated attributes are not
+  counted.
 - Resource identity attributes are not counted. They are only observed in
-  state, and the schema doesn't say which of them are computed.
+  state and have no input/computed distinction (only required/optional for
+  import).
 - Modules referenced from external sources may be visible in plan actions or
   state, but not in the locally copied configuration files.
+- Provider blocks and provider-defined function calls name a provider by its
+  local name, which the report matches against the type segment of the
+  provider's source address. If `required_providers` gives a provider a
+  different local name (for example `mycloud = { source = "hashicorp/aws" }`),
+  that evidence is not attributed to the provider.
 - Each plan observed while collecting costs one additional `terraform show`,
   and each completed apply one additional state read.
 

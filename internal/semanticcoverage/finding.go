@@ -108,7 +108,8 @@ func (w Warning) Valid() bool {
 }
 
 type Finding struct {
-	Version  int       `json:"version"`
+	Version int `json:"version"`
+	// Package is the import path of the package under test.
 	Package  string    `json:"package,omitempty"`
 	Test     string    `json:"test"`
 	Step     int       `json:"step"`
