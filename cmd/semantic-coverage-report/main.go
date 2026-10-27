@@ -391,17 +391,14 @@ func providerMatches(address, ref string) bool {
 // topLevelAttributes returns the top-level attributes and nested blocks of b,
 // sorted by path, which are what attribute coverage is measured against.
 // Nested attributes are left out: state can't tell their names apart from
-// user-provided map keys. Deprecated attributes are left out too, and a
-// deprecated or nil b has none.
+// user-provided map keys. A nil b has none.
 func topLevelAttributes(b *tfjson.SchemaBlock) []attributeResult {
-	if b == nil || b.Deprecated {
+	if b == nil {
 		return nil
 	}
 	var result []attributeResult
 	for name, a := range b.Attributes {
-		if !a.Deprecated {
-			result = append(result, attributeResult{Path: name, Configurable: a.Optional || a.Required, Computed: a.Computed})
-		}
+		result = append(result, attributeResult{Path: name, Configurable: a.Optional || a.Required, Computed: a.Computed})
 	}
 	for name := range b.NestedBlocks {
 		result = append(result, attributeResult{Path: name, Configurable: true})

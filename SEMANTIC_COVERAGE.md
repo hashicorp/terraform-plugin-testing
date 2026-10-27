@@ -107,8 +107,7 @@ provider selection as the test run.
   covered.
 - Attribute totals include only top-level schema attributes and blocks. Nested
   attributes are not counted until a schema-aware walker can distinguish
-  nested schema names from user map keys. Deprecated attributes are not
-  counted.
+  nested schema names from user map keys.
 - Resource identity attributes are not counted. They are only observed in
   state and have no configurable/computed distinction (only required/optional
   for import).
@@ -128,7 +127,7 @@ provider selection as the test run.
 ## Example result
 
 Against `terraform-provider-local` (excluding the download-dependent upgrade
-tests), 58 step findings yielded 9/9 active feature entities, 29/29
+tests), 58 step findings yielded 9/9 active feature entities, 30/30
 configurable attributes, and 39/42 computed attributes. The four
 optional-computed permission attributes count in both totals and were covered
 both set and unset. The three uncovered computed attributes were

@@ -181,6 +181,19 @@ func TestAggregateReadsActionsAndLeavesIdentityOutOfAttributeTotals(t *testing.T
 	}
 }
 
+func TestAggregateCountsDeprecatedAttributes(t *testing.T) {
+	t.Parallel()
+
+	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {
+		"attributes": {"old_name": {"type": "string", "optional": true, "deprecated": true}},
+		"deprecated": true
+	}}}}}}`)
+	result := aggregate(doc, []semanticcoverage.Finding{{Version: 1, Test: "TestExample", Step: 1, Outcome: semanticcoverage.OutcomeSuccess, Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindResource, Name: "example_item", Inputs: []string{"old_name"}}}}})
+	if result.Configurable != (metric{Covered: 1, Total: 1}) {
+		t.Fatalf("deprecated attribute of a deprecated resource should count: %+v", result.Configurable)
+	}
+}
+
 func TestAggregateExcludesNestedAttributesFromCoverageTotals(t *testing.T) {
 	t.Parallel()
 
