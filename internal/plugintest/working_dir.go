@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -571,7 +572,37 @@ func (wd *WorkingDir) Workspaces(ctx context.Context) ([]string, error) {
 
 	logging.HelperResourceTrace(ctx, "Called Terraform CLI workspace list command")
 
-	return workspaces, err
+	if err != nil {
+		return nil, err
+	}
+
+	return filterWorkspaceNames(ctx, workspaces), nil
+}
+
+// filterWorkspaceNames removes any entries from workspaces that aren't valid
+// workspace names, because warnings can be written to stdout alongside the
+// output of the `terraform workspace list` command. See:
+// https://github.com/hashicorp/terraform-plugin-testing/issues/692
+func filterWorkspaceNames(ctx context.Context, workspaces []string) []string {
+	filtered := make([]string, 0, len(workspaces))
+
+	for _, workspace := range workspaces {
+		// Terraform only accepts workspace names that are unchanged by
+		// URL-escaping, so any entry that differs can't be a workspace name.
+		// See here for Terraform's own use of URL-escaping to validate
+		// workspace names:
+		// https://github.com/hashicorp/terraform/blob/9fb1177c3566c247c72e6c36ca219463c4b6be2b/internal/command/workspace_command.go#L44-L52
+		if workspace == url.PathEscape(workspace) {
+			filtered = append(filtered, workspace)
+			continue
+		}
+
+		logging.HelperResourceTrace(ctx, "Ignoring non-workspace line from workspace list command output", map[string]interface{}{
+			"line": workspace,
+		})
+	}
+
+	return filtered
 }
 
 func (wd *WorkingDir) CreateWorkspace(ctx context.Context, workspace string) error {
