@@ -16,9 +16,8 @@ import (
 // ObserveConfigDir records the features and configured attributes declared by
 // the configuration files in dir, the test working directory.
 //
-// Only HCL configuration is read. Terraform JSON configuration is rare in
-// provider tests, so it isn't parsed; a .tf.json file only records
-// WarningConfigUnavailable, so that the report shows the missing evidence.
+// Only HCL configuration is read. A .tf.json file is not parsed; it records
+// WarningConfigUnavailable so that the report shows the missing evidence.
 func (s *Step) ObserveConfigDir(dir string) {
 	if s == nil {
 		return

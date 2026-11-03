@@ -20,9 +20,9 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 	t.Helper()
 
 	// A refresh step sets no configuration of its own, so Terraform uses the
-	// configuration in the working directory. Recording it keeps values that
-	// it sets, which the refresh echoes into state, from counting as computed
-	// by the provider.
+	// configuration already in the working directory. The refresh copies the
+	// values it sets into state. Recording the configuration keeps those
+	// values from counting as computed by the provider.
 	coverage.ObserveConfigDir(wd.BaseDir())
 
 	var err error

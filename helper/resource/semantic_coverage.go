@@ -19,15 +19,15 @@ import (
 // stepCoverage records the semantic coverage evidence of one test step. Step
 // functions get it as an explicit parameter.
 //
-// helper/resource decides when to record, semanticcoverage decides what. The
-// wrappers below are for operations whose evidence needs an extra read, so
-// that plugintest doesn't need to know about coverage. Documents that the
-// harness reads anyway, such as plans for plan checks, are passed to the
-// embedded Step directly.
+// The step functions in helper/resource choose when to record evidence, and
+// package semanticcoverage extracts it. The wrappers below cover operations
+// whose evidence needs an extra read, which keeps coverage code out of
+// plugintest. Documents that the harness reads anyway, such as plans for plan
+// checks, are passed to the embedded Step directly.
 //
-// Only record the step's own operations, not setup, cleanup, or configuration
-// that the harness generates. With collection disabled (a nil Step) every
-// method only performs the wrapped operation.
+// Record only the step's own operations, not setup, cleanup, or configuration
+// that the harness generates. With collection disabled (a nil Step), each
+// wrapper only performs the wrapped operation.
 type stepCoverage struct {
 	*semanticcoverage.Step
 }

@@ -92,7 +92,7 @@ type attributeResult struct {
 	ComputedBy   []stepRef `json:"computed_by,omitempty"`
 }
 
-// missing describes the tests that a still needs to be covered.
+// missing describes the tests that a still needs before it is covered.
 func (a attributeResult) missing() []string {
 	var tests []string
 	if a.Configurable && len(a.ConfiguredBy) == 0 {
@@ -318,9 +318,9 @@ func addFinding(features []*featureResult, providers *providerMap, f semanticcov
 	for _, w := range f.Warnings {
 		warnings = append(warnings, fmt.Sprintf("%s: %s", ref, w))
 	}
-	// A failed step can stop anywhere, and an unexpected error means the
-	// provider didn't do what the test expected, so none of its evidence
-	// shows that a feature works.
+	// A failed step can stop at any point, and its error means the provider
+	// didn't do what the test expected. None of its evidence shows that a
+	// feature works.
 	if f.Outcome == semanticcoverage.OutcomeFailed {
 		return append(warnings, fmt.Sprintf("%s failed; evidence excluded from coverage", ref))
 	}
@@ -328,9 +328,9 @@ func addFinding(features []*featureResult, providers *providerMap, f semanticcov
 	for _, feature := range f.Features {
 		feature, ok := inProcess(feature, served)
 		if !ok {
-			// Evidence of a provider that Terraform installed, such as
-			// an external provider or the released provider in an
-			// upgrade step, says nothing about the provider under test.
+			// The feature belongs to a provider that Terraform installed,
+			// such as an external provider or the released provider in an
+			// upgrade step, not to the code under test.
 			continue
 		}
 		var matches []*featureResult
@@ -379,12 +379,12 @@ func (r *featureResult) record(ref stepRef, f semanticcoverage.Feature) {
 		if a.Configurable && configured {
 			a.ConfiguredBy = appendRef(a.ConfiguredBy, ref)
 		}
-		// A configured value is echoed back into state, so a populated
-		// value only shows that the provider computed it if the step didn't
-		// configure the attribute. The collector merges all uses of a type in
-		// a step, because configuration and state can't be paired per
-		// instance (count, for_each, modules), so any configuration of the
-		// type in the step rules it out.
+		// A configured value is copied into state, so a populated value
+		// shows that the provider computed it only if the step didn't
+		// configure the attribute. Configuration and state can't be paired
+		// per instance (count, for_each, modules), so the collector merges
+		// all uses of a type in a step. Configuring the attribute on any of
+		// them therefore rules out the step.
 		if a.Computed && !configured && slices.Contains(f.Populated, a.Path) {
 			a.ComputedBy = appendRef(a.ComputedBy, ref)
 		}
