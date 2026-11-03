@@ -8,11 +8,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"runtime/debug"
 	"slices"
 	"strings"
-	"time"
 )
 
 // Collector belongs to one TestCase and starts a Step for each test step.
@@ -137,8 +135,9 @@ func (s *Step) Finish(failed bool) error {
 		return cmp.Or(cmp.Compare(a.Kind, b.Kind), cmp.Compare(a.Name, b.Name), cmp.Compare(a.Provider, b.Provider))
 	})
 
-	name := fmt.Sprintf("%d-%d-%d.json", time.Now().UnixNano(), os.Getpid(), s.number)
-	file, err := os.OpenFile(filepath.Join(s.collector.directory, name), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	// Parallel tests share a process and can finish equally numbered steps
+	// at once, so CreateTemp makes the name unique.
+	file, err := os.CreateTemp(s.collector.directory, fmt.Sprintf("%d-*.json", s.number))
 	if err != nil {
 		return err
 	}

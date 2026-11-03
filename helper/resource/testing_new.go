@@ -153,14 +153,14 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	var stepNumber int
 
 	for stepIndex, step := range c.Steps {
+		// The previous step returned to the loop, so it didn't end in
+		// t.Fatal. It failed only if the test reported an error without
+		// stopping. It ends before copyWorkingDir, which can call t.Fatalf.
+		coverage.end(t, t.Failed())
+
 		if stepNumber > 0 {
 			copyWorkingDir(ctx, t, stepNumber, wd)
 		}
-
-		// The previous step returned to the loop, so it didn't end in
-		// t.Fatal. It failed only if the test reported an error without
-		// stopping.
-		coverage.end(t, t.Failed())
 
 		stepNumber = stepIndex + 1 // 1-based indexing for humans
 		coverage = stepCoverage{collector.BeginStep(stepNumber, step.ExpectError != nil)}

@@ -292,13 +292,15 @@ func TestStateEvidence(t *testing.T) {
 			},
 			want: []Feature{{Kind: KindResource, Name: "example_item", Provider: exampleProvider, Populated: []string{"id", "tags"}}},
 		},
-		"resources in child modules": {
+		"resources in child modules have no populated attributes": {
 			record: func(s *Step) {
+				r := resource("example_item", map[string]any{"id": "x"})
+				r.Address = "module.child." + r.Address
 				st := state()
-				st.Values.RootModule.ChildModules = []*tfjson.StateModule{{Resources: []*tfjson.StateResource{resource("example_item", map[string]any{"id": "x"})}}}
+				st.Values.RootModule.ChildModules = []*tfjson.StateModule{{Address: "module.child", Resources: []*tfjson.StateResource{r}}}
 				s.ObserveState(st)
 			},
-			want: []Feature{{Kind: KindResource, Name: "example_item", Provider: exampleProvider, Populated: []string{"id"}}},
+			want: []Feature{{Kind: KindResource, Name: "example_item", Provider: exampleProvider}},
 		},
 		"empty state": {
 			record: func(s *Step) { s.ObserveState(&tfjson.State{}) },

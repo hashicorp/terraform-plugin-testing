@@ -46,6 +46,9 @@ func TestSemanticCoverageWritesAFindingPerStep(t *testing.T) {
 		},
 		// Restores a valid configuration for the post-test destroy.
 		TestStep{Config: coverageTestConfig},
+		// Refresh uses the configuration in the working directory, so the
+		// value it echoes into state counts as configured.
+		TestStep{RefreshState: true},
 	))
 
 	const provider = "registry.terraform.io/hashicorp/test"
@@ -59,6 +62,8 @@ func TestSemanticCoverageWritesAFindingPerStep(t *testing.T) {
 	created := item
 	created.Planned = []semanticcoverage.Operation{semanticcoverage.OperationCreate}
 	created.Completed = []semanticcoverage.Operation{semanticcoverage.OperationCreate}
+	refreshed := item
+	refreshed.Completed = []semanticcoverage.Operation{semanticcoverage.OperationRefresh}
 	served := []string{provider}
 	want := []semanticcoverage.Finding{
 		{
@@ -82,6 +87,12 @@ func TestSemanticCoverageWritesAFindingPerStep(t *testing.T) {
 			Outcome:         semanticcoverage.OutcomeSuccess,
 			ServedProviders: served,
 			Features:        []semanticcoverage.Feature{{Kind: semanticcoverage.KindProvider, Name: provider}, item},
+		},
+		{
+			Step:            5,
+			Outcome:         semanticcoverage.OutcomeSuccess,
+			ServedProviders: served,
+			Features:        []semanticcoverage.Feature{{Kind: semanticcoverage.KindProvider, Name: provider}, refreshed},
 		},
 	}
 	got := writtenCoverage(t, dir)

@@ -61,7 +61,9 @@ that the step used. All uses of one feature type in a step are merged.
 - **Populated** attributes are the top-level attributes with a non-null value
   in the state that the step's apply, import, or refresh produced. Only
   top-level state attribute names are read: deeper maps can contain
-  user-provided keys.
+  user-provided keys. Resources in child modules record no populated
+  attributes, because module configuration is not read and values that a
+  module sets would otherwise count as computed by the provider.
 - **Operations** are `create`, `update`, `replace`, `delete`, `read`,
   `import`, `refresh`, `query`, and `invoke`. An operation is **planned** when
   it appears in one of the step's plans, and **completed** when Terraform
@@ -145,7 +147,8 @@ for it.
   state and have no configurable/computed distinction (only required/optional
   for import).
 - Modules referenced from external sources may be visible in plan actions or
-  state, but not in the locally copied configuration files.
+  state, but not in the locally copied configuration files. Their resources
+  count as used, but their computed attributes are not covered.
 - Terraform JSON configuration (a JSON `Config` string or a `.tf.json` file)
   is not read. Steps that use it get a `config_unavailable` warning and have no
   configuration evidence; plan and state evidence is still recorded.

@@ -120,9 +120,10 @@ func (r stepRef) String() string {
 
 // appendRef appends ref to refs unless it is already there. A step can have
 // several findings for the same feature, such as a provider named both by its
-// local name and by its source address.
+// local name and by its source address. aggregate adds findings in step order,
+// so a duplicate can only be the last ref.
 func appendRef(refs []stepRef, ref stepRef) []stepRef {
-	if slices.Contains(refs, ref) {
+	if n := len(refs); n > 0 && refs[n-1] == ref {
 		return refs
 	}
 	return append(refs, ref)

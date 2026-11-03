@@ -4,10 +4,13 @@
 package semanticcoverage
 
 import (
+	"strings"
+
 	tfjson "github.com/hashicorp/terraform-json"
 )
 
-// ObserveState records the features in state and their populated attributes.
+// ObserveState records the features in state and the populated attributes of
+// root module resources.
 // Only pass state that one of the step's operations produced. A nil state
 // means the state could not be read.
 func (s *Step) ObserveState(state *tfjson.State) {
@@ -24,6 +27,11 @@ func (s *Step) ObserveState(state *tfjson.State) {
 			return
 		}
 		f := s.feature(kind, r.Type, r.ProviderName)
+		// Module configuration is not read, so values that a module sets
+		// would count as computed by the provider.
+		if strings.HasPrefix(r.Address, "module.") {
+			return
+		}
 		// Only top-level keys are schema names. Nested map keys can be
 		// user data, so they are not read.
 		for name, value := range r.AttributeValues {

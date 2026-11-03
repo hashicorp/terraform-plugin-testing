@@ -84,20 +84,15 @@ func (s stepCoverage) apply(ctx context.Context, wd *plugintest.WorkingDir, opts
 	if !s.Enabled() {
 		return wd.Apply(ctx, opts...)
 	}
-	// A nil plan or state records that it could not be read.
-	plan, err := wd.SavedPlan(ctx)
-	if err != nil {
-		plan = nil
-	}
+	// A nil plan or state records that it could not be read. terraform-exec
+	// returns nil with every error.
+	plan, _ := wd.SavedPlan(ctx)
 	s.ObservePlan(plan)
 	if err := wd.Apply(ctx, opts...); err != nil {
 		return err
 	}
 	s.ApplyCompleted(plan)
-	state, err := wd.State(ctx)
-	if err != nil {
-		state = nil
-	}
+	state, _ := wd.State(ctx)
 	s.ObserveState(state)
 	return nil
 }
