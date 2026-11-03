@@ -19,7 +19,13 @@ the recorded findings with a `terraform providers schema -json` document.
 
 Collection is off by default. To turn it on, set
 `TF_ACC_SEMANTIC_COVERAGE_DIR` to a directory when running acceptance tests.
+<!-- <review> -->
+<!-- needs to be set to an empty directory! -->
+<!-- </review> -->
 The harness creates the directory if needed and writes one JSON finding per
+<!-- <review> -->
+<!-- replace harness with "plugin-testing" as harness is nowadays overused and mostly inferred to be "coding agent harnesses" -->
+<!-- </review> -->
 executed test step.
 
 ```sh
@@ -29,6 +35,9 @@ TF_ACC_SEMANTIC_COVERAGE_DIR="$PWD/findings/run-1" \
 
 # Generate the schema with the same provider version used in the test run.
 terraform -chdir=/path/to/initialized/provider/config providers schema -json \
+<!-- <review> -->
+<!-- usually this is done in a provider source repo, so maybe this doesn't really exist but there's a better way to get the schema of the current provider? -->
+<!-- </review> -->
   > provider-schema.json
 
 go run github.com/hashicorp/terraform-plugin-testing/cmd/semantic-coverage-report \
@@ -38,6 +47,9 @@ go run github.com/hashicorp/terraform-plugin-testing/cmd/semantic-coverage-repor
 ```
 
 Use a new, empty directory for each run. The report reads every `.json` file
+<!-- <review> -->
+<!-- "findings directory" -->
+<!-- </review> -->
 under `-findings-dir`, including subdirectories, and counts an attribute as
 covered if any of those findings covers it. Findings left over from an earlier
 run would count toward the current one.
@@ -49,6 +61,9 @@ format version differs from its own.
 
 When `TF_ACC_SEMANTIC_COVERAGE_DIR` is unset, nothing is recorded and the
 harness runs no additional Terraform commands.
+<!-- <review> -->
+<!-- explain why it would run additional terraform commands (or mention a/the second that does explain this behaviour change) -->
+<!-- </review> -->
 
 ### Report flags
 
@@ -71,6 +86,9 @@ the step number, the step's outcome, and the provider **features** that the
 step used: resources, data sources, ephemeral resources, list resources,
 actions, state stores, providers, and functions. All uses of one feature type
 within a step are merged into one entry.
+<!-- <review> -->
+<!-- question: Is "feature" a common wording used to describe resources, data sources, etc. used in terraform plugin/provider development docs? -->
+<!-- </review> -->
 
 The outcome is one of:
 
@@ -96,15 +114,26 @@ reads only top-level attribute names, because keys further down can be
 user-provided map keys. Resources in child modules record no populated
 attributes: module configuration is not read, so a value set by the module
 would otherwise look like one computed by the provider.
+<!-- <review> -->
+<!-- > so a value set by the module -->
+<!-- > would otherwise look like one computed by the provider. -->
+<!-- this sentence is a bit unclear, what does it mean? Make it simpler -->
+<!-- </review> -->
 
 **Operations** are `create`, `update`, `replace`, `delete`, `read`, `import`,
 `refresh`, `query`, and `invoke`. An operation is *planned* when it appears in
 one of the step's plans. It is *completed* when Terraform performed it
+<!-- <review> -->
+<!-- question: where is that "completed" state stored? -->
+<!-- </review> -->
 successfully: by applying a plan, running an import command, refreshing, or
 running a query. A no-op change records the feature but no operation. Steps
 with `PlanOnly`, and import-block tests that only plan, record planned
 operations only. A step with `Destroy: true` completes `delete`; the automatic
 destroy after the last step is not recorded.
+<!-- <review> -->
+<!-- question: should it be recorded? technically it is testing destroy, doesn't it? is it seen as testing destroy? -->
+<!-- </review> -->
 
 **Served providers** are recorded once per step rather than per feature. They
 are the source addresses under which the harness served the provider
@@ -127,6 +156,9 @@ The report applies these rules:
 
 - A `failed` step contributes nothing. The report lists it as a warning.
 - A feature is covered when a `success` or `expected_error` step used it.
+<!-- <review> -->
+<!-- how does expected error test whether an attribute "works" in the non error case? does that collide somehow / does that make sense? how do we know if an attribute can also "not error" from just an expected_error step? -->
+<!-- </review> -->
 - A configurable attribute (required, optional, or a block) is covered when
   such a step configured it.
 - A computed attribute is covered when a `success` step found it populated
@@ -134,16 +166,25 @@ The report applies these rules:
   value is copied into state, and configuration can't be paired with state per
   instance (`count`, `for_each`, modules), so any configuration of the
   attribute in the step disqualifies it.
+  <!-- <review> -->
+  <!-- make this section a bit simpler? -->
+  <!-- </review> -->
 - An optional-computed attribute counts once in the configurable total and
   once in the computed total. Covering both needs one step that sets the
   attribute and one that leaves it to the provider.
 - An `expected_error` step keeps its configured attributes and planned
   operations, but its completed operations and populated attributes are
   dropped.
+  <!-- <review> -->
+  <!-- ah, this is the answer to my error question earlier? -->
+  <!-- </review> -->
 - Deprecated attributes are counted like any other attribute.
 
 Attributes are counted only for top-level schema attributes and blocks.
 Functions have no attributes, so they count only as features.
+<!-- <review> -->
+<!-- functions have inputs? what does this sentence mean? simplify? explain better? -->
+<!-- </review> -->
 
 ## Matching findings to the schema
 
@@ -192,6 +233,9 @@ warnings.
 Operations are listed with the steps that performed them but are not turned
 into a percentage. The schema doesn't say which operations apply to a
 feature, so the report has nothing to divide by.
+<!-- <review> -->
+<!-- technically this would be implied knowledge by how terraform works. so we should be able to know which operations apply to which feature and that would be fixed and thus could be counted -->
+<!-- </review> -->
 
 ## Privacy
 
@@ -242,3 +286,6 @@ uncovered computed attributes were outputs of an ephemeral resource. The
 completed operations were `create` and `replace` for both file resources,
 `read` for the `local_command` data source, and `invoke` for the
 `local_command` action.
+<!-- <review> -->
+<!-- include the exact text and json outputs of the local provider below this paragraph in a pretty rendered json so its readable and both json and text in codeblocks -->
+<!-- </review> -->
