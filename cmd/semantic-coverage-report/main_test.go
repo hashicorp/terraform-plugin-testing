@@ -154,6 +154,121 @@ func TestAggregateMatchesFeaturesToTheSchema(t *testing.T) {
 	}
 }
 
+// publishedSchema is exampleSchema under the address the provider is
+// published under, which differs from the address the test harness serves it
+// under.
+const publishedSchema = `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/example-org/example": {
+	"provider": {"block": {}},
+	"resource_schemas": {"example_item": {"block": {"attributes": {
+		"name": {"type": "string", "required": true},
+		"id":   {"type": "string", "computed": true}
+	}}}}
+}}}`
+
+// servedFinding returns a finding of step 1 of TestExample that served the
+// given providers and used example_item, as a plan and state record it.
+func servedFinding(served ...string) sc.Finding {
+	const address = "registry.terraform.io/hashicorp/example"
+	f := finding(1, sc.OutcomeSuccess,
+		sc.Feature{Kind: sc.KindProvider, Name: address},
+		item(func(f *sc.Feature) {
+			f.Provider = address
+			f.Configured = []string{"name"}
+			f.Populated = []string{"id", "name"}
+			f.Completed = []sc.Operation{sc.OperationCreate}
+		}),
+	)
+	f.ServedProviders = append([]string{}, served...)
+	return f
+}
+
+func TestServedProviderMapsToThePublishedAddress(t *testing.T) {
+	t.Parallel()
+
+	result := aggregate(parseSchema(t, publishedSchema), []sc.Finding{servedFinding("registry.terraform.io/hashicorp/example")})
+	want := totals{Features: metric{2, 2}, Configurable: metric{1, 1}, Computed: metric{1, 1}}
+	if result.Totals != want {
+		t.Errorf("totals = %+v, want %+v", result.Totals, want)
+	}
+	if got := result.Features[1].Completed[sc.OperationCreate]; len(got) != 1 {
+		t.Errorf("completed create = %v, want step 1", got)
+	}
+	if len(result.Warnings) != 0 {
+		t.Errorf("warnings: %v", result.Warnings)
+	}
+}
+
+func TestProvidersNotServedFromTheTestBinaryAreExcluded(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		served []string
+		want   []string
+	}{
+		// An upgrade step runs a released provider that Terraform
+		// installs. Its address can equal the schema address exactly.
+		"no provider served": {
+			served: nil,
+			want:   []string{"no provider served from the test binary matches a single schema provider (served: none); generate the schema from the provider under test"},
+		},
+		// Another provider of the same type, such as an external one,
+		// isn't the provider under test.
+		"another provider served": {
+			served: []string{"registry.terraform.io/hashicorp/other"},
+			want:   []string{"no provider served from the test binary matches a single schema provider (served: registry.terraform.io/hashicorp/other); generate the schema from the provider under test"},
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{servedFinding(test.served...)})
+			if result.Totals.Features.Covered != 0 {
+				t.Errorf("features = %+v, want none covered", result.Totals.Features)
+			}
+			if diff := cmp.Diff(test.want, result.Warnings); diff != "" {
+				t.Errorf("warnings mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestServedHelperProvidersAreIgnored(t *testing.T) {
+	t.Parallel()
+
+	const echo = "registry.terraform.io/hashicorp/echo"
+	f := servedFinding("registry.terraform.io/hashicorp/example", echo)
+	f.Features = append(f.Features,
+		sc.Feature{Kind: sc.KindProvider, Name: "echo"},
+		sc.Feature{Kind: sc.KindProvider, Name: echo},
+		sc.Feature{Kind: sc.KindResource, Name: "echo", Provider: echo, Configured: []string{"data"}},
+	)
+	result := aggregate(parseSchema(t, publishedSchema), []sc.Finding{f})
+	if result.Totals.Features != (metric{2, 2}) {
+		t.Errorf("features = %+v, want both covered", result.Totals.Features)
+	}
+	if len(result.Warnings) != 0 {
+		t.Errorf("warnings: %v", result.Warnings)
+	}
+}
+
+func TestServedProviderOfAnAmbiguousTypeIsNotMapped(t *testing.T) {
+	t.Parallel()
+
+	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {
+		"registry.terraform.io/example-org/example": {"resource_schemas": {"example_item": {"block": {}}}},
+		"registry.terraform.io/fork/example": {"resource_schemas": {"example_item": {"block": {}}}}
+	}}`)
+	result := aggregate(doc, []sc.Finding{servedFinding("registry.terraform.io/hashicorp/example")})
+	if result.Totals.Features.Covered != 0 {
+		t.Errorf("features = %+v, want none covered", result.Totals.Features)
+	}
+	want := []string{"no provider served from the test binary matches a single schema provider (served: registry.terraform.io/hashicorp/example); generate the schema from the provider under test"}
+	if diff := cmp.Diff(want, result.Warnings); diff != "" {
+		t.Errorf("warnings mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func TestAmbiguousConfigurationIsNotCounted(t *testing.T) {
 	t.Parallel()
 
@@ -337,9 +452,18 @@ func parseSchema(t *testing.T, data string) *tfjson.ProviderSchemas {
 	return &doc
 }
 
-// finding returns a finding of step n of TestExample.
+// testProviders are the providers that findings returned by finding served
+// from the test binary: those of the schemas in these tests.
+var testProviders = []string{
+	"registry.terraform.io/hashicorp/aws",
+	"registry.terraform.io/hashicorp/example",
+	"registry.terraform.io/hashicorp/google",
+}
+
+// finding returns a finding of step n of TestExample that served
+// testProviders.
 func finding(n int, outcome sc.Outcome, features ...sc.Feature) sc.Finding {
-	return sc.Finding{Version: sc.FindingVersion, Test: "TestExample", Step: n, Outcome: outcome, Features: features}
+	return sc.Finding{Version: sc.FindingVersion, Test: "TestExample", Step: n, Outcome: outcome, ServedProviders: testProviders, Features: features}
 }
 
 // item returns the resource example_item of exampleSchema, changed by fn.

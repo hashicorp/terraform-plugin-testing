@@ -80,12 +80,27 @@ type Step struct {
 	collector   *Collector
 	number      int
 	expectError bool
+	served      []string
 	features    map[featureKey]*Feature
 	warnings    []Warning
 }
 
 // Enabled reports whether evidence is being collected.
 func (s *Step) Enabled() bool { return s != nil }
+
+// ObserveServedProviders records the source addresses under which the test
+// harness serves provider factories from the test binary during the step.
+// Terraform normalizes source addresses to lower case, so they are recorded
+// in lower case.
+func (s *Step) ObserveServedProviders(addresses []string) {
+	if s == nil {
+		return
+	}
+	s.served = nil
+	for _, address := range addresses {
+		s.served = append(s.served, strings.ToLower(address))
+	}
+}
 
 // Finish writes the step's Finding. failed reports whether the test failed
 // during the step. A step that didn't fail and sets TestStep.ExpectError
@@ -103,12 +118,13 @@ func (s *Step) Finish(failed bool) error {
 		outcome = OutcomeExpectedError
 	}
 	finding := Finding{
-		Version:  FindingVersion,
-		Package:  s.collector.packageName,
-		Test:     s.collector.testName,
-		Step:     s.number,
-		Outcome:  outcome,
-		Warnings: sortedSet(s.warnings),
+		Version:         FindingVersion,
+		Package:         s.collector.packageName,
+		Test:            s.collector.testName,
+		Step:            s.number,
+		Outcome:         outcome,
+		ServedProviders: sortedSet(s.served),
+		Warnings:        sortedSet(s.warnings),
 	}
 	for _, f := range s.features {
 		f.Configured = sortedSet(f.Configured)

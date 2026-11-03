@@ -15,8 +15,8 @@
 //   - From state, it reads only top-level attribute names and whether each
 //     value is non-null. Nested map keys can be user data.
 //
-// It does persist provider and feature type names, schema attribute names,
-// operations, test names, and test package import paths.
+// It does persist provider source addresses and feature type names, schema
+// attribute names, operations, test names, and test package import paths.
 package semanticcoverage
 
 import (
@@ -41,12 +41,20 @@ const FindingVersion = 1
 type Finding struct {
 	Version int `json:"version"`
 	// Package is the import path of the package under test.
-	Package  string    `json:"package,omitempty"`
-	Test     string    `json:"test"`
-	Step     int       `json:"step"`
-	Outcome  Outcome   `json:"outcome"`
-	Features []Feature `json:"features,omitempty"`
-	Warnings []Warning `json:"warnings,omitempty"`
+	Package string  `json:"package,omitempty"`
+	Test    string  `json:"test"`
+	Step    int     `json:"step"`
+	Outcome Outcome `json:"outcome"`
+	// ServedProviders lists the source addresses under which the test
+	// harness served provider factories from the test binary during the step.
+	// The harness chooses these addresses (registry.terraform.io/hashicorp/
+	// followed by the factory name, unless TF_ACC_PROVIDER_HOST or
+	// TF_ACC_PROVIDER_NAMESPACE are set), so they can differ from the address
+	// a provider is published under. Providers that Terraform installs, such
+	// as ExternalProviders, are not listed.
+	ServedProviders []string  `json:"served_providers,omitempty"`
+	Features        []Feature `json:"features,omitempty"`
+	Warnings        []Warning `json:"warnings,omitempty"`
 }
 
 // Validate reports whether f was written by this version of the collector and

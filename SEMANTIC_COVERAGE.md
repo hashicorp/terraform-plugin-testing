@@ -70,6 +70,11 @@ that the step used. All uses of one feature type in a step are merged.
   import-block tests that only plan contribute planned operations only.
   Explicit `Destroy` steps complete `delete`; the automatic cleanup after the
   test is not recorded.
+- **Served providers** are the source addresses under which the test
+  harness served provider factories from the test binary during the step.
+  Providers that Terraform installs, such as `ExternalProviders` or the
+  released provider in an upgrade test step, are not served from the test
+  binary.
 - A finding can carry warnings. Each warning means that one source of
   evidence for the step was unavailable:
 
@@ -102,8 +107,9 @@ The report applies these rules to the findings:
 
 The collector does not persist configuration text, attribute values, plan or
 state JSON, query results, resource names, addresses, instance keys, or
-assertion matchers. It does persist provider and feature type names, schema
-attribute names, operations, test names, and test package import paths.
+assertion matchers. It does persist provider source addresses and feature
+type names, schema attribute names, operations, test names, and test package
+import paths.
 Write findings to a trusted private directory.
 
 ## Report
@@ -113,6 +119,19 @@ and completed operation lists with step references. Operation totals are
 observations, not percentages, because the schema does not declare which
 lifecycle cases apply to a feature. The schema document must describe the same
 provider selection as the test run.
+
+Only evidence of providers served from the test binary counts, so the code
+under test is all that is measured. The harness serves a provider factory as
+`registry.terraform.io/hashicorp/<name>` unless `TF_ACC_PROVIDER_NAMESPACE`
+or `TF_ACC_PROVIDER_HOST` are set, while the schema is usually generated
+under the address the provider is published under, such as
+`registry.terraform.io/example-org/example`. The report attributes a served
+provider to the schema provider with the same address or, failing that, to the
+only schema provider of the same type. Served providers that are not in the
+schema, such as providers that only the tests use, are ignored. The report
+warns when no served provider matches a single schema provider. Configuration that names no
+provider is attributed by its type name prefix, the provider Terraform implies
+for it.
 
 ## Current limits
 

@@ -59,15 +59,18 @@ func TestSemanticCoverageWritesAFindingPerStep(t *testing.T) {
 	created := item
 	created.Planned = []semanticcoverage.Operation{semanticcoverage.OperationCreate}
 	created.Completed = []semanticcoverage.Operation{semanticcoverage.OperationCreate}
+	served := []string{provider}
 	want := []semanticcoverage.Finding{
 		{
-			Step:     1,
-			Outcome:  semanticcoverage.OutcomeSuccess,
-			Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindProvider, Name: provider}, created},
+			Step:            1,
+			Outcome:         semanticcoverage.OutcomeSuccess,
+			ServedProviders: served,
+			Features:        []semanticcoverage.Feature{{Kind: semanticcoverage.KindProvider, Name: provider}, created},
 		},
 		{
-			Step:    2,
-			Outcome: semanticcoverage.OutcomeExpectedError,
+			Step:            2,
+			Outcome:         semanticcoverage.OutcomeExpectedError,
+			ServedProviders: served,
 			Features: []semanticcoverage.Feature{
 				{Kind: semanticcoverage.KindResource, Name: "test_invalid"},
 				{Kind: semanticcoverage.KindResource, Name: "test_resource", Configured: []string{"name"}},
@@ -75,9 +78,10 @@ func TestSemanticCoverageWritesAFindingPerStep(t *testing.T) {
 		},
 		{
 			// A no-op apply has no operation.
-			Step:     4,
-			Outcome:  semanticcoverage.OutcomeSuccess,
-			Features: []semanticcoverage.Feature{{Kind: semanticcoverage.KindProvider, Name: provider}, item},
+			Step:            4,
+			Outcome:         semanticcoverage.OutcomeSuccess,
+			ServedProviders: served,
+			Features:        []semanticcoverage.Feature{{Kind: semanticcoverage.KindProvider, Name: provider}, item},
 		},
 	}
 	got := writtenCoverage(t, dir)
@@ -130,6 +134,42 @@ func TestSemanticCoverageOfStepsThatStopTheTest(t *testing.T) {
 				if slices.Contains(f.Planned, semanticcoverage.OperationDelete) {
 					t.Errorf("cleanup recorded as evidence: %+v", f)
 				}
+			}
+		})
+	}
+}
+
+func TestServedAddresses(t *testing.T) {
+	factories := &providerFactories{
+		legacy:  sdkProviderFactories{"terraform-provider-legacy": nil},
+		protov5: protov5ProviderFactories{"five": nil},
+		protov6: protov6ProviderFactories{"six": nil},
+	}
+	tests := map[string]struct {
+		namespace, host string
+		want            []string
+	}{
+		// The namespaceless address only exists for Terraform 0.12.
+		"default": {want: []string{
+			"registry.terraform.io/hashicorp/five",
+			"registry.terraform.io/hashicorp/legacy",
+			"registry.terraform.io/hashicorp/six",
+		}},
+		"overridden": {namespace: "example-org", host: "example.com", want: []string{
+			"example.com/example-org/five",
+			"example.com/example-org/legacy",
+			"example.com/example-org/six",
+		}},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Setenv(EnvTfAccProviderNamespace, test.namespace)
+			t.Setenv(EnvTfAccProviderHost, test.host)
+
+			got := factories.servedAddresses()
+			slices.Sort(got)
+			if diff := cmp.Diff(test.want, got); diff != "" {
+				t.Errorf("served addresses mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

@@ -522,6 +522,26 @@ func runProviderCommand(ctx context.Context, t testing.T, wd *plugintest.Working
 	return err
 }
 
+// servedAddresses returns the source addresses under which
+// runProviderCommand serves the factories, without the namespaceless address
+// that only Terraform 0.12 uses.
+func (f *providerFactories) servedAddresses() []string {
+	var addresses []string
+	add := func(name string) {
+		addresses = append(addresses, getProviderAddr(strings.TrimPrefix(name, "terraform-provider-")))
+	}
+	for name := range f.legacy {
+		add(name)
+	}
+	for name := range f.protov5 {
+		add(name)
+	}
+	for name := range f.protov6 {
+		add(name)
+	}
+	return addresses
+}
+
 func getProviderAddr(name string) string {
 	host := "registry.terraform.io"
 	namespace := "hashicorp"

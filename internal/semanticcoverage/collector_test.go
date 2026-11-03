@@ -65,6 +65,24 @@ func TestFindingIdentifiesTheStep(t *testing.T) {
 	}
 }
 
+func TestFindingRecordsTheServedProviders(t *testing.T) {
+	t.Parallel()
+
+	c := testCollector(t)
+	step := c.BeginStep(1, false)
+	step.ObserveServedProviders([]string{"registry.terraform.io/stale/example"})
+	// TF_ACC_PROVIDER_NAMESPACE can be mixed case, but Terraform reports
+	// lower case source addresses.
+	step.ObserveServedProviders([]string{"registry.terraform.io/hashicorp/echo", "registry.terraform.io/Example-Org/example"})
+	if err := step.Finish(false); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"registry.terraform.io/example-org/example", "registry.terraform.io/hashicorp/echo"}
+	if diff := cmp.Diff(want, writtenFindings(t, c)[0].ServedProviders); diff != "" {
+		t.Errorf("served providers mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func TestOnlyFinishedStepsWriteFindings(t *testing.T) {
 	t.Parallel()
 

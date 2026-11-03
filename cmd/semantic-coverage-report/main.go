@@ -255,10 +255,12 @@ func aggregate(doc *tfjson.ProviderSchemas, findings []semanticcoverage.Finding)
 	slices.SortStableFunc(findings, func(a, b semanticcoverage.Finding) int {
 		return cmp.Or(cmp.Compare(a.Package, b.Package), cmp.Compare(a.Test, b.Test), cmp.Compare(a.Step, b.Step))
 	})
+	providers := newProviderMap(doc)
 	var warnings []string
 	for _, f := range findings {
-		warnings = append(warnings, addFinding(features, f)...)
+		warnings = append(warnings, addFinding(features, providers, f)...)
 	}
+	warnings = append(warnings, providers.warnings()...)
 	return summarize(features, warnings, len(findings))
 }
 
@@ -309,7 +311,7 @@ func schemaFeatures(doc *tfjson.ProviderSchemas) []*featureResult {
 
 // addFinding records the evidence of finding f in features and returns the
 // finding's warnings.
-func addFinding(features []*featureResult, f semanticcoverage.Finding) []string {
+func addFinding(features []*featureResult, providers *providerMap, f semanticcoverage.Finding) []string {
 	ref := stepRef{Package: f.Package, Test: f.Test, Step: f.Step}
 	var warnings []string
 	for _, w := range f.Warnings {
@@ -321,7 +323,15 @@ func addFinding(features []*featureResult, f semanticcoverage.Finding) []string 
 	if f.Outcome == semanticcoverage.OutcomeFailed {
 		return append(warnings, fmt.Sprintf("%s failed; evidence excluded from coverage", ref))
 	}
+	served := providers.resolve(f.ServedProviders)
 	for _, feature := range f.Features {
+		feature, ok := inProcess(feature, served)
+		if !ok {
+			// Evidence of a provider that Terraform installed, such as
+			// an external provider or the released provider in an
+			// upgrade step, says nothing about the provider under test.
+			continue
+		}
 		var matches []*featureResult
 		for _, r := range features {
 			if r.matches(feature) {
@@ -425,6 +435,101 @@ func providerMatches(address, ref string) bool {
 	default:
 		return strings.HasSuffix(address, "/"+ref)
 	}
+}
+
+// providerMap maps the provider addresses under which the test harness served
+// provider factories from the test binary to the schema's provider addresses.
+//
+// The harness serves a factory as registry.terraform.io/hashicorp/<name>
+// unless TF_ACC_PROVIDER_HOST or TF_ACC_PROVIDER_NAMESPACE say otherwise,
+// while the schema is usually generated under the address the provider is
+// published under. A served address maps to the schema provider with the same
+// address or, failing that, to the only schema provider of the same type.
+type providerMap struct {
+	// byType lists the schema's provider addresses by provider type.
+	byType map[string][]string
+	// served records every served address of all findings.
+	served map[string]bool
+	// mapped reports whether some served address maps to the schema.
+	mapped bool
+}
+
+func newProviderMap(doc *tfjson.ProviderSchemas) *providerMap {
+	m := &providerMap{byType: make(map[string][]string), served: make(map[string]bool)}
+	for address := range doc.Schemas {
+		typ := providerType(address)
+		m.byType[typ] = append(m.byType[typ], address)
+	}
+	return m
+}
+
+// resolve returns the schema address of each served address of a step. A
+// served provider that no single schema provider matches, such as a provider
+// that only the tests use, maps to "".
+func (m *providerMap) resolve(served []string) map[string]string {
+	result := make(map[string]string, len(served))
+	for _, address := range served {
+		m.served[address] = true
+		candidates := m.byType[providerType(address)]
+		var target string
+		switch {
+		case slices.Contains(candidates, address):
+			target = address
+		case len(candidates) == 1:
+			target = candidates[0]
+		}
+		result[address] = target
+		m.mapped = m.mapped || target != ""
+	}
+	return result
+}
+
+// warnings returns a warning if no served provider maps to the schema.
+func (m *providerMap) warnings() []string {
+	if m.mapped {
+		return nil
+	}
+	served := "none"
+	if len(m.served) > 0 {
+		served = strings.Join(slices.Sorted(maps.Keys(m.served)), ", ")
+	}
+	return []string{fmt.Sprintf("no provider served from the test binary matches a single schema provider (served: %s); generate the schema from the provider under test", served)}
+}
+
+// inProcess reports whether feature f belongs to a provider that the step
+// served from the test binary, and returns f with that provider's source
+// address replaced by its schema address. served is the result of
+// providerMap.resolve for the step.
+func inProcess(f semanticcoverage.Feature, served map[string]string) (semanticcoverage.Feature, bool) {
+	ref := &f.Provider
+	if f.Kind == semanticcoverage.KindProvider {
+		ref = &f.Name
+	}
+	if strings.Contains(*ref, "/") {
+		address, ok := served[*ref]
+		if address != "" {
+			*ref = address
+		}
+		return f, ok
+	}
+	// A local name, or nothing for configuration, where Terraform implies
+	// the provider from the type name's prefix.
+	typ := *ref
+	if typ == "" {
+		typ, _, _ = strings.Cut(f.Name, "_")
+	}
+	for address := range served {
+		if providerType(address) == typ {
+			return f, true
+		}
+	}
+	return f, false
+}
+
+// providerType returns the type of a provider source address, such as
+// "aws" for registry.terraform.io/hashicorp/aws.
+func providerType(address string) string {
+	return address[strings.LastIndex(address, "/")+1:]
 }
 
 // topLevelAttributes returns the top-level attributes and nested blocks of b,

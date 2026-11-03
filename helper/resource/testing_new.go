@@ -305,6 +305,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			}
 		}
 
+		// Every Terraform command of the step serves these providers.
+		coverage.ObserveServedProviders(providers.servedAddresses())
+
 		if step.ImportState {
 			logging.HelperResourceTrace(ctx, "TestStep is ImportState mode")
 
