@@ -36,6 +36,7 @@ func TestSemanticCoverageWritesAFindingPerStep(t *testing.T) {
 
 	UnitTest(t, coverageTestCase(
 		TestStep{Config: coverageTestConfig},
+		// A step that expects an error writes no finding.
 		TestStep{
 			Config:      coverageTestConfig + `resource "test_invalid" "b" {}`,
 			ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
@@ -68,29 +69,17 @@ func TestSemanticCoverageWritesAFindingPerStep(t *testing.T) {
 	want := []semanticcoverage.Finding{
 		{
 			Step:            1,
-			Outcome:         semanticcoverage.OutcomeSuccess,
 			ServedProviders: served,
 			Features:        []semanticcoverage.Feature{{Kind: semanticcoverage.KindProvider, Name: provider}, created},
 		},
 		{
-			Step:            2,
-			Outcome:         semanticcoverage.OutcomeExpectedError,
-			ServedProviders: served,
-			Features: []semanticcoverage.Feature{
-				{Kind: semanticcoverage.KindResource, Name: "test_invalid"},
-				{Kind: semanticcoverage.KindResource, Name: "test_resource", Configured: []string{"name"}},
-			},
-		},
-		{
 			// A no-op apply has no operation.
 			Step:            4,
-			Outcome:         semanticcoverage.OutcomeSuccess,
 			ServedProviders: served,
 			Features:        []semanticcoverage.Feature{{Kind: semanticcoverage.KindProvider, Name: provider}, item},
 		},
 		{
 			Step:            5,
-			Outcome:         semanticcoverage.OutcomeSuccess,
 			ServedProviders: served,
 			Features:        []semanticcoverage.Feature{{Kind: semanticcoverage.KindProvider, Name: provider}, refreshed},
 		},
@@ -105,19 +94,19 @@ func TestSemanticCoverageOfStepsThatStopTheTest(t *testing.T) {
 	tests := map[string]struct {
 		step         TestStep
 		checkDestroy TestCheckFunc
-		want         semanticcoverage.Outcome
+		wantFindings int
 	}{
-		"a failing check fails the step": {
+		"a failed step writes no finding": {
 			step: TestStep{
 				Config: coverageTestConfig,
 				Check:  func(*terraform.State) error { return errors.New("check failed") },
 			},
-			want: semanticcoverage.OutcomeFailed,
+			wantFindings: 0,
 		},
-		"a failing cleanup doesn't fail the last step": {
+		"a failing cleanup doesn't drop the last step": {
 			step:         TestStep{Config: coverageTestConfig},
 			checkDestroy: func(*terraform.State) error { return errors.New("destroy check failed") },
-			want:         semanticcoverage.OutcomeSuccess,
+			wantFindings: 1,
 		},
 	}
 	for name, test := range tests {
@@ -137,13 +126,15 @@ func TestSemanticCoverageOfStepsThatStopTheTest(t *testing.T) {
 			}()
 
 			got := writtenCoverage(t, dir)
-			if len(got) != 1 || got[0].Outcome != test.want {
-				t.Fatalf("findings = %+v, want one with outcome %q", got, test.want)
+			if len(got) != test.wantFindings {
+				t.Fatalf("findings = %+v, want %d", got, test.wantFindings)
 			}
 			// Cleanup destroys the resource, but isn't part of the step.
-			for _, f := range got[0].Features {
-				if slices.Contains(f.Planned, semanticcoverage.OperationDelete) {
-					t.Errorf("cleanup recorded as evidence: %+v", f)
+			for _, finding := range got {
+				for _, f := range finding.Features {
+					if slices.Contains(f.Planned, semanticcoverage.OperationDelete) {
+						t.Errorf("cleanup recorded as evidence: %+v", f)
+					}
 				}
 			}
 		})

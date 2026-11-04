@@ -100,20 +100,23 @@ attributes do not change the exit status, and neither do report warnings.
 ## What a finding records
 
 Each finding describes one test step. It holds the test's package and name,
-the step number, the step's outcome, and the provider **features** that the
-step used: resources, data sources, ephemeral resources, list resources,
-actions, state stores, providers, and functions. All uses of one feature type
-within a step are merged into one entry.
+the step number, and the provider **features** that the step used: resources,
+data sources, ephemeral resources, list resources, actions, state stores,
+providers, and functions. All uses of one feature type within a step are
+merged into one entry.
 
-The outcome is one of:
+Findings are written only for steps that pass. These steps write none:
 
-| Outcome | Meaning |
-|---|---|
-| `success` | The step passed. |
-| `expected_error` | The step failed with an error that matched `ExpectError`. |
-| `failed` | The test failed during the step, including through `t.Fatal` or a panic. |
+- **Steps with `ExpectError`.** They test how the provider handles invalid
+  input or a failing operation. A step that only checks a validation error
+  shows nothing about whether the feature works with valid input.
+- **Failed steps.** A failure can stop Terraform at any point, so the step's
+  evidence is incomplete. Once a test has failed, its remaining steps write
+  no finding either, even if the failure didn't stop the test.
+- **Skipped steps.**
 
-Skipped steps write no finding.
+A run with failing tests therefore shows lower coverage, and the report
+doesn't say why. Check that `go test` passed before you read the report.
 
 For each feature, the finding lists the following evidence.
 
@@ -143,7 +146,7 @@ only plan, record planned operations only.
 A step with `Destroy: true` completes `delete`. The automatic destroy after
 the last step is not recorded, although it calls the provider's delete for
 every resource left in state. It runs after the last step's finding is
-written, so that a failed cleanup can't turn a passed step into a failed one,
+written, so that a failed cleanup can't drop the finding of a passed step,
 and it belongs to no step. As a result, `delete` shows as completed only for
 tests that have a `Destroy: true` step.
 
@@ -166,18 +169,11 @@ for the step was unavailable, and the report repeats it:
 
 The report applies these rules:
 
-- A `failed` step contributes nothing. The report lists it as a warning.
-- A feature is covered when a `success` or `expected_error` step used it.
-- An `expected_error` step keeps its configured attributes and planned
-  operations, but its completed operations and populated attributes are
-  dropped, because the step's error may have stopped Terraform before or
-  during the operation. Configured coverage from such a step shows only that
-  a test set the attribute, not that a valid value works: a test that only
-  checks a validation error for an attribute covers it.
+- A feature is covered when a step used it.
 - A configurable attribute (required, optional, or a block) is covered when
-  a `success` or `expected_error` step configured it.
-- A computed attribute is covered when a `success` step found it populated
-  and didn't configure it for any use of that feature type. Terraform copies
+  a step configured it.
+- A computed attribute is covered when a step found it populated and didn't
+  configure it for any use of that feature type. Terraform copies
   configured values into state, so a populated value shows that the provider
   computed it only if the step left the attribute unset. The check is per
   type, not per resource instance, because configuration and state can't be
@@ -233,8 +229,8 @@ The JSON report has these top-level fields:
   name. Each entry has the steps that used it (`covered_by`), each attribute
   with the steps that configured it (`configured_by`) or found it computed
   (`computed_by`), and the steps that planned or completed each operation.
-- `warnings` lists finding warnings, failed steps, ambiguous matches, and
-  provider mapping problems. It is omitted when there are none.
+- `warnings` lists finding warnings, ambiguous matches, and provider mapping
+  problems. It is omitted when there are none.
 
 The text report prints the totals, one line per feature, one
 `uncovered <attribute> (needs ...)` line per uncovered attribute, and the
@@ -297,8 +293,8 @@ that you control.
 
 Running the tests of `terraform-provider-local` at commit `b3d30fe`, without
 the upgrade tests that download released providers (`go test -skip Upgrade`),
-produced 58 findings. The schema was generated with the `dev_overrides`
-recipe from [Usage](#usage). The report showed 9/9 features, 30/30
+produced 40 findings; the 18 steps with `ExpectError` wrote none. The schema
+was generated with the `dev_overrides` recipe from [Usage](#usage). The report showed 9/9 features, 30/30
 configurable attributes, and 39/42 computed attributes covered. The four
 optional-computed permission attributes appear in both totals and were covered
 both when set and when left unset. The three uncovered computed attributes
@@ -312,7 +308,7 @@ sources show no operations, because Terraform read them while planning.
 The text report:
 
 ```text
-Test-derived semantic coverage: 58 findings
+Test-derived semantic coverage: 40 findings
 Attribute scope: top-level schema attributes and blocks only; nested descendants are excluded.
 Features 9/9; configurable 30/30; computed 39/42
 registry.terraform.io/hashicorp/local action local_command: covered=true attributes=5/5 planned=[invoke] completed=[invoke]
@@ -330,13 +326,13 @@ registry.terraform.io/hashicorp/local resource local_sensitive_file: covered=tru
 ```
 
 An excerpt of the JSON report. It is complete except that `features` shows
-only two of the nine entries; the full file has 3,193 lines.
+only two of the nine entries; the full file has 2,868 lines.
 
 ```json
 {
   "version": 1,
   "attribute_scope": "top_level",
-  "findings": 58,
+  "findings": 40,
   "totals": {
     "features": {
       "covered": 9,
@@ -506,16 +502,6 @@ only two of the nine entries; the full file has 3,193 lines.
         {
           "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
           "test": "TestDirectoryExists_basic",
-          "step": 1
-        },
-        {
-          "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
-          "test": "TestDirectoryExists_invalid_file",
-          "step": 1
-        },
-        {
-          "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
-          "test": "TestDirectoryExists_invalid_symlink",
           "step": 1
         }
       ]

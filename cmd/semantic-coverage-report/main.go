@@ -318,12 +318,6 @@ func addFinding(features []*featureResult, providers *providerMap, f semanticcov
 	for _, w := range f.Warnings {
 		warnings = append(warnings, fmt.Sprintf("%s: %s", ref, w))
 	}
-	// A failed step can stop at any point, and its error means the provider
-	// didn't do what the test expected. None of its evidence shows that a
-	// feature works.
-	if f.Outcome == semanticcoverage.OutcomeFailed {
-		return append(warnings, fmt.Sprintf("%s failed; evidence excluded from coverage", ref))
-	}
 	served := providers.resolve(f.ServedProviders)
 	for _, feature := range f.Features {
 		feature, ok := inProcess(feature, served)
@@ -344,7 +338,7 @@ func addFinding(features []*featureResult, providers *providerMap, f semanticcov
 			// The feature belongs to a provider that isn't in the schema,
 			// such as another provider that the test uses.
 		case 1:
-			matches[0].record(ref, claimable(feature, f.Outcome))
+			matches[0].record(ref, feature)
 		default:
 			// Configuration names no provider address, so a type name
 			// that several providers in the schema define is ambiguous.
@@ -352,16 +346,6 @@ func addFinding(features []*featureResult, providers *providerMap, f semanticcov
 		}
 	}
 	return warnings
-}
-
-// claimable returns the evidence of f that a step with the given outcome can
-// claim. A matched expected error keeps configuration and plan evidence, but
-// the operation failed, so it completed nothing and left no reliable state.
-func claimable(f semanticcoverage.Feature, outcome semanticcoverage.Outcome) semanticcoverage.Feature {
-	if outcome != semanticcoverage.OutcomeSuccess {
-		f.Populated, f.Completed = nil, nil
-	}
-	return f
 }
 
 // record records the evidence f of the step ref.

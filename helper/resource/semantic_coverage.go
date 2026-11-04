@@ -44,13 +44,16 @@ func newCoverageCollector(t testing.T) *semanticcoverage.Collector {
 	return c
 }
 
-// end writes the step's finding, if a step is being recorded, and stops
-// recording.
-func (s *stepCoverage) end(t testing.T, failed bool) {
+// end stops recording the step and writes its finding, unless the test has
+// failed. A test that reports an error without stopping fails all of its
+// remaining steps too.
+func (s *stepCoverage) end(t testing.T) {
 	t.Helper()
 
-	if err := s.Finish(failed); err != nil {
-		t.Errorf("writing semantic coverage finding: %s", err)
+	if !t.Failed() {
+		if err := s.Finish(); err != nil {
+			t.Errorf("writing semantic coverage finding: %s", err)
+		}
 	}
 	s.Step = nil
 }

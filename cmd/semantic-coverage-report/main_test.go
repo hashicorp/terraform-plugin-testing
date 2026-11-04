@@ -20,11 +20,11 @@ func TestAggregateKeepsOperationAndAttributeEvidenceDistinct(t *testing.T) {
 	t.Parallel()
 
 	result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{
-		finding(1, sc.OutcomeSuccess, item(func(f *sc.Feature) {
+		finding(1, item(func(f *sc.Feature) {
 			f.Configured = []string{"name"}
 			f.Planned = []sc.Operation{sc.OperationCreate}
 		})),
-		finding(2, sc.OutcomeSuccess, item(func(f *sc.Feature) {
+		finding(2, item(func(f *sc.Feature) {
 			f.Populated = []string{"id"}
 			f.Completed = []sc.Operation{sc.OperationCreate}
 		})),
@@ -43,61 +43,21 @@ func TestAggregateKeepsOperationAndAttributeEvidenceDistinct(t *testing.T) {
 	}
 }
 
-func TestExpectedErrorClaimsNoCompletedOperationOrComputedValue(t *testing.T) {
-	t.Parallel()
-
-	result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{
-		finding(1, sc.OutcomeExpectedError, item(func(f *sc.Feature) {
-			f.Configured = []string{"name"}
-			f.Populated = []string{"id"}
-			f.Planned = []sc.Operation{sc.OperationCreate}
-			f.Completed = []sc.Operation{sc.OperationCreate}
-		})),
-	})
-	if result.Totals.Configurable.Covered != 1 || result.Totals.Computed.Covered != 0 {
-		t.Fatalf("totals: %+v", result.Totals)
-	}
-	f := result.Features[0]
-	if len(f.Planned[sc.OperationCreate]) != 1 || len(f.Completed) != 0 {
-		t.Fatalf("planned=%v completed=%v", f.Planned, f.Completed)
-	}
-}
-
-func TestFailedFindingDoesNotCancelAnotherFinding(t *testing.T) {
-	t.Parallel()
-
-	feature := item(func(f *sc.Feature) {
-		f.Configured = []string{"name"}
-		f.Populated = []string{"id"}
-	})
-	result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{
-		finding(1, sc.OutcomeFailed, feature),
-		finding(1, sc.OutcomeSuccess, feature),
-	})
-	want := totals{Features: metric{1, 1}, Configurable: metric{1, 1}, Computed: metric{1, 1}}
-	if result.Totals != want {
-		t.Fatalf("totals = %+v, want %+v", result.Totals, want)
-	}
-}
-
 func TestFeatureCoverage(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		outcome sc.Outcome
 		feature sc.Feature
 		want    bool
 	}{
-		"used in a successful step":      {sc.OutcomeSuccess, item(nil), true},
-		"used in an expected error step": {sc.OutcomeExpectedError, item(nil), true},
-		"used in a failed step":          {sc.OutcomeFailed, item(nil), false},
-		"only another feature used":      {sc.OutcomeSuccess, sc.Feature{Kind: sc.KindDataSource, Name: "example_item"}, false},
+		"used":                      {item(nil), true},
+		"only another feature used": {sc.Feature{Kind: sc.KindDataSource, Name: "example_item"}, false},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{finding(1, test.outcome, test.feature)})
+			result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{finding(1, test.feature)})
 			if got := result.Features[0].Covered; got != test.want {
 				t.Errorf("covered = %t, want %t", got, test.want)
 			}
@@ -137,7 +97,7 @@ func TestAggregateMatchesFeaturesToTheSchema(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			result := aggregate(doc, []sc.Finding{finding(1, sc.OutcomeSuccess, test.feature)})
+			result := aggregate(doc, []sc.Finding{finding(1, test.feature)})
 			var covered []string
 			for _, f := range result.Features {
 				if f.Covered {
@@ -169,7 +129,7 @@ const publishedSchema = `{"format_version": "1.0", "provider_schemas": {"registr
 // given providers and used example_item, as a plan and state record it.
 func servedFinding(served ...string) sc.Finding {
 	const address = "registry.terraform.io/hashicorp/example"
-	f := finding(1, sc.OutcomeSuccess,
+	f := finding(1,
 		sc.Feature{Kind: sc.KindProvider, Name: address},
 		item(func(f *sc.Feature) {
 			f.Provider = address
@@ -276,7 +236,7 @@ func TestAmbiguousConfigurationIsNotCounted(t *testing.T) {
 		"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {}}}},
 		"registry.terraform.io/fork/example": {"resource_schemas": {"example_item": {"block": {}}}}
 	}}`)
-	result := aggregate(doc, []sc.Finding{finding(1, sc.OutcomeSuccess, sc.Feature{Kind: sc.KindResource, Name: "example_item"})})
+	result := aggregate(doc, []sc.Finding{finding(1, sc.Feature{Kind: sc.KindResource, Name: "example_item"})})
 	if result.Totals.Features.Covered != 0 {
 		t.Errorf("features = %+v, want none covered", result.Totals.Features)
 	}
@@ -292,8 +252,8 @@ func TestOptionalComputedAttributesNeedATestThatSetsThemAndOneThatDoesNot(t *tes
 	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {"attributes": {
 		"tags": {"type": "string", "optional": true, "computed": true}
 	}}}}}}}`)
-	unset := finding(1, sc.OutcomeSuccess, item(func(f *sc.Feature) { f.Populated = []string{"tags"} }))
-	set := finding(2, sc.OutcomeSuccess, item(func(f *sc.Feature) {
+	unset := finding(1, item(func(f *sc.Feature) { f.Populated = []string{"tags"} }))
+	set := finding(2, item(func(f *sc.Feature) {
 		f.Configured = []string{"tags"}
 		f.Populated = []string{"tags"}
 	}))
@@ -319,7 +279,7 @@ func TestAggregateCountsDeprecatedAttributes(t *testing.T) {
 		"attributes": {"old_name": {"type": "string", "optional": true, "deprecated": true}},
 		"deprecated": true
 	}}}}}}`)
-	result := aggregate(doc, []sc.Finding{finding(1, sc.OutcomeSuccess, item(func(f *sc.Feature) { f.Configured = []string{"old_name"} }))})
+	result := aggregate(doc, []sc.Finding{finding(1, item(func(f *sc.Feature) { f.Configured = []string{"old_name"} }))})
 	if result.Totals.Configurable != (metric{Covered: 1, Total: 1}) {
 		t.Fatalf("deprecated attribute of a deprecated resource should count: %+v", result.Totals.Configurable)
 	}
@@ -343,7 +303,7 @@ func TestAggregateExcludesNestedAttributes(t *testing.T) {
 			}}}
 		}
 	}}}}}}`)
-	result := aggregate(doc, []sc.Finding{finding(1, sc.OutcomeSuccess, item(func(f *sc.Feature) {
+	result := aggregate(doc, []sc.Finding{finding(1, item(func(f *sc.Feature) {
 		f.Configured = []string{"settings"}
 		f.Populated = []string{"id"}
 	}))})
@@ -366,7 +326,7 @@ func TestWarningsAreInStepOrder(t *testing.T) {
 	t.Parallel()
 
 	step := func(n int) sc.Finding {
-		f := finding(n, sc.OutcomeSuccess)
+		f := finding(n)
 		f.Package = "example.com/provider"
 		f.Warnings = []sc.Warning{sc.WarningStateUnavailable}
 		return f
@@ -384,20 +344,22 @@ func TestWarningsAreInStepOrder(t *testing.T) {
 func TestTextReport(t *testing.T) {
 	t.Parallel()
 
+	unplanned := finding(2)
+	unplanned.Warnings = []sc.Warning{sc.WarningPlanUnavailable}
 	result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{
-		finding(1, sc.OutcomeSuccess, item(func(f *sc.Feature) {
+		finding(1, item(func(f *sc.Feature) {
 			f.Configured = []string{"name"}
 			f.Planned = []sc.Operation{sc.OperationCreate}
 			f.Completed = []sc.Operation{sc.OperationCreate}
 		})),
-		finding(2, sc.OutcomeFailed),
+		unplanned,
 	})
 	want := `Test-derived semantic coverage: 2 findings
 Attribute scope: top-level schema attributes and blocks only; nested descendants are excluded.
 Features 1/1; configurable 1/1; computed 0/1
 registry.terraform.io/hashicorp/example resource example_item: covered=true attributes=1/2 planned=[create] completed=[create]
   uncovered id (needs a test that leaves it to the provider)
-warning: TestExample step 2 failed; evidence excluded from coverage
+warning: TestExample step 2: plan_unavailable
 `
 	if diff := cmp.Diff(want, textReport(result)); diff != "" {
 		t.Errorf("text report mismatch (-want +got):\n%s", diff)
@@ -412,13 +374,12 @@ func TestReadFindingsRejectsInvalidFindings(t *testing.T) {
 		want    string
 	}{
 		"not JSON":          {`{`, "unexpected end of JSON input"},
-		"other version":     {`{"version":2,"test":"TestExample","step":1,"outcome":"success"}`, "finding version 2, this report reads version 1"},
-		"no test name":      {`{"version":1,"step":1,"outcome":"success"}`, "missing test name or step"},
-		"no step":           {`{"version":1,"test":"TestExample","outcome":"success"}`, "missing test name or step"},
-		"unknown outcome":   {`{"version":1,"test":"TestExample","step":1,"outcome":"skipped"}`, `invalid outcome "skipped"`},
-		"unknown warning":   {`{"version":1,"test":"TestExample","step":1,"outcome":"success","warnings":["step_skipped"]}`, `invalid warning "step_skipped"`},
-		"unknown kind":      {`{"version":1,"test":"TestExample","step":1,"outcome":"success","features":[{"kind":"identity","name":"x"}]}`, `invalid feature kind "identity"`},
-		"unknown operation": {`{"version":1,"test":"TestExample","step":1,"outcome":"success","features":[{"kind":"resource","name":"x","completed":["apply"]}]}`, `invalid operation "apply"`},
+		"other version":     {`{"version":2,"test":"TestExample","step":1}`, "finding version 2, this report reads version 1"},
+		"no test name":      {`{"version":1,"step":1}`, "missing test name or step"},
+		"no step":           {`{"version":1,"test":"TestExample"}`, "missing test name or step"},
+		"unknown warning":   {`{"version":1,"test":"TestExample","step":1,"warnings":["step_skipped"]}`, `invalid warning "step_skipped"`},
+		"unknown kind":      {`{"version":1,"test":"TestExample","step":1,"features":[{"kind":"identity","name":"x"}]}`, `invalid feature kind "identity"`},
+		"unknown operation": {`{"version":1,"test":"TestExample","step":1,"features":[{"kind":"resource","name":"x","completed":["apply"]}]}`, `invalid operation "apply"`},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -462,8 +423,8 @@ var testProviders = []string{
 
 // finding returns a finding of step n of TestExample that served
 // testProviders.
-func finding(n int, outcome sc.Outcome, features ...sc.Feature) sc.Finding {
-	return sc.Finding{Version: sc.FindingVersion, Test: "TestExample", Step: n, Outcome: outcome, ServedProviders: testProviders, Features: features}
+func finding(n int, features ...sc.Feature) sc.Finding {
+	return sc.Finding{Version: sc.FindingVersion, Test: "TestExample", Step: n, ServedProviders: testProviders, Features: features}
 }
 
 // item returns the resource example_item of exampleSchema, changed by fn.

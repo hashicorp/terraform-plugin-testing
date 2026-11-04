@@ -53,14 +53,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 	wd := helper.RequireNewWorkingDir(ctx, t, c.WorkingDir)
 	collector := newCoverageCollector(t)
+	// A step that ends in t.Fatal, a panic, or a skip never returns to the
+	// step loop, so it is never ended and writes no finding.
 	var coverage stepCoverage
-	// A step that ends in t.Fatal or a panic never returns to the step loop,
-	// so it is written here, as failed. A skipped step writes nothing.
-	defer func() {
-		if !t.Skipped() {
-			coverage.end(t, true)
-		}
-	}()
 
 	ctx = logging.TestTerraformPathContext(ctx, wd.GetHelper().TerraformExecPath())
 	ctx = logging.TestWorkingDirectoryContext(ctx, wd.GetHelper().WorkingDirectory())
@@ -153,17 +148,21 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	var stepNumber int
 
 	for stepIndex, step := range c.Steps {
-		// The previous step returned to the loop, so it didn't end in
-		// t.Fatal. It failed only if the test reported an error without
-		// stopping. It ends before copyWorkingDir, which can call t.Fatalf.
-		coverage.end(t, t.Failed())
+		// The previous step returned to the loop. It ends before
+		// copyWorkingDir, which can call t.Fatalf.
+		coverage.end(t)
 
 		if stepNumber > 0 {
 			copyWorkingDir(ctx, t, stepNumber, wd)
 		}
 
 		stepNumber = stepIndex + 1 // 1-based indexing for humans
-		coverage = stepCoverage{collector.BeginStep(stepNumber, step.ExpectError != nil)}
+		// A step that expects an error exercises the provider's error
+		// handling, not the feature, so it records nothing.
+		coverage = stepCoverage{}
+		if step.ExpectError == nil {
+			coverage.Step = collector.BeginStep(stepNumber)
+		}
 
 		configRequest := teststep.PrepareConfigurationRequest{
 			Directory: step.ConfigDirectory,
@@ -561,9 +560,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		t.Fatalf("Step %d/%d, unsupported test mode", stepNumber, len(c.Steps))
 	}
 
-	// Write the last step before the deferred cleanup, which can still fail
+	// End the last step before the deferred cleanup, which can still fail
 	// the test.
-	coverage.end(t, t.Failed())
+	coverage.end(t)
 
 	if stepNumber > 0 {
 		copyWorkingDir(ctx, t, stepNumber, wd)

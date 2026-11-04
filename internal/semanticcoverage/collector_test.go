@@ -14,33 +14,6 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 )
 
-func TestFinishWritesTheOutcome(t *testing.T) {
-	t.Parallel()
-
-	tests := map[string]struct {
-		expectError, failed bool
-		want                Outcome
-	}{
-		"passed":                     {want: OutcomeSuccess},
-		"passed with ExpectError":    {expectError: true, want: OutcomeExpectedError},
-		"failed":                     {failed: true, want: OutcomeFailed},
-		"failed despite ExpectError": {expectError: true, failed: true, want: OutcomeFailed},
-	}
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			c := testCollector(t)
-			if err := c.BeginStep(1, test.expectError).Finish(test.failed); err != nil {
-				t.Fatal(err)
-			}
-			if got := writtenFindings(t, c)[0].Outcome; got != test.want {
-				t.Errorf("outcome = %q, want %q", got, test.want)
-			}
-		})
-	}
-}
-
 func TestFindingIdentifiesTheStep(t *testing.T) {
 	t.Setenv(EnvDirectory, t.TempDir())
 
@@ -48,7 +21,7 @@ func TestFindingIdentifiesTheStep(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := c.BeginStep(2, false).Finish(false); err != nil {
+	if err := c.BeginStep(2).Finish(); err != nil {
 		t.Fatal(err)
 	}
 	want := Finding{
@@ -58,7 +31,6 @@ func TestFindingIdentifiesTheStep(t *testing.T) {
 		Package: "github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage",
 		Test:    "TestExample",
 		Step:    2,
-		Outcome: OutcomeSuccess,
 	}
 	if diff := cmp.Diff([]Finding{want}, writtenFindings(t, c)); diff != "" {
 		t.Errorf("findings mismatch (-want +got):\n%s", diff)
@@ -69,12 +41,12 @@ func TestFindingRecordsTheServedProviders(t *testing.T) {
 	t.Parallel()
 
 	c := testCollector(t)
-	step := c.BeginStep(1, false)
+	step := c.BeginStep(1)
 	step.ObserveServedProviders([]string{"registry.terraform.io/stale/example"})
 	// TF_ACC_PROVIDER_NAMESPACE can be mixed case, but Terraform reports
 	// lower case source addresses.
 	step.ObserveServedProviders([]string{"registry.terraform.io/hashicorp/echo", "registry.terraform.io/Example-Org/example"})
-	if err := step.Finish(false); err != nil {
+	if err := step.Finish(); err != nil {
 		t.Fatal(err)
 	}
 	want := []string{"registry.terraform.io/example-org/example", "registry.terraform.io/hashicorp/echo"}
@@ -87,9 +59,9 @@ func TestOnlyFinishedStepsWriteFindings(t *testing.T) {
 	t.Parallel()
 
 	c := testCollector(t)
-	skipped := c.BeginStep(1, false)
+	skipped := c.BeginStep(1)
 	skipped.ObserveState(state(resource("example_item", map[string]any{"id": "x"})))
-	if err := c.BeginStep(2, false).Finish(false); err != nil {
+	if err := c.BeginStep(2).Finish(); err != nil {
 		t.Fatal(err)
 	}
 	findings := writtenFindings(t, c)
@@ -102,7 +74,7 @@ func TestFindingKeepsNoValues(t *testing.T) {
 	t.Parallel()
 
 	c := testCollector(t)
-	s := c.BeginStep(1, false)
+	s := c.BeginStep(1)
 	s.ObserveConfigDir(configDir(t, `
 resource "example_item" "secret_name" {
   token = "secret-configuration"
@@ -115,7 +87,7 @@ resource "example_item" "secret_name" {
 	r := resource("example_item", map[string]any{"token": "secret-value", "map": map[string]any{"secret-map-key": "secret-value"}})
 	r.Address = `example_item.secret_name["secret-instance-key"]`
 	s.ObserveState(state(r))
-	if err := s.Finish(false); err != nil {
+	if err := s.Finish(); err != nil {
 		t.Fatal(err)
 	}
 	data := writtenFiles(t, c)[0]
@@ -130,7 +102,7 @@ func TestDisabledCollectionDoesNothing(t *testing.T) {
 	t.Parallel()
 
 	var c *Collector
-	s := c.BeginStep(1, false)
+	s := c.BeginStep(1)
 	if s.Enabled() {
 		t.Fatal("step of a nil collector is enabled")
 	}
@@ -142,7 +114,7 @@ func TestDisabledCollectionDoesNothing(t *testing.T) {
 	s.ImportCompleted(nil, "")
 	s.RefreshCompleted()
 	s.QueryCompleted()
-	if err := s.Finish(true); err != nil {
+	if err := s.Finish(); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -175,9 +147,9 @@ func stepFinding(t *testing.T, record func(s *Step)) Finding {
 	t.Helper()
 
 	c := testCollector(t)
-	s := c.BeginStep(1, false)
+	s := c.BeginStep(1)
 	record(s)
-	if err := s.Finish(false); err != nil {
+	if err := s.Finish(); err != nil {
 		t.Fatal(err)
 	}
 	findings := writtenFindings(t, c)

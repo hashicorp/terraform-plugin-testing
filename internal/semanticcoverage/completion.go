@@ -8,8 +8,8 @@ import (
 )
 
 // Operations that don't come from a plan are recorded by the test step mode
-// that performs them, right after Terraform reports success. Whether the step
-// as a whole succeeded is decided by its outcome (see Step.Finish).
+// that performs them, right after Terraform reports success. A finding is
+// written only if the step as a whole passed (see Step.Finish).
 
 // ImportCompleted records that the import command imported the resource at
 // address. state is the state after the import, which gives the resource's

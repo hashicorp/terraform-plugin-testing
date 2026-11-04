@@ -37,14 +37,16 @@ const EnvDirectory = "TF_ACC_SEMANTIC_COVERAGE_DIR"
 // instead of misreading them.
 const FindingVersion = 1
 
-// Finding is the evidence written for one test step.
+// Finding is the evidence written for one test step. Findings are written
+// only for steps that passed without TestStep.ExpectError: a step that
+// expects an error exercises the provider's error handling rather than the
+// feature, and a failed step can stop at any point.
 type Finding struct {
 	Version int `json:"version"`
 	// Package is the import path of the package under test.
-	Package string  `json:"package,omitempty"`
-	Test    string  `json:"test"`
-	Step    int     `json:"step"`
-	Outcome Outcome `json:"outcome"`
+	Package string `json:"package,omitempty"`
+	Test    string `json:"test"`
+	Step    int    `json:"step"`
 	// ServedProviders lists the source addresses under which the test
 	// harness served provider factories from the test binary during the step.
 	// The harness chooses these addresses (registry.terraform.io/hashicorp/
@@ -58,15 +60,13 @@ type Finding struct {
 }
 
 // Validate reports whether f was written by this version of the collector and
-// uses only the defined kinds, operations, outcomes, and warnings.
+// uses only the defined kinds, operations, and warnings.
 func (f Finding) Validate() error {
 	switch {
 	case f.Version != FindingVersion:
 		return fmt.Errorf("finding version %d, this report reads version %d; re-run the tests with the same terraform-plugin-testing version", f.Version, FindingVersion)
 	case f.Test == "" || f.Step < 1:
 		return errors.New("missing test name or step")
-	case !f.Outcome.valid():
-		return fmt.Errorf("invalid outcome %q", f.Outcome)
 	}
 	for _, w := range f.Warnings {
 		if !w.valid() {
@@ -150,27 +150,6 @@ const (
 func (o Operation) valid() bool {
 	switch o {
 	case OperationCreate, OperationUpdate, OperationReplace, OperationDelete, OperationRead, OperationImport, OperationRefresh, OperationQuery, OperationInvoke:
-		return true
-	}
-	return false
-}
-
-// Outcome is how a test step ended.
-type Outcome string
-
-const (
-	// OutcomeSuccess means the step completed and passed its checks.
-	OutcomeSuccess Outcome = "success"
-	// OutcomeExpectedError means the step failed with an error matching
-	// TestStep.ExpectError.
-	OutcomeExpectedError Outcome = "expected_error"
-	// OutcomeFailed means the test failed during the step.
-	OutcomeFailed Outcome = "failed"
-)
-
-func (o Outcome) valid() bool {
-	switch o {
-	case OutcomeSuccess, OutcomeExpectedError, OutcomeFailed:
 		return true
 	}
 	return false

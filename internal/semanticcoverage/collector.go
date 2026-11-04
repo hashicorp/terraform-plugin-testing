@@ -54,16 +54,17 @@ func testPackage() string {
 }
 
 // BeginStep starts collecting evidence for the test step with the given
-// number. expectError reports whether the step sets TestStep.ExpectError.
-func (c *Collector) BeginStep(number int, expectError bool) *Step {
+// number.
+func (c *Collector) BeginStep(number int) *Step {
 	if c == nil {
 		return nil
 	}
-	return &Step{collector: c, number: number, expectError: expectError, features: make(map[featureKey]*Feature)}
+	return &Step{collector: c, number: number, features: make(map[featureKey]*Feature)}
 }
 
-// Step collects the evidence of one test step. Finish writes it as a Finding;
-// a step that is never finished, such as a skipped one, writes nothing.
+// Step collects the evidence of one test step. Finish writes it as a Finding.
+// The caller finishes only steps that passed; a step that is never finished
+// writes nothing.
 //
 // A nil *Step is valid and means collection is disabled: every method is a
 // no-op on a nil receiver (Finish returns nil, Enabled returns false). Callers
@@ -75,12 +76,11 @@ func (c *Collector) BeginStep(number int, expectError bool) *Step {
 // that runs the test steps: Terraform commands and checks run synchronously
 // there, and provider servers never see the step.
 type Step struct {
-	collector   *Collector
-	number      int
-	expectError bool
-	served      []string
-	features    map[featureKey]*Feature
-	warnings    []Warning
+	collector *Collector
+	number    int
+	served    []string
+	features  map[featureKey]*Feature
+	warnings  []Warning
 }
 
 // Enabled reports whether evidence is being collected.
@@ -100,27 +100,16 @@ func (s *Step) ObserveServedProviders(addresses []string) {
 	}
 }
 
-// Finish writes the step's Finding. failed reports whether the test failed
-// during the step. A step that didn't fail and sets TestStep.ExpectError
-// passed only because the error matched, so it is written as
-// OutcomeExpectedError.
-func (s *Step) Finish(failed bool) error {
+// Finish writes the step's Finding. Call it only for a step that passed.
+func (s *Step) Finish() error {
 	if s == nil {
 		return nil
-	}
-	outcome := OutcomeSuccess
-	switch {
-	case failed:
-		outcome = OutcomeFailed
-	case s.expectError:
-		outcome = OutcomeExpectedError
 	}
 	finding := Finding{
 		Version:         FindingVersion,
 		Package:         s.collector.packageName,
 		Test:            s.collector.testName,
 		Step:            s.number,
-		Outcome:         outcome,
 		ServedProviders: sortedSet(s.served),
 		Warnings:        sortedSet(s.warnings),
 	}
