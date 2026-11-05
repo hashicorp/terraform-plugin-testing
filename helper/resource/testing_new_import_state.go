@@ -158,10 +158,11 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 		defer workingDir.Close()
 	}
 
-	err = coverage.setConfig(ctx, workingDir, testStepConfig, step.ConfigVariables)
+	err = workingDir.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		t.Fatalf("Error setting test config: %s", err)
 	}
+	coverage.ObserveConfigDir(workingDir.BaseDir())
 
 	if kind.plannable() {
 		if stepNumber > 1 {

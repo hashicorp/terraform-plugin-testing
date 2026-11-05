@@ -26,10 +26,11 @@ import (
 func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, coverage stepCoverage, step TestStep, providers *providerFactories, cfg teststep.Config) error {
 	t.Helper()
 
-	err := coverage.setConfig(ctx, wd, cfg, step.ConfigVariables)
+	err := wd.SetConfig(ctx, cfg, step.ConfigVariables)
 	if err != nil {
 		return fmt.Errorf("Error setting config: %w", err)
 	}
+	coverage.ObserveConfigDir(wd.BaseDir())
 
 	// ----- Validate and configure the state store by running init
 	err = runProviderCommand(ctx, t, wd, providers, func() error {

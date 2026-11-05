@@ -4,30 +4,24 @@
 package resource
 
 import (
-	"context"
-	"path/filepath"
-
-	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/mitchellh/go-testing-interface"
 
-	"github.com/hashicorp/terraform-plugin-testing/config"
-	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
 	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
-	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 )
 
 // stepCoverage records the semantic coverage evidence of one test step. Step
 // functions get it as an explicit parameter.
 //
 // The step functions in helper/resource choose when to record evidence, and
-// package semanticcoverage extracts it. The wrappers below cover operations
-// whose evidence needs an extra read, which keeps coverage code out of
-// plugintest. Documents that the harness reads anyway, such as plans for plan
-// checks, are passed to the embedded Step directly.
+// package semanticcoverage extracts it. Step code records inline, right after
+// the WorkingDir operation that produced the evidence: it sets the
+// configuration and then observes it, or reads a plan or state and then
+// observes it. This keeps coverage code out of plugintest.
 //
 // Record only the step's own operations, not setup, cleanup, or configuration
-// that the harness generates. With collection disabled (a nil Step), each
-// wrapper only performs the wrapped operation.
+// that the harness generates. With collection disabled (a nil Step), every
+// method is a no-op; check Enabled before running Terraform commands only to
+// feed the step.
 type stepCoverage struct {
 	*semanticcoverage.Step
 }
@@ -56,46 +50,4 @@ func (s *stepCoverage) end(t testing.T) {
 		}
 	}
 	s.Step = nil
-}
-
-// setConfig sets the configuration of wd and records it.
-func (s stepCoverage) setConfig(ctx context.Context, wd *plugintest.WorkingDir, cfg teststep.Config, vars config.Variables) error {
-	if err := wd.SetConfig(ctx, cfg, vars); err != nil {
-		return err
-	}
-	s.ObserveConfigDir(wd.BaseDir())
-	return nil
-}
-
-// setQuery sets the query configuration of wd and records it.
-func (s stepCoverage) setQuery(ctx context.Context, wd *plugintest.WorkingDir, cfg teststep.Config, vars config.Variables) error {
-	if err := wd.SetQuery(ctx, cfg, vars); err != nil {
-		return err
-	}
-	s.ObserveQueryConfig(filepath.Join(wd.BaseDir(), plugintest.QueryFileName))
-	return nil
-}
-
-// apply applies the saved plan in wd. It records the plan's operations as
-// planned and, once the apply succeeded, as completed, and records the
-// resulting state. Call it inside runProviderCommand, because reading the plan
-// and the state needs the providers.
-//
-// Without the state read, a step with no Check would record no populated
-// attributes at all.
-func (s stepCoverage) apply(ctx context.Context, wd *plugintest.WorkingDir, opts ...tfexec.ApplyOption) error {
-	if !s.Enabled() {
-		return wd.Apply(ctx, opts...)
-	}
-	// A nil plan or state records that it could not be read. terraform-exec
-	// returns nil with every error.
-	plan, _ := wd.SavedPlan(ctx)
-	s.ObservePlan(plan)
-	if err := wd.Apply(ctx, opts...); err != nil {
-		return err
-	}
-	s.ApplyCompleted(plan)
-	state, _ := wd.State(ctx)
-	s.ObserveState(state)
-	return nil
 }

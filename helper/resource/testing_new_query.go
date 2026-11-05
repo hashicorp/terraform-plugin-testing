@@ -6,6 +6,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
@@ -21,10 +22,11 @@ func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDi
 	queryConfigRequest := teststep.ConfigurationRequest{
 		Raw: &step.Config,
 	}
-	err := coverage.setQuery(ctx, wd, teststep.Configuration(queryConfigRequest), step.ConfigVariables)
+	err := wd.SetQuery(ctx, teststep.Configuration(queryConfigRequest), step.ConfigVariables)
 	if err != nil {
 		return fmt.Errorf("Error setting query config: %w", err)
 	}
+	coverage.ObserveQueryConfig(filepath.Join(wd.BaseDir(), plugintest.QueryFileName))
 
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
 		return wd.Init(ctx)

@@ -98,10 +98,11 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 	testStepConfig := teststep.Configuration(confRequest)
 
-	err = coverage.setConfig(ctx, wd, testStepConfig, step.ConfigVariables)
+	err = wd.SetConfig(ctx, testStepConfig, step.ConfigVariables)
 	if err != nil {
 		return fmt.Errorf("Error setting config: %w", err)
 	}
+	coverage.ObserveConfigDir(wd.BaseDir())
 
 	// If this step is a PlanOnly step, skip over this first Plan and
 	// subsequent Apply, and use the follow-up Plan that checks for
@@ -203,7 +204,26 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				opts = append(opts, tfexec.AllowDeferral(true))
 			}
 
-			return coverage.apply(ctx, wd, opts...)
+			// Coverage records the planned operations and, once the apply
+			// succeeded, the completed ones and the resulting state. The
+			// extra reads run only while collecting. A nil plan or state
+			// records that it could not be read; terraform-exec returns nil
+			// with every error. Without the state read, a step with no Check
+			// would record no populated attributes at all.
+			var plan *tfjson.Plan
+			if coverage.Enabled() {
+				plan, _ = wd.SavedPlan(ctx)
+				coverage.ObservePlan(plan)
+			}
+			if err := wd.Apply(ctx, opts...); err != nil {
+				return err
+			}
+			coverage.ApplyCompleted(plan)
+			if coverage.Enabled() {
+				state, _ := wd.State(ctx)
+				coverage.ObserveState(state)
+			}
+			return nil
 		})
 		if err != nil {
 			if step.Destroy {
