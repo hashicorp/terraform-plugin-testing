@@ -151,6 +151,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		// The previous step returned to the loop. It ends before
 		// copyWorkingDir, which can call t.Fatalf.
 		coverage.end(t)
+		// <review>
+		// what happens on the very first loop? will it basically do nothing because coverage is nil? should this maybe be added as a comment if true? if not: please explain to me how this works
+		// </review>
 
 		if stepNumber > 0 {
 			copyWorkingDir(ctx, t, stepNumber, wd)

@@ -42,9 +42,15 @@ type output struct {
 
 type totals struct {
 	Features metric `json:"features"`
+	// <review>
+	// add a comment what features are and when they count as covered (e.g. do they count as covered once they are at 100% of their attributes or once they show up at least once in tests? is a resource covered only if its entire lifecycle is covered? that should be the case
+	// </review>
 	// Configurable counts configurable attributes set by a test.
 	Configurable metric `json:"configurable"`
 	// Computed counts computed attributes that a test left to the provider.
+	// <review>
+	// "that a test left to the provider" - what is that supposed to mean?
+	// </review>
 	// Optional-computed attributes count in both totals.
 	Computed metric `json:"computed"`
 }
@@ -152,6 +158,9 @@ func run(args []string) error {
 		return errors.New("-schema-file is required")
 	}
 	doc, err := readSchema(*schemaFile)
+	// <review>
+	// can we name this schema instead?
+	// </review>
 	if err != nil {
 		return err
 	}

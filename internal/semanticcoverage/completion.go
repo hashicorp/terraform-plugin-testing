@@ -15,6 +15,9 @@ import (
 // address. state is the state after the import, which gives the resource's
 // type.
 func (s *Step) ImportCompleted(state *tfjson.State, address string) {
+// <review>
+// question: this only collects whether any kind of importing happened, could we start differentiating between import by id and by resource identity (if supported)?
+// </review>
 	if s == nil {
 		return
 	}

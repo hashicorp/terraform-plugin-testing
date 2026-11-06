@@ -5,6 +5,9 @@ package resource
 
 import (
 	"github.com/mitchellh/go-testing-interface"
+	// <review>
+	// why this import? what does it do? is that something we already have prior art in the repo for? must be
+	// </review>
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 )
@@ -20,6 +23,9 @@ import (
 //
 // Record only the step's own operations, not setup, cleanup, or configuration
 // that the harness generates. With collection disabled (a nil Step), every
+// <review>
+// is harness a common word for plugin-testing? is there prior art in the repo calling it so?
+// </review>
 // method is a no-op; check Enabled before running Terraform commands only to
 // feed the step.
 type stepCoverage struct {

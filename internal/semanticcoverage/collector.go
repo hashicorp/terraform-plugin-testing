@@ -75,6 +75,10 @@ func (c *Collector) BeginStep(number int) *Step {
 // A Step is not safe for concurrent use. All calls come from the goroutine
 // that runs the test steps: Terraform commands and checks run synchronously
 // there, and provider servers never see the step.
+// <review>
+// "provider servers never see the step"
+// -> what's the intention of having this sentence here other than being an AI telltale sign? what does this even mean? why is that important to mention here?
+// </review>
 type Step struct {
 	collector *Collector
 	number    int
@@ -90,6 +94,9 @@ func (s *Step) Enabled() bool { return s != nil }
 // harness serves provider factories from the test binary during the step.
 // Terraform normalizes source addresses to lower case, so they are recorded
 // in lower case.
+// <review>
+// add a note why we're observing these addresses: to be able to later match findings to the provider schema as the schema might have a different address in there than how these show up in tests (specifically, its possible that here we have the default namespace (i.e. hashicorp) whereas in the schema it might be a different provider namespace
+// </review>
 func (s *Step) ObserveServedProviders(addresses []string) {
 	if s == nil {
 		return
@@ -107,6 +114,9 @@ func (s *Step) Finish() error {
 	}
 	finding := Finding{
 		Version:         FindingVersion,
+		// <review>
+		// is there a way to hardcode this? should we? maybe not, maybe that's silly, but still. let's discuss this
+		// </review>
 		Package:         s.collector.packageName,
 		Test:            s.collector.testName,
 		Step:            s.number,

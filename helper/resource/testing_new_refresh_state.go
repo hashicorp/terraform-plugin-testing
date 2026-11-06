@@ -24,6 +24,9 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 	// values it sets into state. Recording the configuration keeps those
 	// values from counting as computed by the provider.
 	coverage.ObserveConfigDir(wd.BaseDir())
+	// <review>
+	// todo: i don't really understand this. explain and check, does refresh actually set values into state based on the config? or does it actually update values based on what the provider says the actual state is? it seems like counting these values as computed by the provider might be correct. but i might be off here
+	// </review>
 
 	var err error
 	// Explicitly ensure prior state exists before refresh.

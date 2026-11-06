@@ -327,6 +327,10 @@ registry.terraform.io/hashicorp/local resource local_sensitive_file: covered=tru
 
 An excerpt of the JSON report. It is complete except that `features` shows
 only two of the nine entries; the full file has 2,868 lines.
+<!-- <review> -->
+<!-- also show a resource (ideally one with optional computed, computed and non computed attributes (or the best possible approximation) -->
+<!-- if the provider has an action or other features, also show one of each -->
+<!-- </review> -->
 
 ```json
 {

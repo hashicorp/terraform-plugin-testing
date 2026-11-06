@@ -14,6 +14,9 @@
 //     assertion matchers.
 //   - From state, it reads only top-level attribute names and whether each
 //     value is non-null. Nested map keys can be user data.
+// <review>
+// maybe combine the sentences, "as nested map keys ..."?
+// </review>
 //
 // It does persist provider source addresses and feature type names, schema
 // attribute names, operations, test names, and test package import paths.
@@ -157,6 +160,9 @@ func (o Operation) valid() bool {
 
 // Warning means that one source of evidence for a step was unavailable. The
 // codes don't say why; use the logs or the collector tests for that.
+// <review>
+// question: where are the logs? how do i enable them? show me examples of such logging
+// </review>
 type Warning string
 
 const (
