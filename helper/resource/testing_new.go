@@ -78,10 +78,11 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			return
 		}
 
+		var jsonStatePreDestroy *tfjson.State
 		var statePreDestroy *terraform.State
 		var err error
 		err = runProviderCommand(ctx, t, wd, providers, func() error {
-			_, statePreDestroy, err = getState(ctx, t, wd)
+			jsonStatePreDestroy, statePreDestroy, err = getState(ctx, t, wd)
 			if err != nil {
 				return err
 			}
@@ -105,6 +106,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				)
 				t.Fatalf("Error running post-test destroy, there may be dangling resources: %s", err.Error())
 			}
+			recordPostTestDestroy(t, collector, len(c.Steps)+1, providers.servedAddresses(), jsonStatePreDestroy)
 		}
 
 		wd.Close()
@@ -149,11 +151,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 	for stepIndex, step := range c.Steps {
 		// The previous step returned to the loop. It ends before
-		// copyWorkingDir, which can call t.Fatalf.
+		// copyWorkingDir, which can call t.Fatalf. In the first iteration,
+		// coverage is the zero value, whose nil Step makes end a no-op.
 		coverage.end(t)
-		// <review>
-		// what happens on the very first loop? will it basically do nothing because coverage is nil? should this maybe be added as a comment if true? if not: please explain to me how this works
-		// </review>
 
 		if stepNumber > 0 {
 			copyWorkingDir(ctx, t, stepNumber, wd)
@@ -428,9 +428,15 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			logging.HelperResourceTrace(ctx, "TestStep is StateStore mode")
 
 			err := testStepNewStateStore(ctx, t, wd, coverage, step, providers, cfg)
+			if err == nil {
+				coverage.StateStoreCompleted(!step.DefaultWorkspaceOnly)
+			}
 			if err == nil && step.VerifyStateStoreLock {
 				logging.HelperResourceTrace(ctx, "TestStep is running VerifyStateStoreLock logic")
 				err = testStepVerifyStateStoreLock(ctx, t, step, providers, cfg, helper)
+				if err == nil {
+					coverage.StateStoreLockVerified()
+				}
 			}
 
 			if err != nil {

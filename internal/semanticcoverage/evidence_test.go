@@ -184,13 +184,22 @@ func TestOperationEvidence(t *testing.T) {
 			},
 			want: item([]Operation{OperationDelete}, []Operation{OperationDelete}),
 		},
-		"an import block plans an import": {
+		// Terraform imports while planning.
+		"an import block with an ID imports by ID": {
 			record: func(s *Step) {
 				p := plan(itemChange(tfjson.ActionNoop))
 				p.ResourceChanges[0].Change.Importing = &tfjson.Importing{ID: "x"}
 				s.ObservePlan(p)
 			},
-			want: item([]Operation{OperationImport}, nil),
+			want: item([]Operation{OperationImportID}, []Operation{OperationImportID}),
+		},
+		"an import block with an identity imports by identity": {
+			record: func(s *Step) {
+				p := plan(itemChange(tfjson.ActionNoop))
+				p.ResourceChanges[0].Change.Importing = &tfjson.Importing{Identity: map[string]any{"id": "x"}}
+				s.ObservePlan(p)
+			},
+			want: item([]Operation{OperationImportIdentity}, []Operation{OperationImportIdentity}),
 		},
 		"a deferred data source read": {
 			record: func(s *Step) {
@@ -206,15 +215,16 @@ func TestOperationEvidence(t *testing.T) {
 				s.ObservePlan(p)
 				s.ApplyCompleted(p)
 			},
-			want: []Feature{{Kind: KindAction, Name: "example_action", Provider: exampleProvider, Planned: []Operation{OperationInvoke}, Completed: []Operation{OperationInvoke}}},
+			// A plan that lists an invocation planned the action.
+			want: []Feature{{Kind: KindAction, Name: "example_action", Provider: exampleProvider, Planned: []Operation{OperationInvoke}, Completed: []Operation{OperationInvoke, OperationPlan}}},
 		},
-		"a plan declares its providers": {
+		"a plan configures its providers": {
 			record: func(s *Step) {
 				s.ObservePlan(&tfjson.Plan{Config: &tfjson.Config{ProviderConfigs: map[string]*tfjson.ProviderConfig{
 					"example": {Name: "example", FullName: exampleProvider},
 				}}})
 			},
-			want: []Feature{{Kind: KindProvider, Name: exampleProvider}},
+			want: []Feature{{Kind: KindProvider, Name: exampleProvider, Completed: []Operation{OperationConfigure}}},
 		},
 		"an unreadable plan": {
 			record: func(s *Step) {
@@ -223,25 +233,26 @@ func TestOperationEvidence(t *testing.T) {
 			},
 			wantWarnings: []Warning{WarningPlanUnavailable},
 		},
-		"an import command completes an import": {
+		"an import command imports by ID": {
 			record: func(s *Step) {
 				imported := state(resource("example_item", map[string]any{"id": "x"}))
 				s.ObserveState(imported)
 				s.ImportCompleted(imported, "example_item.test")
 				s.ImportCompleted(imported, "example_item.other")
 			},
-			want: []Feature{{Kind: KindResource, Name: "example_item", Provider: exampleProvider, Populated: []string{"id"}, Completed: []Operation{OperationImport}}},
+			want: []Feature{{Kind: KindResource, Name: "example_item", Provider: exampleProvider, Populated: []string{"id"}, Completed: []Operation{OperationImportID}}},
 		},
-		"a refresh completes for resources": {
+		"a refresh reads the resources and data sources in its state": {
 			record: func(s *Step) {
 				data := resource("example_lookup", nil)
 				data.Mode = tfjson.DataResourceMode
-				s.ObserveState(state(resource("example_item", nil), data))
-				s.RefreshCompleted()
+				s.ObserveState(state(resource("example_other", nil)))
+				s.RefreshCompleted(state(resource("example_item", nil), data))
 			},
 			want: []Feature{
-				{Kind: KindDataSource, Name: "example_lookup", Provider: exampleProvider},
-				{Kind: KindResource, Name: "example_item", Provider: exampleProvider, Completed: []Operation{OperationRefresh}},
+				{Kind: KindDataSource, Name: "example_lookup", Provider: exampleProvider, Completed: []Operation{OperationRead}},
+				{Kind: KindResource, Name: "example_item", Provider: exampleProvider, Completed: []Operation{OperationRead}},
+				{Kind: KindResource, Name: "example_other", Provider: exampleProvider},
 			},
 		},
 	}
@@ -255,6 +266,94 @@ func TestOperationEvidence(t *testing.T) {
 			}
 			if diff := cmp.Diff(test.wantWarnings, got.Warnings); diff != "" {
 				t.Errorf("warnings mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestPlanningInfersEphemeralResourcesAndFunctions(t *testing.T) {
+	t.Parallel()
+
+	dir := configDir(t, `
+ephemeral "example_secret" "a" {}
+output "b" { value = provider::example::parse("x") }
+`)
+	tests := map[string]struct {
+		plan *tfjson.Plan
+		want []Feature
+	}{
+		"a plan opens and closes ephemeral resources and calls functions": {
+			plan: plan(),
+			want: []Feature{
+				{Kind: KindEphemeralResource, Name: "example_secret", Completed: []Operation{OperationClose, OperationOpen}},
+				{Kind: KindFunction, Name: "parse", Provider: "example", Completed: []Operation{OperationCall}},
+			},
+		},
+		"without a plan they are only declared": {
+			want: []Feature{
+				{Kind: KindEphemeralResource, Name: "example_secret"},
+				{Kind: KindFunction, Name: "parse", Provider: "example"},
+			},
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			got := stepFinding(t, func(s *Step) {
+				s.ObserveConfigDir(dir)
+				if test.plan != nil {
+					s.ObservePlan(test.plan)
+				}
+			})
+			if diff := cmp.Diff(test.want, got.Features); diff != "" {
+				t.Errorf("features mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestStateStoreEvidence(t *testing.T) {
+	t.Parallel()
+
+	dir := configDir(t, `
+terraform {
+  state_store "example_store" {
+    provider "example" {}
+  }
+}
+`)
+	tests := map[string]struct {
+		record func(s *Step)
+		want   []Operation
+	}{
+		"default workspace only": {
+			record: func(s *Step) { s.StateStoreCompleted(false) },
+			want:   []Operation{OperationConfigure, OperationListStates, OperationRead, OperationWrite},
+		},
+		"workspaces": {
+			record: func(s *Step) { s.StateStoreCompleted(true) },
+			want:   []Operation{OperationConfigure, OperationDeleteState, OperationListStates, OperationRead, OperationWrite},
+		},
+		"verified lock": {
+			record: func(s *Step) { s.StateStoreLockVerified() },
+			want:   []Operation{OperationLock, OperationUnlock},
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			got := stepFinding(t, func(s *Step) {
+				s.ObserveConfigDir(dir)
+				test.record(s)
+			})
+			want := []Feature{
+				{Kind: KindProvider, Name: "example"},
+				{Kind: KindStateStore, Name: "example_store", Configured: []string{"provider"}, Completed: test.want},
+			}
+			if diff := cmp.Diff(want, got.Features); diff != "" {
+				t.Errorf("features mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

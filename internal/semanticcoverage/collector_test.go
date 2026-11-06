@@ -112,10 +112,42 @@ func TestDisabledCollectionDoesNothing(t *testing.T) {
 	s.ApplyCompleted(nil)
 	s.ObserveState(nil)
 	s.ImportCompleted(nil, "")
-	s.RefreshCompleted()
+	s.RefreshCompleted(nil)
 	s.QueryCompleted()
+	s.StateStoreCompleted(true)
+	s.StateStoreLockVerified()
 	if err := s.Finish(); err != nil {
 		t.Fatal(err)
+	}
+	d := c.BeginPostTestDestroy(2)
+	d.DestroyCompleted(nil)
+	if err := d.Finish(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestPostTestDestroyFinding(t *testing.T) {
+	t.Parallel()
+
+	c := testCollector(t)
+	s := c.BeginPostTestDestroy(3)
+	data := resource("example_lookup", nil)
+	data.Mode = tfjson.DataResourceMode
+	s.DestroyCompleted(state(resource("example_item", map[string]any{"id": "x"}), data))
+	if err := s.Finish(); err != nil {
+		t.Fatal(err)
+	}
+	want := []Finding{{
+		Version:         FindingVersion,
+		Test:            "TestExample",
+		Step:            3,
+		PostTestDestroy: true,
+		// Only managed resources are deleted, and the destroy records no
+		// attributes.
+		Features: []Feature{{Kind: KindResource, Name: "example_item", Provider: exampleProvider, Completed: []Operation{OperationDelete}}},
+	}}
+	if diff := cmp.Diff(want, writtenFindings(t, c)); diff != "" {
+		t.Errorf("findings mismatch (-want +got):\n%s", diff)
 	}
 }
 

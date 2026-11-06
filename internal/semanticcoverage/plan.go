@@ -10,6 +10,16 @@ import (
 // ObservePlan records the providers in plan and the operations it plans. A nil
 // plan means the plan could not be read.
 //
+// A plan that could be read succeeded, so ObservePlan also records what
+// planning did:
+//   - It configured each provider in the plan's configuration.
+//   - It imported each resource that an import block imports.
+//   - It planned each action invocation in the plan.
+//   - It opened and closed each ephemeral resource, and called each
+//     provider-defined function, in the configuration that the step
+//     observed. The plan doesn't list these, so they are inferred: call
+//     ObservePlan only with plans of that configuration.
+//
 // Plan values are not recorded: populated attributes must come from state
 // that an operation produced (see ObserveState).
 func (s *Step) ObservePlan(plan *tfjson.Plan) {
@@ -23,13 +33,28 @@ func (s *Step) ObservePlan(plan *tfjson.Plan) {
 	if plan.Config != nil {
 		for _, provider := range plan.Config.ProviderConfigs {
 			if provider != nil && provider.FullName != "" {
-				s.feature(KindProvider, provider.FullName, "")
+				add(&s.feature(KindProvider, provider.FullName, "").Completed, OperationConfigure)
 			}
 		}
 	}
 	s.plannedOperations(plan, func(f *Feature, operation Operation) {
 		add(&f.Planned, operation)
+		switch operation {
+		case OperationImportID, OperationImportIdentity:
+			add(&f.Completed, operation)
+		case OperationInvoke:
+			add(&f.Completed, OperationPlan)
+		}
 	})
+	for _, f := range s.features {
+		switch f.Kind {
+		case KindEphemeralResource:
+			add(&f.Completed, OperationOpen)
+			add(&f.Completed, OperationClose)
+		case KindFunction:
+			add(&f.Completed, OperationCall)
+		}
+	}
 }
 
 // ApplyCompleted records the operations of plan as completed, after it was
@@ -60,7 +85,7 @@ func (s *Step) plannedOperations(plan *tfjson.Plan, fn func(f *Feature, operatio
 		f := s.feature(kind, rc.Type, rc.ProviderName)
 		fn(f, operationForActions(rc.Change.Actions))
 		if rc.Change.Importing != nil {
-			fn(f, OperationImport)
+			fn(f, importOperation(rc.Change.Importing))
 		}
 	}
 	for _, invocation := range plan.ActionInvocations {
@@ -68,6 +93,15 @@ func (s *Step) plannedOperations(plan *tfjson.Plan, fn func(f *Feature, operatio
 			fn(s.feature(KindAction, invocation.Type, invocation.ProviderName), OperationInvoke)
 		}
 	}
+}
+
+// importOperation returns the operation of an import block: an import by
+// identity if the block gives one, and by ID otherwise.
+func importOperation(importing *tfjson.Importing) Operation {
+	if importing.Identity != nil {
+		return OperationImportIdentity
+	}
+	return OperationImportID
 }
 
 // modeKinds maps the resource modes in plans and state to feature kinds.

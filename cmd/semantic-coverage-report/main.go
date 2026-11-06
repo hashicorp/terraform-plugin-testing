@@ -41,16 +41,18 @@ type output struct {
 }
 
 type totals struct {
+	// Features counts the entries of the provider schema: the provider
+	// itself and each resource, data source, ephemeral resource, list
+	// resource, action, state store, and function. A feature is covered
+	// when passing steps completed every operation of its lifecycle (see
+	// requiredOperations). Attribute coverage is counted separately and
+	// doesn't affect it.
 	Features metric `json:"features"`
-	// <review>
-	// add a comment what features are and when they count as covered (e.g. do they count as covered once they are at 100% of their attributes or once they show up at least once in tests? is a resource covered only if its entire lifecycle is covered? that should be the case
-	// </review>
-	// Configurable counts configurable attributes set by a test.
+	// Configurable counts configurable attributes (required, optional, and
+	// blocks) that a step set.
 	Configurable metric `json:"configurable"`
-	// Computed counts computed attributes that a test left to the provider.
-	// <review>
-	// "that a test left to the provider" - what is that supposed to mean?
-	// </review>
+	// Computed counts computed attributes that a step didn't set but found
+	// non-null in state, which shows that the provider set the value.
 	// Optional-computed attributes count in both totals.
 	Computed metric `json:"computed"`
 }
@@ -73,13 +75,66 @@ type featureResult struct {
 	Provider string                `json:"provider"`
 	Kind     semanticcoverage.Kind `json:"kind"`
 	Name     string                `json:"name"`
-	// Covered reports whether the feature appears in a finding that didn't
-	// fail.
-	Covered    bool                                     `json:"covered"`
-	CoveredBy  []stepRef                                `json:"covered_by,omitempty"`
-	Attributes []attributeResult                        `json:"attributes,omitempty"`
-	Planned    map[semanticcoverage.Operation][]stepRef `json:"planned,omitempty"`
-	Completed  map[semanticcoverage.Operation][]stepRef `json:"completed,omitempty"`
+	// Covered reports whether a step used the feature and steps completed
+	// every operation that its kind requires.
+	Covered bool `json:"covered"`
+	// UsedBy lists the steps whose evidence names the feature.
+	UsedBy []stepRef `json:"used_by,omitempty"`
+	// MissingOperations lists the required operations that no step
+	// completed.
+	MissingOperations []semanticcoverage.Operation             `json:"missing_operations,omitempty"`
+	Attributes        []attributeResult                        `json:"attributes,omitempty"`
+	Planned           map[semanticcoverage.Operation][]stepRef `json:"planned,omitempty"`
+	Completed         map[semanticcoverage.Operation][]stepRef `json:"completed,omitempty"`
+
+	// required lists the operations that the feature needs to be covered.
+	required []semanticcoverage.Operation
+}
+
+// requiredOperations returns the operations that a feature of the given kind
+// needs to be covered: its lifecycle, as the RPCs of the provider protocol
+// implement it. identity reports whether a resource has an identity schema,
+// and so supports import by identity.
+//
+// Every resource needs update and import by ID, although some resources
+// support neither. The schema doesn't say whether they do, so such a resource
+// is never covered.
+func requiredOperations(kind semanticcoverage.Kind, identity bool) []semanticcoverage.Operation {
+	switch kind {
+	case semanticcoverage.KindProvider:
+		return []semanticcoverage.Operation{semanticcoverage.OperationConfigure}
+	case semanticcoverage.KindResource:
+		required := []semanticcoverage.Operation{
+			semanticcoverage.OperationCreate,
+			semanticcoverage.OperationRead,
+			semanticcoverage.OperationUpdate,
+			semanticcoverage.OperationDelete,
+			semanticcoverage.OperationImportID,
+		}
+		if identity {
+			required = append(required, semanticcoverage.OperationImportIdentity)
+		}
+		return required
+	case semanticcoverage.KindDataSource:
+		return []semanticcoverage.Operation{semanticcoverage.OperationRead}
+	case semanticcoverage.KindEphemeralResource:
+		return []semanticcoverage.Operation{semanticcoverage.OperationOpen, semanticcoverage.OperationClose}
+	case semanticcoverage.KindListResource:
+		return []semanticcoverage.Operation{semanticcoverage.OperationQuery}
+	case semanticcoverage.KindAction:
+		return []semanticcoverage.Operation{semanticcoverage.OperationPlan, semanticcoverage.OperationInvoke}
+	case semanticcoverage.KindStateStore:
+		return []semanticcoverage.Operation{
+			semanticcoverage.OperationConfigure,
+			semanticcoverage.OperationRead,
+			semanticcoverage.OperationWrite,
+			semanticcoverage.OperationListStates,
+			semanticcoverage.OperationDeleteState,
+		}
+	case semanticcoverage.KindFunction:
+		return []semanticcoverage.Operation{semanticcoverage.OperationCall}
+	}
+	return nil
 }
 
 // attributeResult is the coverage of one top-level attribute or block.
@@ -88,9 +143,9 @@ type attributeResult struct {
 	// Configurable attributes (required, optional, and blocks) need a test
 	// that sets them.
 	Configurable bool `json:"configurable"`
-	// Computed attributes need a test that leaves them to the provider and
-	// finds them populated. Optional-computed attributes are both, and need
-	// both tests.
+	// Computed attributes need a test that doesn't set them and finds them
+	// non-null in state, which shows that the provider set the value.
+	// Optional-computed attributes are both, and need both tests.
 	Computed bool `json:"computed"`
 	// Covered reports whether every side of the attribute has evidence.
 	Covered      bool      `json:"covered"`
@@ -105,7 +160,7 @@ func (a attributeResult) missing() []string {
 		tests = append(tests, "a test that sets it")
 	}
 	if a.Computed && len(a.ComputedBy) == 0 {
-		tests = append(tests, "a test that leaves it to the provider")
+		tests = append(tests, "a test that leaves it unset and finds it populated")
 	}
 	return tests
 }
@@ -115,13 +170,19 @@ type stepRef struct {
 	Package string `json:"package,omitempty"`
 	Test    string `json:"test"`
 	Step    int    `json:"step"`
+	// PostTestDestroy marks the destroy that runs after the last step.
+	PostTestDestroy bool `json:"post_test_destroy,omitempty"`
 }
 
 func (r stepRef) String() string {
-	if r.Package == "" {
-		return fmt.Sprintf("%s step %d", r.Test, r.Step)
+	step := fmt.Sprintf("step %d", r.Step)
+	if r.PostTestDestroy {
+		step = "post-test destroy"
 	}
-	return fmt.Sprintf("%s %s step %d", r.Package, r.Test, r.Step)
+	if r.Package == "" {
+		return fmt.Sprintf("%s %s", r.Test, step)
+	}
+	return fmt.Sprintf("%s %s %s", r.Package, r.Test, step)
 }
 
 // appendRef appends ref to refs unless it is already there. A step can have
@@ -157,10 +218,7 @@ func run(args []string) error {
 	if *schemaFile == "" {
 		return errors.New("-schema-file is required")
 	}
-	doc, err := readSchema(*schemaFile)
-	// <review>
-	// can we name this schema instead?
-	// </review>
+	schema, err := readSchema(*schemaFile)
 	if err != nil {
 		return err
 	}
@@ -171,7 +229,7 @@ func run(args []string) error {
 	if len(findings) == 0 {
 		return fmt.Errorf("no findings in %s", *findingsDir)
 	}
-	result := aggregate(doc, findings)
+	result := aggregate(schema, findings)
 	data, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
 		return err
@@ -192,14 +250,14 @@ func readSchema(path string) (*tfjson.ProviderSchemas, error) {
 		return nil, err
 	}
 	// Unmarshalling also validates the schema format version.
-	var doc tfjson.ProviderSchemas
-	if err = json.Unmarshal(data, &doc); err != nil {
+	var schema tfjson.ProviderSchemas
+	if err = json.Unmarshal(data, &schema); err != nil {
 		return nil, fmt.Errorf("%s: %w", path, err)
 	}
-	if len(doc.Schemas) == 0 {
+	if len(schema.Schemas) == 0 {
 		return nil, fmt.Errorf("%s: schema has no providers", path)
 	}
-	return &doc, nil
+	return &schema, nil
 }
 
 func readFindings(dir string) ([]semanticcoverage.Finding, error) {
@@ -246,6 +304,9 @@ func textReport(r output) string {
 		fmt.Fprintf(&text, "%s %s %s: covered=%t attributes=%d/%d planned=%v completed=%v\n",
 			f.Provider, f.Kind, f.Name, f.Covered, covered, len(f.Attributes),
 			slices.Sorted(maps.Keys(f.Planned)), slices.Sorted(maps.Keys(f.Completed)))
+		if len(f.MissingOperations) > 0 {
+			fmt.Fprintf(&text, "  missing operations %v\n", f.MissingOperations)
+		}
 		for _, a := range f.Attributes {
 			if !a.Covered {
 				fmt.Fprintf(&text, "  uncovered %s (needs %s)\n", a.Path, strings.Join(a.missing(), " and "))
@@ -258,14 +319,14 @@ func textReport(r output) string {
 	return text.String()
 }
 
-func aggregate(doc *tfjson.ProviderSchemas, findings []semanticcoverage.Finding) output {
-	features := schemaFeatures(doc)
+func aggregate(schema *tfjson.ProviderSchemas, findings []semanticcoverage.Finding) output {
+	features := schemaFeatures(schema)
 	// Sorting the findings puts the warnings in step order.
 	findings = slices.Clone(findings)
 	slices.SortStableFunc(findings, func(a, b semanticcoverage.Finding) int {
 		return cmp.Or(cmp.Compare(a.Package, b.Package), cmp.Compare(a.Test, b.Test), cmp.Compare(a.Step, b.Step))
 	})
-	providers := newProviderMap(doc)
+	providers := newProviderMap(schema)
 	var warnings []string
 	for _, f := range findings {
 		warnings = append(warnings, addFinding(features, providers, f)...)
@@ -274,11 +335,12 @@ func aggregate(doc *tfjson.ProviderSchemas, findings []semanticcoverage.Finding)
 	return summarize(features, warnings, len(findings))
 }
 
-// schemaFeatures returns a featureResult for every feature in doc.
-func schemaFeatures(doc *tfjson.ProviderSchemas) []*featureResult {
+// schemaFeatures returns a featureResult for every feature in schema.
+func schemaFeatures(schema *tfjson.ProviderSchemas) []*featureResult {
 	var features []*featureResult
-	for provider, p := range doc.Schemas {
+	for provider, p := range schema.Schemas {
 		add := func(kind semanticcoverage.Kind, name string, b *tfjson.SchemaBlock) {
+			_, identity := p.ResourceIdentitySchemas[name]
 			features = append(features, &featureResult{
 				Provider:   provider,
 				Kind:       kind,
@@ -286,6 +348,7 @@ func schemaFeatures(doc *tfjson.ProviderSchemas) []*featureResult {
 				Attributes: topLevelAttributes(b),
 				Planned:    make(map[semanticcoverage.Operation][]stepRef),
 				Completed:  make(map[semanticcoverage.Operation][]stepRef),
+				required:   requiredOperations(kind, kind == semanticcoverage.KindResource && identity),
 			})
 		}
 		if p.ConfigSchema != nil {
@@ -298,12 +361,12 @@ func schemaFeatures(doc *tfjson.ProviderSchemas) []*featureResult {
 			semanticcoverage.KindListResource:      p.ListResourceSchemas,
 			semanticcoverage.KindStateStore:        p.StateStoreSchemas,
 		} {
-			for name, schema := range schemas {
-				add(kind, name, schema.Block)
+			for name, entry := range schemas {
+				add(kind, name, entry.Block)
 			}
 		}
-		for name, schema := range p.ActionSchemas {
-			add(semanticcoverage.KindAction, name, schema.Block)
+		for name, entry := range p.ActionSchemas {
+			add(semanticcoverage.KindAction, name, entry.Block)
 		}
 		for name := range p.Functions {
 			add(semanticcoverage.KindFunction, name, nil)
@@ -322,7 +385,7 @@ func schemaFeatures(doc *tfjson.ProviderSchemas) []*featureResult {
 // addFinding records the evidence of finding f in features and returns the
 // finding's warnings.
 func addFinding(features []*featureResult, providers *providerMap, f semanticcoverage.Finding) []string {
-	ref := stepRef{Package: f.Package, Test: f.Test, Step: f.Step}
+	ref := stepRef{Package: f.Package, Test: f.Test, Step: f.Step, PostTestDestroy: f.PostTestDestroy}
 	var warnings []string
 	for _, w := range f.Warnings {
 		warnings = append(warnings, fmt.Sprintf("%s: %s", ref, w))
@@ -359,7 +422,7 @@ func addFinding(features []*featureResult, providers *providerMap, f semanticcov
 
 // record records the evidence f of the step ref.
 func (r *featureResult) record(ref stepRef, f semanticcoverage.Feature) {
-	r.CoveredBy = appendRef(r.CoveredBy, ref)
+	r.UsedBy = appendRef(r.UsedBy, ref)
 	for _, operation := range f.Planned {
 		r.Planned[operation] = appendRef(r.Planned[operation], ref)
 	}
@@ -388,7 +451,12 @@ func (r *featureResult) record(ref stepRef, f semanticcoverage.Feature) {
 func summarize(features []*featureResult, warnings []string, findings int) output {
 	result := output{Version: reportVersion, AttributeScope: "top_level", Findings: findings, Features: features, Warnings: warnings}
 	for _, f := range features {
-		f.Covered = len(f.CoveredBy) > 0
+		for _, operation := range f.required {
+			if len(f.Completed[operation]) == 0 {
+				f.MissingOperations = append(f.MissingOperations, operation)
+			}
+		}
+		f.Covered = len(f.UsedBy) > 0 && len(f.MissingOperations) == 0
 		result.Totals.Features.add(f.Covered)
 		for i := range f.Attributes {
 			a := &f.Attributes[i]
@@ -448,9 +516,9 @@ type providerMap struct {
 	mapped bool
 }
 
-func newProviderMap(doc *tfjson.ProviderSchemas) *providerMap {
+func newProviderMap(schema *tfjson.ProviderSchemas) *providerMap {
 	m := &providerMap{byType: make(map[string][]string), served: make(map[string]bool)}
-	for address := range doc.Schemas {
+	for address := range schema.Schemas {
 		typ := providerType(address)
 		m.byType[typ] = append(m.byType[typ], address)
 	}

@@ -4,10 +4,8 @@
 package resource
 
 import (
+	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
-	// <review>
-	// why this import? what does it do? is that something we already have prior art in the repo for? must be
-	// </review>
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 )
@@ -23,9 +21,6 @@ import (
 //
 // Record only the step's own operations, not setup, cleanup, or configuration
 // that the harness generates. With collection disabled (a nil Step), every
-// <review>
-// is harness a common word for plugin-testing? is there prior art in the repo calling it so?
-// </review>
 // method is a no-op; check Enabled before running Terraform commands only to
 // feed the step.
 type stepCoverage struct {
@@ -56,4 +51,18 @@ func (s *stepCoverage) end(t testing.T) {
 		}
 	}
 	s.Step = nil
+}
+
+// recordPostTestDestroy writes the finding of the destroy that runs after the
+// last step, unless the test has failed. number is the number after the last
+// step's, served the addresses of the providers served from the test binary,
+// and state the state before the destroy. Call it only after the destroy and
+// TestCase.CheckDestroy succeeded.
+func recordPostTestDestroy(t testing.T, c *semanticcoverage.Collector, number int, served []string, state *tfjson.State) {
+	t.Helper()
+
+	coverage := stepCoverage{c.BeginPostTestDestroy(number)}
+	coverage.ObserveServedProviders(served)
+	coverage.DestroyCompleted(state)
+	coverage.end(t)
 }

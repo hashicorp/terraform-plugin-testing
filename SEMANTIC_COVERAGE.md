@@ -5,9 +5,10 @@
 
 Semantic coverage reports which parts of a provider's schema the acceptance
 tests exercise. For each resource, data source, ephemeral resource, list
-resource, action, state store, and function, it reports whether a test used
-it, which of its top-level attributes a test configured or found populated,
-and which operations Terraform planned or completed.
+resource, action, state store, and function, it reports whether the tests
+completed every operation of its lifecycle, which of its top-level attributes
+a test configured or found populated, and which operations Terraform planned
+or completed.
 
 terraform-plugin-testing collects the evidence while the tests run. While
 collection is enabled, plugin-testing records evidence for each `TestStep`: it
@@ -105,7 +106,8 @@ data sources, ephemeral resources, list resources, actions, state stores,
 providers, and functions. All uses of one feature type within a step are
 merged into one entry.
 
-Findings are written only for steps that pass. These steps write none:
+Findings are written only for steps that pass. The automatic destroy after
+the last step also writes a finding (see Operations). These steps write none:
 
 - **Steps with `ExpectError`.** They test how the provider handles invalid
   input or a failing operation. A step that only checks a validation error
@@ -133,22 +135,45 @@ user-provided map keys. Resources in child modules record no populated
 attributes: the collector doesn't read module configuration, so it can't tell
 whether a value was set by the module or computed by the provider.
 
-**Operations** are `create`, `update`, `replace`, `delete`, `read`, `import`,
-`refresh`, `query`, and `invoke`. The finding stores them per feature in two
-lists. `planned` holds the operations that appear in one of the step's plans.
-`completed` holds the operations that Terraform performed successfully:
-plugin-testing adds an operation right after the Terraform command that
-performs it returns without error, which is applying a plan, running an
-import command, refreshing, or running a query. A no-op change records the
-feature but no operation. Steps with `PlanOnly`, and import-block tests that
-only plan, record planned operations only.
+**Operations** are the lifecycle events of a feature, named after the
+provider protocol RPCs that implement them. The finding stores them per
+feature in two lists. `planned` holds the operations that appear in one of
+the step's plans. `completed` holds the operations that Terraform performed
+successfully: plugin-testing adds an operation right after the Terraform
+command that performs it returns without error. A no-op change records the
+feature but no operation.
+
+| Kind | Operations | Recorded when |
+|---|---|---|
+| provider | `configure` | A plan succeeds that has the provider in its configuration (inferred). |
+| resource | `create`, `update`, `replace`, `delete` | A plan has the change, and an apply completes it. |
+| resource | `read` | A refresh succeeds: a `RefreshState` step, or the refreshing plan that ends every config step. |
+| resource | `import_id` | The import command, or a plan with an import block that has an `id`, succeeds. |
+| resource | `import_identity` | A plan with an import block that has an `identity` succeeds. |
+| data source | `read` | A refresh succeeds with the data source in state, or an apply completes a read that Terraform deferred. |
+| ephemeral resource | `open`, `close` | A plan of a configuration that declares it succeeds (inferred). |
+| list resource | `query` | A `Query` step succeeds. |
+| action | `plan`, `invoke` | A plan has the invocation (`plan`), and an apply completes it (`invoke`). |
+| state store | `configure`, `read`, `write`, `list_states` | A `StateStore` step passes. |
+| state store | `delete_state` | A `StateStore` step without `DefaultWorkspaceOnly` passes. |
+| state store | `lock`, `unlock` | A `StateStore` step with `VerifyStateStoreLock` passes. |
+| function | `call` | A plan of a configuration that calls it succeeds (inferred). |
+
+The collector doesn't observe RPCs, only Terraform's plans and state. The
+operations marked "inferred" are not in either: a plan that succeeded must
+have configured its providers, opened and closed its ephemeral resources, and
+called its functions, so the collector records them for the features in the
+step's configuration. Terraform imports a resource while planning an import
+block, so a plan with an import completes it, although plugin-testing never
+applies such a plan.
 
 A step with `Destroy: true` completes `delete`. The automatic destroy after
-the last step is not recorded, although it calls the provider's delete for
-every resource left in state. It runs after the last step's finding is
-written, so that a failed cleanup can't drop the finding of a passed step,
-and it belongs to no step. As a result, `delete` shows as completed only for
-tests that have a `Destroy: true` step.
+the last step writes its own finding, which records a completed `delete` for
+each resource in the state before the destroy. Its step number is the one
+after the last step's, it has `post_test_destroy: true`, and the report names
+it "post-test destroy". It is written only if the test hadn't failed and both
+the destroy and `CheckDestroy` succeeded. It is separate from the last step's
+finding, so that a failed cleanup can't drop the finding of a passed step.
 
 **Served providers** are recorded once per step rather than per feature. They
 are the source addresses under which plugin-testing served the provider
@@ -157,7 +182,8 @@ factories from the test binary. Providers that Terraform installs, such as
 this list.
 
 A finding can also carry warnings. Each one means that a source of evidence
-for the step was unavailable, and the report repeats it:
+for the step was unavailable, and the report repeats it. The codes don't
+record the cause, and nothing logs it:
 
 | Warning | Meaning |
 |---|---|
@@ -169,7 +195,9 @@ for the step was unavailable, and the report repeats it:
 
 The report applies these rules:
 
-- A feature is covered when a step used it.
+- A feature is covered when steps completed every operation that its kind
+  requires (see below). It doesn't matter whether that was in one step or in
+  several. Attribute coverage is counted separately and doesn't affect it.
 - A configurable attribute (required, optional, or a block) is covered when
   a step configured it.
 - A computed attribute is covered when a step found it populated and didn't
@@ -180,13 +208,35 @@ The report applies these rules:
   matched up per instance under `count`, `for_each`, or modules.
 - An optional-computed attribute counts once in the configurable total and
   once in the computed total. Covering both needs one step that sets the
-  attribute and one that leaves it to the provider.
+  attribute and one that leaves it unset and finds it populated.
 - Deprecated attributes are counted like any other attribute.
 
 Attributes are counted only for top-level schema attributes and blocks.
 Functions take positional arguments rather than attributes, and the collector
-doesn't record which arguments a call passes. A function is therefore covered
-when a step calls it, and adds nothing to the attribute totals.
+doesn't record which arguments a call passes. A function therefore adds
+nothing to the attribute totals.
+
+A feature needs these completed operations to be covered:
+
+| Kind | Required operations |
+|---|---|
+| provider | `configure` |
+| resource | `create`, `read`, `update`, `delete`, `import_id`, and `import_identity` if the schema has a resource identity schema for it |
+| data source | `read` |
+| ephemeral resource | `open`, `close` |
+| list resource | `query` |
+| action | `plan`, `invoke` |
+| state store | `configure`, `read`, `write`, `list_states`, `delete_state` |
+| function | `call` |
+
+A planned operation doesn't count. `replace`, `lock`, and `unlock` are
+reported but not required.
+
+Every resource needs `update` and `import_id`, although some resources
+support neither: a resource whose attributes all require replacement never
+updates in place, and a resource can lack import support. The schema JSON
+doesn't say whether either applies, so such a resource is never covered. Its
+`missing_operations` show why.
 
 ## Matching findings to the schema
 
@@ -226,26 +276,18 @@ The JSON report has these top-level fields:
 - `totals` holds covered and total counts for features, configurable
   attributes, and computed attributes.
 - `features` lists every feature in the schema, sorted by provider, kind, and
-  name. Each entry has the steps that used it (`covered_by`), each attribute
-  with the steps that configured it (`configured_by`) or found it computed
-  (`computed_by`), and the steps that planned or completed each operation.
+  name. Each entry has the steps whose evidence names it (`used_by`), the
+  required operations that no step completed (`missing_operations`), each
+  attribute with the steps that configured it (`configured_by`) or found it
+  computed (`computed_by`), and the steps that planned or completed each
+  operation.
 - `warnings` lists finding warnings, ambiguous matches, and provider mapping
   problems. It is omitted when there are none.
 
-The text report prints the totals, one line per feature, one
-`uncovered <attribute> (needs ...)` line per uncovered attribute, and the
-warnings.
-
-Operations are listed with the steps that performed them but are not turned
-into a percentage. Some operations apply to every feature of a kind: `create`
-and `delete` to resources, `query` to list resources, and `invoke` to actions.
-Others depend on how the provider implements the feature, and the schema JSON
-doesn't say whether they apply: `update` needs an attribute that can change in
-place, `replace` needs an attribute that requires replacement, and `import`
-needs import support. Ephemeral resources are opened, renewed, and closed,
-which the collector doesn't record, and the `read` of a data source is
-recorded only in some cases (see Limitations). The report therefore has no
-complete list of applicable operations to divide by.
+The text report prints the totals and one line per feature. Under a feature,
+it prints a `missing operations [...]` line if required operations are
+missing, and one `uncovered <attribute> (needs ...)` line per uncovered
+attribute. The warnings come last.
 
 ## Privacy
 
@@ -282,64 +324,77 @@ that you control.
 - The query file of a `Query` step stays in the working directory. Later steps
   in the same test therefore also record its list resources and their
   configured attributes.
-- A data source that Terraform reads while planning doesn't appear as a change
-  in the plan, so its `read` is recorded only when Terraform defers the read
-  to apply, for example because it depends on a resource that the same apply
-  creates or changes.
-- The automatic destroy after the last step is not recorded (see
-  Operations).
+- Provider `configure`, ephemeral resource `open` and `close`, and function
+  `call` are inferred from successful plans, not observed (see Operations).
+  A provider that Terraform doesn't need for the plan, or an ephemeral
+  resource or function call that the plan doesn't evaluate, still counts.
+- Renewing an ephemeral resource is not recorded. It happens only when the
+  resource's lease expires during an operation.
+- The read of a resource is recorded only from steps that refresh. A config
+  step with the `NoRefresh` plan option, or a destroy step with
+  `PreventPostDestroyRefresh`, records none.
 
 ## Example result
 
 Running the tests of `terraform-provider-local` at commit `b3d30fe`, without
 the upgrade tests that download released providers (`go test -skip Upgrade`),
-produced 40 findings; the 18 steps with `ExpectError` wrote none. The schema
-was generated with the `dev_overrides` recipe from [Usage](#usage). The report showed 9/9 features, 30/30
-configurable attributes, and 39/42 computed attributes covered. The four
-optional-computed permission attributes appear in both totals and were covered
-both when set and when left unset. The three uncovered computed attributes
-were outputs of an ephemeral resource. The completed operations were `create`
-and `replace` for both file resources, `read` for the `local_command` data
-source, and `invoke` for the `local_command` action. The `local_command` data
-source records `read` only in the tests where it depends on a `local_file`
-created in the same apply. The `local_file` and `local_sensitive_file` data
-sources show no operations, because Terraform read them while planning.
+produced 73 findings: 40 for test steps and 33 for post-test destroys. The 18
+steps with `ExpectError` wrote none. The schema was generated with the
+`dev_overrides` recipe from [Usage](#usage).
+
+The report showed 7/9 features, 30/30 configurable attributes, and 39/42
+computed attributes covered:
+
+- The two file resources are not covered. Their tests create, read, replace,
+  and delete them, but never update or import them: every change to a file
+  resource forces replacement, and neither supports import. Both are missing
+  `update` and `import_id`, as described in
+  [How the report counts coverage](#how-the-report-counts-coverage).
+- The four optional-computed permission attributes appear in both totals and
+  were covered both when set and when left unset.
+- The three uncovered computed attributes are outputs of the ephemeral
+  resource. Ephemeral resources leave nothing in state (see
+  [Limitations](#limitations)).
+- The `local_file` and `local_sensitive_file` data sources were each used in
+  one test, whose refreshing plan recorded their `read`.
+- `delete` of the file resources was completed only by post-test destroys.
+  No test has a `Destroy: true` step.
 
 The text report:
 
 ```text
-Test-derived semantic coverage: 40 findings
+Test-derived semantic coverage: 73 findings
 Attribute scope: top-level schema attributes and blocks only; nested descendants are excluded.
-Features 9/9; configurable 30/30; computed 39/42
-registry.terraform.io/hashicorp/local action local_command: covered=true attributes=5/5 planned=[invoke] completed=[invoke]
+Features 7/9; configurable 30/30; computed 39/42
+registry.terraform.io/hashicorp/local action local_command: covered=true attributes=5/5 planned=[invoke] completed=[invoke plan]
 registry.terraform.io/hashicorp/local data_source local_command: covered=true attributes=8/8 planned=[read] completed=[read]
-registry.terraform.io/hashicorp/local data_source local_file: covered=true attributes=10/10 planned=[] completed=[]
-registry.terraform.io/hashicorp/local data_source local_sensitive_file: covered=true attributes=10/10 planned=[] completed=[]
-registry.terraform.io/hashicorp/local ephemeral_resource local_command: covered=true attributes=5/8 planned=[] completed=[]
-  uncovered exit_code (needs a test that leaves it to the provider)
-  uncovered stderr (needs a test that leaves it to the provider)
-  uncovered stdout (needs a test that leaves it to the provider)
-registry.terraform.io/hashicorp/local function direxists: covered=true attributes=0/0 planned=[] completed=[]
-registry.terraform.io/hashicorp/local provider : covered=true attributes=0/0 planned=[] completed=[]
-registry.terraform.io/hashicorp/local resource local_file: covered=true attributes=14/14 planned=[create replace] completed=[create replace]
-registry.terraform.io/hashicorp/local resource local_sensitive_file: covered=true attributes=13/13 planned=[create replace] completed=[create replace]
+registry.terraform.io/hashicorp/local data_source local_file: covered=true attributes=10/10 planned=[] completed=[read]
+registry.terraform.io/hashicorp/local data_source local_sensitive_file: covered=true attributes=10/10 planned=[] completed=[read]
+registry.terraform.io/hashicorp/local ephemeral_resource local_command: covered=true attributes=5/8 planned=[] completed=[close open]
+  uncovered exit_code (needs a test that leaves it unset and finds it populated)
+  uncovered stderr (needs a test that leaves it unset and finds it populated)
+  uncovered stdout (needs a test that leaves it unset and finds it populated)
+registry.terraform.io/hashicorp/local function direxists: covered=true attributes=0/0 planned=[] completed=[call]
+registry.terraform.io/hashicorp/local provider : covered=true attributes=0/0 planned=[] completed=[configure]
+registry.terraform.io/hashicorp/local resource local_file: covered=false attributes=14/14 planned=[create replace] completed=[create delete read replace]
+  missing operations [update import_id]
+registry.terraform.io/hashicorp/local resource local_sensitive_file: covered=false attributes=13/13 planned=[create replace] completed=[create delete read replace]
+  missing operations [update import_id]
 ```
 
-An excerpt of the JSON report. It is complete except that `features` shows
-only two of the nine entries; the full file has 2,868 lines.
-<!-- <review> -->
-<!-- also show a resource (ideally one with optional computed, computed and non computed attributes (or the best possible approximation) -->
-<!-- if the provider has an action or other features, also show one of each -->
-<!-- </review> -->
+An excerpt of the JSON report. It shows one feature of each kind, with some of
+their attributes: for `local_file`, a configurable attribute (`filename`), an
+optional-computed one (`file_permission`), and a computed one (`id`). Each
+list of steps is cut to its first entry. The full file has 3504 lines.
 
 ```json
 {
   "version": 1,
   "attribute_scope": "top_level",
-  "findings": 40,
+  "findings": 73,
   "totals": {
     "features": {
-      "covered": 9,
+      "covered": 7,
       "total": 9
     },
     "configurable": {
@@ -354,10 +409,63 @@ only two of the nine entries; the full file has 2,868 lines.
   "features": [
     {
       "provider": "registry.terraform.io/hashicorp/local",
+      "kind": "action",
+      "name": "local_command",
+      "covered": true,
+      "used_by": [
+        {
+          "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+          "test": "TestLocalCommandAction_absolute_path_bash",
+          "step": 1
+        }
+      ],
+      "attributes": [
+        {
+          "path": "command",
+          "configurable": true,
+          "computed": false,
+          "covered": true,
+          "configured_by": [
+            {
+              "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+              "test": "TestLocalCommandAction_absolute_path_bash",
+              "step": 1
+            }
+          ]
+        }
+      ],
+      "planned": {
+        "invoke": [
+          {
+            "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+            "test": "TestLocalCommandAction_absolute_path_bash",
+            "step": 1
+          }
+        ]
+      },
+      "completed": {
+        "invoke": [
+          {
+            "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+            "test": "TestLocalCommandAction_absolute_path_bash",
+            "step": 1
+          }
+        ],
+        "plan": [
+          {
+            "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+            "test": "TestLocalCommandAction_absolute_path_bash",
+            "step": 1
+          }
+        ]
+      }
+    },
+    {
+      "provider": "registry.terraform.io/hashicorp/local",
       "kind": "data_source",
       "name": "local_file",
       "covered": true,
-      "covered_by": [
+      "used_by": [
         {
           "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
           "test": "TestLocalFileDataSource",
@@ -367,97 +475,6 @@ only two of the nine entries; the full file has 2,868 lines.
       "attributes": [
         {
           "path": "content",
-          "configurable": false,
-          "computed": true,
-          "covered": true,
-          "computed_by": [
-            {
-              "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
-              "test": "TestLocalFileDataSource",
-              "step": 1
-            }
-          ]
-        },
-        {
-          "path": "content_base64",
-          "configurable": false,
-          "computed": true,
-          "covered": true,
-          "computed_by": [
-            {
-              "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
-              "test": "TestLocalFileDataSource",
-              "step": 1
-            }
-          ]
-        },
-        {
-          "path": "content_base64sha256",
-          "configurable": false,
-          "computed": true,
-          "covered": true,
-          "computed_by": [
-            {
-              "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
-              "test": "TestLocalFileDataSource",
-              "step": 1
-            }
-          ]
-        },
-        {
-          "path": "content_base64sha512",
-          "configurable": false,
-          "computed": true,
-          "covered": true,
-          "computed_by": [
-            {
-              "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
-              "test": "TestLocalFileDataSource",
-              "step": 1
-            }
-          ]
-        },
-        {
-          "path": "content_md5",
-          "configurable": false,
-          "computed": true,
-          "covered": true,
-          "computed_by": [
-            {
-              "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
-              "test": "TestLocalFileDataSource",
-              "step": 1
-            }
-          ]
-        },
-        {
-          "path": "content_sha1",
-          "configurable": false,
-          "computed": true,
-          "covered": true,
-          "computed_by": [
-            {
-              "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
-              "test": "TestLocalFileDataSource",
-              "step": 1
-            }
-          ]
-        },
-        {
-          "path": "content_sha256",
-          "configurable": false,
-          "computed": true,
-          "covered": true,
-          "computed_by": [
-            {
-              "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
-              "test": "TestLocalFileDataSource",
-              "step": 1
-            }
-          ]
-        },
-        {
-          "path": "content_sha512",
           "configurable": false,
           "computed": true,
           "covered": true,
@@ -481,6 +498,161 @@ only two of the nine entries; the full file has 2,868 lines.
               "step": 1
             }
           ]
+        }
+      ],
+      "completed": {
+        "read": [
+          {
+            "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+            "test": "TestLocalFileDataSource",
+            "step": 1
+          }
+        ]
+      }
+    },
+    {
+      "provider": "registry.terraform.io/hashicorp/local",
+      "kind": "ephemeral_resource",
+      "name": "local_command",
+      "covered": true,
+      "used_by": [
+        {
+          "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+          "test": "TestLocalCommandEphemeral_absolute_path_with_working_directory",
+          "step": 1
+        }
+      ],
+      "attributes": [
+        {
+          "path": "command",
+          "configurable": true,
+          "computed": false,
+          "covered": true,
+          "configured_by": [
+            {
+              "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+              "test": "TestLocalCommandEphemeral_absolute_path_with_working_directory",
+              "step": 1
+            }
+          ]
+        },
+        {
+          "path": "stdout",
+          "configurable": false,
+          "computed": true,
+          "covered": false
+        }
+      ],
+      "completed": {
+        "close": [
+          {
+            "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+            "test": "TestLocalCommandEphemeral_absolute_path_with_working_directory",
+            "step": 1
+          }
+        ],
+        "open": [
+          {
+            "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+            "test": "TestLocalCommandEphemeral_absolute_path_with_working_directory",
+            "step": 1
+          }
+        ]
+      }
+    },
+    {
+      "provider": "registry.terraform.io/hashicorp/local",
+      "kind": "function",
+      "name": "direxists",
+      "covered": true,
+      "used_by": [
+        {
+          "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+          "test": "TestDirectoryExists_basic",
+          "step": 1
+        }
+      ],
+      "completed": {
+        "call": [
+          {
+            "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+            "test": "TestDirectoryExists_basic",
+            "step": 1
+          }
+        ]
+      }
+    },
+    {
+      "provider": "registry.terraform.io/hashicorp/local",
+      "kind": "provider",
+      "name": "",
+      "covered": true,
+      "used_by": [
+        {
+          "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+          "test": "TestDirectoryExists_basic",
+          "step": 1
+        }
+      ],
+      "completed": {
+        "configure": [
+          {
+            "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+            "test": "TestDirectoryExists_basic",
+            "step": 1
+          }
+        ]
+      }
+    },
+    {
+      "provider": "registry.terraform.io/hashicorp/local",
+      "kind": "resource",
+      "name": "local_file",
+      "covered": false,
+      "used_by": [
+        {
+          "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+          "test": "TestLocalCommandDataSource_absolute_path_with_working_directory",
+          "step": 1
+        }
+      ],
+      "missing_operations": [
+        "update",
+        "import_id"
+      ],
+      "attributes": [
+        {
+          "path": "file_permission",
+          "configurable": true,
+          "computed": true,
+          "covered": true,
+          "configured_by": [
+            {
+              "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+              "test": "TestLocalFile_Permissions",
+              "step": 2
+            }
+          ],
+          "computed_by": [
+            {
+              "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+              "test": "TestLocalCommandDataSource_absolute_path_with_working_directory",
+              "step": 1
+            }
+          ]
+        },
+        {
+          "path": "filename",
+          "configurable": true,
+          "computed": false,
+          "covered": true,
+          "configured_by": [
+            {
+              "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+              "test": "TestLocalCommandDataSource_absolute_path_with_working_directory",
+              "step": 1
+            }
+          ]
         },
         {
           "path": "id",
@@ -490,25 +662,59 @@ only two of the nine entries; the full file has 2,868 lines.
           "computed_by": [
             {
               "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
-              "test": "TestLocalFileDataSource",
+              "test": "TestLocalCommandDataSource_absolute_path_with_working_directory",
               "step": 1
             }
           ]
         }
-      ]
-    },
-    {
-      "provider": "registry.terraform.io/hashicorp/local",
-      "kind": "function",
-      "name": "direxists",
-      "covered": true,
-      "covered_by": [
-        {
-          "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
-          "test": "TestDirectoryExists_basic",
-          "step": 1
-        }
-      ]
+      ],
+      "planned": {
+        "create": [
+          {
+            "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+            "test": "TestLocalCommandDataSource_absolute_path_with_working_directory",
+            "step": 1
+          }
+        ],
+        "replace": [
+          {
+            "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+            "test": "TestLocalFile_Basic",
+            "step": 2
+          }
+        ]
+      },
+      "completed": {
+        "create": [
+          {
+            "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+            "test": "TestLocalCommandDataSource_absolute_path_with_working_directory",
+            "step": 1
+          }
+        ],
+        "delete": [
+          {
+            "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+            "test": "TestLocalCommandDataSource_absolute_path_with_working_directory",
+            "step": 2,
+            "post_test_destroy": true
+          }
+        ],
+        "read": [
+          {
+            "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+            "test": "TestLocalCommandDataSource_absolute_path_with_working_directory",
+            "step": 1
+          }
+        ],
+        "replace": [
+          {
+            "package": "github.com/terraform-providers/terraform-provider-local/internal/provider",
+            "test": "TestLocalFile_Basic",
+            "step": 2
+          }
+        ]
+      }
     }
   ]
 }

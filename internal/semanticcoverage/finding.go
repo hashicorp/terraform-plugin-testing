@@ -13,10 +13,7 @@
 //     JSON, query results, resource names, addresses, instance keys, or
 //     assertion matchers.
 //   - From state, it reads only top-level attribute names and whether each
-//     value is non-null. Nested map keys can be user data.
-// <review>
-// maybe combine the sentences, "as nested map keys ..."?
-// </review>
+//     value is non-null, as nested map keys can be user data.
 //
 // It does persist provider source addresses and feature type names, schema
 // attribute names, operations, test names, and test package import paths.
@@ -49,7 +46,12 @@ type Finding struct {
 	// Package is the import path of the package under test.
 	Package string `json:"package,omitempty"`
 	Test    string `json:"test"`
-	Step    int    `json:"step"`
+	// Step is the 1-based number of the test step. The destroy that runs
+	// after the last step has the number after it.
+	Step int `json:"step"`
+	// PostTestDestroy reports whether the finding is of the destroy that
+	// runs after the last step, rather than of a test step.
+	PostTestDestroy bool `json:"post_test_destroy,omitempty"`
 	// ServedProviders lists the source addresses under which the test
 	// harness served provider factories from the test binary during the step.
 	// The harness chooses these addresses (registry.terraform.io/hashicorp/
@@ -135,34 +137,71 @@ func (k Kind) valid() bool {
 	return false
 }
 
-// Operation is something Terraform does with a feature.
+// Operation is a lifecycle event of a feature, named after the provider
+// protocol RPC that implements it. Some operations are inferred rather than
+// observed; see the Step methods that record them.
 type Operation string
 
 const (
+	// Resource operations. A replace runs both Create and Delete.
 	OperationCreate  Operation = "create"
 	OperationUpdate  Operation = "update"
 	OperationReplace Operation = "replace"
 	OperationDelete  Operation = "delete"
-	OperationRead    Operation = "read"
-	OperationImport  Operation = "import"
-	OperationRefresh Operation = "refresh"
-	OperationQuery   Operation = "query"
-	OperationInvoke  Operation = "invoke"
+	// OperationRead is a read of a resource, a data source, or the state
+	// of a state store.
+	OperationRead Operation = "read"
+	// OperationImportID is an import by ID, with the import command or an
+	// import block with an id.
+	OperationImportID Operation = "import_id"
+	// OperationImportIdentity is an import with an import block that gives
+	// the resource identity.
+	OperationImportIdentity Operation = "import_identity"
+
+	// OperationOpen and OperationClose are the lifecycle of an ephemeral
+	// resource.
+	OperationOpen  Operation = "open"
+	OperationClose Operation = "close"
+
+	// OperationQuery lists the resources of a list resource.
+	OperationQuery Operation = "query"
+
+	// OperationPlan and OperationInvoke are the lifecycle of an action.
+	OperationPlan   Operation = "plan"
+	OperationInvoke Operation = "invoke"
+
+	// OperationCall is a call of a provider-defined function.
+	OperationCall Operation = "call"
+
+	// OperationConfigure configures a provider or a state store.
+	OperationConfigure Operation = "configure"
+
+	// State store operations, besides configure and read.
+	OperationWrite       Operation = "write"
+	OperationListStates  Operation = "list_states"
+	OperationDeleteState Operation = "delete_state"
+	OperationLock        Operation = "lock"
+	OperationUnlock      Operation = "unlock"
 )
 
 func (o Operation) valid() bool {
 	switch o {
-	case OperationCreate, OperationUpdate, OperationReplace, OperationDelete, OperationRead, OperationImport, OperationRefresh, OperationQuery, OperationInvoke:
+	case OperationCreate, OperationUpdate, OperationReplace, OperationDelete, OperationRead,
+		OperationImportID, OperationImportIdentity,
+		OperationOpen, OperationClose,
+		OperationQuery,
+		OperationPlan, OperationInvoke,
+		OperationCall,
+		OperationConfigure,
+		OperationWrite, OperationListStates, OperationDeleteState, OperationLock, OperationUnlock:
 		return true
 	}
 	return false
 }
 
 // Warning means that one source of evidence for a step was unavailable. The
-// codes don't say why; use the logs or the collector tests for that.
-// <review>
-// question: where are the logs? how do i enable them? show me examples of such logging
-// </review>
+// codes don't record the cause, and the collector doesn't log it. Reproduce
+// the step's evidence in the collector tests to find out why.
 type Warning string
 
 const (

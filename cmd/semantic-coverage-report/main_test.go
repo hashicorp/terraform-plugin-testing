@@ -43,25 +43,87 @@ func TestAggregateKeepsOperationAndAttributeEvidenceDistinct(t *testing.T) {
 	}
 }
 
-func TestFeatureCoverage(t *testing.T) {
+func TestFeatureCoverageNeedsTheLifecycle(t *testing.T) {
 	t.Parallel()
 
+	lifecycle := []sc.Operation{sc.OperationCreate, sc.OperationRead, sc.OperationUpdate, sc.OperationDelete, sc.OperationImportID}
+	completed := func(operations ...sc.Operation) sc.Feature {
+		return item(func(f *sc.Feature) { f.Completed = operations })
+	}
+	identitySchema := `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {
+		"resource_schemas": {"example_item": {"block": {}}},
+		"resource_identity_schemas": {"example_item": {"version": 0, "attributes": {"id": {"type": "string", "required_for_import": true}}}}
+	}}}`
 	tests := map[string]struct {
-		feature sc.Feature
-		want    bool
+		schema      string
+		findings    []sc.Finding
+		wantMissing []sc.Operation
 	}{
-		"used":                      {item(nil), true},
-		"only another feature used": {sc.Feature{Kind: sc.KindDataSource, Name: "example_item"}, false},
+		"used without operations": {
+			schema:      exampleSchema,
+			findings:    []sc.Finding{finding(1, item(nil))},
+			wantMissing: lifecycle,
+		},
+		"operations completed across steps": {
+			schema: exampleSchema,
+			findings: []sc.Finding{
+				finding(1, completed(sc.OperationCreate, sc.OperationRead)),
+				finding(2, completed(sc.OperationUpdate, sc.OperationImportID)),
+				postTestDestroy(3, completed(sc.OperationDelete)),
+			},
+		},
+		// Planning an operation doesn't complete it.
+		"planned only": {
+			schema: exampleSchema,
+			findings: []sc.Finding{finding(1, item(func(f *sc.Feature) {
+				f.Planned = lifecycle
+				f.Completed = []sc.Operation{sc.OperationCreate, sc.OperationRead, sc.OperationDelete, sc.OperationImportID}
+			}))},
+			wantMissing: []sc.Operation{sc.OperationUpdate},
+		},
+		"a resource with an identity schema needs an import by identity": {
+			schema:      identitySchema,
+			findings:    []sc.Finding{finding(1, completed(lifecycle...))},
+			wantMissing: []sc.Operation{sc.OperationImportIdentity},
+		},
+		"only another feature used": {
+			schema:      exampleSchema,
+			findings:    []sc.Finding{finding(1, sc.Feature{Kind: sc.KindDataSource, Name: "example_item", Completed: lifecycle})},
+			wantMissing: lifecycle,
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{finding(1, test.feature)})
-			if got := result.Features[0].Covered; got != test.want {
-				t.Errorf("covered = %t, want %t", got, test.want)
+			f := aggregate(parseSchema(t, test.schema), test.findings).Features[0]
+			if diff := cmp.Diff(test.wantMissing, f.MissingOperations); diff != "" {
+				t.Errorf("missing operations mismatch (-want +got):\n%s", diff)
+			}
+			want := len(f.UsedBy) > 0 && len(test.wantMissing) == 0
+			if f.Covered != want {
+				t.Errorf("covered = %t, want %t", f.Covered, want)
 			}
 		})
+	}
+}
+
+func TestRequiredOperationsPerKind(t *testing.T) {
+	t.Parallel()
+
+	tests := map[sc.Kind][]sc.Operation{
+		sc.KindProvider:          {sc.OperationConfigure},
+		sc.KindDataSource:        {sc.OperationRead},
+		sc.KindEphemeralResource: {sc.OperationOpen, sc.OperationClose},
+		sc.KindListResource:      {sc.OperationQuery},
+		sc.KindAction:            {sc.OperationPlan, sc.OperationInvoke},
+		sc.KindStateStore:        {sc.OperationConfigure, sc.OperationRead, sc.OperationWrite, sc.OperationListStates, sc.OperationDeleteState},
+		sc.KindFunction:          {sc.OperationCall},
+	}
+	for kind, want := range tests {
+		if diff := cmp.Diff(want, requiredOperations(kind, false)); diff != "" {
+			t.Errorf("%s: required operations mismatch (-want +got):\n%s", kind, diff)
+		}
 	}
 }
 
@@ -70,7 +132,7 @@ func TestAggregateMatchesFeaturesToTheSchema(t *testing.T) {
 
 	const aws = "registry.terraform.io/hashicorp/aws"
 	const google = "registry.terraform.io/hashicorp/google"
-	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {
+	schema := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {
 		"registry.terraform.io/hashicorp/aws": {
 			"provider": {"block": {}},
 			"resource_schemas": {"aws_instance": {"block": {}}},
@@ -97,15 +159,15 @@ func TestAggregateMatchesFeaturesToTheSchema(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			result := aggregate(doc, []sc.Finding{finding(1, test.feature)})
-			var covered []string
+			result := aggregate(schema, []sc.Finding{finding(1, test.feature)})
+			var used []string
 			for _, f := range result.Features {
-				if f.Covered {
-					covered = append(covered, f.Provider+" "+string(f.Kind)+" "+f.Name)
+				if len(f.UsedBy) > 0 {
+					used = append(used, f.Provider+" "+string(f.Kind)+" "+f.Name)
 				}
 			}
-			if diff := cmp.Diff(test.want, covered); diff != "" {
-				t.Errorf("covered features mismatch (-want +got):\n%s", diff)
+			if diff := cmp.Diff(test.want, used); diff != "" {
+				t.Errorf("used features mismatch (-want +got):\n%s", diff)
 			}
 			if len(result.Warnings) != 0 {
 				t.Errorf("warnings: %v", result.Warnings)
@@ -146,9 +208,11 @@ func TestServedProviderMapsToThePublishedAddress(t *testing.T) {
 	t.Parallel()
 
 	result := aggregate(parseSchema(t, publishedSchema), []sc.Finding{servedFinding("registry.terraform.io/hashicorp/example")})
-	want := totals{Features: metric{2, 2}, Configurable: metric{1, 1}, Computed: metric{1, 1}}
-	if result.Totals != want {
-		t.Errorf("totals = %+v, want %+v", result.Totals, want)
+	if got := usedFeatures(result); got != 2 {
+		t.Errorf("used features = %d, want 2", got)
+	}
+	if result.Totals.Configurable != (metric{1, 1}) || result.Totals.Computed != (metric{1, 1}) {
+		t.Errorf("totals = %+v, want all attributes covered", result.Totals)
 	}
 	if got := result.Features[1].Completed[sc.OperationCreate]; len(got) != 1 {
 		t.Errorf("completed create = %v, want step 1", got)
@@ -183,8 +247,8 @@ func TestProvidersNotServedFromTheTestBinaryAreExcluded(t *testing.T) {
 			t.Parallel()
 
 			result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{servedFinding(test.served...)})
-			if result.Totals.Features.Covered != 0 {
-				t.Errorf("features = %+v, want none covered", result.Totals.Features)
+			if got := usedFeatures(result); got != 0 {
+				t.Errorf("used features = %d, want 0", got)
 			}
 			if diff := cmp.Diff(test.want, result.Warnings); diff != "" {
 				t.Errorf("warnings mismatch (-want +got):\n%s", diff)
@@ -204,8 +268,8 @@ func TestServedHelperProvidersAreIgnored(t *testing.T) {
 		sc.Feature{Kind: sc.KindResource, Name: "echo", Provider: echo, Configured: []string{"data"}},
 	)
 	result := aggregate(parseSchema(t, publishedSchema), []sc.Finding{f})
-	if result.Totals.Features != (metric{2, 2}) {
-		t.Errorf("features = %+v, want both covered", result.Totals.Features)
+	if got := usedFeatures(result); got != 2 || result.Totals.Features.Total != 2 {
+		t.Errorf("used features = %d of %d, want 2 of 2", got, result.Totals.Features.Total)
 	}
 	if len(result.Warnings) != 0 {
 		t.Errorf("warnings: %v", result.Warnings)
@@ -215,13 +279,13 @@ func TestServedHelperProvidersAreIgnored(t *testing.T) {
 func TestServedProviderOfAnAmbiguousTypeIsNotMapped(t *testing.T) {
 	t.Parallel()
 
-	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {
+	schema := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {
 		"registry.terraform.io/example-org/example": {"resource_schemas": {"example_item": {"block": {}}}},
 		"registry.terraform.io/fork/example": {"resource_schemas": {"example_item": {"block": {}}}}
 	}}`)
-	result := aggregate(doc, []sc.Finding{servedFinding("registry.terraform.io/hashicorp/example")})
-	if result.Totals.Features.Covered != 0 {
-		t.Errorf("features = %+v, want none covered", result.Totals.Features)
+	result := aggregate(schema, []sc.Finding{servedFinding("registry.terraform.io/hashicorp/example")})
+	if got := usedFeatures(result); got != 0 {
+		t.Errorf("used features = %d, want 0", got)
 	}
 	want := []string{"no provider served from the test binary matches a single schema provider (served: registry.terraform.io/hashicorp/example); generate the schema from the provider under test"}
 	if diff := cmp.Diff(want, result.Warnings); diff != "" {
@@ -232,13 +296,13 @@ func TestServedProviderOfAnAmbiguousTypeIsNotMapped(t *testing.T) {
 func TestAmbiguousConfigurationIsNotCounted(t *testing.T) {
 	t.Parallel()
 
-	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {
+	schema := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {
 		"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {}}}},
 		"registry.terraform.io/fork/example": {"resource_schemas": {"example_item": {"block": {}}}}
 	}}`)
-	result := aggregate(doc, []sc.Finding{finding(1, sc.Feature{Kind: sc.KindResource, Name: "example_item"})})
-	if result.Totals.Features.Covered != 0 {
-		t.Errorf("features = %+v, want none covered", result.Totals.Features)
+	result := aggregate(schema, []sc.Finding{finding(1, sc.Feature{Kind: sc.KindResource, Name: "example_item"})})
+	if got := usedFeatures(result); got != 0 {
+		t.Errorf("used features = %d, want 0", got)
 	}
 	want := []string{"TestExample step 1: resource example_item has 2 schema matches"}
 	if diff := cmp.Diff(want, result.Warnings); diff != "" {
@@ -249,7 +313,7 @@ func TestAmbiguousConfigurationIsNotCounted(t *testing.T) {
 func TestOptionalComputedAttributesNeedATestThatSetsThemAndOneThatDoesNot(t *testing.T) {
 	t.Parallel()
 
-	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {"attributes": {
+	schema := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {"attributes": {
 		"tags": {"type": "string", "optional": true, "computed": true}
 	}}}}}}}`)
 	unset := finding(1, item(func(f *sc.Feature) { f.Populated = []string{"tags"} }))
@@ -258,14 +322,14 @@ func TestOptionalComputedAttributesNeedATestThatSetsThemAndOneThatDoesNot(t *tes
 		f.Populated = []string{"tags"}
 	}))
 
-	got := aggregate(doc, []sc.Finding{unset, set}).Features[0].Attributes[0]
+	got := aggregate(schema, []sc.Finding{unset, set}).Features[0].Attributes[0]
 	want := attributeResult{Path: "tags", Configurable: true, Computed: true, Covered: true, ConfiguredBy: []stepRef{ref(2)}, ComputedBy: []stepRef{ref(1)}}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("attribute mismatch (-want +got):\n%s", diff)
 	}
 
 	// A configured value is echoed into state, so it isn't computed.
-	got = aggregate(doc, []sc.Finding{set}).Features[0].Attributes[0]
+	got = aggregate(schema, []sc.Finding{set}).Features[0].Attributes[0]
 	want = attributeResult{Path: "tags", Configurable: true, Computed: true, ConfiguredBy: []stepRef{ref(2)}}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("attribute mismatch (-want +got):\n%s", diff)
@@ -275,11 +339,11 @@ func TestOptionalComputedAttributesNeedATestThatSetsThemAndOneThatDoesNot(t *tes
 func TestAggregateCountsDeprecatedAttributes(t *testing.T) {
 	t.Parallel()
 
-	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {
+	schema := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {
 		"attributes": {"old_name": {"type": "string", "optional": true, "deprecated": true}},
 		"deprecated": true
 	}}}}}}`)
-	result := aggregate(doc, []sc.Finding{finding(1, item(func(f *sc.Feature) { f.Configured = []string{"old_name"} }))})
+	result := aggregate(schema, []sc.Finding{finding(1, item(func(f *sc.Feature) { f.Configured = []string{"old_name"} }))})
 	if result.Totals.Configurable != (metric{Covered: 1, Total: 1}) {
 		t.Fatalf("deprecated attribute of a deprecated resource should count: %+v", result.Totals.Configurable)
 	}
@@ -288,7 +352,7 @@ func TestAggregateCountsDeprecatedAttributes(t *testing.T) {
 func TestAggregateExcludesNestedAttributes(t *testing.T) {
 	t.Parallel()
 
-	doc := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {
+	schema := parseSchema(t, `{"format_version": "1.0", "provider_schemas": {"registry.terraform.io/hashicorp/example": {"resource_schemas": {"example_item": {"block": {
 		"attributes": {
 			"settings": {"optional": true, "nested_type": {"nesting_mode": "single", "attributes": {
 				"mode":   {"type": "string", "optional": true},
@@ -303,7 +367,7 @@ func TestAggregateExcludesNestedAttributes(t *testing.T) {
 			}}}
 		}
 	}}}}}}`)
-	result := aggregate(doc, []sc.Finding{finding(1, item(func(f *sc.Feature) {
+	result := aggregate(schema, []sc.Finding{finding(1, item(func(f *sc.Feature) {
 		f.Configured = []string{"settings"}
 		f.Populated = []string{"id"}
 	}))})
@@ -346,20 +410,25 @@ func TestTextReport(t *testing.T) {
 
 	unplanned := finding(2)
 	unplanned.Warnings = []sc.Warning{sc.WarningPlanUnavailable}
+	destroyed := postTestDestroy(3)
+	destroyed.Warnings = []sc.Warning{sc.WarningStateUnavailable}
 	result := aggregate(parseSchema(t, exampleSchema), []sc.Finding{
 		finding(1, item(func(f *sc.Feature) {
 			f.Configured = []string{"name"}
 			f.Planned = []sc.Operation{sc.OperationCreate}
-			f.Completed = []sc.Operation{sc.OperationCreate}
+			f.Completed = []sc.Operation{sc.OperationCreate, sc.OperationRead}
 		})),
 		unplanned,
+		destroyed,
 	})
-	want := `Test-derived semantic coverage: 2 findings
+	want := `Test-derived semantic coverage: 3 findings
 Attribute scope: top-level schema attributes and blocks only; nested descendants are excluded.
-Features 1/1; configurable 1/1; computed 0/1
-registry.terraform.io/hashicorp/example resource example_item: covered=true attributes=1/2 planned=[create] completed=[create]
-  uncovered id (needs a test that leaves it to the provider)
+Features 0/1; configurable 1/1; computed 0/1
+registry.terraform.io/hashicorp/example resource example_item: covered=false attributes=1/2 planned=[create] completed=[create read]
+  missing operations [update delete import_id]
+  uncovered id (needs a test that leaves it unset and finds it populated)
 warning: TestExample step 2: plan_unavailable
+warning: TestExample post-test destroy: state_unavailable
 `
 	if diff := cmp.Diff(want, textReport(result)); diff != "" {
 		t.Errorf("text report mismatch (-want +got):\n%s", diff)
@@ -406,11 +475,11 @@ const exampleSchema = `{"format_version": "1.0", "provider_schemas": {"registry.
 func parseSchema(t *testing.T, data string) *tfjson.ProviderSchemas {
 	t.Helper()
 
-	var doc tfjson.ProviderSchemas
-	if err := json.Unmarshal([]byte(data), &doc); err != nil {
+	var schema tfjson.ProviderSchemas
+	if err := json.Unmarshal([]byte(data), &schema); err != nil {
 		t.Fatal(err)
 	}
-	return &doc
+	return &schema
 }
 
 // testProviders are the providers that findings returned by finding served
@@ -425,6 +494,25 @@ var testProviders = []string{
 // testProviders.
 func finding(n int, features ...sc.Feature) sc.Finding {
 	return sc.Finding{Version: sc.FindingVersion, Test: "TestExample", Step: n, ServedProviders: testProviders, Features: features}
+}
+
+// postTestDestroy returns the finding of the destroy after step n-1 of
+// TestExample.
+func postTestDestroy(n int, features ...sc.Feature) sc.Finding {
+	f := finding(n, features...)
+	f.PostTestDestroy = true
+	return f
+}
+
+// usedFeatures returns the number of features in result that a step used.
+func usedFeatures(result output) int {
+	used := 0
+	for _, f := range result.Features {
+		if len(f.UsedBy) > 0 {
+			used++
+		}
+	}
+	return used
 }
 
 // item returns the resource example_item of exampleSchema, changed by fn.

@@ -20,13 +20,13 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 	t.Helper()
 
 	// A refresh step sets no configuration of its own, so Terraform uses the
-	// configuration already in the working directory. The refresh copies the
-	// values it sets into state. Recording the configuration keeps those
-	// values from counting as computed by the provider.
+	// configuration already in the working directory. A refresh doesn't copy
+	// configuration into state: it calls ReadResource with the prior state,
+	// and the provider returns what it reads. But for an attribute that the
+	// configuration sets, that is the value an earlier apply set, so a
+	// non-null value doesn't show that the provider computed it. Recording
+	// the configuration keeps such attributes from counting as computed.
 	coverage.ObserveConfigDir(wd.BaseDir())
-	// <review>
-	// todo: i don't really understand this. explain and check, does refresh actually set values into state based on the config? or does it actually update values based on what the provider says the actual state is? it seems like counting these values as computed by the provider might be correct. but i might be off here
-	// </review>
 
 	var err error
 	// Explicitly ensure prior state exists before refresh.
@@ -59,7 +59,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 		t.Fatalf("Error getting state: %s", err)
 	}
 	coverage.ObserveState(jsonState)
-	coverage.RefreshCompleted()
+	coverage.RefreshCompleted(jsonState)
 
 	// Go through the refreshed state and verify
 	if step.Check != nil {

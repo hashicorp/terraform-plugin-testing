@@ -62,6 +62,16 @@ func (c *Collector) BeginStep(number int) *Step {
 	return &Step{collector: c, number: number, features: make(map[featureKey]*Feature)}
 }
 
+// BeginPostTestDestroy starts collecting evidence for the destroy that runs
+// after the last test step. number is the number after the last step's.
+func (c *Collector) BeginPostTestDestroy(number int) *Step {
+	s := c.BeginStep(number)
+	if s != nil {
+		s.postTestDestroy = true
+	}
+	return s
+}
+
 // Step collects the evidence of one test step. Finish writes it as a Finding.
 // The caller finishes only steps that passed; a step that is never finished
 // writes nothing.
@@ -72,19 +82,15 @@ func (c *Collector) BeginStep(number int) *Step {
 // work done solely to feed the step, such as extra Terraform commands. New
 // methods must preserve this by returning early when s == nil.
 //
-// A Step is not safe for concurrent use. All calls come from the goroutine
-// that runs the test steps: Terraform commands and checks run synchronously
-// there, and provider servers never see the step.
-// <review>
-// "provider servers never see the step"
-// -> what's the intention of having this sentence here other than being an AI telltale sign? what does this even mean? why is that important to mention here?
-// </review>
+// A Step is not safe for concurrent use. Only the goroutine that runs the
+// test steps uses it.
 type Step struct {
-	collector *Collector
-	number    int
-	served    []string
-	features  map[featureKey]*Feature
-	warnings  []Warning
+	collector       *Collector
+	number          int
+	postTestDestroy bool
+	served          []string
+	features        map[featureKey]*Feature
+	warnings        []Warning
 }
 
 // Enabled reports whether evidence is being collected.
@@ -94,9 +100,13 @@ func (s *Step) Enabled() bool { return s != nil }
 // harness serves provider factories from the test binary during the step.
 // Terraform normalizes source addresses to lower case, so they are recorded
 // in lower case.
-// <review>
-// add a note why we're observing these addresses: to be able to later match findings to the provider schema as the schema might have a different address in there than how these show up in tests (specifically, its possible that here we have the default namespace (i.e. hashicorp) whereas in the schema it might be a different provider namespace
-// </review>
+//
+// The report needs these addresses to match the step's evidence to the
+// provider schema. The harness serves a provider under the hashicorp
+// namespace by default, while the schema usually has the address the provider
+// is published under, which can be in another namespace. The served addresses
+// tell the report which providers are the code under test, and which schema
+// provider each one is.
 func (s *Step) ObserveServedProviders(addresses []string) {
 	if s == nil {
 		return
@@ -114,12 +124,10 @@ func (s *Step) Finish() error {
 	}
 	finding := Finding{
 		Version:         FindingVersion,
-		// <review>
-		// is there a way to hardcode this? should we? maybe not, maybe that's silly, but still. let's discuss this
-		// </review>
 		Package:         s.collector.packageName,
 		Test:            s.collector.testName,
 		Step:            s.number,
+		PostTestDestroy: s.postTestDestroy,
 		ServedProviders: sortedSet(s.served),
 		Warnings:        sortedSet(s.warnings),
 	}

@@ -48,7 +48,7 @@ func TestSemanticCoverageWritesAFindingPerStep(t *testing.T) {
 		// Restores a valid configuration for the post-test destroy.
 		TestStep{Config: coverageTestConfig},
 		// Refresh uses the configuration in the working directory, so the
-		// value it echoes into state counts as configured.
+		// configured name counts as configured, not as computed.
 		TestStep{RefreshState: true},
 	))
 
@@ -59,29 +59,46 @@ func TestSemanticCoverageWritesAFindingPerStep(t *testing.T) {
 		Provider:   provider,
 		Configured: []string{"name"},
 		Populated:  []string{"name"},
+		// Every passing config step ends with a plan that refreshes.
+		Completed: []semanticcoverage.Operation{semanticcoverage.OperationRead},
 	}
 	created := item
 	created.Planned = []semanticcoverage.Operation{semanticcoverage.OperationCreate}
-	created.Completed = []semanticcoverage.Operation{semanticcoverage.OperationCreate}
-	refreshed := item
-	refreshed.Completed = []semanticcoverage.Operation{semanticcoverage.OperationRefresh}
+	created.Completed = []semanticcoverage.Operation{semanticcoverage.OperationCreate, semanticcoverage.OperationRead}
+	configured := semanticcoverage.Feature{
+		Kind:      semanticcoverage.KindProvider,
+		Name:      provider,
+		Completed: []semanticcoverage.Operation{semanticcoverage.OperationConfigure},
+	}
 	served := []string{provider}
 	want := []semanticcoverage.Finding{
 		{
 			Step:            1,
 			ServedProviders: served,
-			Features:        []semanticcoverage.Feature{{Kind: semanticcoverage.KindProvider, Name: provider}, created},
+			Features:        []semanticcoverage.Feature{configured, created},
 		},
 		{
 			// A no-op apply has no operation.
 			Step:            4,
 			ServedProviders: served,
-			Features:        []semanticcoverage.Feature{{Kind: semanticcoverage.KindProvider, Name: provider}, item},
+			Features:        []semanticcoverage.Feature{configured, item},
 		},
 		{
 			Step:            5,
 			ServedProviders: served,
-			Features:        []semanticcoverage.Feature{{Kind: semanticcoverage.KindProvider, Name: provider}, refreshed},
+			Features:        []semanticcoverage.Feature{configured, item},
+		},
+		{
+			// The destroy after the last step deletes what is in state.
+			Step:            6,
+			PostTestDestroy: true,
+			ServedProviders: served,
+			Features: []semanticcoverage.Feature{{
+				Kind:      semanticcoverage.KindResource,
+				Name:      "test_resource",
+				Provider:  provider,
+				Completed: []semanticcoverage.Operation{semanticcoverage.OperationDelete},
+			}},
 		},
 	}
 	got := writtenCoverage(t, dir)
@@ -103,6 +120,8 @@ func TestSemanticCoverageOfStepsThatStopTheTest(t *testing.T) {
 			},
 			wantFindings: 0,
 		},
+		// The failed CheckDestroy also keeps the post-test destroy from
+		// writing a finding.
 		"a failing cleanup doesn't drop the last step": {
 			step:         TestStep{Config: coverageTestConfig},
 			checkDestroy: func(*terraform.State) error { return errors.New("destroy check failed") },

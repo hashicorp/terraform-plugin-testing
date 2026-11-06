@@ -359,6 +359,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	}
 
 	// do another plan
+	refreshed := true
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
 		var opts []tfexec.PlanOption
 		if step.Destroy {
@@ -366,6 +367,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 			if step.PreventPostDestroyRefresh {
 				opts = append(opts, tfexec.Refresh(false))
+				refreshed = false
 			}
 		}
 
@@ -375,6 +377,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			}
 			if c.AdditionalCLIOptions.Plan.NoRefresh {
 				opts = append(opts, tfexec.Refresh(false))
+				refreshed = false
 			}
 		}
 
@@ -401,6 +404,10 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("Error reading post-apply refresh plan: %w", err)
 	}
 	coverage.ObservePlan(plan)
+	if refreshed {
+		// The prior state of a plan is the state after its refresh.
+		coverage.RefreshCompleted(plan.PriorState)
+	}
 
 	// Run post-apply, post-refresh plan checks
 	if len(step.ConfigPlanChecks.PostApplyPostRefresh) > 0 {
