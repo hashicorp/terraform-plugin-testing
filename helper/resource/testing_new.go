@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -52,10 +53,10 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	t.Helper()
 
 	wd := helper.RequireNewWorkingDir(ctx, t, c.WorkingDir)
-	collector := newCoverageCollector(t)
+	collector := newCoverageCollector(ctx, t)
 	// A step that ends in t.Fatal, a panic, or a skip never returns to the
 	// step loop, so it is never ended and writes no finding.
-	var coverage stepCoverage
+	var coverage *semanticcoverage.Step
 
 	ctx = logging.TestTerraformPathContext(ctx, wd.GetHelper().TerraformExecPath())
 	ctx = logging.TestWorkingDirectoryContext(ctx, wd.GetHelper().WorkingDirectory())
@@ -106,7 +107,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				)
 				t.Fatalf("Error running post-test destroy, there may be dangling resources: %s", err.Error())
 			}
-			recordPostTestDestroy(t, collector, len(c.Steps)+1, providers.servedAddresses(), jsonStatePreDestroy)
+			recordPostTestDestroy(ctx, t, collector, len(c.Steps)+1, providers.servedAddresses(), jsonStatePreDestroy)
 		}
 
 		wd.Close()
@@ -152,8 +153,8 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	for stepIndex, step := range c.Steps {
 		// The previous step returned to the loop. It ends before
 		// copyWorkingDir, which can call t.Fatalf. In the first iteration,
-		// coverage is the zero value, whose nil Step makes end a no-op.
-		coverage.end(t)
+		// coverage is nil, which makes End a no-op.
+		coverage.End(ctx, t)
 
 		if stepNumber > 0 {
 			copyWorkingDir(ctx, t, stepNumber, wd)
@@ -162,9 +163,9 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		stepNumber = stepIndex + 1 // 1-based indexing for humans
 		// A step that expects an error exercises the provider's error
 		// handling, not the feature, so it records nothing.
-		coverage = stepCoverage{}
+		coverage = nil
 		if step.ExpectError == nil {
-			coverage.Step = collector.BeginStep(stepNumber)
+			coverage = collector.BeginStep(stepNumber)
 		}
 
 		configRequest := teststep.PrepareConfigurationRequest{
@@ -204,7 +205,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			logging.HelperResourceDebug(ctx, "Called TestStep SkipFunc")
 
 			if skip {
-				coverage = stepCoverage{}
+				coverage = nil
 				t.Logf("Skipping step %d/%d due to SkipFunc", stepNumber, len(c.Steps))
 				logging.HelperResourceWarn(ctx, "Skipping TestStep due to SkipFunc")
 				continue
@@ -571,7 +572,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 	// End the last step before the deferred cleanup, which can still fail
 	// the test.
-	coverage.end(t)
+	coverage.End(ctx, t)
 
 	if stepNumber > 0 {
 		copyWorkingDir(ctx, t, stepNumber, wd)

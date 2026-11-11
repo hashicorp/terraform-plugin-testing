@@ -5,29 +5,33 @@ package semanticcoverage
 
 import (
 	"cmp"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"runtime/debug"
 	"slices"
 	"strings"
+
+	"github.com/mitchellh/go-testing-interface"
+
+	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 )
 
 // Collector belongs to one TestCase and starts a Step for each test step.
 //
-// A nil *Collector means collection is disabled: New returns nil when
-// EnvDirectory is unset, and BeginStep then returns a nil *Step.
+// A nil *Collector means collection is disabled: New returns nil for an
+// empty directory, and BeginStep then returns a nil *Step.
 type Collector struct {
 	directory   string
 	packageName string
 	testName    string
 }
 
-// New returns a Collector for the test with the given name, or nil if
-// EnvDirectory is unset. It creates the findings directory, so that a bad
+// New returns a Collector that writes the findings of the test with the given
+// name to dir, or nil if dir is empty. It creates dir, so that a bad
 // directory fails the test before its first step.
-func New(testName string) (*Collector, error) {
-	dir := os.Getenv(EnvDirectory)
+func New(dir, testName string) (*Collector, error) {
 	if dir == "" {
 		return nil, nil
 	}
@@ -72,15 +76,14 @@ func (c *Collector) BeginPostTestDestroy(number int) *Step {
 	return s
 }
 
-// Step collects the evidence of one test step. Finish writes it as a Finding.
-// The caller finishes only steps that passed; a step that is never finished
-// writes nothing.
+// Step collects the evidence of one test step. End writes it as a Finding
+// unless the test has failed; a step that is never ended writes nothing.
 //
 // A nil *Step is valid and means collection is disabled: every method is a
-// no-op on a nil receiver (Finish returns nil, Enabled returns false). Callers
-// can therefore invoke methods unconditionally and only need Enabled to skip
-// work done solely to feed the step, such as extra Terraform commands. New
-// methods must preserve this by returning early when s == nil.
+// no-op on a nil receiver (Enabled returns false). Callers can therefore
+// invoke methods unconditionally and only need Enabled to skip work done
+// solely to feed the step, such as extra Terraform commands. New methods must
+// preserve this by returning early when s == nil.
 //
 // A Step is not safe for concurrent use. Only the goroutine that runs the
 // test steps uses it.
@@ -88,6 +91,7 @@ type Step struct {
 	collector       *Collector
 	number          int
 	postTestDestroy bool
+	ended           bool
 	served          []string
 	features        map[featureKey]*Feature
 	warnings        []Warning
@@ -117,11 +121,34 @@ func (s *Step) ObserveServedProviders(addresses []string) {
 	}
 }
 
-// Finish writes the step's Finding. Call it only for a step that passed.
-func (s *Step) Finish() error {
-	if s == nil {
-		return nil
+// End stops recording the step and writes its Finding, unless the test t has
+// failed: a test that reports an error without stopping fails all of its
+// remaining steps too. Only the first call has an effect. Errors are reported
+// to t and logged.
+func (s *Step) End(ctx context.Context, t testing.T) {
+	t.Helper()
+
+	if s == nil || s.ended {
+		return
 	}
+	s.ended = true
+	if t.Failed() {
+		return
+	}
+	finding, err := s.finish()
+	if err != nil {
+		logging.HelperResourceError(ctx, "Error writing semantic coverage finding", map[string]interface{}{logging.KeyError: err})
+		t.Errorf("Error writing semantic coverage finding: %s", err)
+		return
+	}
+	for _, w := range finding.Warnings {
+		logging.HelperResourceWarn(ctx, "Semantic coverage evidence incomplete", map[string]interface{}{logging.KeySemanticCoverageWarning: string(w)})
+	}
+	logging.HelperResourceDebug(ctx, "Wrote semantic coverage finding")
+}
+
+// finish writes the step's Finding and returns it.
+func (s *Step) finish() (Finding, error) {
 	finding := Finding{
 		Version:         FindingVersion,
 		Package:         s.collector.packageName,
@@ -146,13 +173,13 @@ func (s *Step) Finish() error {
 	// at once, so CreateTemp makes the name unique.
 	file, err := os.CreateTemp(s.collector.directory, fmt.Sprintf("%d-*.json", s.number))
 	if err != nil {
-		return err
+		return finding, err
 	}
 	if err := json.NewEncoder(file).Encode(finding); err != nil {
 		_ = file.Close()
-		return err
+		return finding, err
 	}
-	return file.Close()
+	return finding, file.Close()
 }
 
 // featureKey identifies a feature within a step. Configuration names no
@@ -188,9 +215,9 @@ func (s *Step) warn(w Warning) {
 	s.warnings = append(s.warnings, w)
 }
 
-// add appends value to the list, unless it is empty. Finish removes
-// duplicates.
-func add[T ~string](list *[]T, value T) {
+// appendNonEmpty appends value to the list, unless it is empty. finish
+// removes duplicates.
+func appendNonEmpty[T ~string](list *[]T, value T) {
 	if value != "" {
 		*list = append(*list, value)
 	}

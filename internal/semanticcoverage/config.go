@@ -129,14 +129,14 @@ func schemaBodies(b *hclsyntax.Block, block configBlock) []*hclsyntax.Body {
 // recordConfigured records the top-level attributes and blocks set in body.
 func recordConfigured(f *Feature, body *hclsyntax.Body) {
 	for name := range body.Attributes {
-		add(&f.Configured, name)
+		appendNonEmpty(&f.Configured, name)
 	}
 	for _, b := range body.Blocks {
 		name := b.Type
 		if name == "dynamic" && len(b.Labels) == 1 {
 			name = b.Labels[0]
 		}
-		add(&f.Configured, name)
+		appendNonEmpty(&f.Configured, name)
 	}
 }
 

@@ -14,9 +14,10 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 )
 
-func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, coverage stepCoverage, step TestStep, providers *providerFactories) error {
+func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, coverage *semanticcoverage.Step, step TestStep, providers *providerFactories) error {
 	t.Helper()
 
 	// A refresh step sets no configuration of its own, so Terraform uses the

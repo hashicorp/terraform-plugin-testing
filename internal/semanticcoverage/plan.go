@@ -33,26 +33,26 @@ func (s *Step) ObservePlan(plan *tfjson.Plan) {
 	if plan.Config != nil {
 		for _, provider := range plan.Config.ProviderConfigs {
 			if provider != nil && provider.FullName != "" {
-				add(&s.feature(KindProvider, provider.FullName, "").Completed, OperationConfigure)
+				appendNonEmpty(&s.feature(KindProvider, provider.FullName, "").Completed, OperationConfigure)
 			}
 		}
 	}
 	s.plannedOperations(plan, func(f *Feature, operation Operation) {
-		add(&f.Planned, operation)
+		appendNonEmpty(&f.Planned, operation)
 		switch operation {
 		case OperationImportID, OperationImportIdentity:
-			add(&f.Completed, operation)
+			appendNonEmpty(&f.Completed, operation)
 		case OperationInvoke:
-			add(&f.Completed, OperationPlan)
+			appendNonEmpty(&f.Completed, OperationPlan)
 		}
 	})
 	for _, f := range s.features {
 		switch f.Kind {
 		case KindEphemeralResource:
-			add(&f.Completed, OperationOpen)
-			add(&f.Completed, OperationClose)
+			appendNonEmpty(&f.Completed, OperationOpen)
+			appendNonEmpty(&f.Completed, OperationClose)
 		case KindFunction:
-			add(&f.Completed, OperationCall)
+			appendNonEmpty(&f.Completed, OperationCall)
 		}
 	}
 }
@@ -65,7 +65,7 @@ func (s *Step) ApplyCompleted(plan *tfjson.Plan) {
 		return
 	}
 	s.plannedOperations(plan, func(f *Feature, operation Operation) {
-		add(&f.Completed, operation)
+		appendNonEmpty(&f.Completed, operation)
 	})
 }
 

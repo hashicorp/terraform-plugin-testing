@@ -25,11 +25,9 @@ import (
 	"slices"
 )
 
-const EnvDirectory = "TF_ACC_SEMANTIC_COVERAGE_DIR"
-
 // FindingVersion is the schema version of the JSON findings written per step.
 //
-// Findings live in a user-owned directory (EnvDirectory) that outlives the
+// Findings live in a user-owned directory that outlives the
 // test run. They are written by the test binary and read by
 // cmd/semantic-coverage-report, and the two can be built from different
 // versions of this module. Bump FindingVersion whenever the meaning or shape

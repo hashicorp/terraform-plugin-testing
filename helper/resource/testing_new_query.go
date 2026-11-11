@@ -13,10 +13,11 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource/query"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 )
 
-func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, coverage stepCoverage, step TestStep, providers *providerFactories) error {
+func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, coverage *semanticcoverage.Step, step TestStep, providers *providerFactories) error {
 	t.Helper()
 
 	queryConfigRequest := teststep.ConfigurationRequest{

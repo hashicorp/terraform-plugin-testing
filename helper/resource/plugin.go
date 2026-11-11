@@ -527,17 +527,17 @@ func runProviderCommand(ctx context.Context, t testing.T, wd *plugintest.Working
 // that only Terraform 0.12 uses.
 func (f *providerFactories) servedAddresses() []string {
 	var addresses []string
-	add := func(name string) {
+	appendServed := func(name string) {
 		addresses = append(addresses, getProviderAddr(strings.TrimPrefix(name, "terraform-provider-")))
 	}
 	for name := range f.legacy {
-		add(name)
+		appendServed(name)
 	}
 	for name := range f.protov5 {
-		add(name)
+		appendServed(name)
 	}
 	for name := range f.protov6 {
-		add(name)
+		appendServed(name)
 	}
 	return addresses
 }

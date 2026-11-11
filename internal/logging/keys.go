@@ -28,6 +28,12 @@ const (
 	// The type of resource being operated on, such as "random_pet"
 	KeyResourceType = "tf_resource_type"
 
+	// The directory that semantic coverage findings are written to.
+	KeySemanticCoverageDirectory = "semantic_coverage_directory"
+
+	// A semantic coverage warning code, such as "plan_unavailable".
+	KeySemanticCoverageWarning = "semantic_coverage_warning"
+
 	// The name of the test being executed.
 	KeyTestName = "test_name"
 

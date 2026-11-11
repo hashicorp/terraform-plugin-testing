@@ -9,7 +9,7 @@ import (
 
 // Operations that don't come from a plan are recorded by the test step mode
 // that performs them, right after Terraform reports success. A finding is
-// written only if the step as a whole passed (see Step.Finish).
+// written only if the step as a whole passed (see Step.End).
 
 // ImportCompleted records that the import command imported the resource at
 // address. state is the state after the import, which gives the resource's
@@ -21,7 +21,7 @@ func (s *Step) ImportCompleted(state *tfjson.State, address string) {
 	}
 	stateResources(state, func(r *tfjson.StateResource) {
 		if r.Address == address && r.Mode == tfjson.ManagedResourceMode {
-			add(&s.feature(KindResource, r.Type, r.ProviderName).Completed, OperationImportID)
+			appendNonEmpty(&s.feature(KindResource, r.Type, r.ProviderName).Completed, OperationImportID)
 		}
 	})
 }
@@ -35,7 +35,7 @@ func (s *Step) RefreshCompleted(state *tfjson.State) {
 	}
 	stateResources(state, func(r *tfjson.StateResource) {
 		if kind, ok := modeKinds[r.Mode]; ok {
-			add(&s.feature(kind, r.Type, r.ProviderName).Completed, OperationRead)
+			appendNonEmpty(&s.feature(kind, r.Type, r.ProviderName).Completed, OperationRead)
 		}
 	})
 }
@@ -48,7 +48,7 @@ func (s *Step) DestroyCompleted(state *tfjson.State) {
 	}
 	stateResources(state, func(r *tfjson.StateResource) {
 		if r.Mode == tfjson.ManagedResourceMode {
-			add(&s.feature(KindResource, r.Type, r.ProviderName).Completed, OperationDelete)
+			appendNonEmpty(&s.feature(KindResource, r.Type, r.ProviderName).Completed, OperationDelete)
 		}
 	})
 }
@@ -83,7 +83,7 @@ func (s *Step) completedForKind(kind Kind, operations ...Operation) {
 	for _, f := range s.features {
 		if f.Kind == kind {
 			for _, operation := range operations {
-				add(&f.Completed, operation)
+				appendNonEmpty(&f.Completed, operation)
 			}
 		}
 	}

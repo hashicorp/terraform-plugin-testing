@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-exec/tfexec"
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
@@ -23,7 +24,7 @@ import (
 //   - Can be successfully initialized (validation and configuring)
 //   - Can read and write state
 //   - Supports workspaces (creating and deleting)
-func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, coverage stepCoverage, step TestStep, providers *providerFactories, cfg teststep.Config) error {
+func testStepNewStateStore(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, coverage *semanticcoverage.Step, step TestStep, providers *providerFactories, cfg teststep.Config) error {
 	t.Helper()
 
 	err := wd.SetConfig(ctx, cfg, step.ConfigVariables)

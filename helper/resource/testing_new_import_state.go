@@ -22,12 +22,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, testCaseWorkingDir *plugintest.WorkingDir, coverage stepCoverage, step TestStep, priorStepCfg teststep.Config, providers *providerFactories, stepNumber int) error {
+func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, testCaseWorkingDir *plugintest.WorkingDir, coverage *semanticcoverage.Step, step TestStep, priorStepCfg teststep.Config, providers *providerFactories, stepNumber int) error {
 	t.Helper()
 
 	// step.ImportStateKind implicitly defaults to the zero-value (ImportCommandWithID) for backward compatibility
@@ -198,7 +199,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 }
 
-func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, coverage stepCoverage, providers *providerFactories, resourceName string, step TestStep, priorIdentityValues map[string]any) error {
+func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, coverage *semanticcoverage.Step, providers *providerFactories, resourceName string, step TestStep, priorIdentityValues map[string]any) error {
 	kind := step.ImportStateKind
 
 	if step.GenerateConfig {
@@ -269,7 +270,7 @@ func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.Wo
 	return nil
 }
 
-func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, coverage stepCoverage, providers *providerFactories, resourceName string, importId string, step TestStep, state *terraform.State) error {
+func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, coverage *semanticcoverage.Step, providers *providerFactories, resourceName string, importId string, step TestStep, state *terraform.State) error {
 	err := runProviderCommand(ctx, t, workingDir, providers, func() error {
 		return workingDir.Import(ctx, resourceName, importId)
 	})

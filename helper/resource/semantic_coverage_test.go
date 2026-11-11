@@ -32,7 +32,7 @@ const coverageTestConfig = `resource "test_resource" "secret_name" {
 
 func TestSemanticCoverageWritesAFindingPerStep(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv(semanticcoverage.EnvDirectory, dir)
+	t.Setenv(EnvTfAccSemanticCoverageDir, dir)
 
 	UnitTest(t, coverageTestCase(
 		TestStep{Config: coverageTestConfig},
@@ -131,7 +131,7 @@ func TestSemanticCoverageOfStepsThatStopTheTest(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			dir := t.TempDir()
-			t.Setenv(semanticcoverage.EnvDirectory, dir)
+			t.Setenv(EnvTfAccSemanticCoverageDir, dir)
 
 			c := coverageTestCase(test.step)
 			c.CheckDestroy = test.checkDestroy

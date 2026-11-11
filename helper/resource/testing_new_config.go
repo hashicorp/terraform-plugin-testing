@@ -20,6 +20,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 )
 
 // expectNonEmptyPlanOutputChangesMinTFVersion is used to keep compatibility for
@@ -27,7 +28,7 @@ import (
 // changes. Those older versions will always show outputs being created.
 var expectNonEmptyPlanOutputChangesMinTFVersion = tfversion.Version0_14_0
 
-func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, coverage stepCoverage, step TestStep, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
+func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, coverage *semanticcoverage.Step, step TestStep, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
 	t.Helper()
 
 	// When `refreshAfterApply` is true, a `Config`-mode test step will invoke

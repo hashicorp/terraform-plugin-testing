@@ -36,7 +36,7 @@ func (s *Step) ObserveState(state *tfjson.State) {
 		// user data, so they are not read.
 		for name, value := range r.AttributeValues {
 			if value != nil {
-				add(&f.Populated, name)
+				appendNonEmpty(&f.Populated, name)
 			}
 		}
 	})

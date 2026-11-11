@@ -4,6 +4,7 @@
 package semanticcoverage
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -12,18 +13,17 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	tfjson "github.com/hashicorp/terraform-json"
+	testinginterface "github.com/mitchellh/go-testing-interface"
 )
 
 func TestFindingIdentifiesTheStep(t *testing.T) {
-	t.Setenv(EnvDirectory, t.TempDir())
+	t.Parallel()
 
-	c, err := New("TestExample")
+	c, err := New(t.TempDir(), "TestExample")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := c.BeginStep(2).Finish(); err != nil {
-		t.Fatal(err)
-	}
+	c.BeginStep(2).End(context.Background(), t)
 	want := Finding{
 		Version: FindingVersion,
 		// The full import path keeps same-named tests in packages with the
@@ -46,9 +46,7 @@ func TestFindingRecordsTheServedProviders(t *testing.T) {
 	// TF_ACC_PROVIDER_NAMESPACE can be mixed case, but Terraform reports
 	// lower case source addresses.
 	step.ObserveServedProviders([]string{"registry.terraform.io/hashicorp/echo", "registry.terraform.io/Example-Org/example"})
-	if err := step.Finish(); err != nil {
-		t.Fatal(err)
-	}
+	step.End(context.Background(), t)
 	want := []string{"registry.terraform.io/example-org/example", "registry.terraform.io/hashicorp/echo"}
 	if diff := cmp.Diff(want, writtenFindings(t, c)[0].ServedProviders); diff != "" {
 		t.Errorf("served providers mismatch (-want +got):\n%s", diff)
@@ -61,9 +59,7 @@ func TestOnlyFinishedStepsWriteFindings(t *testing.T) {
 	c := testCollector(t)
 	skipped := c.BeginStep(1)
 	skipped.ObserveState(state(resource("example_item", map[string]any{"id": "x"})))
-	if err := c.BeginStep(2).Finish(); err != nil {
-		t.Fatal(err)
-	}
+	c.BeginStep(2).End(context.Background(), t)
 	findings := writtenFindings(t, c)
 	if len(findings) != 1 || findings[0].Step != 2 || len(findings[0].Features) != 0 {
 		t.Fatalf("findings = %+v, want only an empty step 2", findings)
@@ -87,9 +83,7 @@ resource "example_item" "secret_name" {
 	r := resource("example_item", map[string]any{"token": "secret-value", "map": map[string]any{"secret-map-key": "secret-value"}})
 	r.Address = `example_item.secret_name["secret-instance-key"]`
 	s.ObserveState(state(r))
-	if err := s.Finish(); err != nil {
-		t.Fatal(err)
-	}
+	s.End(context.Background(), t)
 	data := writtenFiles(t, c)[0]
 	for _, secret := range []string{"secret-configuration", "secret_name", "secret-instance-key", "secret-planned-value", "secret-map-key", "secret-value"} {
 		if strings.Contains(string(data), secret) {
@@ -116,14 +110,10 @@ func TestDisabledCollectionDoesNothing(t *testing.T) {
 	s.QueryCompleted()
 	s.StateStoreCompleted(true)
 	s.StateStoreLockVerified()
-	if err := s.Finish(); err != nil {
-		t.Fatal(err)
-	}
+	s.End(context.Background(), t)
 	d := c.BeginPostTestDestroy(2)
 	d.DestroyCompleted(nil)
-	if err := d.Finish(); err != nil {
-		t.Fatal(err)
-	}
+	d.End(context.Background(), t)
 }
 
 func TestPostTestDestroyFinding(t *testing.T) {
@@ -134,9 +124,7 @@ func TestPostTestDestroyFinding(t *testing.T) {
 	data := resource("example_lookup", nil)
 	data.Mode = tfjson.DataResourceMode
 	s.DestroyCompleted(state(resource("example_item", map[string]any{"id": "x"}), data))
-	if err := s.Finish(); err != nil {
-		t.Fatal(err)
-	}
+	s.End(context.Background(), t)
 	want := []Finding{{
 		Version:         FindingVersion,
 		Test:            "TestExample",
@@ -151,17 +139,36 @@ func TestPostTestDestroyFinding(t *testing.T) {
 	}
 }
 
+func TestStepEndWritesOnceForPassingTests(t *testing.T) {
+	t.Parallel()
+
+	c := testCollector(t)
+	s := c.BeginStep(1)
+	s.End(context.Background(), t)
+	s.End(context.Background(), t)
+	if got := len(writtenFiles(t, c)); got != 1 {
+		t.Errorf("got %d findings, want 1", got)
+	}
+
+	failed := &testinginterface.RuntimeT{}
+	failed.Fail()
+	c.BeginStep(2).End(context.Background(), failed)
+	if got := len(writtenFiles(t, c)); got != 1 {
+		t.Errorf("failed test wrote a finding: got %d findings, want 1", got)
+	}
+}
+
 func TestNewFailsEarlyForUnusableDirectory(t *testing.T) {
+	t.Parallel()
+
 	file := filepath.Join(t.TempDir(), "file")
 	if err := os.WriteFile(file, nil, 0600); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv(EnvDirectory, filepath.Join(file, "findings"))
-	if c, err := New("TestExample"); err == nil || c != nil {
+	if c, err := New(filepath.Join(file, "findings"), "TestExample"); err == nil || c != nil {
 		t.Fatalf("collector=%v err=%v", c, err)
 	}
-	t.Setenv(EnvDirectory, "")
-	if c, err := New("TestExample"); err != nil || c != nil {
+	if c, err := New("", "TestExample"); err != nil || c != nil {
 		t.Fatalf("disabled: collector=%v err=%v", c, err)
 	}
 }
@@ -181,9 +188,7 @@ func stepFinding(t *testing.T, record func(s *Step)) Finding {
 	c := testCollector(t)
 	s := c.BeginStep(1)
 	record(s)
-	if err := s.Finish(); err != nil {
-		t.Fatal(err)
-	}
+	s.End(context.Background(), t)
 	findings := writtenFindings(t, c)
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
