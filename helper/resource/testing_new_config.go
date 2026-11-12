@@ -20,6 +20,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 )
 
 // expectNonEmptyPlanOutputChangesMinTFVersion is used to keep compatibility for
@@ -27,7 +28,7 @@ import (
 // changes. Those older versions will always show outputs being created.
 var expectNonEmptyPlanOutputChangesMinTFVersion = tfversion.Version0_14_0
 
-func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
+func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugintest.WorkingDir, coverage *semanticcoverage.Step, step TestStep, providers *providerFactories, stepIndex int, helper *plugintest.Helper) error {
 	t.Helper()
 
 	// When `refreshAfterApply` is true, a `Config`-mode test step will invoke
@@ -102,6 +103,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	if err != nil {
 		return fmt.Errorf("Error setting config: %w", err)
 	}
+	coverage.ObserveConfigDir(wd.BaseDir())
 
 	// If this step is a PlanOnly step, skip over this first Plan and
 	// subsequent Apply, and use the follow-up Plan that checks for
@@ -203,7 +205,26 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 				opts = append(opts, tfexec.AllowDeferral(true))
 			}
 
-			return wd.Apply(ctx, opts...)
+			// Coverage records the planned operations and, once the apply
+			// succeeded, the completed ones and the resulting state. The
+			// extra reads run only while collecting. A nil plan or state
+			// records that it could not be read; terraform-exec returns nil
+			// with every error. Without the state read, a step with no Check
+			// would record no populated attributes at all.
+			var plan *tfjson.Plan
+			if coverage.Enabled() {
+				plan, _ = wd.SavedPlan(ctx)
+				coverage.ObservePlan(plan)
+			}
+			if err := wd.Apply(ctx, opts...); err != nil {
+				return err
+			}
+			coverage.ApplyCompleted(plan)
+			if coverage.Enabled() {
+				state, _ := wd.State(ctx)
+				coverage.ObserveState(state)
+			}
+			return nil
 		})
 		if err != nil {
 			if step.Destroy {
@@ -306,6 +327,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 		return fmt.Errorf("Error reading saved post-apply non-refresh plan: %w", err)
 	}
+	coverage.ObservePlan(plan)
 
 	// Run post-apply, pre-refresh plan checks
 	if len(step.ConfigPlanChecks.PostApplyPreRefresh) > 0 {
@@ -338,6 +360,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 	}
 
 	// do another plan
+	refreshed := true
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
 		var opts []tfexec.PlanOption
 		if step.Destroy {
@@ -345,6 +368,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 
 			if step.PreventPostDestroyRefresh {
 				opts = append(opts, tfexec.Refresh(false))
+				refreshed = false
 			}
 		}
 
@@ -354,6 +378,7 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 			}
 			if c.AdditionalCLIOptions.Plan.NoRefresh {
 				opts = append(opts, tfexec.Refresh(false))
+				refreshed = false
 			}
 		}
 
@@ -378,6 +403,11 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		}
 
 		return fmt.Errorf("Error reading post-apply refresh plan: %w", err)
+	}
+	coverage.ObservePlan(plan)
+	if refreshed {
+		// The prior state of a plan is the state after its refresh.
+		coverage.RefreshCompleted(plan.PriorState)
 	}
 
 	// Run post-apply, post-refresh plan checks

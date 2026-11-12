@@ -22,12 +22,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
-func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, testCaseWorkingDir *plugintest.WorkingDir, step TestStep, priorStepCfg teststep.Config, providers *providerFactories, stepNumber int) error {
+func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest.Helper, testCaseWorkingDir *plugintest.WorkingDir, coverage *semanticcoverage.Step, step TestStep, priorStepCfg teststep.Config, providers *providerFactories, stepNumber int) error {
 	t.Helper()
 
 	// step.ImportStateKind implicitly defaults to the zero-value (ImportCommandWithID) for backward compatibility
@@ -162,6 +163,7 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	if err != nil {
 		t.Fatalf("Error setting test config: %s", err)
 	}
+	coverage.ObserveConfigDir(workingDir.BaseDir())
 
 	if kind.plannable() {
 		if stepNumber > 1 {
@@ -191,13 +193,13 @@ func testStepNewImportState(ctx context.Context, t testing.T, helper *plugintest
 	}
 
 	if kind.plannable() {
-		return testImportBlock(ctx, t, workingDir, providers, resourceName, step, priorIdentityValues)
+		return testImportBlock(ctx, t, workingDir, coverage, providers, resourceName, step, priorIdentityValues)
 	} else {
-		return testImportCommand(ctx, t, workingDir, providers, resourceName, importId, step, state)
+		return testImportCommand(ctx, t, workingDir, coverage, providers, resourceName, importId, step, state)
 	}
 }
 
-func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, step TestStep, priorIdentityValues map[string]any) error {
+func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, coverage *semanticcoverage.Step, providers *providerFactories, resourceName string, step TestStep, priorIdentityValues map[string]any) error {
 	kind := step.ImportStateKind
 
 	if step.GenerateConfig {
@@ -220,6 +222,7 @@ func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.Wo
 	if err != nil {
 		return fmt.Errorf("reading generated plan with import config: %s", err)
 	}
+	coverage.ObservePlan(plan)
 
 	logging.HelperResourceDebug(ctx, fmt.Sprintf("ImportBlockWithId: %d resource changes", len(plan.ResourceChanges)))
 
@@ -267,7 +270,7 @@ func testImportBlock(ctx context.Context, t testing.T, workingDir *plugintest.Wo
 	return nil
 }
 
-func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, providers *providerFactories, resourceName string, importId string, step TestStep, state *terraform.State) error {
+func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.WorkingDir, coverage *semanticcoverage.Step, providers *providerFactories, resourceName string, importId string, step TestStep, state *terraform.State) error {
 	err := runProviderCommand(ctx, t, workingDir, providers, func() error {
 		return workingDir.Import(ctx, resourceName, importId)
 	})
@@ -275,17 +278,18 @@ func testImportCommand(ctx context.Context, t testing.T, workingDir *plugintest.
 		return err
 	}
 
+	var jsonState *tfjson.State
 	var importState *terraform.State
 	err = runProviderCommand(ctx, t, workingDir, providers, func() error {
-		_, importState, err = getState(ctx, t, workingDir)
-		if err != nil {
-			return err
-		}
-		return nil
+		var err error
+		jsonState, importState, err = getState(ctx, t, workingDir)
+		return err
 	})
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
 	}
+	coverage.ObserveState(jsonState)
+	coverage.ImportCompleted(jsonState, resourceName)
 
 	logging.HelperResourceDebug(ctx, fmt.Sprintf("State after import: %d resources in the root module", len(importState.RootModule().Resources)))
 

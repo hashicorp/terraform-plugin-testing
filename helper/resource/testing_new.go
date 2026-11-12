@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -52,6 +53,10 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	t.Helper()
 
 	wd := helper.RequireNewWorkingDir(ctx, t, c.WorkingDir)
+	collector := newCoverageCollector(ctx, t)
+	// A step that ends in t.Fatal, a panic, or a skip never returns to the
+	// step loop, so it is never ended and writes no finding.
+	var coverage *semanticcoverage.Step
 
 	ctx = logging.TestTerraformPathContext(ctx, wd.GetHelper().TerraformExecPath())
 	ctx = logging.TestWorkingDirectoryContext(ctx, wd.GetHelper().WorkingDirectory())
@@ -74,10 +79,11 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			return
 		}
 
+		var jsonStatePreDestroy *tfjson.State
 		var statePreDestroy *terraform.State
 		var err error
 		err = runProviderCommand(ctx, t, wd, providers, func() error {
-			_, statePreDestroy, err = getState(ctx, t, wd)
+			jsonStatePreDestroy, statePreDestroy, err = getState(ctx, t, wd)
 			if err != nil {
 				return err
 			}
@@ -101,6 +107,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 				)
 				t.Fatalf("Error running post-test destroy, there may be dangling resources: %s", err.Error())
 			}
+			recordPostTestDestroy(ctx, t, collector, len(c.Steps)+1, providers.servedAddresses(), jsonStatePreDestroy)
 		}
 
 		wd.Close()
@@ -144,11 +151,22 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 	var stepNumber int
 
 	for stepIndex, step := range c.Steps {
+		// The previous step returned to the loop. It ends before
+		// copyWorkingDir, which can call t.Fatalf. In the first iteration,
+		// coverage is nil, which makes End a no-op.
+		coverage.End(ctx, t)
+
 		if stepNumber > 0 {
 			copyWorkingDir(ctx, t, stepNumber, wd)
 		}
 
 		stepNumber = stepIndex + 1 // 1-based indexing for humans
+		// A step that expects an error exercises the provider's error
+		// handling, not the feature, so it records nothing.
+		coverage = nil
+		if step.ExpectError == nil {
+			coverage = collector.BeginStep(stepNumber)
+		}
 
 		configRequest := teststep.PrepareConfigurationRequest{
 			Directory: step.ConfigDirectory,
@@ -187,6 +205,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			logging.HelperResourceDebug(ctx, "Called TestStep SkipFunc")
 
 			if skip {
+				coverage = nil
 				t.Logf("Skipping step %d/%d due to SkipFunc", stepNumber, len(c.Steps))
 				logging.HelperResourceWarn(ctx, "Skipping TestStep due to SkipFunc")
 				continue
@@ -289,10 +308,13 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 			}
 		}
 
+		// Every Terraform command of the step serves these providers.
+		coverage.ObserveServedProviders(providers.servedAddresses())
+
 		if step.ImportState {
 			logging.HelperResourceTrace(ctx, "TestStep is ImportState mode")
 
-			err := testStepNewImportState(ctx, t, helper, wd, step, appliedCfg, providers, stepNumber)
+			err := testStepNewImportState(ctx, t, helper, wd, coverage, step, appliedCfg, providers, stepNumber)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 				if err == nil {
@@ -331,7 +353,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.RefreshState {
 			logging.HelperResourceTrace(ctx, "TestStep is RefreshState mode")
 
-			err := testStepNewRefreshState(ctx, t, wd, step, providers)
+			err := testStepNewRefreshState(ctx, t, wd, coverage, step, providers)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 				if err == nil {
@@ -370,7 +392,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.Query {
 			logging.HelperResourceTrace(ctx, "TestStep is Query mode")
 
-			err := testStepNewQuery(ctx, t, wd, step, providers)
+			err := testStepNewQuery(ctx, t, wd, coverage, step, providers)
 
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
@@ -406,10 +428,16 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if step.StateStore {
 			logging.HelperResourceTrace(ctx, "TestStep is StateStore mode")
 
-			err := testStepNewStateStore(ctx, t, wd, step, providers, cfg)
+			err := testStepNewStateStore(ctx, t, wd, coverage, step, providers, cfg)
+			if err == nil {
+				coverage.StateStoreCompleted(!step.DefaultWorkspaceOnly)
+			}
 			if err == nil && step.VerifyStateStoreLock {
 				logging.HelperResourceTrace(ctx, "TestStep is running VerifyStateStoreLock logic")
 				err = testStepVerifyStateStoreLock(ctx, t, step, providers, cfg, helper)
+				if err == nil {
+					coverage.StateStoreLockVerified()
+				}
 			}
 
 			if err != nil {
@@ -452,7 +480,7 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 		if cfg != nil {
 			logging.HelperResourceTrace(ctx, "TestStep is Config mode")
 
-			err := testStepNewConfig(ctx, t, c, wd, step, providers, stepIndex, helper)
+			err := testStepNewConfig(ctx, t, c, wd, coverage, step, providers, stepIndex, helper)
 			if step.ExpectError != nil {
 				logging.HelperResourceDebug(ctx, "Checking TestStep ExpectError")
 
@@ -541,6 +569,10 @@ func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest
 
 		t.Fatalf("Step %d/%d, unsupported test mode", stepNumber, len(c.Steps))
 	}
+
+	// End the last step before the deferred cleanup, which can still fail
+	// the test.
+	coverage.End(ctx, t)
 
 	if stepNumber > 0 {
 		copyWorkingDir(ctx, t, stepNumber, wd)

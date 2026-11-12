@@ -1,0 +1,5 @@
+kind: FEATURES
+body: 'helper/resource: Added experimental semantic coverage collection, enabled by setting `TF_ACC_SEMANTIC_COVERAGE_DIR`, which writes one JSON finding per test step'
+time: 2026-10-23T12:42:32.894064+02:00
+custom:
+    Issue: "1"

@@ -6,16 +6,18 @@ package resource
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource/query"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 	"github.com/hashicorp/terraform-plugin-testing/internal/teststep"
 )
 
-func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {
+func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, coverage *semanticcoverage.Step, step TestStep, providers *providerFactories) error {
 	t.Helper()
 
 	queryConfigRequest := teststep.ConfigurationRequest{
@@ -25,6 +27,7 @@ func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDi
 	if err != nil {
 		return fmt.Errorf("Error setting query config: %w", err)
 	}
+	coverage.ObserveQueryConfig(filepath.Join(wd.BaseDir(), plugintest.QueryFileName))
 
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
 		return wd.Init(ctx)
@@ -42,6 +45,7 @@ func testStepNewQuery(ctx context.Context, t testing.T, wd *plugintest.WorkingDi
 	if err != nil {
 		return err
 	}
+	coverage.QueryCompleted()
 
 	return query.RunQueryChecks(ctx, t, queryOut, step.QueryResultChecks)
 }
