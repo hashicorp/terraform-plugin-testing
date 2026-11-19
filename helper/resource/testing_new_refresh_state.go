@@ -14,10 +14,20 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/plugintest"
+	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
 )
 
-func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, step TestStep, providers *providerFactories) error {
+func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.WorkingDir, coverage *semanticcoverage.Step, step TestStep, providers *providerFactories) error {
 	t.Helper()
+
+	// A refresh step sets no configuration of its own, so Terraform uses the
+	// configuration already in the working directory. A refresh doesn't copy
+	// configuration into state: it calls ReadResource with the prior state,
+	// and the provider returns what it reads. But for an attribute that the
+	// configuration sets, that is the value an earlier apply set, so a
+	// non-null value doesn't show that the provider computed it. Recording
+	// the configuration keeps such attributes from counting as computed.
+	coverage.ObserveConfigDir(wd.BaseDir())
 
 	var err error
 	// Explicitly ensure prior state exists before refresh.
@@ -39,17 +49,18 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 		return err
 	}
 
+	var jsonState *tfjson.State
 	var refreshState *terraform.State
 	err = runProviderCommand(ctx, t, wd, providers, func() error {
-		_, refreshState, err = getState(ctx, t, wd)
-		if err != nil {
-			return err
-		}
-		return nil
+		var err error
+		jsonState, refreshState, err = getState(ctx, t, wd)
+		return err
 	})
 	if err != nil {
 		t.Fatalf("Error getting state: %s", err)
 	}
+	coverage.ObserveState(jsonState)
+	coverage.RefreshCompleted(jsonState)
 
 	// Go through the refreshed state and verify
 	if step.Check != nil {
@@ -79,6 +90,7 @@ func testStepNewRefreshState(ctx context.Context, t testing.T, wd *plugintest.Wo
 	if err != nil {
 		return fmt.Errorf("Error retrieving post-refresh plan: %w", err)
 	}
+	coverage.ObservePlan(plan)
 
 	// Run post-refresh plan checks
 	if len(step.RefreshPlanChecks.PostRefresh) > 0 {

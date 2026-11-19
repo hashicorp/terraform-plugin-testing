@@ -1,0 +1,5 @@
+kind: FEATURES
+body: 'cmd/semantic-coverage-report: Added command that compares semantic coverage findings with a `terraform providers schema -json` document and reports schema coverage'
+time: 2026-10-23T12:42:34.362012+02:00
+custom:
+    Issue: "1"
