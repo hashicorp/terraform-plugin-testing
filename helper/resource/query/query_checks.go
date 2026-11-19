@@ -54,7 +54,7 @@ func RunQueryChecks(ctx context.Context, t testing.T, query []tfjson.LogMsg, que
 		resp := querycheck.CheckQueryResponse{}
 		queryCheck.CheckQuery(ctx, querycheck.CheckQueryRequest{
 			Query:          reqQueryData,
-			QuerySummary:   &summary,
+			QuerySummary:   &summary, //nolint:staticcheck // Populated for existing checks that still read the deprecated field.
 			QuerySummaries: summaries,
 		}, &resp)
 
