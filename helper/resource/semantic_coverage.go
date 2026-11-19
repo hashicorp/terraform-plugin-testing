@@ -18,21 +18,36 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"os"
 
+	"github.com/hashicorp/go-version"
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-testing/internal/logging"
 	"github.com/hashicorp/terraform-plugin-testing/internal/semanticcoverage"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
+// semanticCoverageMinTFVersion is the oldest Terraform version that semantic
+// coverage supports. Older versions leave providers without a provider block
+// out of the JSON plan's configuration, so the evidence of configuring them
+// would be missing.
+var semanticCoverageMinTFVersion = tfversion.Version1_2_0
+
 // newCoverageCollector returns the coverage collector for the test t, or nil
-// if collection is disabled.
-func newCoverageCollector(ctx context.Context, t testing.T) *semanticcoverage.Collector {
+// if collection is disabled. It fails the test if collection is enabled and
+// tfVersion is older than semanticCoverageMinTFVersion.
+func newCoverageCollector(ctx context.Context, t testing.T, tfVersion *version.Version) *semanticcoverage.Collector {
 	t.Helper()
 
 	dir := os.Getenv(EnvTfAccSemanticCoverageDir)
+	if dir != "" {
+		if err := checkSemanticCoverageTFVersion(tfVersion); err != nil {
+			t.Fatalf("Error enabling semantic coverage: %s", err)
+		}
+	}
 	c, err := semanticcoverage.New(dir, t.Name())
 	if err != nil {
 		t.Fatalf("Error creating semantic coverage collector: %s", err)
@@ -41,6 +56,16 @@ func newCoverageCollector(ctx context.Context, t testing.T) *semanticcoverage.Co
 		logging.HelperResourceDebug(ctx, "Semantic coverage collection enabled", map[string]interface{}{logging.KeySemanticCoverageDirectory: dir})
 	}
 	return c
+}
+
+// checkSemanticCoverageTFVersion returns an error if semantic coverage doesn't
+// support tfVersion.
+func checkSemanticCoverageTFVersion(tfVersion *version.Version) error {
+	if tfVersion == nil || tfVersion.LessThan(semanticCoverageMinTFVersion) {
+		return fmt.Errorf("%s requires Terraform CLI version %s or later, got %s",
+			EnvTfAccSemanticCoverageDir, semanticCoverageMinTFVersion, tfVersion)
+	}
+	return nil
 }
 
 // recordPostTestDestroy writes the finding of the destroy that runs after the

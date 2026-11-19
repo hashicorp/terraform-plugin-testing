@@ -47,7 +47,8 @@ const (
 	// coverage collection. Defaults to disabled. When set, the directory is
 	// created if needed and one JSON finding is written to it per test step.
 	// The cmd/semantic-coverage-report command compares the findings with
-	// the provider schema.
+	// the provider schema. Collection requires Terraform CLI 1.2 or later;
+	// with an older version, tests fail while it is set.
 	//
 	// This feature is experimental and the finding format may change.
 	EnvTfAccSemanticCoverageDir = "TF_ACC_SEMANTIC_COVERAGE_DIR"

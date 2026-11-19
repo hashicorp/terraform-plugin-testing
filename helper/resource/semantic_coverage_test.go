@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
@@ -135,14 +136,18 @@ func TestSemanticCoverageOfStepsThatStopTheTest(t *testing.T) {
 
 			c := coverageTestCase(test.step)
 			c.CheckDestroy = test.checkDestroy
+			st := &stoppingT{}
 			func() {
 				defer func() {
 					if r := recover(); r != errStopTest {
 						panic(r)
 					}
 				}()
-				UnitTest(&stoppingT{}, c)
+				UnitTest(st, c)
 			}()
+			if st.Skipped() {
+				t.Skip("skipped by the test case's TerraformVersionChecks")
+			}
 
 			got := writtenCoverage(t, dir)
 			if len(got) != test.wantFindings {
@@ -196,13 +201,38 @@ func TestServedAddresses(t *testing.T) {
 	}
 }
 
+func TestCheckSemanticCoverageTFVersion(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		version *version.Version
+		wantErr bool
+	}{
+		"unknown": {version: nil, wantErr: true},
+		"too old": {version: version.Must(version.NewVersion("1.1.9")), wantErr: true},
+		"oldest":  {version: tfversion.Version1_2_0},
+		"newer":   {version: tfversion.Version1_14_0},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			err := checkSemanticCoverageTFVersion(test.version)
+			if gotErr := err != nil; gotErr != test.wantErr {
+				t.Errorf("error = %v, want error: %t", err, test.wantErr)
+			}
+		})
+	}
+}
+
 var errStopTest = errors.New("test stopped")
 
 // stoppingT stops the test like testing.T does: Fatal marks it failed and
-// stops it.
+// stops it, and Skip marks it skipped and stops it.
 type stoppingT struct {
 	mockT
-	failed bool
+	failed  bool
+	skipped bool
 }
 
 func (t *stoppingT) Fatal(...any) { t.FailNow() }
@@ -216,13 +246,25 @@ func (t *stoppingT) FailNow() {
 
 func (t *stoppingT) Failed() bool { return t.failed || t.mockT.Failed() }
 
+func (t *stoppingT) Skip(...any) { t.SkipNow() }
+
+func (t *stoppingT) Skipf(string, ...any) { t.SkipNow() }
+
+func (t *stoppingT) SkipNow() {
+	t.skipped = true
+	panic(errStopTest)
+}
+
+func (t *stoppingT) Skipped() bool { return t.skipped }
+
 // coverageTestCase returns a test case of the given steps with a provider
 // "test". Its resource test_resource has a name, and its resource
 // test_invalid fails validation.
 func coverageTestCase(steps ...TestStep) TestCase {
 	return TestCase{
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_0_0), // ProtoV6ProviderFactories
+			// Semantic coverage requires it.
+			tfversion.SkipBelow(semanticCoverageMinTFVersion),
 		},
 		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
 			"test": providerserver.NewProviderServer(testprovider.Provider{

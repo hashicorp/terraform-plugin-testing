@@ -24,6 +24,12 @@ Collection is off by default. To turn it on, set
 running acceptance tests. plugin-testing creates the directory if needed and
 writes one JSON finding per executed test step.
 
+Collection requires Terraform CLI 1.2 or later. With an older Terraform, every
+test that runs fails while `TF_ACC_SEMANTIC_COVERAGE_DIR` is set. Tests skipped
+by their `TerraformVersionChecks` still skip. Before 1.2, the JSON plan leaves
+providers without a `provider` block out of its configuration, so the
+evidence of configuring them would be missing.
+
 The report also needs the provider's schema, built from the same source as
 the tests. In a provider repository, build the provider and point Terraform at
 the binary with a `dev_overrides` CLI configuration. Terraform then uses that

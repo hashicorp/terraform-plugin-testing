@@ -52,8 +52,10 @@ func runPostTestDestroy(ctx context.Context, t testing.T, c TestCase, wd *plugin
 func runNewTest(ctx context.Context, t testing.T, c TestCase, helper *plugintest.Helper) {
 	t.Helper()
 
+	// The collector is created first: it can fail the test, before there is
+	// a working directory to clean up.
+	collector := newCoverageCollector(ctx, t, helper.TerraformVersion())
 	wd := helper.RequireNewWorkingDir(ctx, t, c.WorkingDir)
-	collector := newCoverageCollector(ctx, t)
 	// A step that ends in t.Fatal, a panic, or a skip never returns to the
 	// step loop, so it is never ended and writes no finding.
 	var coverage *semanticcoverage.Step
