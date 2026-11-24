@@ -103,6 +103,31 @@ func testStepNewConfig(ctx context.Context, t testing.T, c TestCase, wd *plugint
 		return fmt.Errorf("Error setting config: %w", err)
 	}
 
+	// The TestCase and TestStep level inits only see the generated provider
+	// configuration: they miss the providers a Config with a terraform block
+	// declares (it is used as is), and none runs without provider fields.
+	if step.Config != "" {
+		needsInit := hasTerraformBlock
+
+		if !needsInit && !c.hasProviders(ctx) {
+			stepHasProviders, err := step.hasProviders(ctx, stepIndex, t.Name())
+			if err != nil {
+				return fmt.Errorf("Error checking for providers: %w", err)
+			}
+
+			needsInit = !stepHasProviders
+		}
+
+		if needsInit {
+			err = runProviderCommand(ctx, t, wd, providers, func() error {
+				return wd.Init(ctx)
+			})
+			if err != nil {
+				return fmt.Errorf("Error running init: %w", err)
+			}
+		}
+	}
+
 	// If this step is a PlanOnly step, skip over this first Plan and
 	// subsequent Apply, and use the follow-up Plan that checks for
 	// permadiffs

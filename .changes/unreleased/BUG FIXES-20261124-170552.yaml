@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: 'helper/resource: Fixed providers declared in `TestStep.Config` (provider block without TestCase or TestStep providers, or `required_providers` in a terraform block) not being installed'
+time: 2026-11-24T17:05:52.397279703+00:00
+custom:
+    Issue: "695"
