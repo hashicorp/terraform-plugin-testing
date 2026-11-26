@@ -1935,6 +1935,74 @@ func TestTest_TestStep_ExternalProviders_DifferentVersions(t *testing.T) {
 	})
 }
 
+func TestTest_TestStep_Config_RequiredProviders(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		Steps: []TestStep{
+			{
+				Config: `
+provider "null" {}
+
+resource "null_resource" "test" {}
+`,
+			},
+			{
+				Config: `
+terraform {
+  required_providers {
+    null = {
+      source = "registry.terraform.io/hashicorp/null"
+    }
+    random = {
+      source = "registry.terraform.io/hashicorp/random"
+    }
+  }
+}
+
+provider "random" {}
+
+resource "null_resource" "test" {}
+
+resource "random_pet" "test" {}
+`,
+			},
+		},
+	})
+}
+
+func TestTest_TestStep_Config_RequiredProviders_TestCaseExternalProviders(t *testing.T) {
+	t.Parallel()
+
+	Test(t, TestCase{
+		ExternalProviders: map[string]ExternalProvider{
+			"null": {
+				Source: "registry.terraform.io/hashicorp/null",
+			},
+		},
+		Steps: []TestStep{
+			{
+				Config: `
+terraform {
+  required_providers {
+    null = {
+      source = "registry.terraform.io/hashicorp/null"
+    }
+    random = {
+      source = "registry.terraform.io/hashicorp/random"
+    }
+  }
+}
+
+resource "null_resource" "test" {}
+
+resource "random_pet" "test" {}
+`,
+			},
+		},
+	})
+}
+
 func TestTest_TestStep_ExternalProviders_Error(t *testing.T) {
 	t.Parallel()
 
