@@ -42,4 +42,5 @@ var (
 	Version1_13_0 *version.Version = version.Must(version.NewVersion("1.13.0"))
 	Version1_14_0 *version.Version = version.Must(version.NewVersion("1.14.0"))
 	Version1_15_0 *version.Version = version.Must(version.NewVersion("1.15.0"))
+	Version1_16_0 *version.Version = version.Must(version.NewVersion("1.16.0"))
 )
