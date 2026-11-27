@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: 'helper/resource: Filter non-workspace lines from `terraform workspace list` output so that warning diagnostics written to stdout cannot break state store workspace assertions'
+time: 2026-10-28T08:34:49.935253+05:30
+custom:
+    Issue: "692"
